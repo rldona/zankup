@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b8f6a">
+<title>OpenSport</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data.js"></script>
+<style>
+/* ---------- temas: tokens de diseño ---------- */
+/* fijos (no dependen del tema) */
+:root{
+  --z1:#a5d8ff;--z2:#69db7c;--z3:#ffd43b;--z4:#ff922b;--z5:#f03e3e;
+  --ctl:#1c7ed6;--atl:#e64980;--tsbp:#40c057;--tsbn:#fa5252;--other:#868e96;--row:#0c8599;--swim:#15aabf;
+}
+/* Claro (por defecto) */
+:root,[data-theme="light"]{color-scheme:light;
+  --bg:#f4f5f3;--surface:#fff;--surface2:#f8f8f6;--fg:#17191a;--muted:#676b6e;--line:#e3e4e0;
+  --accent:#0b8f6a;--accent-fg:#fff;--accent-soft:#e2f4ee;
+  --run:#e8590c;--ride:#1c7ed6;--strength:#7048e8;--walk:#2b8a3e;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);--radius:14px}
+/* Oscuro */
+@media (prefers-color-scheme:dark){:root:not([data-theme]){color-scheme:dark;
+  --bg:#0f1112;--surface:#181b1d;--surface2:#1e2124;--fg:#eceeed;--muted:#9aa0a3;--line:#2a2e31;
+  --accent:#20c997;--accent-fg:#06221a;--accent-soft:#13302a;--shadow:none;
+  --run:#ff8a3d;--ride:#4dabf7;--strength:#9775fa;--walk:#51cf66}}
+[data-theme="dark"]{color-scheme:dark;
+  --bg:#0f1112;--surface:#181b1d;--surface2:#1e2124;--fg:#eceeed;--muted:#9aa0a3;--line:#2a2e31;
+  --accent:#20c997;--accent-fg:#06221a;--accent-soft:#13302a;--shadow:none;
+  --run:#ff8a3d;--ride:#4dabf7;--strength:#9775fa;--walk:#51cf66}
+/* Negro OLED: negro puro, ahorra batería en pantallas OLED */
+[data-theme="oled"]{color-scheme:dark;
+  --bg:#000;--surface:#0b0b0b;--surface2:#141414;--fg:#f2f2f2;--muted:#8f8f8f;--line:#1f1f1f;
+  --accent:#38d9a9;--accent-fg:#001a12;--accent-soft:#0d2a21;--shadow:none;
+  --run:#ff922b;--ride:#4dabf7;--strength:#9775fa;--walk:#69db7c}
+/* Alto contraste: bordes y texto al máximo, sin sombras */
+[data-theme="contraste"]{color-scheme:light;
+  --bg:#fff;--surface:#fff;--surface2:#eeeeee;--fg:#000;--muted:#262626;--line:#000;
+  --accent:#0033cc;--accent-fg:#fff;--accent-soft:#d6e0ff;--shadow:none;
+  --run:#b33c00;--ride:#0050b3;--strength:#5a2fc2;--walk:#1d6b2f}
+/* Bosque: oscuro verdoso */
+[data-theme="bosque"]{color-scheme:dark;
+  --bg:#0d1611;--surface:#132019;--surface2:#1a2a21;--fg:#e4efe7;--muted:#98ae9f;--line:#24372c;
+  --accent:#8ce99a;--accent-fg:#0a1a0f;--accent-soft:#1d3a26;--shadow:none;
+  --run:#ffa94d;--ride:#74c0fc;--strength:#b197fc;--walk:#8ce99a}
+/* Océano: claro azulado */
+[data-theme="oceano"]{color-scheme:light;
+  --bg:#edf3f9;--surface:#fff;--surface2:#f2f7fc;--fg:#0e2233;--muted:#57708a;--line:#d3e1ee;
+  --accent:#1971c2;--accent-fg:#fff;--accent-soft:#dbeafa;
+  --run:#e8590c;--ride:#1864ab;--strength:#6741d9;--walk:#2b8a3e;
+  --shadow:0 1px 2px rgba(14,34,51,.06),0 6px 18px rgba(14,34,51,.05)}
+/* Atardecer: claro cálido */
+[data-theme="atardecer"]{color-scheme:light;
+  --bg:#fbf3ec;--surface:#fffaf5;--surface2:#f8ebe0;--fg:#2b1c12;--muted:#7f6656;--line:#efd9c8;
+  --accent:#d9480f;--accent-fg:#fff;--accent-soft:#ffe6d5;
+  --run:#c2410c;--ride:#1c7ed6;--strength:#7048e8;--walk:#2b8a3e;
+  --shadow:0 1px 2px rgba(60,30,10,.06),0 6px 18px rgba(60,30,10,.05)}
+/* en temas oscuros, el mapa raster se oscurece para no deslumbrar */
+.is-dark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88) saturate(.7)}
+[data-theme="contraste"] .card,[data-theme="contraste"] .panel,[data-theme="contraste"] .kpi{border-width:2px}
+*{box-sizing:border-box}
+html,body{height:100%}
+/* barras de desplazamiento finas y con los colores del tema */
+:root{--sb-thumb:color-mix(in srgb,var(--fg) 22%,transparent);--sb-thumb-hover:color-mix(in srgb,var(--fg) 40%,transparent)}
+*{scrollbar-width:thin;scrollbar-color:var(--sb-thumb) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--sb-thumb);border-radius:10px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--sb-thumb-hover);border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-corner{background:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+svg.i{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:232px 1fr;height:100vh}
+.side{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 12px;gap:4px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:750;font-size:18px;padding:4px 10px 18px;letter-spacing:-.2px}
+.brand b{width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-size:15px}
+.nav{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:0;background:none;text-align:left;width:100%;color:var(--muted);font-weight:550}
+.nav:hover{background:var(--surface2);color:var(--fg)}
+.nav.on{background:var(--accent-soft);color:var(--accent)}
+.side .grow{flex:1}
+.syncbtn{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:11px;background:var(--accent);color:var(--accent-fg);font-weight:650}
+.lastsync{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+.main{overflow:hidden;display:flex;min-width:0}
+.view{flex:1;overflow:auto;min-width:0}
+.topbar,.tabbar{display:none}
+
+/* feed + detail */
+.feedwrap{display:grid;grid-template-columns:400px 1fr;height:100%;min-width:0}
+.feedcol{border-right:1px solid var(--line);overflow:auto;background:var(--bg)}
+.detailcol{overflow:auto;min-width:0}
+.pad{padding:20px}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.3px}
+h2{font-size:16px;margin:0 0 12px}
+.week{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.week .row{display:flex;gap:18px;margin-top:6px}
+.week .row div b{display:block;font-size:18px}
+.week .row div span{font-size:12px;color:var(--muted)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;white-space:nowrap;font-size:13px}
+.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;display:block;width:100%;text-align:left;box-shadow:var(--shadow)}
+.card:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.chead{display:flex;gap:10px;align-items:center}
+.sp{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;flex:none}
+.ctitle{font-weight:650;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.csub{font-size:12px;color:var(--muted)}
+.cbody{display:flex;gap:12px;align-items:flex-end;margin-top:10px}
+.cstats{display:grid;grid-template-columns:repeat(3,auto);gap:4px 18px;flex:1}
+.cstats b{display:block;font-size:16px}
+.cstats span{font-size:11px;color:var(--muted)}
+.thumb{width:88px;height:64px;flex:none;border-radius:8px;background:var(--surface2)}
+.badges{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.badge{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.badge.pr{background:#fff3bf;color:#7a5b00;border-color:#ffe066}
+
+/* detail */
+.dhead{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.back{display:none}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.kpi b{display:block;font-size:19px;letter-spacing:-.2px}
+.kpi span{font-size:11.5px;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+.panel .ph{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel .ph h2{margin:0;flex:1}
+.panel .pb{padding:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;padding:4px 10px;font-size:12.5px}
+.seg button.on{background:var(--fg);color:var(--bg)}
+.map{height:380px;background:var(--surface2)}
+.legend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.legend i{width:80px;height:7px;border-radius:4px;display:inline-block}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:170px}
+.readout{font-size:12px;color:var(--muted);padding:6px 14px 10px;min-height:28px}
+.zones .bar{display:flex;height:12px;border-radius:6px;overflow:hidden;margin-bottom:10px}
+.cstats b{white-space:nowrap}
+.zrow{display:grid;grid-template-columns:30px 1fr 92px 48px;gap:8px;align-items:center;font-size:12.5px;margin:5px 0}
+.zrow .track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.zrow .track i{display:block;height:100%}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:550;color:var(--muted);font-size:12px}
+tr:last-child td{border-bottom:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.effort{display:flex;align-items:center;gap:14px}
+.ring{width:74px;height:74px;flex:none}
+.note{font-size:12px;color:var(--muted)}
+
+/* stats */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.vbars{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:6px}
+.vbars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;min-width:0}
+.vbars .stack{width:100%;max-width:26px;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden}
+.vbars .lbl{font-size:10px;color:var(--muted);white-space:nowrap}
+.flegend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.flegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tsbnow{display:flex;gap:18px;margin-bottom:10px;flex-wrap:wrap}
+.tsbnow div b{font-size:22px;display:block}
+.tsbnow div span{font-size:12px;color:var(--muted)}
+
+/* settings */
+.form{display:grid;gap:12px;max-width:640px}
+.pad.narrow{max-width:720px;margin:0 auto}
+.pad.narrow .form{max-width:none}
+.field{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.field input[type=number]{width:80px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);color:var(--fg);font:inherit;text-align:right}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.theme{display:flex;flex-direction:column;gap:6px;text-align:left;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.theme[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.theme .tname{font-weight:600;font-size:13px}
+.theme .note{margin-top:-4px}
+.tprev{position:relative;display:block;height:68px;border-radius:8px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.tprev:not([data-theme]){background:linear-gradient(135deg,#f4f5f3 50%,#0f1112 50%)}
+.tprev .tbar{position:absolute;left:0;top:0;bottom:0;width:22%;background:var(--surface);border-right:1px solid var(--line)}
+.tprev .tcard{position:absolute;left:30%;right:8%;top:12px;height:40px;border-radius:6px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:5px;padding:7px}
+.tprev .tcard b{display:block;height:5px;border-radius:3px;background:var(--fg);opacity:.75;width:70%}
+.tprev .tcard b+b{background:var(--muted);width:45%;opacity:.6}
+.tprev .tdot{position:absolute;right:12%;bottom:20px;width:14px;height:14px;border-radius:50%;background:var(--accent)}
+.tprev:not([data-theme]) .tbar,.tprev:not([data-theme]) .tcard,.tprev:not([data-theme]) .tdot{display:none}
+.switch{width:42px;height:24px;border-radius:12px;background:var(--line);position:relative;border:0}
+.switch.on{background:var(--accent)}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
+.switch.on::after{left:21px}
+
+/* sync sheet + toast */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:50}
+.scrim.open{display:flex}
+.sheet{background:var(--surface);border-radius:18px;padding:22px;width:min(440px,calc(100% - 32px));box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.steps{list-style:none;padding:0;margin:14px 0}
+.steps li{display:flex;gap:10px;align-items:center;padding:6px 0;color:var(--muted)}
+.steps li.done{color:var(--fg)}
+.steps li .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px}
+.steps li.done .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.steps li.run .dot{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.btnrow{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font-weight:600}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.toast{position:fixed;right:20px;top:20px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 10px 40px rgba(0,0,0,.18);transform:translateY(-140%);transition:transform .35s;z-index:60;max-width:360px}
+.toast.show{transform:none}
+.proto{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);font-size:11px;white-space:nowrap;background:var(--fg);color:var(--bg);padding:3px 10px;border-radius:999px;opacity:.65;pointer-events:none;z-index:5}
+.empty{display:grid;place-items:center;height:100%;color:var(--muted)}
+
+/* ---------- cabecera «Tu semana» ---------- */
+:root{--st-fresco:#4dabf7;--st-neutro:#adb5bd;--st-productivo:#40c057;--st-sobrecarga:#fa5252}
+.wk{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.wkhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.wkhead h2{margin:0;flex:1;font-size:16px}
+.streak{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--accent);font-size:13px;background:var(--accent-soft);padding:4px 10px;border-radius:999px}
+.streak svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linejoin:round}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.days .dl{font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.day{width:38px;height:38px;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;background:var(--surface2);color:var(--muted);border:2px solid transparent;position:relative}
+.day.act{color:#fff;border:0;cursor:pointer}
+.day.act svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.day.act .n{position:absolute;right:-3px;top:-3px;background:var(--fg);color:var(--bg);font-size:10px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center}
+.day.today{border-color:var(--fg);background:transparent;color:var(--fg)}
+.day.future{background:transparent;border:2px dashed var(--line)}
+.wkstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.wkstats b{display:block;font-size:16px}
+.wkstats span{font-size:11px;color:var(--muted)}
+.hl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:10px;overflow-x:auto;margin:0 -20px 4px;padding:2px 20px 10px;scroll-snap-type:x mandatory}
+.hcard{scroll-snap-align:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;text-align:left;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px;min-height:132px}
+.hcard .k{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:600}
+.hcard .k i{width:8px;height:8px;border-radius:50%}
+.hcard .v{font-size:22px;font-weight:750;letter-spacing:-.3px;line-height:1.15}
+.hcard .s{font-size:12px;color:var(--muted)}
+.hcard .grow{flex:1}
+.st28{display:flex;gap:2px;height:8px;margin-top:6px}
+.st28 i{flex:1;border-radius:2px}
+.st28+.s{display:flex;justify-content:space-between;margin-top:4px}
+.minibar{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin-top:6px;position:relative}
+.minibar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.minibar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg);opacity:.5}
+.more{width:100%;margin:6px 0 24px}
+
+/* ---------- acceso ---------- */
+body.auth .side,body.auth .topbar,body.auth .tabbar,body.auth .proto{display:none!important}
+body.auth .app{grid-template-columns:1fr;grid-template-rows:1fr}
+.login{min-height:100%;display:grid;grid-template-columns:1.1fr 1fr;background:var(--bg)}
+.lart{position:relative;overflow:hidden;background:var(--accent);color:var(--accent-fg);padding:44px;display:flex;flex-direction:column;justify-content:space-between}
+.lart svg.routes{position:absolute;inset:0;width:100%;height:100%;opacity:.28}
+.lart .brand{padding:0;color:inherit;font-size:22px;position:relative}
+.lart .brand b{background:var(--accent-fg);color:var(--accent)}
+.lart h2{font-size:30px;line-height:1.15;margin:0 0 10px;max-width:420px;position:relative;letter-spacing:-.5px}
+.lart p{margin:0;max-width:400px;opacity:.85;position:relative}
+.lart .lstats{display:flex;gap:26px;margin-top:22px;position:relative}
+.lart .lstats b{display:block;font-size:22px}
+.lart .lstats span{font-size:12px;opacity:.8}
+.lform{display:grid;place-items:center;padding:32px 20px}
+.lcard{width:100%;max-width:380px}
+.lcard h1{font-size:24px;margin:0 0 4px}
+.lcard .sub{color:var(--muted);margin-bottom:22px}
+.fld{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;font-size:13px;font-weight:600}
+.fld input{font:inherit;font-size:15px;font-weight:400;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.fld input:focus,.otp input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.pw{position:relative}
+.pw input{width:100%;padding-right:44px}
+.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);padding:6px}
+.lrow{display:flex;justify-content:space-between;align-items:center;margin:4px 0 18px;font-size:13px}
+.lrow label{display:flex;gap:8px;align-items:center;color:var(--muted);cursor:pointer}
+.lrow a{color:var(--accent);text-decoration:none;font-weight:600}
+.btn.block{width:100%;padding:12px;font-size:15px;display:flex;justify-content:center;align-items:center;gap:8px}
+.gbtn{background:#fff;color:#1f1f1f;border:1px solid #dadce0;font-weight:600}
+.is-dark .gbtn{background:#131314;color:#e3e3e3;border-color:#8e918f}
+.alt{display:grid;gap:10px}
+.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:16px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.lerr{background:color-mix(in srgb,var(--st-sobrecarga) 12%,transparent);color:var(--st-sobrecarga);border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:14px;display:none}
+.lerr.show{display:block}
+.otp{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:6px 0 18px}
+.otp input{font:inherit;font-size:22px;font-weight:700;text-align:center;padding:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%}
+.lfoot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@media (max-width:1023px){
+  .login{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .lart{padding:22px 20px 26px}
+  .lart h2{font-size:22px;margin-top:18px}
+  .lart .lstats,.lart p{display:none}
+  .lform{align-items:start;padding:26px 20px}
+}
+
+/* ---------- filtro de periodo ---------- */
+.period{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.period select,.period input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.period input{flex:1;min-width:140px}
+.period .clear{border:0;background:none;color:var(--accent);font-size:13px;font-weight:600;padding:4px}
+.psum{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:14px}
+.psum div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.psum b{display:block;font-size:17px}
+.psum span{font-size:11.5px;color:var(--muted)}
+.psum .delta{font-size:11.5px;font-weight:600}
+.up{color:var(--st-productivo)} .down{color:var(--st-sobrecarga)}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 8px;font-size:13px}
+.mhead b{font-size:14px;text-transform:capitalize}
+.mhead span{color:var(--muted)}
+.prog{position:relative}
+.prog svg{display:block;width:100%;height:260px}
+.prog .tip{font-size:12px;color:var(--muted);min-height:20px;margin-top:6px}
+.prog .tip b{color:var(--fg)}
+.vbars.many .lbl.num{display:none}
+
+/* ---------- perfil ---------- */
+.phead{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.avatar{width:84px;height:84px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-size:30px;font-weight:750;flex:none}
+.phead .who{flex:1;min-width:200px}
+.phead h1{margin:0}
+.chiprow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+.pstats div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pstats b{display:block;font-size:20px}
+.pstats span{font-size:11.5px;color:var(--muted)}
+.ptabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.ptabs button{border:0;background:none;padding:10px 12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.ptabs button.on{color:var(--fg);border-bottom-color:var(--accent)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.goal{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+.goal:last-child{border-bottom:0}
+.goal .ring{width:62px;height:62px}
+.goal b{display:block}
+.est{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.est:last-child{border-bottom:0}
+.est .val{font-size:18px;font-weight:700;text-align:right}
+.est .how{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.est a{color:var(--accent)}
+.src{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.src:last-child{border-bottom:0}
+.src .logo{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px;flex:none}
+.src .grow{flex:1}
+.ok{color:var(--accent);font-weight:600;font-size:13px}
+.emptybox{text-align:center;padding:18px 10px;color:var(--muted)}
+.emptybox svg{width:40px;height:40px;stroke:var(--muted);fill:none;stroke-width:1.6;margin-bottom:6px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.formgrid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.formgrid input,.formgrid select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);color:var(--fg)}
+.formgrid .full{grid-column:1/-1}
+
+/* ---------- mobile ---------- */
+@media (max-width:1023px){
+  /* en móvil el sistema usa barras superpuestas: aquí las ocultamos para que el prototipo se vea igual */
+  *{scrollbar-width:none}
+  ::-webkit-scrollbar{display:none}
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;height:100dvh}
+  .side{display:none}
+  .topbar{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  .topbar .brand{padding:0;font-size:17px;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .topbar .brand b{display:inline-grid;vertical-align:middle;margin-right:8px}
+  .topbar .grow{flex:1}
+  .iconbtn{border:0;background:var(--surface2);width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
+  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);padding:4px}
+  .tab.on{color:var(--accent)}
+  .feedwrap{grid-template-columns:1fr}
+  .feedcol{border-right:0}
+  .detailcol{display:none}
+  .feedwrap.detail .feedcol{display:none}
+  .feedwrap.detail .detailcol{display:block}
+  .pad{padding:14px 16px}
+  .back{display:grid}
+  .map{height:280px}
+  .grid2{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .kpi b{font-size:17px}
+  .statgrid{grid-template-columns:1fr}
+  .hl{margin:0 -16px 4px;padding:2px 16px 10px;grid-auto-columns:78%}
+  .pstats{grid-template-columns:repeat(2,1fr)}
+  .pgrid{grid-template-columns:1fr}
+  .avatar{width:68px;height:68px;font-size:24px}
+  .yeartbl td:nth-child(5),.yeartbl th:nth-child(5){display:none}
+  .day{width:36px;height:36px}
+  .toast{left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));max-width:none}
+  .sheet{position:fixed;bottom:0;left:0;right:0;width:100%;border-radius:20px 20px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+  .scrim{align-items:flex-end}
+  .proto{bottom:74px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><b>OS</b>OpenSport</div>
+    <button class="nav" data-go="feed"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Actividades</button>
+    <button class="nav" data-go="stats"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Estadísticas</button>
+    <button class="nav" data-go="profile"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Perfil</button>
+    <button class="nav" data-go="settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
+    <div class="grow"></div>
+    <button class="syncbtn" data-sync><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5"/></svg>Sincronizar</button>
+    <div class="lastsync" id="lastsync1"></div>
+  </aside>
+
+  <header class="topbar">
+    <button class="iconbtn back" id="backbtn" aria-label="Volver"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="brand" id="toptitle"><b>OS</b>OpenSport</div>
+    <div class="grow"></div>
+    <button class="iconbtn" id="gearbtn" aria-label="Ajustes" style="display:none"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <button class="iconbtn" data-sync aria-label="Sincronizar"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5"/></svg></button>
+  </header>
+
+  <main class="main"><div class="view" id="view"></div></main>
+
+  <nav class="tabbar">
+    <button class="tab" data-go="feed"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Feed</button>
+    <button class="tab" data-go="stats"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Estadísticas</button>
+    <button class="tab" data-sync><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5"/></svg>Sync</button>
+    <button class="tab" data-go="profile"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Tú</button>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-label="Sincronización">
+  <h2 style="margin:0">Sincronizar con Garmin</h2>
+  <div class="note">Personal API · FIT original</div>
+  <ul class="steps" id="steps"></ul>
+  <div class="progress"><i id="prog"></i></div>
+  <div class="btnrow"><button class="btn" id="closesync">Cerrar</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<div class="proto">Prototipo · datos reales de Garmin</div>
+
+<script>
+// ---------- temas ----------
+const THEMES = [
+  {id:'system', n:'Sistema', d:'Sigue el modo del dispositivo'},
+  {id:'light', n:'Claro'}, {id:'dark', n:'Oscuro'}, {id:'oled', n:'Negro OLED', d:'Ahorra batería'},
+  {id:'contraste', n:'Alto contraste', d:'Máxima legibilidad'},
+  {id:'bosque', n:'Bosque'}, {id:'oceano', n:'Océano'}, {id:'atardecer', n:'Atardecer'},
+];
+const DARK_THEMES = new Set(['dark','oled','bosque']);
+const sysDark = matchMedia('(prefers-color-scheme: dark)');
+let themeId = 'system';
+try { themeId = localStorage.getItem('os-theme') || 'system'; } catch (_) {}
+function isDarkTheme() { return DARK_THEMES.has(themeId) || (themeId === 'system' && sysDark.matches); }
+function applyTheme(id, save = true) {
+  themeId = THEMES.some(x => x.id === id) ? id : 'system';
+  const root = document.documentElement;
+  if (themeId === 'system') delete root.dataset.theme; else root.dataset.theme = themeId;
+  root.classList.toggle('is-dark', isDarkTheme());
+  document.querySelector('meta[name="theme-color"]').content = getComputedStyle(root).getPropertyValue('--surface').trim();
+  if (save) try { localStorage.setItem('os-theme', themeId); } catch (_) {}
+  document.querySelectorAll('[data-pick]').forEach(b => b.setAttribute('aria-pressed', b.dataset.pick === themeId));
+  if (window.__booted && state.route !== 'settings') render();  // mapas y gráficas se redibujan con el nuevo tema
+}
+window.setTheme = id => applyTheme(id);
+sysDark.addEventListener('change', () => themeId === 'system' && applyTheme('system', false));
+applyTheme(themeId, false);
+
+const D = window.OS_DATA;
+const A = D.activities, byId = Object.fromEntries(A.map(a => [String(a.id), a]));
+const SPORT = {
+  run:{n:'Carrera', c:'var(--run)', ic:'<path d="M13 4a2 2 0 1 0 0 .01M8 21l3-6 3 3v3M6 12l3-4 4 1 3 4 3 1"/>'},
+  ride:{n:'Ciclismo', c:'var(--ride)', ic:'<circle cx="6" cy="17" r="3.5"/><circle cx="18" cy="17" r="3.5"/><path d="M6 17l4-8h5l3 8M10 9l2 8h-6M14 6h3"/>'},
+  strength:{n:'Fuerza', c:'var(--strength)', ic:'<path d="M3 10v4M6 7v10M18 7v10M21 10v4M6 12h12"/>'},
+  walk:{n:'Caminar', c:'var(--walk)', ic:'<path d="M13 4a2 2 0 1 0 0 .01M10 21l2-7 3 3v4M9 11l2-3 3 1 2 4"/>'},
+  row:{n:'Remo', c:'var(--row)', ic:'<path d="M4 20l8-8M14 10l6-6M3 17l4 4M17 3l4 4M9 15l2-2"/>'},
+  swim:{n:'Natación', c:'var(--swim)', ic:'<circle cx="16" cy="6" r="2"/><path d="M2 18c2 0 2-1.5 4-1.5S8 18 10 18s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M5 14l5-5 3 3 3-3"/>'},
+  other:{n:'Otra', c:'var(--other)', ic:'<circle cx="12" cy="12" r="8"/>'},
+};
+const $ = s => document.querySelector(s);
+const view = $('#view');
+const isMobile = () => matchMedia('(max-width:1023px)').matches;
+
+// ---------- formato ----------
+const pad2 = n => String(n).padStart(2, '0');
+const fmtDur = s => { s = Math.round(s); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return h ? `${h}:${pad2(m)}:${pad2(x)}` : `${m}:${pad2(x)}`; };
+const fmtHM = s => { const h = Math.floor(s/3600), m = Math.round(s%3600/60); return h ? `${h} h ${m} min` : `${m} min`; };
+const fmtKm = m => (m/1000).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtPace = v => v > 0.3 ? fmtDur(1000/v) : '—';
+const fmtSpeed = v => (v*3.6).toLocaleString('es-ES', {maximumFractionDigits:1});
+const dt = s => new Date(s.replace(' ', 'T'));
+const fmtDate = s => { const d = dt(s); return d.toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'}) + ' · ' + d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); };
+const avgSpeed = a => a.dist && a.moving ? a.dist / a.moving : 0;
+const effortLabel = t => t < 25 ? 'Suave' : t < 60 ? 'Moderado' : t < 110 ? 'Exigente' : t < 180 ? 'Muy exigente' : 'Extremo';
+const icon = (sp, size = 34) => `<span class="sp" style="background:${SPORT[sp].c};width:${size}px;height:${size}px"><svg class="i" viewBox="0 0 24 24" style="stroke:#fff;width:${size*.56}px;height:${size*.56}px">${SPORT[sp].ic}</svg></span>`;
+const prIds = new Set(D.prs.map(p => String(p.id)));
+
+// escala de color para el recorrido
+const STOPS = [[0,[51,154,240]],[0.5,[252,196,25]],[1,[240,62,62]]];
+const colorAt = f => { f = Math.max(0, Math.min(1, f)); for (let i = 1; i < STOPS.length; i++) if (f <= STOPS[i][0]) { const [a,c0] = STOPS[i-1], [b,c1] = STOPS[i], k = (f-a)/(b-a); return `rgb(${c0.map((c,j) => Math.round(c+(c1[j]-c)*k))})`; } };
+const quant = (arr, q) => { const s = arr.filter(x => x != null).sort((a,b) => a-b); return s.length ? s[Math.floor(q*(s.length-1))] : 0; };
+
+// ---------- navegación ----------
+let state = {route:'feed', id:null, filter:'all'};
+function go(hash) { location.hash = hash; }
+function parse() {
+  const h = location.hash.replace(/^#\/?/, '');
+  const [r, id] = h.split('/');
+  state.route = ['feed','stats','settings','profile','a','login'].includes(r) ? r : 'feed';
+  if (!loggedIn() && state.route !== 'login') { location.replace('#/login'); return; }
+  state.id = r === 'a' ? id : (state.route === 'feed' && !isMobile() ? (state.id || String(A[0].id)) : null);
+  render();
+}
+addEventListener('hashchange', parse);
+addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(() => { if (currentMap) currentMap.resize(); }, 120); });
+document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go('#/' + b.dataset.go));
+$('#backbtn').onclick = () => go(state.route === 'settings' ? '#/profile' : '#/feed');
+$('#gearbtn').onclick = () => go('#/settings');
+
+function setNav(r) {
+  document.querySelectorAll('[data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === (r === 'a' ? 'feed' : r)));
+  $('#backbtn').style.display = isMobile() && (r === 'a' || r === 'settings') ? '' : 'none';
+  $('#gearbtn').style.display = isMobile() && r === 'profile' ? '' : 'none';
+  $('#toptitle').innerHTML = isMobile() && r === 'a' ? (byId[state.id]?.name || '') .replace(/</g,'&lt;') : r === 'stats' ? 'Estadísticas' : r === 'settings' ? 'Ajustes' : r === 'profile' ? 'Tú' : '<b>OS</b>OpenSport';
+}
+
+let currentMap = null;
+function render() {
+  if (currentMap) { currentMap.remove(); currentMap = null; }
+  document.body.classList.toggle('auth', state.route === 'login');
+  if (state.route === 'login') return renderLogin();
+  setNav(state.route);
+  if (state.route === 'stats') return renderStats();
+  if (state.route === 'settings') return renderSettings();
+  if (state.route === 'profile') return renderProfile();
+  renderFeed();
+}
+
+// ---------- feed ----------
+function weekSummary() {
+  const monday = new Date(); monday.setHours(0,0,0,0); monday.setDate(monday.getDate() - ((monday.getDay()+6)%7));
+  const wk = A.filter(a => dt(a.start) >= monday);
+  return {n:wk.length, km:wk.reduce((s,a) => s + a.dist, 0)/1000, t:wk.reduce((s,a) => s + a.moving, 0), eff:wk.reduce((s,a) => s + a.trimp, 0)};
+}
+function thumb(a) {
+  if (!a.route) return `<div class="thumb" style="display:grid;place-items:center">${icon(a.sport, 28)}</div>`;
+  const la = a.route.map(p => p[0]), lo = a.route.map(p => p[1]);
+  const [y0,y1,x0,x1] = [Math.min(...la), Math.max(...la), Math.min(...lo), Math.max(...lo)];
+  const kx = Math.cos(((y0+y1)/2)*Math.PI/180), w = (x1-x0)*kx || 1e-6, h = (y1-y0) || 1e-6, s = Math.min(76/w, 52/h);
+  const pts = a.route.map(([y,x]) => `${(6 + ((x-x0)*kx*s) + (76 - w*s)/2).toFixed(1)},${(6 + (y1-y)*s + (52 - h*s)/2).toFixed(1)}`).join(' ');
+  return `<svg class="thumb" viewBox="0 0 88 64"><polyline points="${pts}" fill="none" stroke="${SPORT[a.sport].c}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function cardStats(a) {
+  if (a.sport === 'strength') return [[fmtDur(a.dur),'Tiempo'],[a.hr ? a.hr+' ppm' : '—','FC media'],[a.kcal ? a.kcal+' kcal' : '—','Calorías']];
+  const v = avgSpeed(a);
+  const third = a.sport === 'ride' ? [fmtSpeed(v)+' km/h','Velocidad'] : [fmtPace(v)+' /km','Ritmo'];
+  return [[fmtKm(a.dist)+' km','Distancia'],[fmtDur(a.moving),'Tiempo'],third];
+}
+function card(a) {
+  const sel = String(a.id) === String(state.id) ? ' sel' : '';
+  const badges = [`<span class="badge">Esfuerzo ${a.trimp}</span>`];
+  if (a.te) badges.push(`<span class="badge">TE ${a.te.toFixed(1)}</span>`);
+  if (a.np) badges.push(`<span class="badge">${a.np} W NP</span>`);
+  if (prIds.has(String(a.id))) badges.push(`<span class="badge pr">🏆 Récord</span>`);
+  return `<button class="card${sel}" data-id="${a.id}">
+    <div class="chead">${icon(a.sport)}<div style="min-width:0;flex:1"><div class="ctitle">${a.name || SPORT[a.sport].n}</div><div class="csub">${fmtDate(a.start)}${a.location ? ' · ' + a.location : ''}</div></div></div>
+    <div class="cbody"><div class="cstats num">${cardStats(a).map(([b,s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('')}</div>${thumb(a)}</div>
+    <div class="badges">${badges.join('')}</div></button>`;
+}
+function grouped(shown, all) {   // tarjetas agrupadas por mes, con el resumen de cada mes
+  let html = '', cur = null;
+  for (const a of shown) {
+    const key = a.start.slice(0, 7);
+    if (key !== cur) {
+      cur = key; const s = sums(all.filter(x => x.start.startsWith(key)));
+      html += `<div class="mhead"><b>${MONTHS[+key.slice(5) - 1]} ${key.slice(0, 4)}</b><span class="num">${s.n} act. · ${Math.round(s.dist / 1000)} km · ${fmtHM(s.time)}</span></div>`;
+    }
+    html += card(a);
+  }
+  return html;
+}
+function renderFeed() {
+  if (currentMap) { try { currentMap.remove(); } catch (_) {} currentMap = null; }
+  const w = weekSummary();
+  const fp = state.fp, q = (fp.q || '').trim().toLowerCase();
+  const list = A.filter(a => (state.filter === 'all' || a.sport === state.filter) && inPeriod(a, fp) && (!q || (a.name || '').toLowerCase().includes(q) || (a.description || '').toLowerCase().includes(q)));
+  const filtered = fp.y !== 'all' || q || state.filter !== 'all';
+  const showDetail = state.route === 'a' || (!isMobile() && state.id);
+  view.innerHTML = `<div class="feedwrap ${state.route === 'a' ? 'detail' : ''}">
+    <section class="feedcol"><div class="pad">
+      ${weekHeader(w)}
+      ${highlights()}
+      ${isMobile() ? '' : '<h2 style="margin:18px 0 10px">Actividades <span class="muted" style="font-weight:400;font-size:13px">· '+A.length.toLocaleString('es-ES')+' desde ' + dt(P.since).getFullYear() + '</span></h2>'}
+      <div class="chips">${[['all','Todas'],['run','Carrera'],['ride','Ciclismo'],['strength','Fuerza'],['walk','Caminar'],['row','Remo'],['swim','Natación']].map(([k,n]) => `<button class="chip ${state.filter===k?'on':''}" data-f="${k}">${n}</button>`).join('')}</div>
+      ${periodBar(fp, 'fp', true)}
+      ${filtered ? periodSummary(list, null) : ''}
+      ${list.length ? '' : '<div class="emptybox">No hay actividades con estos filtros.</div>'}
+      ${grouped(list.slice(0, state.limit || 40), list)}
+      ${list.length > (state.limit || 40) ? '<button class="btn more" id="more">Ver más actividades</button>' : ''}
+    </div></section>
+    <section class="detailcol" id="detail">${showDetail && byId[state.id] ? '' : '<div class="empty">Elige una actividad</div>'}</section></div>`;
+  view.querySelectorAll('.chip').forEach(c => c.onclick = () => { state.filter = c.dataset.f; state.limit = 40; renderFeed(); });
+  bindPeriod(view, renderFeed);
+  const more = $('#more'); if (more) more.onclick = () => { state.limit = (state.limit || 40) + 40; const y = $('.feedcol').scrollTop; renderFeed(); $('.feedcol').scrollTop = y; };
+  view.querySelectorAll('[data-href]').forEach(el => el.onclick = () => go(el.dataset.href));
+  view.querySelectorAll('.card').forEach(c => c.onclick = () => isMobile() ? go('#/a/' + c.dataset.id) : (state.id = c.dataset.id, history.replaceState(null, '', '#/feed'), renderFeed()));
+  if (showDetail && byId[state.id]) renderDetail(byId[state.id], $('#detail'));
+  if (state.route === 'a') view.scrollTop = 0;
+}
+
+// ---------- acceso (prototipo: no comprueba credenciales reales) ----------
+function googleLinked() { try { const v = localStorage.getItem('os-google'); return v === 'none' ? null : (v || 'r•••••@gmail.com'); } catch (_) { return null; } }
+function loggedIn() { try { return localStorage.getItem('os-session') !== 'out'; } catch (_) { return true; } }
+function logout() { try { localStorage.setItem('os-session', 'out'); } catch (_) {} go('#/login'); }
+function routesArt() {   // fondo abstracto (curvas de nivel generadas): la pantalla de acceso no muestra ningún dato del usuario
+  const lines = [];
+  for (let k = 0; k < 26; k++) {
+    const base = 40 + k * 30, amp = 18 + (k % 5) * 6, ph = k * 0.7;
+    let d = '';
+    for (let x = -20; x <= 620; x += 20) { const y = base + Math.sin(x / 90 + ph) * amp + Math.sin(x / 37 + k) * amp * 0.35; d += (d ? ' L' : 'M') + x + ',' + y.toFixed(1); }
+    lines.push(`<path d="${d}" fill="none" stroke="currentColor" stroke-width="${k % 4 === 0 ? 1.8 : 1}"/>`);
+  }
+  return `<svg class="routes" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice">${lines.join('')}</svg>`;
+}
+function renderLogin(step = 'pass') {
+  view.innerHTML = `<div class="login">
+    <section class="lart">${routesArt()}
+      <div class="brand"><b>OS</b>OpenSport</div>
+      <div><h2>Tus datos deportivos, en tu casa.</h2><p>Instancia privada de OpenSport. Sincroniza con Garmin, analiza tu histórico y sigue tu forma sin depender de nadie.</p></div>
+    </section>
+    <section class="lform"><div class="lcard">${step === 'pass' ? `
+      <h1>Hola de nuevo</h1><div class="sub">Entra en tu OpenSport</div>
+      <div class="lerr" id="lerr" role="alert"></div>
+      <form id="lf" novalidate>
+        <label class="fld">Correo electrónico<input id="lu" type="email" autocomplete="username" placeholder="tu@correo.com" value=""></label>
+        <label class="fld">Contraseña<span class="pw"><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" id="eye" aria-label="Mostrar contraseña"><svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
+        <div class="lrow"><label><input type="checkbox" checked> Recordar este dispositivo 30 días</label><a href="#" onclick="return false" title="En una instancia personal se restablece desde el servidor">¿La olvidaste?</a></div>
+        <button class="btn primary block" id="lgo" type="submit">Entrar</button>
+      </form>
+      <div class="or">o</div>
+      <div class="alt"><button class="btn block gbtn" id="gg"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continuar con Google</button>
+      <button class="btn block" id="pk"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M2 21c1-4 3.5-6 6-6 1.5 0 3 .6 4 1.6M15 11a3 3 0 1 1 3 3v6l-1.5 1.5L15 20v-1l1-1-1-1v-3.2"/></svg>Entrar con passkey</button></div>
+      <div class="lfoot">Prototipo: cualquier correo y contraseña sirven.<br>Instancia privada · un solo usuario</div>` : `
+      <h1>Verificación en dos pasos</h1><div class="sub">Introduce el código de 6 dígitos de tu app de autenticación.</div>
+      <div class="lerr" id="lerr" role="alert"></div>
+      <form id="lf" novalidate><div class="otp">${Array.from({length: 6}, (_, i) => `<input inputmode="numeric" maxlength="1" aria-label="Dígito ${i + 1}" ${i === 0 ? 'autocomplete="one-time-code"' : ''}>`).join('')}</div>
+        <button class="btn primary block" id="lgo" type="submit">Verificar</button></form>
+      <div class="lrow" style="margin-top:14px"><a href="#" id="lback">← Volver</a><a href="#" onclick="return false">Usar un código de recuperación</a></div>
+      <div class="lfoot">Prototipo: cualquier código de 6 dígitos sirve.</div>`}
+    </div></section></div>`;
+  const err = msg => { const e = $('#lerr'); e.textContent = msg; e.classList.toggle('show', !!msg); };
+  const busy = (b, label) => { const g = $('#lgo'); g.disabled = b; g.innerHTML = b ? '<span class="spin"></span>' : label; };
+  const enter = () => { try { localStorage.setItem('os-session', 'in'); } catch (_) {} go('#/feed'); };
+  if (step === 'pass') {
+    $('#lu').focus();
+    $('#eye').onclick = () => { const i = $('#lp'); i.type = i.type === 'password' ? 'text' : 'password'; };
+    $('#lf').onsubmit = e => { e.preventDefault();
+      if (!/^\S+@\S+\.\S+$/.test($('#lu').value)) return err('Introduce un correo válido.');
+      if (!$('#lp').value) return err('Introduce la contraseña.');
+      err(''); busy(true); setTimeout(() => renderLogin('otp'), 600); };
+    $('#gg').onclick = () => { const b = $('#gg'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Abriendo Google…'; setTimeout(() => { b.innerHTML = '<span class="spin"></span> Comprobando que es tu cuenta vinculada…'; setTimeout(enter, 900); }, 900); };
+    $('#pk').onclick = () => { const b = $('#pk'); b.innerHTML = '<span class="spin"></span> Esperando a tu dispositivo…'; setTimeout(enter, 1100); };
+  } else {
+    const boxes = [...view.querySelectorAll('.otp input')]; boxes[0].focus();
+    boxes.forEach((b, i) => {
+      b.oninput = () => { b.value = b.value.replace(/\D/g, '').slice(-1); if (b.value && boxes[i + 1]) boxes[i + 1].focus(); if (boxes.every(x => x.value)) $('#lf').requestSubmit(); };
+      b.onkeydown = e => { if (e.key === 'Backspace' && !b.value && boxes[i - 1]) boxes[i - 1].focus(); };
+      b.onpaste = e => { const d = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6); if (d.length) { e.preventDefault(); d.split('').forEach((c, k) => boxes[k] && (boxes[k].value = c)); boxes[Math.min(d.length, 5)].focus(); } };
+    });
+    $('#lback').onclick = e => { e.preventDefault(); renderLogin('pass'); };
+    $('#lf').onsubmit = e => { e.preventDefault();
+      if (!boxes.every(x => x.value)) return err('Faltan dígitos.');
+      err(''); busy(true); setTimeout(enter, 700); };
+  }
+}
+
+// ---------- periodos: año, mes, últimos 12 meses ----------
+const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const YEARS = [...new Set(A.map(a => +a.start.slice(0, 4)))].sort((a, b) => b - a);
+state.fp = {y: 'all', m: 'all', q: ''};      // filtro del feed
+state.sp = {y: 'last12', m: 'all'};          // periodo de estadísticas
+function periodRange(p) {
+  const now = new Date(); now.setHours(23, 59, 59);
+  if (p.y === 'all') return [dt(D.daily[0].date), now];
+  if (p.y === 'last12') { const f = new Date(now); f.setDate(f.getDate() - 364); f.setHours(0, 0, 0, 0); return [f, now]; }
+  if (p.m === 'all') return [new Date(p.y, 0, 1), new Date(Math.min(+new Date(p.y, 11, 31, 23, 59, 59), +now))];
+  return [new Date(p.y, p.m - 1, 1), new Date(Math.min(+new Date(p.y, p.m, 0, 23, 59, 59), +now))];
+}
+function prevRange(p) {   // mismo periodo del año anterior (hasta la misma fecha si es el periodo en curso)
+  if (p.y === 'all') return null;
+  const [f, to] = periodRange(p), back = d => { const x = new Date(d); x.setFullYear(x.getFullYear() - 1); return x; };
+  return [back(f), back(to)];
+}
+const inRange = (a, r) => { const d = dt(a.start); return d >= r[0] && d <= r[1]; };
+function inPeriod(a, p) {
+  if (p.y === 'all') return true;
+  if (p.y === 'last12') return inRange(a, periodRange(p));
+  return +a.start.slice(0, 4) === +p.y && (p.m === 'all' || +a.start.slice(5, 7) === +p.m);
+}
+function periodLabel(p) {
+  if (p.y === 'all') return 'Todo el histórico';
+  if (p.y === 'last12') return 'Últimos 12 meses';
+  return p.m === 'all' ? String(p.y) : `${MONTHS[p.m - 1]} ${p.y}`;
+}
+function periodBar(p, kind, withSearch) {
+  const yc = y => A.filter(a => a.start.startsWith(y)).length;
+  const months = p.y !== 'all' && p.y !== 'last12' ? [...new Set(A.filter(a => a.start.startsWith(p.y)).map(a => +a.start.slice(5, 7)))].sort((a, b) => a - b) : [];
+  return `<div class="period" data-kind="${kind}">
+    <select data-k="y" aria-label="Año"><option value="all">Todo</option><option value="last12">Últimos 12 meses</option>${YEARS.map(y => `<option value="${y}" ${String(p.y) === String(y) ? 'selected' : ''}>${y} (${yc(y)})</option>`).join('')}</select>
+    <select data-k="m" aria-label="Mes" ${months.length ? '' : 'disabled'}><option value="all">Todo el año</option>${months.map(m => `<option value="${m}" ${String(p.m) === String(m) ? 'selected' : ''}>${MONTHS[m - 1]}</option>`).join('')}</select>
+    ${withSearch ? `<input type="search" data-k="q" placeholder="Buscar por nombre o descripción" value="${(p.q || '').replace(/"/g, '&quot;')}">` : ''}
+    ${p.y !== (kind === 'sp' ? 'last12' : 'all') || p.q ? '<button class="clear" data-k="clear">Quitar filtros</button>' : ''}
+  </div>`.replace(`<option value="${p.y}">`, `<option value="${p.y}" selected>`);
+}
+function bindPeriod(root, rerender) {
+  root.querySelectorAll('.period').forEach(bar => {
+    const p = state[bar.dataset.kind];
+    bar.querySelectorAll('select').forEach(s => s.onchange = () => { p[s.dataset.k] = s.value === 'all' || s.value === 'last12' ? s.value : +s.value; if (s.dataset.k === 'y') p.m = 'all'; state.limit = 40; rerender(); });
+    const q = bar.querySelector('input[data-k="q"]');
+    if (q) q.oninput = () => { clearTimeout(q._t); q._t = setTimeout(() => { p.q = q.value; state.limit = 40; rerender(); const n = $('.period input[data-k="q"]'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250); };
+    const c = bar.querySelector('[data-k="clear"]'); if (c) c.onclick = () => { Object.assign(p, bar.dataset.kind === 'sp' ? {y: 'last12', m: 'all'} : {y: 'all', m: 'all', q: ''}); rerender(); };
+  });
+}
+function sums(list) {
+  return list.reduce((s, a) => ({n: s.n + 1, dist: s.dist + a.dist, time: s.time + a.moving, asc: s.asc + (a.asc || 0), eff: s.eff + (a.trimp || 0)}), {n: 0, dist: 0, time: 0, asc: 0, eff: 0});
+}
+function periodSummary(list, prevList) {
+  const s = sums(list), q = prevList ? sums(prevList) : null;
+  const delta = (k) => { if (!q || !q[k]) return ''; const d = (s[k] - q[k]) / q[k] * 100; return `<span class="delta ${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(0)} %</span>`; };
+  return `<div class="psum num">
+    <div><b>${s.n}</b><span>actividades</span> ${delta('n')}</div>
+    <div><b>${Math.round(s.dist / 1000).toLocaleString('es-ES')} km</b><span>distancia</span> ${delta('dist')}</div>
+    <div><b>${Math.round(s.time / 3600).toLocaleString('es-ES')} h</b><span>tiempo</span> ${delta('time')}</div>
+    <div><b>${Math.round(s.asc).toLocaleString('es-ES')} m</b><span>desnivel</span> ${delta('asc')}</div>
+  </div>${q ? '<div class="note" style="margin:-8px 0 12px">Las flechas comparan con el mismo periodo del año anterior.</div>' : ''}`;
+}
+
+// ---------- cabecera «Tu semana» y destacados ----------
+const P = D.profile;
+const ST_LABEL = {fresco:'Fresco', neutro:'Neutro', productivo:'Productivo', sobrecarga:'Sobrecarga'};
+const ST_TEXT = {fresco:'Descansado: buen momento para un esfuerzo fuerte', neutro:'Carga estable, ni ganando ni perdiendo forma', productivo:'Estás ganando forma con la carga actual', sobrecarga:'Mucha fatiga acumulada: prioriza recuperar'};
+const STREAK_SVG = '<svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>';
+const startOfWeek = d => { const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; };
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+function weekHeader(w) {
+  const today = new Date(), mon = startOfWeek(today);
+  const cells = ['L','M','X','J','V','S','D'].map((l, i) => {
+    const d = new Date(mon); d.setDate(mon.getDate() + i); const key = ymd(d);
+    const acts = A.filter(a => a.start.startsWith(key));
+    let cls = 'day', inner = d.getDate(), attrs = '';
+    if (acts.length) {
+      const main = acts.slice().sort((a,b) => b.moving - a.moving)[0];
+      cls += ' act'; attrs = ` style="background:${SPORT[main.sport].c}" data-href="#/a/${main.id}" title="${acts.map(a => a.name).join(' · ').replace(/"/g,'')}"`;
+      inner = `<svg viewBox="0 0 24 24">${SPORT[main.sport].ic}</svg>${acts.length > 1 ? `<span class="n">${acts.length}</span>` : ''}`;
+    } else if (key === ymd(today)) cls += ' today';
+    else if (d > today) cls += ' future';
+    return `<div><div class="dl">${l}</div><div class="${cls}"${attrs}>${inner}</div></div>`;
+  }).join('');
+  return `<section class="wk">
+    <div class="wkhead"><h2>Tu semana</h2><span class="streak" title="Semanas seguidas con al menos una actividad">${STREAK_SVG}${P.streak} semanas</span></div>
+    <div class="days">${cells}</div>
+    <div class="wkstats num"><div><b>${w.n}</b><span>actividades</span></div><div><b>${w.km.toFixed(1).replace('.',',')} km</b><span>distancia</span></div><div><b>${fmtHM(w.t)}</b><span>tiempo</span></div><div><b>${w.eff}</b><span>esfuerzo</span></div></div>
+  </section>`;
+}
+function goals() {
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem('os-goals') || '{}'); } catch (_) {}
+  const now = new Date(), mon = startOfWeek(now), m0 = new Date(now.getFullYear(), now.getMonth(), 1), y0 = new Date(now.getFullYear(), 0, 1);
+  const from = {semana: mon, mes: m0, 'año': y0};
+  return P.goals.map(g => {
+    const target = saved[g.id] ?? g.target;
+    const val = A.filter(a => dt(a.start) >= from[g.period]).reduce((s, a) => s + (g.metric === 'dist' ? a.dist : a.moving), 0);
+    // proyección lineal a fin de periodo
+    const end = g.period === 'semana' ? new Date(+mon + 7*864e5) : g.period === 'mes' ? new Date(now.getFullYear(), now.getMonth()+1, 1) : new Date(now.getFullYear()+1, 0, 1);
+    const frac = (now - from[g.period]) / (end - from[g.period]);
+    return {...g, target, val, pct: val/target, proj: frac > 0 ? val/frac : val};
+  });
+}
+const fmtGoal = (g, v) => g.metric === 'dist' ? (v/1000).toLocaleString('es-ES', {maximumFractionDigits: v >= 100000 ? 0 : 1}) + ' km' : fmtHM(v);
+function ringPct(p, label, color = 'var(--accent)', size = 62) {
+  const r = size/2 - 6, c = 2*Math.PI*r, f = Math.min(1, p);
+  return `<svg class="ring" viewBox="0 0 ${size} ${size}" style="width:${size}px;height:${size}px"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="7"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c*f} ${c}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-size="${size*.24}" font-weight="700" fill="var(--fg)">${label}</text></svg>`;
+}
+function highlights() {
+  const last = D.daily[D.daily.length-1], st = last.tsb > 5 ? 'fresco' : last.tsb > -10 ? 'neutro' : last.tsb > -30 ? 'productivo' : 'sobrecarga';
+  const L = P.load, ratio = L.avg ? L.week / L.avg : 0;
+  const loadLbl = ratio < .6 ? 'Baja' : ratio < 1.3 ? 'Óptima' : ratio < 1.6 ? 'Alta' : 'Muy alta';
+  const e = P.estimates, g = goals()[0];
+  const recentPR = D.prs.filter(p => (Date.now() - dt(p.date)) / 864e5 <= 30).length;
+  const cards = [
+    `<button class="hcard" data-href="#/stats"><span class="k"><i style="background:var(--st-${st})"></i>Estado de forma</span><span class="v">${ST_LABEL[st]}</span><span class="s">${ST_TEXT[st]}</span><span class="grow"></span>
+      <div class="st28">${P.status28.map(x => `<i style="background:var(--st-${x.st})" title="${x.date}: ${ST_LABEL[x.st]}"></i>`).join('')}</div><span class="s"><span>Últ. 4 semanas</span><span>Forma ${last.ctl.toFixed(0)} · Frescura ${last.tsb > 0 ? '+' : ''}${last.tsb.toFixed(0)}</span></span></button>`,
+    `<button class="hcard" data-href="#/stats"><span class="k">Carga semanal</span><span class="v">${loadLbl}</span><span class="s">${L.week} de esfuerzo esta semana · tu media ${L.avg}</span><span class="grow"></span>
+      <div class="minibar"><i style="width:${Math.min(100, ratio/2*100)}%;background:var(--accent)"></i><u style="left:50%"></u></div><span class="s">La marca central es tu media de 4 semanas</span></button>`,
+    `<button class="hcard" data-href="#/profile"><span class="k">Objetivo semanal</span><div style="display:flex;gap:12px;align-items:center">${ringPct(g.pct, Math.round(g.pct*100)+'%')}<div><span class="v" style="font-size:19px">${fmtGoal(g, g.val)}</span><div class="s">de ${fmtGoal(g, g.target)} · proyección ${fmtGoal(g, g.proj)}</div></div></div></button>`,
+    e.vdot ? `<button class="hcard" data-href="#/profile"><span class="k">VO₂máx estimado</span><span class="v">${e.vdot.value}</span><span class="s">VDOT a partir de tu mejor ${e.vdot.label} reciente (${fmtDur(e.vdot.t)}). Ritmo umbral ≈ ${fmtPace(e.threshold_pace.value)} /km</span></button>` : '',
+    e.ftp ? `<button class="hcard" data-href="#/profile"><span class="k">FTP estimado</span><span class="v">${e.ftp.value} W</span><span class="s">${e.ftp.method}${P.weight ? ` · ${(e.ftp.value / P.weight).toFixed(2).replace('.',',')} W/kg` : ''}</span></button>` : '',
+    `<button class="hcard" data-href="#/stats"><span class="k">Récords</span><span class="v">${recentPR ? recentPR + ' nuevos' : 'Sin novedades'}</span><span class="s">${recentPR ? 'en los últimos 30 días' : 'Tu último récord: ' + D.prs.map(p => p.date).sort().pop()}</span></button>`,
+  ];
+  return `<div class="hl">${cards.join('')}</div>`;
+}
+
+// ---------- perfil ----------
+function me() {
+  let o = {}; try { o = JSON.parse(localStorage.getItem('os-profile') || '{}'); } catch (_) {}
+  return {name: P.name || 'Tú', location: P.location, birth: '', gender: P.gender === 'male' ? 'Hombre' : P.gender === 'female' ? 'Mujer' : '', weight: P.weight, height: P.height ? Math.round(P.height*100) : '', ...o};
+}
+function initials(n) { return n.split(/\s+/).filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase(); }
+function openSheet(html, onSave) {
+  const sc = document.createElement('div'); sc.className = 'scrim open';
+  sc.innerHTML = `<div class="sheet" role="dialog">${html}<div class="btnrow"><button class="btn" data-x>Cancelar</button><button class="btn primary" data-ok>Guardar</button></div></div>`;
+  document.body.appendChild(sc);
+  const close = () => sc.remove();
+  sc.onclick = e => { if (e.target === sc || e.target.closest('[data-x]')) close(); if (e.target.closest('[data-ok]')) { onSave(sc); close(); } };
+}
+function editProfile() {
+  const m = me();
+  openSheet(`<h2 style="margin:0">Editar perfil</h2><div class="formgrid">
+    <label class="full">Nombre<input name="name" value="${m.name}"></label>
+    <label class="full">Ubicación<input name="location" value="${m.location}"></label>
+    <label>Fecha de nacimiento<input name="birth" type="date" value="${m.birth}"></label>
+    <label>Sexo<select name="gender">${['','Hombre','Mujer','Otro'].map(x => `<option ${x===m.gender?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label>Peso (kg)<input name="weight" type="number" step="0.1" value="${m.weight ?? ''}"></label>
+    <label>Altura (cm)<input name="height" type="number" value="${m.height ?? ''}"></label>
+    <label class="full note" style="font-size:12px">El peso se usa para W/kg y calorías. Tus datos físicos nunca se envían a la IA.</label></div>`,
+    sc => { const o = {}; sc.querySelectorAll('[name]').forEach(i => o[i.name] = i.type === 'number' ? (i.value ? +i.value : null) : i.value); try { localStorage.setItem('os-profile', JSON.stringify(o)); } catch (_) {} render(); });
+}
+function editGoals() {
+  const gs = goals();
+  openSheet(`<h2 style="margin:0">Objetivos</h2><div class="formgrid">${gs.map(g => `<label class="full">${g.label} (${g.metric === 'dist' ? 'km' : 'horas'})<input name="${g.id}" type="number" value="${g.metric === 'dist' ? g.target/1000 : g.target/3600}"></label>`).join('')}</div>`,
+    sc => { const o = {}; sc.querySelectorAll('[name]').forEach(i => { const g = gs.find(x => x.id === i.name); o[i.name] = +i.value * (g.metric === 'dist' ? 1000 : 3600); }); try { localStorage.setItem('os-goals', JSON.stringify(o)); } catch (_) {} render(); });
+}
+let profileTab = 'resumen';
+function renderProfile() {
+  const m = me(), y = P.year, tot = s => Object.values(s).reduce((acc, x) => ({n: acc.n + x.n, dist: acc.dist + x.dist, time: acc.time + x.time, asc: acc.asc + x.asc}), {n:0, dist:0, time:0, asc:0});
+  const ty = tot(y), e = P.estimates;
+  const yy = {}; A.filter(a => a.start.startsWith(String(state.py || YEARS[0]))).forEach(a => { const s = yy[a.sport] = yy[a.sport] || {n: 0, dist: 0, time: 0, asc: 0}; s.n++; s.dist += a.dist; s.time += a.moving; s.asc += a.asc || 0; });
+  const since = dt(P.since).toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+  const sportRows = obj => ['run','ride','walk','strength','row','swim'].filter(s => obj[s]).map(s => `<tr><td>${SPORT[s].n}</td><td>${obj[s].n}</td><td>${obj[s].dist ? fmtKm(obj[s].dist) + ' km' : '—'}</td><td>${fmtHM(obj[s].time)}</td><td>${obj[s].asc ? Math.round(obj[s].asc).toLocaleString('es-ES') + ' m' : '—'}</td></tr>`).join('');
+  const TABS = [['resumen','Resumen'],['objetivos','Objetivos'],['estimaciones','Estimaciones'],['equipo','Equipo'],['cuenta','Cuenta y fuentes']];
+  const sections = {
+    resumen: `<div class="pgrid">
+      <div class="panel"><div class="ph"><h2>Histórico</h2><span class="muted" style="font-size:13px">desde ${since}</span></div><table class="num yeartbl"><thead><tr><th>Deporte</th><th>Act.</th><th>Distancia</th><th>Tiempo</th><th>Desnivel</th></tr></thead><tbody>${sportRows(P.all)}</tbody></table></div>
+      <div class="panel"><div class="ph"><h2>Año</h2><select data-py style="font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)">${YEARS.map(yy => `<option ${yy === (state.py || YEARS[0]) ? "selected" : ""}>${yy}</option>`).join("")}</select></div><table class="num yeartbl"><thead><tr><th>Deporte</th><th>Act.</th><th>Distancia</th><th>Tiempo</th><th>Desnivel</th></tr></thead><tbody>${sportRows(yy)}</tbody></table></div>
+      <div class="panel"><div class="ph"><h2>Récords</h2><a href="#/stats" class="muted" style="font-size:13px">Ver todos ›</a></div><table class="num"><tbody>${D.prs.filter(p => ['1 km','5 km','10 km','Media'].includes(p.label)).map(p => `<tr><td>${p.label}</td><td>${fmtDur(p.t)}</td><td>${fmtPace(p.d/p.t)} /km</td><td><a href="#/a/${p.id}" style="color:var(--accent)">${dt(p.date).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</a></td></tr>`).join('')}</tbody></table></div>
+      <div class="panel"><div class="ph"><h2>Datos físicos</h2><button class="btn" data-edit>Editar</button></div><div class="pb"><div class="kpis num" style="margin:0">
+        <div class="kpi"><b>${m.weight ?? '—'} kg</b><span>Peso</span></div><div class="kpi"><b>${m.height || '—'} cm</b><span>Altura</span></div>
+        <div class="kpi"><b>${D.settings.hr_max}</b><span>FC máx</span></div><div class="kpi"><b>${D.settings.hr_rest}</b><span>FC reposo</span></div></div>
+        <div class="note" style="margin-top:8px">FC y zonas se cambian en <a href="#/settings" style="color:var(--accent)">Ajustes</a>.</div></div></div>
+    </div>`,
+    objetivos: `<div class="pgrid"><div class="panel"><div class="ph"><h2>Objetivos</h2><button class="btn" data-goals>Editar</button></div><div class="pb">${goals().map(g => `<div class="goal">${ringPct(g.pct, Math.round(g.pct*100)+'%')}<div><b>${g.label}</b><span class="num">${fmtGoal(g, g.val)} de ${fmtGoal(g, g.target)}</span><div class="note">Proyección a fin de ${g.period}: ${fmtGoal(g, g.proj)} ${g.proj >= g.target ? '· vas en camino ✓' : '· por debajo del objetivo'}</div></div></div>`).join('')}</div></div>
+      <div class="panel"><div class="ph"><h2>Racha</h2></div><div class="pb"><div style="display:flex;gap:14px;align-items:center"><span class="streak" style="font-size:20px;padding:8px 14px">${STREAK_SVG}${P.streak}</span><div><b>semanas seguidas</b><div class="note">con al menos una actividad. La semana en curso cuenta en cuanto registras algo.</div></div></div></div></div></div>`,
+    estimaciones: `<div class="pgrid"><div class="panel"><div class="ph"><h2>Estimaciones de rendimiento</h2></div><div class="pb">
+      ${e.vdot ? `<div class="est"><b>VO₂máx (VDOT)</b><span class="val">${e.vdot.value}</span><span class="how">${e.vdot.method} (${fmtDur(e.vdot.t)}) · <a href="#/a/${e.vdot.src}">ver actividad</a></span></div>` : ''}
+      ${e.threshold_pace ? `<div class="est"><b>Ritmo umbral</b><span class="val">${fmtPace(e.threshold_pace.value)} /km</span><span class="how">${e.threshold_pace.method}</span></div>` : ''}
+      ${e.ftp ? `<div class="est"><b>FTP estimado</b><span class="val">${e.ftp.value} W</span><span class="how">${e.ftp.method}${m.weight ? ` · ${(e.ftp.value/m.weight).toFixed(2).replace('.',',')} W/kg` : ''} · <a href="#/a/${e.ftp.src}">ver actividad</a></span></div>` : ''}
+      <div class="est"><b>FC máxima observada</b><span class="val">${e.hr_max.value} ppm</span><span class="how">${e.hr_max.method} · <a href="#/a/${e.hr_max.src}">ver actividad</a> · tu ajuste actual es ${D.settings.hr_max}</span></div>
+      </div></div><div class="panel"><div class="ph"><h2>Cómo se calculan</h2></div><div class="pb note">Se recalculan solas con cada actividad nueva, usando los últimos 90 días. Cada cifra indica de qué actividad sale para que puedas comprobarla.</div></div></div>`,
+    equipo: `<div class="panel"><div class="ph"><h2>Equipamiento</h2><button class="btn">Añadir</button></div><div class="pb">${P.gear.map(g => { const sp = g.sports.includes('ride') ? 'ride' : 'run', lim = sp === 'run' ? 800000 : null; return `<div class="src">${icon(sp, 36)}<div class="grow"><b>${g.name}</b><div class="note">${g.n} actividades · ${dt(g.first).getFullYear()}–${dt(g.last).getFullYear()}${g.last < '2026-01-01' ? ' · retirado' : ''}</div>${lim ? `<div class="minibar" style="max-width:260px"><i style="width:${Math.min(100, g.dist/lim*100)}%;background:${g.dist > lim ? 'var(--st-sobrecarga)' : 'var(--accent)'}"></i></div><div class="note">${g.dist > lim ? 'Supera los 800 km recomendados para unas zapatillas' : 'Vida útil orientativa: 800 km'}</div>` : ''}</div><b class="num" style="white-space:nowrap">${Math.round(g.dist/1000).toLocaleString('es-ES')} km</b></div>`; }).join('')}</div></div>`,
+    cuenta: `<div class="pgrid"><div class="panel"><div class="ph"><h2>Fuentes conectadas</h2></div><div class="pb">
+      <div class="src"><span class="logo" style="background:#1c1c1c">G</span><div class="grow"><b>Garmin Connect</b><div class="note">Personal API · última sincronización hoy · clave válida hasta nov 2027</div></div><span class="ok">● Conectada</span></div>
+      <div class="src"><span class="logo" style="background:#4285f4">GH</span><div class="grow"><b>Google Health</b><div class="note">Sueño, VFC y datos diarios de tu Fitbit Air</div></div><button class="btn">Conectar</button></div>
+      <div class="src"><span class="logo" style="background:#868e96">ZIP</span><div class="grow"><b>Importar histórico</b><div class="note">ZIP de exportación de Strava o FIT sueltos</div></div><button class="btn">Importar</button></div></div></div>
+      <div class="panel"><div class="ph"><h2>Métodos de acceso</h2></div><div class="pb">
+      <div class="src"><span class="logo" style="background:var(--surface2);color:var(--fg)">••</span><div class="grow"><b>Contraseña + verificación en dos pasos</b><div class="note">App de autenticación · 8 códigos de recuperación sin usar</div></div><span class="ok">● Activo</span></div>
+      <div class="src"><span class="logo" style="background:#fff;border:1px solid var(--line)"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><div class="grow"><b>Cuenta de Google</b><div class="note" id="gstate">${googleLinked() ? 'Vinculada a ' + googleLinked() + ' · solo esta cuenta puede entrar' : 'Entra con un toque usando tu cuenta de Google'}</div></div><button class="btn" id="glink">${googleLinked() ? 'Desvincular' : 'Vincular'}</button></div>
+      <div class="src"><span class="logo" style="background:var(--surface2);color:var(--fg)">🔑</span><div class="grow"><b>Passkeys</b><div class="note">Huella o Face ID en tus dispositivos</div></div><button class="btn">Añadir</button></div>
+      </div></div>
+      <div class="panel"><div class="ph"><h2>Cuenta</h2></div><div class="pb">
+      <div class="src"><div class="grow"><b>Exportar todos mis datos</b><div class="note">ZIP con tus FIT originales y JSON</div></div><button class="btn">Exportar</button></div>
+      <div class="src"><div class="grow"><b>Sesiones y dispositivos</b><div class="note">Este navegador · sesión activa</div></div><a class="btn" href="#/settings">Gestionar</a></div>
+      <div class="src"><div class="grow"><b>Ajustes</b><div class="note">Tema, zonas, privacidad, notificaciones</div></div><a class="btn" href="#/settings">Abrir</a></div></div></div></div>`,
+  };
+  view.innerHTML = `<div class="pad" style="max-width:1100px">
+    <div class="phead"><div class="avatar">${initials(m.name)}</div><div class="who"><h1>${m.name}</h1><div class="muted">${m.location} · en OpenSport desde ${since}</div>
+      <div class="chiprow"><span class="streak">${STREAK_SVG}${P.streak} semanas seguidas</span><span class="badge">${P.device}</span></div></div>
+      <div class="pills"><button class="btn" data-edit>Editar perfil</button><button class="btn" data-goals>Objetivos</button></div></div>
+    <div class="pstats num"><div><b>${ty.n}</b><span>actividades en ${new Date().getFullYear()}</span></div><div><b>${Math.round(ty.dist/1000).toLocaleString('es-ES')} km</b><span>distancia este año</span></div><div><b>${Math.round(ty.time/3600)} h</b><span>tiempo este año</span></div><div><b>${Math.round(ty.asc).toLocaleString('es-ES')} m</b><span>desnivel este año</span></div></div>
+    <div class="ptabs">${TABS.map(([k,n]) => `<button data-tab="${k}" class="${k===profileTab?'on':''}">${n}</button>`).join('')}</div>
+    ${sections[profileTab]}
+  </div>`;
+  view.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { profileTab = b.dataset.tab; renderProfile(); });
+  view.querySelectorAll('[data-edit]').forEach(b => b.onclick = editProfile);
+  view.querySelectorAll('[data-goals]').forEach(b => b.onclick = editGoals);
+  const gl = view.querySelector('#glink'); if (gl) gl.onclick = () => { try { if (googleLinked()) localStorage.setItem('os-google', 'none'); else localStorage.setItem('os-google', 'r•••••@gmail.com'); } catch (_) {} renderProfile(); };
+  const py = view.querySelector('[data-py]'); if (py) py.onchange = () => { state.py = +py.value; renderProfile(); };
+}
+
+// ---------- detalle ----------
+function kpisFor(a) {
+  const v = avgSpeed(a), k = [];
+  if (a.dist) k.push([fmtKm(a.dist)+' km','Distancia']);
+  k.push([fmtDur(a.moving),'Tiempo en movimiento']);
+  if (a.sport === 'run' || a.sport === 'walk') k.push([fmtPace(v)+' /km','Ritmo medio']);
+  if (a.sport === 'ride') k.push([fmtSpeed(v)+' km/h','Velocidad media']);
+  if (a.asc) k.push([Math.round(a.asc)+' m','Desnivel +']);
+  if (a.hr) k.push([`${a.hr} <small class="muted">/ ${a.hrmax}</small>`,'FC media / máx']);
+  if (a.avgpw) k.push([`${a.avgpw} <small class="muted">/ ${a.np||'—'}</small>`,'Potencia media / NP']);
+  if (a.kcal) k.push([a.kcal,'Calorías']);
+  if (a.te) k.push([a.te.toFixed(1) + (a.ate ? ` <small class="muted">/ ${a.ate.toFixed(1)}</small>` : ''),'Training Effect']);
+  return k;
+}
+function renderDetail(a, el) {
+  const hasMap = !!(a.streams && a.streams.lat && a.streams.lat.some(x => x != null));
+  const modes = [['pace', a.sport === 'ride' ? 'Velocidad' : 'Ritmo'], ['hr','FC'], ['ele','Altitud']];
+  if (a.streams && a.streams.pw) modes.splice(1, 0, ['pw','Potencia']);
+  el.innerHTML = `<div class="pad">
+    <div class="dhead">${icon(a.sport, 44)}<div style="flex:1;min-width:0"><h1>${a.name || SPORT[a.sport].n}</h1><div class="muted">${fmtDate(a.start)}${a.location ? ' · ' + a.location : ''} · fēnix 6X Pro</div></div></div>
+    <div class="kpis num">${kpisFor(a).map(([b,s]) => `<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('')}</div>
+    ${!a.streams ? '<div class="panel"><div class="pb note">En el prototipo solo se incluyen las series (mapa y gráficas) de las 80 actividades más recientes.</div></div>' : ''}
+    ${a.streams && (hasMap || a.streams.hr) ? `<div class="panel">
+      <div class="ph"><h2>${hasMap ? 'Recorrido' : 'Frecuencia cardiaca'}</h2>${hasMap ? `<div class="seg" id="mode">${modes.map(([k,n],i) => `<button data-m="${k}" class="${i?'':'on'}">${n}</button>`).join('')}</div><div class="legend" id="lg"><span id="lmin"></span><i id="lbar"></i><span id="lmax"></span></div>` : ''}</div>
+      ${hasMap ? '<div class="map" id="map"></div>' : ''}
+      <div class="chart"><svg id="prof" viewBox="0 0 1000 170" preserveAspectRatio="none"></svg></div>
+      <div class="readout num" id="ro">Pasa el cursor por la gráfica${hasMap ? ' o por el recorrido' : ''}.</div></div>` : ''}
+    <div class="grid2">
+      <div class="panel"><div class="ph"><h2>Esfuerzo relativo</h2></div><div class="pb effort">${ring(a.trimp)}<div><b style="font-size:18px">${effortLabel(a.trimp)}</b><div class="note">TRIMP calculado con tu FC máx (${D.settings.hr_max}) y de reposo (${D.settings.hr_rest}), no con los valores del reloj.</div></div></div></div>
+      <div class="panel zones"><div class="ph"><h2>Zonas de FC</h2></div><div class="pb">${zonesHtml(a.zones)}</div></div>
+    </div>
+    ${a.best.length ? `<div class="panel"><div class="ph"><h2>Mejores tiempos</h2></div><table class="num"><thead><tr><th>Distancia</th><th>Tiempo</th><th>Ritmo</th><th></th></tr></thead><tbody>${a.best.map(b => { const pr = D.prs.find(p => p.label === b.label); const isPr = pr && String(pr.id) === String(a.id); return `<tr><td>${b.label}</td><td>${fmtDur(b.t)}</td><td>${fmtPace(b.d/b.t)} /km</td><td>${isPr ? '🏆 Récord' : `<span class="muted">récord ${fmtDur(pr.t)}</span>`}</td></tr>`; }).join('')}</tbody></table></div>` : ''}
+    ${a.pcurve.length ? `<div class="panel"><div class="ph"><h2>Curva de potencia</h2><div class="legend"><i style="width:14px;background:var(--ride)"></i>esta actividad <i style="width:14px;background:var(--line);margin-left:8px"></i>mejor histórico</div></div><div class="pb">${powerCurve(a.pcurve, D.pcurve)}</div></div>` : ''}
+    ${a.laps.length > 1 ? `<div class="panel"><div class="ph"><h2>Vueltas</h2></div><div style="overflow-x:auto"><table class="num"><thead><tr><th>#</th><th>Distancia</th><th>Tiempo</th><th>${a.sport==='ride'?'Velocidad':'Ritmo'}</th><th>Desn.</th><th>FC</th>${a.laps.some(l=>l.pw)?'<th>Potencia</th>':''}</tr></thead><tbody>${a.laps.map((l,i) => `<tr><td>${i+1}</td><td>${fmtKm(l.d)} km</td><td>${fmtDur(l.t)}</td><td>${l.d ? (a.sport==='ride' ? fmtSpeed(l.d/l.t)+' km/h' : fmtPace(l.d/l.t)+' /km') : '—'}</td><td>${l.asc!=null?'+'+l.asc+' / −'+(l.desc??0)+' m':'—'}</td><td>${l.hr??'—'}</td>${a.laps.some(x=>x.pw)?`<td>${l.pw??'—'} W</td>`:''}</tr>`).join('')}</tbody></table></div></div>` : ''}
+    ${a.description || a.gear || a.weather || a.strava_re ? `<div class="panel"><div class="pb" style="display:grid;gap:8px">${a.description ? `<div style="white-space:pre-line">${a.description.replace(/</g,'&lt;')}</div>` : ''}<div class="badges" style="margin:0">${a.gear ? `<span class="badge">👟 ${a.gear}</span>` : ''}${a.weather ? `<span class="badge">☁ ${a.weather}</span>` : ''}${a.strava_re ? `<span class="badge">Esfuerzo Relativo en Strava: ${a.strava_re} · aquí ${a.trimp}</span>` : ''}</div></div></div>` : ''}
+    <div class="note" style="margin:6px 0 30px">Origen: ${{garmin:'Garmin (FIT original)', 'garmin+strava':'Garmin (FIT original) + datos de Strava', strava:'Exportación de Strava'}[a.source] || '—'} · <a href="#" onclick="return false" style="color:var(--accent)">Descargar fichero</a></div>
+  </div>`;
+  if (a.streams && a.streams.hr) setupProfile(a, hasMap);
+}
+function ring(v) {
+  const f = Math.min(1, v / 200), r = 30, c = 2*Math.PI*r;
+  return `<svg class="ring" viewBox="0 0 74 74"><circle cx="37" cy="37" r="${r}" fill="none" stroke="var(--surface2)" stroke-width="8"/><circle cx="37" cy="37" r="${r}" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c*f} ${c}" transform="rotate(-90 37 37)"/><text x="37" y="43" text-anchor="middle" font-size="19" font-weight="700" fill="var(--fg)">${v}</text></svg>`;
+}
+function zonesHtml(z) {
+  const tot = z.reduce((a,b) => a+b, 0) || 1, lim = D.settings.zones.map(f => Math.round(f*D.settings.hr_max));
+  return `<div class="bar">${z.map((s,i) => `<i style="width:${s/tot*100}%;background:var(--z${i+1})"></i>`).join('')}</div>` +
+    z.map((s,i) => `<div class="zrow num"><b>Z${i+1}</b><div class="track"><i style="width:${s/tot*100}%;background:var(--z${i+1})"></i></div><span class="muted">${lim[i]}${i<4?'–'+(lim[i+1]-1):'+'} ppm</span><span style="text-align:right">${fmtDur(s)}</span></div>`).join('');
+}
+function powerCurve(cur, best) {
+  const W = 600, H = 180, P = 30, xs = s => P + Math.log(s/5)/Math.log(3600/5)*(W-2*P);
+  const maxW = Math.max(...best.map(p => p.w)) * 1.05, ys = w => H - 22 - w/maxW*(H-40);
+  const line = arr => arr.map((p,i) => `${i?'L':'M'}${xs(p.s).toFixed(1)},${ys(p.w).toFixed(1)}`).join(' ');
+  const ticks = [[5,'5 s'],[60,'1 min'],[300,'5 min'],[1200,'20 min'],[3600,'1 h']];
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
+    ${ticks.map(([s,l]) => `<line x1="${xs(s)}" x2="${xs(s)}" y1="10" y2="${H-22}" stroke="var(--line)"/><text x="${xs(s)}" y="${H-6}" font-size="11" text-anchor="middle" fill="var(--muted)">${l}</text>`).join('')}
+    <path d="${line(best)}" fill="none" stroke="var(--line)" stroke-width="3"/>
+    <path d="${line(cur)}" fill="none" stroke="var(--ride)" stroke-width="2.5"/>
+    ${cur.filter(p => [5,60,300,1200].includes(p.s)).map(p => `<circle cx="${xs(p.s)}" cy="${ys(p.w)}" r="3.5" fill="var(--ride)"/><text x="${xs(p.s)+6}" y="${ys(p.w)-6}" font-size="11" fill="var(--fg)">${p.w} W</text>`).join('')}
+  </svg>`;
+}
+
+function setupProfile(a, hasMap) {
+  const S = a.streams, n = S.t.length, totX = a.dist ? S.d[n-1] || a.dist : S.t[n-1];
+  const X = i => (a.dist ? S.d[i] : S.t[i]) / totX * 1000;
+  // velocidad suavizada a partir de distancia/tiempo
+  const vs = S.d.map((_, i) => { const j0 = Math.max(0, i-3), j1 = Math.min(n-1, i+3); const dtm = S.t[j1]-S.t[j0]; return dtm > 0 ? (S.d[j1]-S.d[j0])/dtm : 0; });
+  const series = {pace: vs, hr: S.hr, ele: S.ele, pw: S.pw ? S.pw.map((_, i) => { let s = 0, c = 0; for (let j = Math.max(0,i-2); j <= Math.min(n-1,i+2); j++) if (S.pw[j] != null) { s += S.pw[j]; c++; } return c ? s/c : null; }) : null};
+  const svg = $('#prof');
+  let mode = hasMap ? 'pace' : 'hr';
+  let map = null;
+  if (hasMap) { try { map = buildMap(a); } catch (e) { if (currentMap) { try { currentMap.remove(); } catch (_) {} currentMap = null; } map = buildLeaflet(a); } }
+  function drawChart() {
+    const ele = S.ele.filter(x => x != null);
+    let html = '';
+    if (ele.length) {
+      const e0 = Math.min(...ele) - 2, e1 = Math.max(...ele) + 2;
+      html += `<path d="M0,170 ${S.ele.map((e,i) => e == null ? '' : `L${X(i).toFixed(1)},${(166 - (e-e0)/(e1-e0)*70).toFixed(1)}`).join(' ')} L1000,170 Z" fill="var(--surface2)"/>`;
+    }
+    const key = mode === 'ele' ? (S.pw ? 'pw' : 'hr') : mode, arr = series[key];
+    if (arr) {
+      const lo = quant(arr, .02), hi = quant(arr, .99) || 1, col = key === 'hr' ? 'var(--z5)' : key === 'pw' ? 'var(--ride)' : 'var(--accent)';
+      const Y = v => 8 + (1 - (v - lo)/(hi - lo || 1)) * 120;
+      html += `<path d="M${arr.map((v,i) => v == null ? '' : `${X(i).toFixed(1)},${Math.max(4, Math.min(166, Y(v))).toFixed(1)}`).filter(Boolean).join(' L')}" fill="none" stroke="${col}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`;
+    }
+    html += `<line id="cur" x1="-5" x2="-5" y1="0" y2="170" stroke="var(--fg)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+    svg.innerHTML = html;
+  }
+  function show(i) {
+    const c = svg.querySelector('#cur'); c.setAttribute('x1', X(i)); c.setAttribute('x2', X(i));
+    const parts = [a.dist ? fmtKm(S.d[i]) + ' km' : null, fmtDur(S.t[i]),
+      a.dist ? (a.sport === 'ride' ? fmtSpeed(vs[i]) + ' km/h' : fmtPace(vs[i]) + ' /km') : null,
+      S.hr[i] ? S.hr[i] + ' ppm' : null, S.pw && S.pw[i] != null ? S.pw[i] + ' W' : null,
+      S.cad && S.cad[i] ? S.cad[i] + ' ppm cad.' : null, S.ele[i] != null ? Math.round(S.ele[i]) + ' m' : null];
+    $('#ro').textContent = parts.filter(Boolean).join(' · ');
+    if (map) map.setCursor(i);
+  }
+  const idxAt = x => { const target = x/1000*totX; let lo = 0, hi = n-1; while (lo < hi) { const m = (lo+hi) >> 1; if ((a.dist ? S.d[m] : S.t[m]) < target) lo = m+1; else hi = m; } return lo; };
+  const move = cx => { const r = svg.getBoundingClientRect(); show(idxAt((cx - r.left)/r.width*1000)); };
+  svg.addEventListener('mousemove', e => move(e.clientX));
+  svg.addEventListener('touchmove', e => move(e.touches[0].clientX), {passive:true});
+  if (map) { map.onHover = show; }
+  const modeEl = $('#mode');
+  if (modeEl) modeEl.onclick = e => { const b = e.target.closest('button'); if (!b) return; modeEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); mode = b.dataset.m; drawChart(); map && map.color(mode === 'pace' ? vs : series[mode], mode); };
+  drawChart();
+  if (map) map.color(vs, 'pace');
+}
+
+function legendFor(a, vals, mode) {
+  const ok = vals.filter(v => v != null);
+  const lo = mode === 'ele' ? Math.min(...ok) : quant(vals, .05), hi = mode === 'ele' ? Math.max(...ok) : quant(vals, .95);
+  const lab = mode === 'pace' ? (a.sport === 'ride' ? v => fmtSpeed(v)+' km/h' : v => fmtPace(v)) : mode === 'hr' ? v => Math.round(v)+' ppm' : mode === 'pw' ? v => Math.round(v)+' W' : v => Math.round(v)+' m';
+  $('#lmin').textContent = lab(lo); $('#lmax').textContent = lab(hi);
+  $('#lbar').style.background = `linear-gradient(90deg,${[0,.25,.5,.75,1].map(colorAt)})`;
+  return [lo, hi];
+}
+// Alternativa sin WebGL (Leaflet + teselas raster)
+function buildLeaflet(a) {
+  const S = a.streams, idx = S.lat.map((v,i) => v != null ? i : -1).filter(i => i >= 0);
+  const ll = idx.map(i => [S.lat[i], S.lon[i]]);
+  const m = L.map('map', {preferCanvas:true, zoomControl:true, scrollWheelZoom:!isMobile()});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(m);
+  const fit = () => { m.invalidateSize(); m.fitBounds(L.latLngBounds(ll), {padding:[30,30], animate:false}); };
+  fit(); let refits = 0, alive = true; const ro = new ResizeObserver(() => { if (alive && refits++ < 3) fit(); else ro.disconnect(); }); ro.observe(m.getContainer());
+  currentMap = {remove: () => { alive = false; ro.disconnect(); m.remove(); }, resize: () => m.invalidateSize()};
+  const layer = L.layerGroup().addTo(m);
+  L.circleMarker(ll[0], {radius:7, color:'#fff', weight:2.5, fillColor:'#2f9e44', fillOpacity:1}).addTo(m);
+  L.circleMarker(ll[ll.length-1], {radius:7, color:'#fff', weight:2.5, fillColor:'#17191a', fillOpacity:1}).addTo(m);
+  const cur = L.circleMarker(ll[0], {radius:6, color:'#17191a', weight:3, fillColor:'#fff', fillOpacity:1});
+  const api = {
+    onHover:null,
+    color(vals, mode) {
+      const [lo, hi] = legendFor(a, vals, mode); layer.clearLayers();
+      L.polyline(ll, {color:'#fff', weight:8, opacity:.9}).addTo(layer);
+      for (let k = 1; k < idx.length; k++) L.polyline([ll[k-1], ll[k]], {color: colorAt(((vals[idx[k]] ?? lo) - lo)/((hi-lo)||1)), weight:4.5}).addTo(layer);
+    },
+    setCursor(i) { if (S.lat[i] != null) cur.setLatLng([S.lat[i], S.lon[i]]).addTo(m); },
+  };
+  m.on('mousemove', e => {
+    if (!api.onHover) return; let best = -1, bd = Infinity; const p0 = m.latLngToContainerPoint(e.latlng);
+    idx.forEach((i, k) => { const p = m.latLngToContainerPoint(ll[k]); const d = (p.x-p0.x)**2 + (p.y-p0.y)**2; if (d < bd) { bd = d; best = i; } });
+    if (bd < 400) api.onHover(best);
+  });
+  return api;
+}
+function buildMap(a) {
+  const probe = document.createElement('canvas');
+  if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) throw new Error('sin WebGL');
+  const S = a.streams, idx = S.lat.map((v,i) => v != null ? i : -1).filter(i => i >= 0);
+  const coords = idx.map(i => [S.lon[i], S.lat[i]]);
+  const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+  const dark = isDarkTheme();
+  const raster = {version:8, sources:{osm:{type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize:256, attribution:'© OpenStreetMap'}}, layers:[{id:'osm', type:'raster', source:'osm'}]};
+  const m = new maplibregl.Map({container:'map', style: raster, bounds, fitBoundsOptions:{padding:36}, attributionControl:{compact:true}, cooperativeGestures: isMobile()});
+  fetch(`https://tiles.openfreemap.org/styles/${dark ? 'dark' : 'positron'}`).then(r => r.ok ? r.json() : null).then(st => { if (st && currentMap === m) { m.setStyle(st); m.once('styledata', addLayers); } }).catch(() => {});
+  currentMap = m;
+  m.addControl(new maplibregl.NavigationControl({showCompass:false}), 'top-right');
+  let colored = null;
+  function segments(vals, mode) {
+    const [lo, hi] = legendFor(a, vals, mode), feats = [];
+    for (let k = 1; k < idx.length; k++) { const i = idx[k], v = vals[i]; feats.push({type:'Feature', properties:{c: colorAt(((v ?? lo) - lo)/((hi - lo) || 1))}, geometry:{type:'LineString', coordinates:[coords[k-1], coords[k]]}}); }
+    return {type:'FeatureCollection', features:feats};
+  }
+  function addLayers() {
+    if (m.getSource('route')) return;
+    m.addSource('route', {type:'geojson', data: colored || {type:'FeatureCollection', features:[]}});
+    m.addLayer({id:'route-casing', type:'line', source:'route', paint:{'line-color':'#fff', 'line-width':7, 'line-opacity':.9}, layout:{'line-join':'round','line-cap':'round'}});
+    m.addLayer({id:'route', type:'line', source:'route', paint:{'line-color':['get','c'], 'line-width':4.5}, layout:{'line-join':'round','line-cap':'round'}});
+    m.addSource('pts', {type:'geojson', data:{type:'FeatureCollection', features:[
+      {type:'Feature', properties:{c:'#2f9e44'}, geometry:{type:'Point', coordinates:coords[0]}},
+      {type:'Feature', properties:{c:'#17191a'}, geometry:{type:'Point', coordinates:coords[coords.length-1]}}]}});
+    m.addLayer({id:'pts', type:'circle', source:'pts', paint:{'circle-radius':7, 'circle-color':['get','c'], 'circle-stroke-color':'#fff', 'circle-stroke-width':2.5}});
+    m.addSource('cur', {type:'geojson', data:{type:'FeatureCollection', features:[]}});
+    m.addLayer({id:'cur', type:'circle', source:'cur', paint:{'circle-radius':6, 'circle-color':'#fff', 'circle-stroke-color':'#17191a', 'circle-stroke-width':3}});
+  }
+  m.on('load', addLayers);
+  m.on('mousemove', e => {
+    if (!api.onHover) return; let best = -1, bd = Infinity;
+    idx.forEach((i, k) => { const p = m.project(coords[k]); const d = (p.x-e.point.x)**2 + (p.y-e.point.y)**2; if (d < bd) { bd = d; best = i; } });
+    if (bd < 400) api.onHover(best);
+  });
+  const api = {
+    onHover:null,
+    color(vals, mode) { colored = segments(vals, mode); const s = m.getSource('route'); if (s) s.setData(colored); },
+    setCursor(i) { const s = m.getSource('cur'); if (!s || S.lat[i] == null) return; s.setData({type:'FeatureCollection', features:[{type:'Feature', properties:{}, geometry:{type:'Point', coordinates:[S.lon[i], S.lat[i]]}}]}); },
+  };
+  return api;
+}
+
+// ---------- estadísticas ----------
+function renderStats() {
+  const p = state.sp, r = periodRange(p), pr = prevRange(p);
+  const list = A.filter(a => inPeriod(a, p)), prev = pr ? A.filter(a => inRange(a, pr)) : null;
+  const days = D.daily.filter(x => { const d = dt(x.date); return d >= r[0] && d <= r[1]; });
+  const last = D.daily[D.daily.length - 1];
+  const form = last.tsb > 5 ? 'Fresco' : last.tsb > -10 ? 'Neutro' : last.tsb > -30 ? 'Productivo' : 'Sobrecarga';
+  // récords y curva de potencia del periodo, comparados con los de siempre
+  const best = {}; list.forEach(a => a.best.forEach(b => { if (!best[b.label] || b.t < best[b.label].t) best[b.label] = {...b, id: a.id, date: a.start.slice(0, 10)}; }));
+  const prs = D.prs.map(x => best[x.label]).filter(Boolean);
+  const pc = {}; list.forEach(a => a.pcurve.forEach(x => { if (!pc[x.s] || x.w > pc[x.s].w) pc[x.s] = x; }));
+  const pcur = Object.values(pc).sort((a, b) => a.s - b.s);
+  const pr5 = best['5 km'], riegel = (t, d1, d2) => t * Math.pow(d2 / d1, 1.06);
+  view.innerHTML = `<div class="pad">${isMobile() ? '' : '<h1 style="margin-bottom:12px">Estadísticas</h1>'}
+    ${periodBar(p, 'sp', false)}
+    ${periodSummary(list, prev)}
+    <div class="panel"><div class="ph"><h2>Forma y frescura · ${periodLabel(p)}</h2><div class="flegend"><span><i style="background:var(--ctl)"></i>Forma (42 d)</span><span><i style="background:var(--atl)"></i>Fatiga (7 d)</span><span><i style="background:var(--tsbp)"></i>Frescura</span></div></div>
+      <div class="pb"><div class="tsbnow num"><div><b>${last.ctl.toFixed(0)}</b><span>Forma hoy</span></div><div><b>${last.atl.toFixed(0)}</b><span>Fatiga hoy</span></div><div><b>${last.tsb > 0 ? '+' : ''}${last.tsb.toFixed(0)}</b><span>Frescura · ${form}</span></div></div>${days.length > 1 ? fitnessChart(days) : '<div class="note">Sin datos en este periodo.</div>'}</div></div>
+    <div class="statgrid">
+      ${volumePanel(list, p)}
+      ${progressPanel(p)}
+      <div class="panel"><div class="ph"><h2>Mejores tiempos · ${periodLabel(p)}</h2></div>${prs.length ? `<table class="num"><thead><tr><th>Distancia</th><th>Tiempo</th><th>Ritmo</th><th>Fecha</th></tr></thead><tbody>${prs.map(b => { const all = D.prs.find(x => x.label === b.label); const isPR = String(all.id) === String(b.id); return `<tr><td>${b.label}</td><td>${fmtDur(b.t)} ${isPR ? '🏆' : ''}</td><td>${fmtPace(b.d / b.t)}</td><td><a href="#/a/${b.id}" style="color:var(--accent)">${dt(b.date).toLocaleDateString('es-ES', {day: 'numeric', month: 'short', year: p.y === 'all' || p.y === 'last12' ? 'numeric' : undefined})}</a></td></tr>`; }).join('')}</tbody></table><div class="pb note">🏆 = récord de siempre. ${p.y === 'all' ? '' : 'El resto, lo mejor de este periodo.'}</div>` : '<div class="pb note">Sin carreras con distancia medida en este periodo.</div>'}</div>
+      <div class="panel"><div class="ph"><h2>Predicción de carrera</h2></div>${pr5 ? `<table class="num"><thead><tr><th>Prueba</th><th>Tiempo estimado</th><th>Ritmo</th></tr></thead><tbody>${[[10000, '10 km'], [21097, 'Media maratón'], [42195, 'Maratón']].map(([d, n]) => { const tt = riegel(pr5.t, 5000, d); return `<tr><td>${n}</td><td>${fmtDur(tt)}</td><td>${fmtPace(d / tt)} /km</td></tr>`; }).join('')}</tbody></table><div class="pb note">Riegel a partir de tu mejor 5 km del periodo (${fmtDur(pr5.t)}).</div>` : '<div class="pb note">Hace falta un 5 km en este periodo.</div>'}</div>
+      <div class="panel"><div class="ph"><h2>Curva de potencia</h2><div class="legend"><i style="width:14px;background:var(--ride)"></i>periodo <i style="width:14px;background:var(--line);margin-left:8px"></i>de siempre</div></div><div class="pb">${pcur.length ? powerCurve(pcur, D.pcurve) : '<div class="note">Sin datos de potencia en este periodo.</div>'}</div></div>
+    </div></div>`;
+  bindPeriod(view, renderStats);
+  setupProgress();
+  view.querySelectorAll('[data-vm]').forEach(b => b.onclick = () => { state.vm = b.dataset.vm; renderStats(); });
+}
+function volumePanel(list, p) {
+  // cubetas según el periodo: años (todo), meses (un año o 12 meses) o días (un mes)
+  const unit = p.y === 'all' ? 'y' : p.m !== 'all' ? 'd' : 'm', metric = state.vm || 'time';
+  const keyOf = a => unit === 'y' ? a.start.slice(0, 4) : unit === 'm' ? a.start.slice(0, 7) : a.start.slice(0, 10);
+  const keys = []; const [f, to] = periodRange(p);
+  if (unit === 'y') for (let y = +YEARS[YEARS.length - 1]; y <= +YEARS[0]; y++) keys.push(String(y));
+  else if (unit === 'm') { const d = new Date(f.getFullYear(), f.getMonth(), 1); while (d <= to) { keys.push(`${d.getFullYear()}-${pad2(d.getMonth() + 1)}`); d.setMonth(d.getMonth() + 1); } }
+  else { const d = new Date(f); while (d <= to) { keys.push(ymd(d)); d.setDate(d.getDate() + 1); } }
+  const B = Object.fromEntries(keys.map(k => [k, {}]));
+  list.forEach(a => { const b = B[keyOf(a)]; if (b) b[a.sport] = (b[a.sport] || 0) + (metric === 'time' ? a.moving / 3600 : a.dist / 1000); });
+  const tot = k => Object.values(B[k]).reduce((x, y) => x + y, 0), max = Math.max(1, ...keys.map(tot));
+  const lbl = k => unit === 'y' ? `'${k.slice(2)}` : unit === 'm' ? MONTHS[+k.slice(5) - 1].slice(0, 3) : +k.slice(8);
+  const SP = ['run', 'ride', 'strength', 'walk', 'row', 'swim', 'other'];
+  return `<div class="panel"><div class="ph"><h2>Volumen por ${unit === 'y' ? 'año' : unit === 'm' ? 'mes' : 'día'}</h2><div class="seg"><button data-vm="time" class="${metric === 'time' ? 'on' : ''}">Horas</button><button data-vm="dist" class="${metric === 'dist' ? 'on' : ''}">Km</button></div></div>
+    <div class="pb"><div class="vbars ${keys.length > 16 ? 'many' : ''}">${keys.map(k => { const tt = tot(k); return `<div class="col" title="${k}: ${tt.toFixed(1)} ${metric === 'time' ? 'h' : 'km'}"><span class="lbl num">${tt ? Math.round(tt) : ''}</span><div class="stack" style="height:${tt / max * 110}px">${SP.map(s => B[k][s] ? `<i style="height:${B[k][s] / tt * 100}%;background:${SPORT[s].c}"></i>` : '').join('')}</div><span class="lbl">${keys.length > 16 && unit === 'd' && +k.slice(8) % 5 !== 1 ? '' : lbl(k)}</span></div>`; }).join('')}</div>
+    <div class="flegend" style="margin-top:8px">${['run', 'ride', 'strength', 'walk', 'row'].map(s => `<span><i style="background:${SPORT[s].c}"></i>${SPORT[s].n}</span>`).join('')}</div></div></div>`;
+}
+// progreso anual: distancia acumulada por día del año, una línea por año
+function progressPanel(p) {
+  const sp = state.ps || 'run';
+  return `<div class="panel"><div class="ph"><h2>Progreso anual</h2><div class="seg" id="psport">${[['run', 'Carrera'], ['ride', 'Ciclismo'], ['all', 'Todo']].map(([k, n]) => `<button data-ps="${k}" class="${sp === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+    <div class="pb prog"><svg id="progsvg" viewBox="0 0 1000 260" preserveAspectRatio="none"></svg><div class="tip num" id="progtip">Pasa el cursor para comparar años en la misma fecha.</div></div></div>`;
+}
+function setupProgress() {
+  const svg = $('#progsvg'); if (!svg) return;
+  const sp = state.ps || 'run', sel = state.sp.y === 'all' || state.sp.y === 'last12' ? new Date().getFullYear() : +state.sp.y;
+  const doy = s => { const d = dt(s); return Math.floor((d - new Date(d.getFullYear(), 0, 1)) / 864e5); };
+  const series = {};
+  A.filter(a => sp === 'all' || a.sport === sp).forEach(a => { const y = +a.start.slice(0, 4); (series[y] = series[y] || new Array(366).fill(0))[doy(a.start)] += a.dist / 1000; });
+  Object.values(series).forEach(arr => { for (let i = 1; i < 366; i++) arr[i] += arr[i - 1]; });
+  const years = Object.keys(series).map(Number).sort();
+  const today = new Date(), todayDoy = doy(ymd(today));
+  const max = Math.max(1, ...years.map(y => series[y][y === today.getFullYear() ? todayDoy : 365])) * 1.05;
+  const X = i => i / 365 * 1000, Y = v => 250 - v / max * 235;
+  const path = y => { const end = y === today.getFullYear() ? todayDoy : 365; return 'M' + series[y].slice(0, end + 1).map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' L'); };
+  const monthTicks = MONTHS.map((m, i) => doy(`${today.getFullYear()}-${pad2(i + 1)}-01`));
+  svg.innerHTML = monthTicks.map(d => `<line x1="${X(d)}" x2="${X(d)}" y1="0" y2="250" stroke="var(--line)" vector-effect="non-scaling-stroke"/>`).join('') +
+    years.filter(y => y !== sel).map(y => `<path d="${path(y)}" fill="none" stroke="var(--muted)" stroke-opacity=".35" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`).join('') +
+    (series[sel] ? `<path d="${path(sel)}" fill="none" stroke="var(--accent)" stroke-width="3" vector-effect="non-scaling-stroke"/>` : '') +
+    `<line id="pcur" x1="-5" x2="-5" y1="0" y2="250" stroke="var(--fg)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+  const tip = $('#progtip');
+  const show = i => {
+    $('#pcur').setAttribute('x1', X(i)); $('#pcur').setAttribute('x2', X(i));
+    const date = new Date(today.getFullYear(), 0, 1 + i).toLocaleDateString('es-ES', {day: 'numeric', month: 'short'});
+    const vals = years.filter(y => y !== today.getFullYear() || i <= todayDoy).map(y => [y, series[y][i]]).sort((a, b) => b[1] - a[1]);
+    tip.innerHTML = `<b>A ${date}</b> · ` + vals.slice(0, 6).map(([y, v]) => `${y === sel ? '<b>' : ''}${y}: ${Math.round(v)} km${y === sel ? '</b>' : ''}`).join(' · ');
+  };
+  const move = cx => { const r = svg.getBoundingClientRect(); show(Math.max(0, Math.min(365, Math.round((cx - r.left) / r.width * 365)))); };
+  svg.onmousemove = e => move(e.clientX); svg.ontouchmove = e => move(e.touches[0].clientX);
+  show(Math.min(todayDoy, 365));
+  document.querySelectorAll('[data-ps]').forEach(b => b.onclick = () => { state.ps = b.dataset.ps; renderStats(); });
+}
+function fitnessChart(d) {
+  const W = 1000, H = 220, n = d.length, X = i => i / (n - 1) * W;
+  const max = Math.max(...d.map(x => Math.max(x.ctl, x.atl))) * 1.1 || 1, mid = 150;
+  const Y = v => mid - v / max * (mid - 10), tmax = Math.max(...d.map(x => Math.abs(x.tsb))) || 1, TY = v => 185 - v / tmax * 30;
+  const step = n > 800 ? 'year' : n > 45 ? 'month' : 'week';
+  const ticks = d.map((x, i) => [x.date, i]).filter(([s]) => step === 'year' ? s.endsWith('-01-01') : step === 'month' ? s.endsWith('-01') : dt(s).getDay() === 1);
+  const bw = Math.max(1, W / n * .8);
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:220px;display:block">
+    ${ticks.map(([s, i]) => `<line x1="${X(i)}" x2="${X(i)}" y1="0" y2="${H}" stroke="var(--line)" vector-effect="non-scaling-stroke"/>`).join('')}
+    <line x1="0" x2="${W}" y1="185" y2="185" stroke="var(--line)" vector-effect="non-scaling-stroke"/>
+    ${n <= 800 ? d.map((x, i) => `<rect x="${X(i) - bw / 2}" width="${bw}" y="${Math.min(185, TY(x.tsb))}" height="${Math.abs(TY(x.tsb) - 185)}" fill="${x.tsb >= 0 ? 'var(--tsbp)' : 'var(--tsbn)'}" opacity=".8"/>`).join('') : ''}
+    <path d="M${d.map((x, i) => `${X(i).toFixed(1)},${Y(x.atl).toFixed(1)}`).join(' L')}" fill="none" stroke="var(--atl)" stroke-width="1.4" stroke-opacity="${n > 800 ? .5 : 1}" vector-effect="non-scaling-stroke"/>
+    <path d="M0,${mid} L${d.map((x, i) => `${X(i).toFixed(1)},${Y(x.ctl).toFixed(1)}`).join(' L')} L${W},${mid} Z" fill="var(--ctl)" opacity=".12"/>
+    <path d="M${d.map((x, i) => `${X(i).toFixed(1)},${Y(x.ctl).toFixed(1)}`).join(' L')}" fill="none" stroke="var(--ctl)" stroke-width="2.6" vector-effect="non-scaling-stroke"/>
+  </svg><div class="flegend num" style="justify-content:space-between">${ticks.filter((_, k, arr) => arr.length <= 16 || k % Math.ceil(arr.length / 16) === 0).map(([s]) => `<span>${step === 'year' ? s.slice(0, 4) : step === 'month' ? dt(s).toLocaleDateString('es-ES', {month: 'short'}) : +s.slice(8)}</span>`).join('')}</div>`;
+}
+
+// ---------- ajustes ----------
+function renderSettings() {
+  const sw = on => `<button class="switch ${on?'on':''}" onclick="this.classList.toggle('on')"></button>`;
+  view.innerHTML = `<div class="pad narrow">${isMobile() ? '' : '<h1 style="margin-bottom:16px">Ajustes</h1>'}<div class="form">
+    <h2 style="margin:4px 0 0">Apariencia</h2>
+    <div class="themes">${THEMES.map(th => `<button class="theme" data-pick="${th.id}" aria-pressed="${th.id === themeId}">
+      <span class="tprev" ${th.id === 'system' ? '' : `data-theme="${th.id}"`}><i class="tbar"></i><i class="tcard"><b></b><b></b></i><i class="tdot"></i></span>
+      <span class="tname">${th.n}</span>${th.d ? `<span class="note">${th.d}</span>` : ''}</button>`).join('')}</div>
+    <h2 style="margin:10px 0 0">Fisiología</h2>
+    <div class="field"><div><b>FC máxima</b><div class="note">Base de las zonas y del esfuerzo relativo</div></div><input type="number" value="${D.settings.hr_max}"></div>
+    <div class="field"><div><b>FC en reposo</b><div class="note">El reloj indica 30 ppm, que no es realista</div></div><input type="number" value="${D.settings.hr_rest}"></div>
+    <div class="field"><div><b>Modelo de zonas</b><div class="note">% de FC máx · 50 / 60 / 70 / 80 / 90</div></div><span class="muted">Cambiar ›</span></div>
+    <h2 style="margin:10px 0 0">Privacidad</h2>
+    <div class="field"><div><b>Zona de privacidad</b><div class="note">Oculta 300 m alrededor de casa en todo lo que compartas</div></div>${sw(true)}</div>
+    <h2 style="margin:10px 0 0">Garmin</h2>
+    <div class="field"><div><b>Clave de la Personal API</b><div class="note">Activa · caduca el 7 nov 2027 · te avisaremos 2 semanas antes</div></div><span style="color:var(--accent);font-weight:600">● Conectada</span></div>
+    <div class="field"><div><b>Sincronización automática</b><div class="note">Cada 15 min desde Railway</div></div>${sw(true)}</div>
+    <h2 style="margin:10px 0 0">Notificaciones y dispositivos</h2>
+    <div class="field"><div><b>Actividad nueva y récords</b><div class="note">Web Push en este navegador</div></div>${sw(true)}</div>
+    <div class="field"><div><b>Este dispositivo</b><div class="note">${isMobile() ? 'Chrome · Android' : 'Chrome · Linux'} · sesión activa</div></div><button class="btn" data-logout>Cerrar sesión</button></div>
+  </div></div>`;
+  view.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => applyTheme(b.dataset.pick));
+  view.querySelectorAll('[data-logout]').forEach(b => b.onclick = logout);
+}
+
+// ---------- sincronización (simulada) ----------
+const STEPS = ['Renovando token de Garmin', 'Buscando actividades nuevas', 'Descargando FIT original', 'Calculando métricas y récords', 'Actualizando forma y frescura'];
+function lastSyncText() { const t = new Date(); return 'Última sincronización: hoy, ' + t.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); }
+$('#lastsync1').textContent = lastSyncText();
+document.querySelectorAll('[data-sync]').forEach(b => b.onclick = runSync);
+$('#closesync').onclick = () => $('#scrim').classList.remove('open');
+function runSync() {
+  const ul = $('#steps'), prog = $('#prog');
+  ul.innerHTML = STEPS.map(s => `<li><span class="dot"></span>${s}</li>`).join('');
+  $('#scrim').classList.add('open'); prog.style.width = '0';
+  let i = 0;
+  const tick = () => {
+    const lis = ul.querySelectorAll('li');
+    if (i > 0) { lis[i-1].className = 'done'; lis[i-1].querySelector('.dot').textContent = '✓'; }
+    if (i < lis.length) { lis[i].className = 'run'; prog.style.width = (i / lis.length * 100) + '%'; i++; setTimeout(tick, 650); }
+    else { prog.style.width = '100%'; $('#lastsync1').textContent = lastSyncText(); setTimeout(() => { $('#scrim').classList.remove('open'); toast(A[0]); }, 500); }
+  };
+  tick();
+}
+function toast(a) {
+  const t = $('#toast');
+  t.innerHTML = `${icon(a.sport, 38)}<div><b>Nueva actividad sincronizada</b><div class="note">${a.name} · ${a.dist ? fmtKm(a.dist)+' km · ' : ''}${fmtDur(a.moving)} · esfuerzo ${a.trimp}</div></div>`;
+  t.onclick = () => { t.classList.remove('show'); go('#/a/' + a.id); };
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 4200);
+}
+
+window.__booted = true;
+parse();
+</script>
+</body>
+</html>

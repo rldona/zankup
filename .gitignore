@@ -1,0 +1,5 @@
+.env
+data/
+__pycache__/
+docs/prototipos/data.js
+strava/

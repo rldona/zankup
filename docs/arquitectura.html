@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitectura OpenSport</title>
+<style>
+:root{--bg:#f6f6f3;--card:#fff;--fg:#1c1c1a;--muted:#6a6a64;--line:#dedcd5;--band:#efeee9;--edge:#8a8a82;--cloud:#f1ecfb;--cloud-line:#9b7fd4;
+  --ok:#2f9e44;--ok-bg:#ebf7ee;--wip:#e8890c;--wip-bg:#fff4e3;--todo:#9a9a92;--todo-bg:#fbfbf9;--ext:#5c6bc0;--ext-bg:#eef0fb;--accent:#e8590c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141413;--card:#1e1e1c;--fg:#ecebe6;--muted:#9c9b94;--line:#34332f;--band:#1a1a18;--edge:#7c7b74;--cloud:#1f1a2b;--cloud-line:#9b7fd4;
+  --ok:#51cf66;--ok-bg:#16301d;--wip:#ffa94d;--wip-bg:#33240f;--todo:#85847d;--todo-bg:#1e1e1c;--ext:#8c9eff;--ext-bg:#1d2140;--accent:#ff7a2e}}
+:root[data-theme="dark"]{--bg:#141413;--card:#1e1e1c;--fg:#ecebe6;--muted:#9c9b94;--line:#34332f;--band:#1a1a18;--edge:#7c7b74;--cloud:#1f1a2b;--cloud-line:#9b7fd4;
+  --ok:#51cf66;--ok-bg:#16301d;--wip:#ffa94d;--wip-bg:#33240f;--todo:#85847d;--todo-bg:#1e1e1c;--ext:#8c9eff;--ext-bg:#1d2140;--accent:#ff7a2e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:26px;margin:0 0 4px}
+h2{font-size:18px;margin:32px 0 10px}
+.lead{color:var(--muted);margin:0 0 18px;max-width:780px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin-bottom:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:4px;border:2px solid}
+.diagram{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+svg{display:block;width:100%;min-width:760px;height:auto}
+svg text{fill:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h3{margin:0 0 6px;font-size:15px}
+.card p,.card li{margin:0;color:var(--muted);font-size:14px}
+.card ol,.card ul{margin:0;padding-left:18px}
+code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--band);padding:1px 5px;border-radius:4px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:13px}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;border:1px solid;white-space:nowrap}
+.t-ok{color:var(--ok);border-color:var(--ok)} .t-wip{color:var(--wip);border-color:var(--wip)} .t-no{color:var(--todo);border-color:var(--todo)}
+a{color:var(--accent)}
+.foot{margin-top:28px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<h1>Arquitectura de OpenSport</h1>
+<p class="lead">Una plataforma personal estilo Strava. Un backend en Railway sincroniza solo las actividades de Garmin, guarda los FIT originales y calcula métricas avanzadas propias. Dos clientes lo usan: primero una PWA para escritorio y móvil, alojada en Vercel, y después una app Android nativa.</p>
+
+<div class="legend">
+  <span><i style="border-color:var(--ok);background:var(--ok-bg)"></i>Funciona hoy</span>
+  <span><i style="border-color:var(--wip);background:var(--wip-bg)"></i>Prototipo</span>
+  <span><i style="border-color:var(--todo);background:var(--todo-bg);border-style:dashed"></i>Pendiente</span>
+  <span><i style="border-color:var(--ext);background:var(--ext-bg)"></i>Externo</span>
+  <span><i style="border-color:var(--cloud-line);background:var(--cloud)"></i>Railway</span>
+  <span><i style="border-color:var(--fg);background:var(--band)"></i>Vercel</span>
+</div>
+<div class="diagram"><svg id="map" viewBox="0 0 1110 925" role="img" aria-label="Diagrama de arquitectura de OpenSport"></svg></div>
+
+<h2>Cómo funciona una sincronización</h2>
+<div class="cards">
+  <div class="card"><h3>1 · Disparo</h3><p>El cron de Railway cada 15 min, o el botón «Sync» de la PWA o la app (<code>POST /api/sync</code>). La PWA consulta el progreso cada 2 s.</p></div>
+  <div class="card"><h3>2 · Garmin</h3><p>Clave → JWT de 24 h → actividades nuevas → <code>download-service/files/activity/{id}</code> → ZIP → FIT original al volumen.</p></div>
+  <div class="card"><h3>3 · Proceso</h3><p>Parser → zonas, esfuerzo, GAP, récords y curva de potencia → Postgres. Después se recalculan forma y frescura de forma incremental.</p></div>
+  <div class="card"><h3>4 · Aviso</h3><p>Notificación (Web Push / FCM): «Carrera de 6,6 km · récord en 1 km». Los clientes refrescan y guardan en caché para usarse sin conexión.</p></div>
+</div>
+
+<h2>Componentes</h2>
+<div class="tw"><table>
+  <thead><tr><th>Componente</th><th>Qué hace</th><th>Estado</th></tr></thead>
+  <tbody>
+    <tr><td>Sync service</td><td>Token, lista incremental y descarga del FIT original desde la Garmin Personal API. Lo lanzan el cron o el botón</td><td><span class="tag t-ok">Funciona</span> <code>sync/garmin_sync.py</code></td></tr>
+    <tr><td>Importador</td><td>FIT sueltos, ZIP de Garmin y ZIP masivo de Strava (histórico). Evita duplicados</td><td><span class="tag t-no">Pendiente</span></td></tr>
+    <tr><td>Parser FIT</td><td>FIT → sesión, vueltas, series a 1 Hz, potencia y dispositivo (<code>fitdecode</code>)</td><td><span class="tag t-wip">Prototipo</span></td></tr>
+    <tr><td>Motor de métricas</td><td>Las métricas «Premium»: ver abajo</td><td><span class="tag t-wip">Prototipo</span> mejores tiempos exactos</td></tr>
+    <tr><td>Postgres + volumen</td><td>Actividades, series, métricas y carga diaria · FIT originales en <code>/data/raw</code></td><td><span class="tag t-no">Pendiente</span> hoy en <code>data/activities/</code></td></tr>
+    <tr><td>Proxy de Vercel</td><td><code>rewrites /api/* → Railway</code>: mismo origen, sin CORS, cookie <code>httpOnly</code>, válido en las previsualizaciones</td><td><span class="tag t-no">Pendiente</span></td></tr>
+    <tr><td>API REST</td><td>FastAPI + OpenAPI: auth, <code>/sync</code>, <code>/activities</code>, <code>/streams</code>, <code>/stats</code>, <code>/import</code>, <code>/devices</code></td><td><span class="tag t-no">Pendiente</span></td></tr>
+    <tr><td>Autenticación</td><td>Un usuario: passkey o contraseña + TOTP. Token de acceso corto y de refresco largo, dispositivos revocables</td><td><span class="tag t-no">Pendiente</span></td></tr>
+    <tr><td>Notificaciones</td><td>Web Push (VAPID) para la PWA y FCM para Android: actividad nueva, récord, error de sincronización, clave a punto de caducar</td><td><span class="tag t-no">Pendiente</span></td></tr>
+    <tr><td>Privacidad</td><td>Zonas de privacidad aplicadas al servir o exportar lo que se comparte</td><td><span class="tag t-no">Pendiente</span></td></tr>
+    <tr><td>PWA (Vercel)</td><td>Escritorio y móvil con diseño adaptable: React, Vite, <code>vite-plugin-pwa</code>, MapLibre. Feed, detalle, estadísticas, ajustes, botón Sync. Instalable y sin conexión</td><td><span class="tag t-wip">Prototipo</span> de la vista de actividad</td></tr>
+    <tr><td>App Android</td><td>React Native + Expo sobre <code>packages/core</code> (compartido con la PWA): MapLibre nativo, Skia, Reanimated, FCM, Health Connect</td><td><span class="tag t-no">Fase 5</span></td></tr>
+  </tbody>
+</table></div>
+
+<h2>Métricas avanzadas (las «Premium», hechas por nosotros)</h2>
+<div class="cards">
+  <div class="card"><h3>Esfuerzo y forma</h3><ul><li>Zonas de FC y ritmo con tu configuración</li><li>Esfuerzo relativo (TRIMP)</li><li>Forma, fatiga y frescura (CTL / ATL / TSB)</li></ul></div>
+  <div class="card"><h3>Rendimiento</h3><ul><li>Ritmo ajustado a pendiente (GAP)</li><li>Récords de 400 m a maratón y su evolución</li><li>Predicción de carrera (Riegel)</li><li>Curva de potencia en bici y ROUVY</li></ul></div>
+  <div class="card"><h3>Recorridos y volumen</h3><ul><li>Rutas repetidas y comparación de tiempos</li><li>Mapa de calor personal</li><li>Volumen y carga por semana, mes y año</li><li>Datos de Garmin: Training Effect y más adelante VFC y sueño</li></ul></div>
+</div>
+
+<h2>Decisiones</h2>
+<div class="cards">
+  <div class="card"><h3>Garmin Personal API</h3><p>Oficial, para particulares y sin aprobación. Su FIT es <b>idéntico byte a byte</b> al «Exportar archivo» de Garmin. El de Strava pierde 11 tipos de mensaje propietarios.</p></div>
+  <div class="card"><h3>Railway</h3><p>Siempre disponible para el cron y las notificaciones. Postgres, volumen y cron en un mismo proyecto, unos 5 $/mes. El contenedor estándar permite migrar a Fly.io o a un VPS.</p></div>
+  <div class="card"><h3>Primero la PWA, en Vercel</h3><p>Un solo código para escritorio y móvil, lo más rápido para validar, con una previsualización por cada PR. El proxy <code>/api</code> evita CORS y problemas de cookies. La app nativa llega cuando hagan falta notificaciones fiables, segundo plano y Health Connect.</p></div>
+  <div class="card"><h3>Descartado</h3><ul><li>API de Strava: de pago desde junio de 2026</li><li>Automatizar webs: antibots y condiciones de uso</li><li>intervals.icu: acceso a Garmin en duda</li><li>App de Garmin en el móvil: necesita root</li></ul></div>
+</div>
+
+<h2>Fases</h2>
+<div class="cards">
+  <div class="card"><h3>1 · Backend en Railway</h3><p>Paquete <code>opensport</code>, Postgres, volumen, auth, API de actividades y cron.</p></div>
+  <div class="card"><h3>2 · PWA en Vercel</h3><p>Escritorio y móvil: feed, detalle, botón Sync, instalable y sin conexión.</p></div>
+  <div class="card"><h3>3 · Métricas</h3><p>Zonas, TRIMP, forma, GAP, récords, potencia, rutas, mapa de calor.</p></div>
+  <div class="card"><h3>4 · Avisos e histórico</h3><p>Web Push e importación del ZIP de Strava.</p></div>
+  <div class="card"><h3>5 · App Android</h3><p>React Native + Expo sobre el código compartido. Empieza con una prueba de concepto de rendimiento.</p></div>
+  <div class="card"><h3>6 · Salud</h3><p>Sueño y VFC desde la Personal API y Health Connect.</p></div>
+</div>
+
+<p class="foot">Detalle: <a href="arquitectura.md">arquitectura.md</a> · <a href="hallazgos.md">hallazgos.md</a> · Noviembre de 2026</p>
+</main>
+
+<script>
+const H = 56;
+const N = {
+  watch: {x:40,  y:40,  w:170, t:'⌚ fēnix 6X',           s:'graba el FIT',               st:'ext'},
+  app:   {x:240, y:40,  w:170, t:'App Garmin Connect',     s:'Bluetooth',                  st:'ext'},
+  gc:    {x:440, y:40,  w:200, t:'Garmin Connect',         s:'nube · Personal API',        st:'ext'},
+  szip:  {x:690, y:40,  w:170, t:'ZIP de Strava',          s:'histórico',                  st:'todo'},
+  fitm:  {x:890, y:40,  w:180, t:'FIT sueltos',            s:'subida manual',              st:'todo'},
+
+  env:   {x:40,  y:190, w:170, t:'Variables de entorno',   s:'clave Garmin · JWT · VAPID', st:'ok'},
+  cron:  {x:240, y:190, w:170, t:'Cron Railway',           s:'cada 15 min',                st:'todo'},
+  sync:  {x:440, y:190, w:200, t:'Sync service',           s:'sync/garmin_sync.py',        st:'ok'},
+  imp:   {x:780, y:190, w:200, t:'Importador',             s:'FIT · ZIP · deduplicado',    st:'todo'},
+
+  raw:   {x:500, y:310, w:280, t:'Volumen /data/raw',      s:'FIT originales inmutables',  st:'ok'},
+
+  parse: {x:290, y:430, w:200, t:'Parser FIT',             s:'fitdecode → modelo',         st:'wip'},
+  met:   {x:540, y:430, w:240, t:'Motor de métricas',      s:'zonas · TRIMP · forma · GAP · récords', st:'wip'},
+  priv:  {x:830, y:430, w:200, t:'Privacidad',             s:'zonas al servir/exportar',   st:'todo'},
+
+  db:    {x:420, y:550, w:300, t:'Postgres',               s:'actividades · series · métricas · forma', st:'todo'},
+
+  api:   {x:290, y:670, w:520, t:'API REST · FastAPI',     s:'auth · /sync · /activities · /streams · /stats · /devices', st:'todo'},
+  push:  {x:850, y:670, w:200, t:'Notificaciones',         s:'Web Push · FCM',             st:'todo'},
+
+  pwa:   {x:30,  y:840, w:270, t:'PWA · escritorio y móvil', s:'React · Vite · MapLibre · offline', st:'wip'},
+  rw:    {x:330, y:840, w:230, t:'Rewrites /api/*',        s:'mismo origen · cookie httpOnly', st:'todo'},
+  andr:  {x:660, y:840, w:300, t:'App Android · fase 5',   s:'React Native · Expo · core compartido', st:'todo'},
+};
+// [desde, hasta, etiqueta, opciones]
+const E = [
+  ['watch','app'], ['app','gc'],
+  ['gc','sync',{label:'Personal API · FIT original'}],
+  ['szip','imp',{x2:840}], ['fitm','imp',{x2:930}],
+  ['env','sync',{dashed:true, over:true}], ['cron','sync'],
+  ['sync','raw',{x2:570}], ['imp','raw',{x2:710}],
+  ['raw','parse',{x1:540}], ['parse','met'],
+  ['parse','db',{x2:470}], ['met','db',{x2:660}],
+  ['db','api',{x2:570}], ['priv','api',{x2:780}],
+  ['api','push'],
+  ['api','rw',{x1:445, label:'HTTPS'}], ['rw','pwa'], ['api','andr',{x1:740, x2:760, label:'HTTPS + token'}],
+  ['push','pwa',{dashed:true, x2:165, my:790}], ['push','andr',{dashed:true, x2:900, my:790}],
+];
+const svg = document.getElementById('map'), NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+const txt = (x, y, s, attrs, color) => { const t = el('text', {x, y, ...attrs}); t.textContent = s; if (color) t.style.fill = color; return t; };
+const C = {ok:['--ok','--ok-bg'], wip:['--wip','--wip-bg'], todo:['--todo','--todo-bg'], ext:['--ext','--ext-bg']};
+
+const defs = el('defs', {});
+const mk = el('marker', {id:'arr', viewBox:'0 0 10 10', refX:9, refY:5, markerWidth:7, markerHeight:7, orient:'auto-start-reverse'}, defs);
+el('path', {d:'M0,0 L10,5 L0,10 z', fill:'var(--edge)'}, mk);
+
+// fondos: fuentes, Railway, clientes
+el('rect', {x:10, y:20, width:1090, height:96, rx:8, fill:'var(--band)'});
+el('rect', {x:10, y:150, width:1090, height:600, rx:12, fill:'var(--cloud)', stroke:'var(--cloud-line)', 'stroke-width':1.5});
+el('rect', {x:10, y:810, width:570, height:100, rx:12, fill:'var(--band)', stroke:'var(--fg)', 'stroke-width':1.2});
+el('rect', {x:600, y:810, width:500, height:100, rx:12, fill:'var(--band)'});
+txt(1088, 36, 'FUENTES', {'font-size':11, 'font-weight':600, 'text-anchor':'end', 'letter-spacing':1}, 'var(--muted)');
+txt(1088, 172, '☁ RAILWAY · BACKEND', {'font-size':12, 'font-weight':700, 'text-anchor':'end', 'letter-spacing':1}, 'var(--cloud-line)');
+txt(568, 828, '▲ VERCEL', {'font-size':12, 'font-weight':700, 'text-anchor':'end', 'letter-spacing':1}, 'var(--fg)');
+txt(1088, 828, 'ANDROID', {'font-size':11, 'font-weight':600, 'text-anchor':'end', 'letter-spacing':1}, 'var(--muted)');
+[['ORIGINALES',338],['PROCESADO',458],['DATOS',578],['API',698]].forEach(([n,y]) => txt(28, y+5, n, {'font-size':12, 'font-weight':600, 'letter-spacing':1}, 'var(--muted)'));
+
+// aristas
+const g = el('g', {});
+E.forEach(([a, b, o = {}]) => {
+  const A = N[a], B = N[b]; let d, lx, ly;
+  if (o.over) {
+    d = `M${A.x + A.w/2},${A.y} L${A.x + A.w/2},${A.y - 12} L${B.x + 30},${A.y - 12} L${B.x + 30},${B.y}`;
+  } else if (Math.abs(A.y - B.y) < 5) {
+    const r = A.x < B.x, x1 = r ? A.x + A.w : A.x, x2 = r ? B.x : B.x + B.w, y = A.y + H/2;
+    d = `M${x1},${y} L${x2},${y}`;
+  } else {
+    const x1 = o.x1 ?? A.x + A.w/2, y1 = A.y + H, x2 = o.x2 ?? B.x + B.w/2, y2 = B.y;
+    const my = o.my ?? (y1 + y2) / 2;
+    d = x1 === x2 ? `M${x1},${y1} L${x2},${y2}` : `M${x1},${y1} L${x1},${my} L${x2},${my} L${x2},${y2}`;
+    lx = x1 + 8; ly = (y1 + my) / 2 + 4;
+  }
+  el('path', {d, fill:'none', stroke: o.dashed && a === 'push' ? 'var(--accent)' : 'var(--edge)', 'stroke-width':1.6, 'marker-end':'url(#arr)', 'stroke-dasharray': o.dashed ? '5 4' : ''}, g);
+  if (o.label) { const t = el('text', {x:lx, y:ly, 'font-size':12, 'font-weight':600}, g); t.textContent = o.label; t.style.fill = 'var(--accent)'; }
+});
+
+// nodos
+for (const id in N) {
+  const n = N[id], [stroke, fill] = C[n.st], ng = el('g', {});
+  el('rect', {x:n.x, y:n.y, width:n.w, height:H, rx:8, fill:`var(${fill})`, stroke:`var(${stroke})`, 'stroke-width':1.8, 'stroke-dasharray': n.st === 'todo' ? '6 4' : ''}, ng);
+  const t1 = el('text', {x:n.x + n.w/2, y:n.y + 24, 'text-anchor':'middle', 'font-size':14, 'font-weight':600}, ng); t1.textContent = n.t;
+  const t2 = el('text', {x:n.x + n.w/2, y:n.y + 43, 'text-anchor':'middle', 'font-size':12}, ng); t2.textContent = n.s; t2.style.fill = 'var(--muted)';
+}
+</script>
+</body>
+</html>

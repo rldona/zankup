@@ -117,7 +117,11 @@ def build_worker() -> Worker:
     settings = get_settings()
     sessions = sessionmaker(get_engine(), expire_on_commit=False)
     key = settings.garmin_personal_api_key.get_secret_value() if settings.garmin_personal_api_key else None
-    return Worker(sessions, default_handlers(get_raw_store(settings), sessions, key))
+    from opensport.alerts import email_sender
+
+    return Worker(
+        sessions, default_handlers(get_raw_store(settings), sessions, key, email_sender(settings), settings)
+    )
 
 
 def main() -> None:

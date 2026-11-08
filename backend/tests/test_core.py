@@ -15,7 +15,13 @@ def test_settings_read_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.is_production
     assert settings.effective_log_format == "json"
     assert str(settings.raw_dir) == "/data/raw"
-    assert settings.integrations() == {"garmin": True, "email": False, "google_sign_in": False, "ai": False}
+    assert settings.integrations() == {
+        "garmin": True,
+        "email": False,
+        "backups": False,
+        "google_sign_in": False,
+        "ai": False,
+    }
 
 
 def test_secrets_never_show_up(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -27,6 +27,7 @@ from typing import Any
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from opensport.alerts import Sender, notify_sync_outcome
 from opensport.db.models import Activity, Job, Source, SyncRun
 from opensport.jobs.queue import enqueue
 from opensport.storage import RawStore, raw_key
@@ -119,6 +120,7 @@ def run_sync(
     run_id: int | None = None,
     pause_s: float = 1.0,
     sleep: Callable[[float], None] = time.sleep,
+    alert: Sender | None = None,
 ) -> SyncResult:
     """Run one sync, recorded in a new `sync_runs` row or in `run_id` (a queued run).
 
@@ -188,6 +190,8 @@ def run_sync(
                 run = session.get_one(SyncRun, run_id)
                 run.status, run.finished_at, run.error = "error", datetime.now(UTC), message[:2000]
             log.error("Sync failed", extra={"run_id": run_id, "error": message[:200]})
+            with sessions() as session:
+                notify_sync_outcome(session, user_id, alert)
             raise
 
         with sessions.begin() as session:
@@ -199,4 +203,6 @@ def run_sync(
                 session.add(source)
             source.last_sync_at = datetime.now(UTC)
         log.info("Sync finished", extra={"run_id": run_id, "listed": len(seen), "queued": queued})
+        with sessions() as session:
+            notify_sync_outcome(session, user_id, alert)
         return SyncResult(run_id, len(seen), queued, len(seen) - queued)

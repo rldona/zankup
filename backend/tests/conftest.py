@@ -7,6 +7,7 @@ a missing database an error instead of a skip.
 import os
 import uuid
 from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -27,9 +28,9 @@ def alembic_config(url: str) -> Config:
     return config
 
 
-@pytest.fixture
-def empty_database() -> Iterator[str]:
-    """A new, empty database, dropped after the test. Yields its SQLAlchemy URL."""
+@contextmanager
+def throwaway_database() -> Iterator[str]:
+    """Create a new, empty database and drop it afterwards. Yields its SQLAlchemy URL."""
     server = make_url(Settings(_env_file=None).sqlalchemy_url)  # type: ignore[call-arg]
     admin = create_engine(server, isolation_level="AUTOCOMMIT")
     name = f"opensport_test_{uuid.uuid4().hex[:12]}"
@@ -46,6 +47,13 @@ def empty_database() -> Iterator[str]:
         with admin.connect() as conn:
             conn.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
         admin.dispose()
+
+
+@pytest.fixture
+def empty_database() -> Iterator[str]:
+    """A new, empty database, dropped after the test. Yields its SQLAlchemy URL."""
+    with throwaway_database() as url:
+        yield url
 
 
 @pytest.fixture

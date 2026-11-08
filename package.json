@@ -5,5 +5,12 @@
   "packageManager": "pnpm@10.34.7",
   "engines": {
     "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @opensport/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format:check": "pnpm -r format:check"
   }
 }

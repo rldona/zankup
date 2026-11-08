@@ -1,4 +1,4 @@
-"""Genera docs/prototipos/data.js a partir de data/activities/*.fit|json (datos reales)."""
+"""Genera docs/prototypes/data.js a partir de data/activities/*.fit|json (datos reales)."""
 import csv, glob, gzip, io, json, math, os, sys
 import xml.etree.ElementTree as ET
 from concurrent.futures import ProcessPoolExecutor
@@ -7,7 +7,7 @@ from datetime import datetime, date, timedelta
 import fitdecode
 
 ROOT = sys.argv[1]
-OUT = os.path.join(ROOT, 'docs/prototipos/data.js')
+OUT = os.path.join(ROOT, 'docs/prototypes/data.js')
 HR_MAX, HR_REST = 185, 50
 ZB = [0.5, 0.6, 0.7, 0.8, 0.9]  # límites inferiores Z1..Z5 en % FC máx
 K = 180 / 2**31

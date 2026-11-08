@@ -23,6 +23,9 @@ class Settings(BaseSettings):
         default=None, description="Defaults to json in production and console elsewhere"
     )
 
+    owner_email: str = Field(
+        default="owner@opensport.local", description="Owner account until sign-up (OS-221) sets the real one"
+    )
     run_worker: bool = Field(default=True, description="Run the job worker inside the API process")
 
     database_url: str = "postgresql://opensport:opensport@127.0.0.1:5432/opensport"

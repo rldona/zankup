@@ -25,7 +25,7 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 - **Open source and self-hosted.** Each person deploys their own instance (Railway + Vercel, or Docker on their own server) and uses **their own keys**: Garmin Personal API, Google OAuth, Google Health and, optionally, Anthropic. That keeps every instance within the Garmin Personal API's personal-use terms, and nobody else's health data lives on our servers.
 - **Licences:** `packages/metrics` (the metrics engine) under **MIT**, so anyone can reuse it; everything else under **AGPL-3.0**, so hosted forks stay open.
 - **No payments for now.** Nothing in the design should close the door to a hosted version later: every table carries `user_id` from the start, even though each deployment has a single user.
-- **Brand decided, not applied yet.** The product will be called **Zankup**; the name, mark and wordmark are in the [brand guide](brand/README.md). Zankup stays in the code until the rename (guide, section 7); the mark and icons are #116 and the domain is OS-D06. Instances run on their `*.vercel.app` and `*.up.railway.app` URLs.
+- **Brand applied.** The product is **Zankup**; the name, mark, wordmark and colours are in the [brand guide](brand/README.md). The reference instance runs on **zankup.com** (PWA and API proxy on Vercel) and **api.zankup.com** (API on Railway, for the Android app). A self-hosted instance can keep its `*.vercel.app` and `*.up.railway.app` URLs or use its own domain.
 
 **Working rules:**
 - One ticket = one branch = one small PR with tests.
@@ -58,7 +58,7 @@ These are owner decisions, tracked as issues with the `decision` label.
   - Railway, Vercel, Resend, Google Cloud and Anthropic (optional). Expected cost at the start: about $5–10/month. The same list becomes the self-hosting guide (OS-224).
   - *Done when:* every account exists and its keys are stored only in Railway's variables and the local `.env`.
 
-The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.vercel.app` URL is enough for now.
+The production domain (OS-D06) is done: `zankup.com` → Vercel (`www` redirects to it), `api.zankup.com` → Railway. DNS is at the registrar (GoDaddy); the records are listed in `docs/architecture.md`.
 
 ## Phase 0 · Foundations
 
@@ -126,7 +126,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - Every 15 min. Done as a scheduler thread next to the worker (a Railway Cron Job cannot reach the API's volume), queuing one sync job per time slot.
   - *Done when:* a new activity from the watch shows up in the database with no intervention.
 - **OS-110 · Authentication** (L) · depends on OS-102
-  - One user per instance. Sign-in with password + TOTP (passkeys are in the backlog, OS-405). `httpOnly` session cookie for the web and access + refresh tokens for Android. Rate limiting.
+  - One user per instance. Sign-in with password + TOTP; passkeys come with OS-405. `httpOnly` session cookie for the web and access + refresh tokens for Android. Rate limiting.
   - *Done when:* every route except `/health` and `/auth/*` returns 401 without a session.
 - **OS-111 · Activities API** (M) · depends on OS-107 and OS-110
   - `GET /api/activities` (cursor pagination), `GET /api/activities/{id}`, `/streams` (gzip) and `/fit`. OpenAPI published.
@@ -170,7 +170,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - *Done when:* switching themes leaves no hard-coded colour visible and every theme passes WCAG AA contrast in CI.
 - **OS-203 · Sign-in screen** (M) · depends on OS-110 and OS-201
   - Prototype design: on desktop, a brand panel on the left with the claim "Your sports data, from start to finish." and, as a second line, "Sync with Garmin, import your Strava history and follow your form without depending on anyone" and gentle animated waves (Canvas 2D, no library, still with `prefers-reduced-motion`), and the form on the right; on mobile, a single column. Links to "Create your account" (OS-221) and "Forgot it?" (OS-222).
-  - Step 1: email and password (show/hide, "remember this device for 30 days"). Step 2: 6-digit TOTP code with auto-advance, pasting the whole code and a link to use a recovery code. "Continue with Google" (OS-220). "Sign in with a passkey" waits for OS-405 (backlog).
+  - Step 1: email and password (show/hide, "remember this device for 30 days"). Step 2: 6-digit TOTP code with auto-advance, pasting the whole code and a link to use a recovery code. "Continue with Google" (OS-220). "Sign in with a passkey" (OS-405).
   - Clear errors that never reveal whether the email or the password was wrong, rate limiting with increasing delays and the right `autocomplete` values (`username`, `current-password`, `one-time-code`) for password managers.
   - **The sign-in screen shows no user data** (no numbers or routes): it is the only thing visible without a session.
   - Every route redirects to sign-in without a session. "Sign out" is in Settings and in the profile.
@@ -186,12 +186,16 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - Random 32-byte token stored only as a hash, rate limiting per IP and per account, and resend at most every 60 s.
   - Transactional email with **Resend** (the free tier is enough), each instance with its own Resend account. Without a custom domain, Resend's test sender only delivers to the account owner's address, which is exactly the single user of the instance; a verified domain (SPF and DKIM) is optional. Emails in the user's language.
   - Plan B if everything is lost: the server command `zankup reset-password`.
+- **OS-405 · Passkeys (WebAuthn)** (M) · depends on OS-110 and OS-D06
+  - Passkey registration and sign-in, verified with the device's fingerprint or face recognition and synced by the password manager (Google or iCloud). The backend comes first; the PWA uses it in the sign-in screen (OS-203) and in Profile → Sign-in methods.
+  - The relying party ID is the instance's domain (`zankup.com`), which must stay stable: changing it invalidates every passkey. `/.well-known/assetlinks.json` on that domain lets **the same passkey work in the Android app** (OS-503).
+  - A passkey replaces both the password and the TOTP code (it is already two factors: the device and the fingerprint or PIN).
 - **OS-220 · Sign-in with a Google account** (M) · depends on OS-110 and OS-203
   - "Continue with Google" with OpenID Connect (authorization code flow with PKCE and `state`/`nonce`), requesting only `openid email profile`. The backend validates the ID token (issuer, audience, expiry, `email_verified`) and compares it with the linked Google `sub`: **only your account can get in**, even though other people have Google accounts.
   - Linked and unlinked from Profile → Account and sources → Sign-in methods. Unlinking requires another active method (password with 2FA or passkey).
   - Signing in with Google does not ask for the TOTP code: it counts as strong verification because Google already applies its own two-step verification.
   - Same Google Cloud project as the Google Health API (OS-603), but with its own OAuth client and no health scopes.
-  - Self-hosted: each instance creates its own OAuth client in Google Cloud, with its `*.vercel.app` URL as the redirect (steps in OS-224).
+  - Self-hosted: each instance creates its own OAuth client in Google Cloud, with its own domain (`https://zankup.com/api/auth/google/callback` for the reference instance) or its `*.vercel.app` URL as the redirect (steps in OS-224).
   - *Note:* Google requires fixed redirect URLs. It works in production and locally, but not on Vercel previews (changing URLs), where you sign in with a password.
   - *Done when:* signing in with your Google account works and any other account gets a generic rejection.
 - **OS-204 · Feed** (M) · depends on OS-111 and OS-202
@@ -347,7 +351,7 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
 - **OS-502 · Expo project in the monorepo** (M) · depends on OS-501
   - `apps/mobile` with Expo Router, the new architecture and Hermes. EAS Build and EAS Update. CI with lint, tests and build. Theme generated from the `packages/core` tokens (OS-214), plus Android dynamic colour. i18n with the shared catalogues and `expo-localization`.
 - **OS-503 · Authentication in the app** (L) · depends on OS-502, OS-110 and OS-220
-  - **First sign-in**, with two options now and a third when OS-405 leaves the backlog:
+  - **First sign-in**, with two options now and a third with OS-405:
     - **Native Google** with `@react-native-google-signin/google-signin` (Android Credential Manager: one-tap account sheet). The app sends the ID token to `POST /api/auth/google/mobile` and the backend applies the same linked-account-only rule.
     - **Password + TOTP.**
     - *Later:* **passkey** with `react-native-passkey`, the same one as the PWA, thanks to the `assetlinks.json` published on the instance's URL.
@@ -355,7 +359,7 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
   - **Strong biometrics by default** (class 3). On many Samsung phones face recognition is weak (class 1/2) and cannot release keys, so the fingerprint is used there. A setting allows weak biometrics only as an app lock.
   - If the enrolled fingerprints change, there are several failures or the token expires, Google or the password is required again.
   - Setup: an Android OAuth client in Google Cloud with the package name and the SHA-1 fingerprints of the EAS and Play Store certificates.
-  - Self-hosted: on first launch the app asks for the instance URL (your `*.vercel.app` or your own server), so one published app works with any instance.
+  - Self-hosted: on first launch the app asks for the instance URL (`https://api.zankup.com`, your own domain or your `*.up.railway.app`), so one published app works with any instance.
   - *Done when:* on your S26 you sign in the first time with Google and afterwards open the app with just your fingerprint, and an unlinked Google account is rejected.
 - **OS-504 · Feed, "Your week" header and detail** (L) · depends on OS-503
   - Parity with the PWA using the `packages/core` hooks. FlashList, native MapLibre and Skia charts.
@@ -433,13 +437,6 @@ It can start as soon as M3 is done (it needs the metrics), in parallel with phas
 
 Not planned in any phase. Each one comes back when its reason to wait goes away.
 
-- **OS-D06 · Choose the production domain** (S)
-  - Waits until there is a reason for a brand or a hosted version. Each instance uses its `*.vercel.app` URL meanwhile.
-  - Would be needed by: passkeys shared with the Android app under a single domain, a custom sender in Resend and nicer Google OAuth URLs.
-- **OS-405 · Passkeys (WebAuthn)** (M) · depends on OS-110
-  - Passkey registration and sign-in on the PWA (verified with the device's fingerprint or face recognition), synced by the password manager (Google or iCloud). Managed in Profile → Sign-in methods.
-  - The relying party ID is the instance's URL, which must stay stable (changing it invalidates every passkey). A stable `*.vercel.app` subdomain works, and `/.well-known/assetlinks.json` would let **the same passkey work in the Android app** (OS-503).
-  - Waits because Google sign-in and the fingerprint in the app already cover convenient access.
 - **Route builder and sending routes to the watch** (L)
   - Draw a route on the map with elevation and surface, save it and export it as GPX or FIT course. Sending it straight to the watch depends on whether the Garmin Personal API accepts uploads; to be checked.
 - **Structured workouts and training plans** (L)

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Actions are pinned to commit SHAs (supply chain); the comment shows the release.
+jobs:
+  backend:
+    name: Backend (Python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: '0.13.5'
+          enable-cache: true
+      - name: Install
+        run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check --output-format=github
+      - name: Format
+        run: uv run ruff format --check
+      - name: Type check
+        run: uv run mypy
+      - name: Test
+        run: uv run pytest -W error
+      - name: Docker build
+        run: docker build -f backend/Dockerfile -t opensport-api:ci .
+
+  web:
+    name: Web (TypeScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: Enable pnpm (version from package.json)
+        run: corepack enable pnpm
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Format
+        run: pnpm format:check
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build

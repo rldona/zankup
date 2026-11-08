@@ -1925,6 +1925,18 @@
             ],
             "title": "Windows",
             "description": "How many date windows the run covers"
+          },
+          "no_fit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "No Fit",
+            "description": "Skipped: no FIT original (manual, or GPX/TCX uploads)"
           }
         },
         "type": "object",

@@ -82,6 +82,7 @@ flowchart TB
 **How the `api` service is configured (production):**
 - **Deploys** from `main` through a GitHub deployment trigger with "wait for CI": a commit deploys only after its checks pass. The Railway GitHub app needs access to the repository for that trigger.
 - **Build:** `backend/Dockerfile` (path set on the service). **Pre-deploy:** `alembic -c backend/alembic.ini upgrade head`, so a failing migration stops the deploy and the running version stays up. **Health check:** `/api/health`, which also reports the database and the applied migration (`schema_revision`).
+- **Background jobs** (OS-115) run in a worker thread inside the API process, on a `jobs` table claimed with `FOR UPDATE SKIP LOCKED`. Not a separate service because a Railway volume attaches to one service only, and the worker needs the original FIT files on `/data`. `RUN_WORKER=false` turns it off; `python -m opensport.jobs.worker` runs it on its own (self-hosting on one machine, or a future setup with object storage).
 - **Railway treats `railway.json` (config as code) as deprecated** and does not apply every field from it: the pre-deploy command in the file was ignored until it was set on the service itself through the API. The service settings are the source of truth; `railway.json` stays only as documentation of them and must be kept in sync by hand. The self-hosting kit (OS-224) will set these settings by script.
 
 **Why Railway?** It deploys straight from git, offers Postgres, volumes and cron in the same project, and costs about $5/month for this usage.

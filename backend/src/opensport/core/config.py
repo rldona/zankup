@@ -23,6 +23,8 @@ class Settings(BaseSettings):
         default=None, description="Defaults to json in production and console elsewhere"
     )
 
+    run_worker: bool = Field(default=True, description="Run the job worker inside the API process")
+
     database_url: str = "postgresql://opensport:opensport@127.0.0.1:5432/opensport"
     data_dir: Path = Path("data")
 

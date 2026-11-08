@@ -55,7 +55,7 @@ These are owner decisions, tracked as issues with the `decision` label.
   - MIT for `packages/metrics`, AGPL-3.0 for the rest of the repository, public repository (see "Product model" above). Applied in OS-001.
   - *Done when:* `LICENSE` (AGPL-3.0) is at the root, `packages/metrics/LICENSE` (MIT) is in place and the repository is public.
 - **OS-D08 · Create the service accounts for your own instance** (S)
-  - Railway, Vercel, Resend, Google Cloud, Anthropic (optional) and Sentry. Expected cost at the start: about $5–10/month. The same list becomes the self-hosting guide (OS-224).
+  - Railway, Vercel, Resend, Google Cloud and Anthropic (optional). Expected cost at the start: about $5–10/month. The same list becomes the self-hosting guide (OS-224).
   - *Done when:* every account exists and its keys are stored only in Railway's variables and the local `.env`.
 
 The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.vercel.app` URL is enough for now.
@@ -135,7 +135,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
 - **OS-113 · Initial Garmin history load** (S) · depends on OS-108
   - `sync --since YYYY-MM-DD` command, with pauses, to bring in everything on Garmin Connect.
 - **OS-114 · Observability and backups** (S) · depends on OS-005
-  - Error tracking (Sentry or similar), an alert if sync fails 3 times in a row, daily backups of Postgres and the volume.
+  - Structured logs in Railway, an email alert (Resend) if sync fails 3 times in a row, and daily backups of Postgres and the volume. Error tracking with Sentry is in the backlog.
   - *Done when:* a backup has been restored into a fresh database and volume and the app works with it (restore tested, not just backup).
 - **OS-115 · Job queue and worker** (M) · depends on OS-102
   - `jobs` table in Postgres (with `SKIP LOCKED`), retries with backoff and a worker that is the same container started in worker mode on Railway. Sync and ingestion become jobs.
@@ -234,7 +234,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - *Done when:* the anonymised strength fixture shows the same sets, reps and weights as Garmin Connect.
 - **OS-224 · Self-hosting kit** (M) · depends on OS-005, OS-006 and OS-009
   - A production `docker compose` (API, worker, Postgres, volume and the built PWA behind one origin) for your own server, and a **"Deploy on Railway" template** plus Vercel instructions for the cloud path.
-  - `docs/self-hosting.md`, step by step and in English: getting your own Garmin Personal API key, creating the Google OAuth client (OS-220), Resend, Sentry, and later the Google Health client (OS-603) and the optional Anthropic key (OS-701). Every variable in `.env.example` is explained there.
+  - `docs/self-hosting.md`, step by step and in English: getting your own Garmin Personal API key, creating the Google OAuth client (OS-220), Resend, and later the Google Health client (OS-603) and the optional Anthropic key (OS-701). Every variable in `.env.example` is explained there.
   - Updates: how to upgrade an instance (migrations run on start) and how to back it up and restore it (OS-114).
   - *Done when:* someone other than you deploys a working instance from the guide alone, without help, in under an hour.
 
@@ -446,6 +446,8 @@ Not planned in any phase. Each one comes back when its reason to wait goes away.
   - Interval workouts by pace, HR or power, and multi-week plans built on the engine's estimates. Same open question about sending them to the watch.
 - **3D route view** (M)
   - MapLibre with terrain elevation for the activity and replay (OS-414).
+- **Error tracking with Sentry** (S)
+  - Backend (FastAPI) and web (React) SDKs with data scrubbing and no IP addresses, in its own Sentry organisation (EU region). Comes back when structured logs and the sync-failure alert (OS-114) are no longer enough, for example once other people run their own instances.
 - **Brand: name and logo** (#116)
   - OpenSport is the working name; the current mountain mark stays.
 

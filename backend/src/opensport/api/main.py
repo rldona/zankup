@@ -34,7 +34,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "OpenSport API starting",
             extra={"version": __version__, "environment": settings.environment, **settings.integrations()},
         )
+        worker = None
+        if settings.run_worker:
+            from opensport.jobs.worker import build_worker
+
+            worker = build_worker()
+            worker.start_thread()  # a thread with its own DB connections: requests never wait for jobs
         yield
+        if worker is not None:
+            worker.stop()
 
     app = FastAPI(
         title="OpenSport API",

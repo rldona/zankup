@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "OpenSport PoC",
+    "slug": "opensport-poc",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "dev.opensport.poc",
+      "usesCleartextTraffic": true
+    },
+    "plugins": [
+      "@maplibre/maplibre-react-native",
+      "expo-secure-store"
+    ]
+  }
+}

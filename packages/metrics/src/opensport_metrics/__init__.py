@@ -1,3 +1,23 @@
-"""opensport-metrics: open, documented training metrics. Algorithms arrive in phase 3 of the roadmap."""
+"""opensport-metrics: open, documented training metrics.
+
+Every function works on plain sequences in SI units (seconds, metres, m/s) and documents its method.
+"""
+
+from opensport_metrics.efforts import RUN_DISTANCES, BestEffort, best_effort, best_efforts
+from opensport_metrics.moving import moving_time
+from opensport_metrics.smoothing import pace_s_per_km, rolling_mean
+from opensport_metrics.splits import Split, splits
 
 __version__ = "0.1.0"
+
+__all__ = [
+    "RUN_DISTANCES",
+    "BestEffort",
+    "Split",
+    "best_effort",
+    "best_efforts",
+    "moving_time",
+    "pace_s_per_km",
+    "rolling_mean",
+    "splits",
+]

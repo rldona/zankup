@@ -400,6 +400,122 @@
         }
       }
     },
+    "/api/sync": {
+      "post": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Start Sync",
+        "description": "Sync Garmin now. Returns the new run, or the one already queued or running.",
+        "operationId": "startSync",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatus"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Garmin is not configured on this instance"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "List Syncs",
+        "description": "Latest runs, newest first: when the last sync happened and how it went.",
+        "operationId": "listSyncs",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SyncStatus"
+                  },
+                  "title": "Response Listsyncs"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sync/{run_id}": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Get Sync",
+        "description": "One run and its progress. Poll it every couple of seconds while it is queued or running.",
+        "operationId": "getSync",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health",
@@ -1500,6 +1616,142 @@
           "sample_count"
         ],
         "title": "StreamsInfo"
+      },
+      "SyncProgress": {
+        "properties": {
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since",
+            "description": "First day asked to the source (YYYY-MM-DD)"
+          },
+          "listed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listed",
+            "description": "Activities the source returned"
+          },
+          "new": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New",
+            "description": "Of those, not imported yet"
+          },
+          "downloaded": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downloaded",
+            "description": "Original files downloaded so far"
+          }
+        },
+        "type": "object",
+        "title": "SyncProgress"
+      },
+      "SyncStatus": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "cron",
+              "button",
+              "initial",
+              "import"
+            ],
+            "title": "Trigger"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "success",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "new_count": {
+            "type": "integer",
+            "title": "New Count",
+            "description": "New activities found and queued for import"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/SyncProgress"
+          },
+          "pending_imports": {
+            "type": "integer",
+            "title": "Pending Imports",
+            "description": "Activities downloaded but not imported yet (all runs)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "trigger",
+          "status",
+          "started_at",
+          "finished_at",
+          "new_count",
+          "progress",
+          "pending_imports",
+          "error"
+        ],
+        "title": "SyncStatus"
       },
       "TotpRequest": {
         "properties": {

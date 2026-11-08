@@ -4,6 +4,7 @@ Every variable is documented in .env.example. Secrets are `SecretStr`, so they n
 reprs or error messages; read them with `.get_secret_value()` only where they are used.
 """
 
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -35,6 +36,9 @@ class Settings(BaseSettings):
     data_dir: Path = Path("data")
 
     garmin_personal_api_key: SecretStr | None = None
+    garmin_key_expires_on: date | None = Field(
+        None, description="When the Personal API key expires (shown in Settings, warned two weeks before)"
+    )
     jwt_secret: SecretStr | None = None
     resend_api_key: SecretStr | None = None
     alert_email: str | None = Field(default=None, description="Where sync failure alerts go (OS-114)")

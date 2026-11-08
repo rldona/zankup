@@ -68,6 +68,15 @@ describe('i18n', () => {
   it('fills placeholders', () => {
     expect(message('es', 'api.connected', { version: '0.1.0' })).toBe('API conectada · v0.1.0');
   });
+
+  it('picks plural forms per language', () => {
+    const totals = (locale: 'en' | 'es', count: number) =>
+      message(locale, 'feed.monthTotals', { count, distance: '1.234', unit: 'km', time: '1 h' });
+    expect(totals('en', 1)).toBe('1 activity · 1.234 km · 1 h');
+    expect(totals('en', 1200)).toBe('1,200 activities · 1.234 km · 1 h');
+    expect(totals('es', 1)).toBe('1 actividad · 1.234 km · 1 h');
+    expect(totals('es', 3)).toBe('3 actividades · 1.234 km · 1 h');
+  });
 });
 
 describe('tokens', () => {

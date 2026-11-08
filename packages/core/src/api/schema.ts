@@ -98,6 +98,50 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
+    /**
+     * Update Me
+     * @description Edit the profile (OS-218): name, location, date of birth, sex, weight and height.
+     */
+    patch: operations['updateMe'];
+    trace?: never;
+  };
+  '/api/auth/devices': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Devices
+     * @description Open sessions: every browser and app signed in, the current one marked.
+     */
+    get: operations['listDevices'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/devices/{device_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete Device
+     * @description Sign a session out from elsewhere. Signing out this one is POST /logout.
+     */
+    delete: operations['deleteDevice'];
+    options?: never;
+    head?: never;
     patch?: never;
     trace?: never;
   };
@@ -434,6 +478,43 @@ export interface paths {
     patch: operations['updateSettings'];
     trace?: never;
   };
+  '/api/profile/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Profile Summary */
+    get: operations['getProfileSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/sources': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Sources
+     * @description Data sources and their state, for Settings and the profile's Account tab.
+     */
+    get: operations['listSources'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -710,6 +791,29 @@ export interface components {
       /** Challenge */
       challenge: string;
     };
+    /** DeviceOut */
+    DeviceOut: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /** Platform */
+      platform: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Last Seen */
+      last_seen: string | null;
+      /** Expires At */
+      expires_at: string | null;
+      /**
+       * Current
+       * @description The session making this request
+       */
+      current: boolean;
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -770,6 +874,16 @@ export interface components {
       display_name: string | null;
       /** Totp Enabled */
       totp_enabled: boolean;
+      /** Location */
+      location?: string | null;
+      /** Birth Date */
+      birth_date?: string | null;
+      /** Sex */
+      sex?: ('female' | 'male' | 'other') | null;
+      /** Weight Kg */
+      weight_kg?: number | null;
+      /** Height Cm */
+      height_cm?: number | null;
     };
     /**
      * MonthTotals
@@ -831,9 +945,9 @@ export interface components {
       theme: 'system' | 'light' | 'dark' | 'oled' | 'highContrast' | 'forest' | 'ocean' | 'sunset';
       /**
        * Language
-       * @enum {string}
+       * @description Null until picked: clients use the device's language
        */
-      language: 'en' | 'es';
+      language: ('en' | 'es') | null;
       /**
        * Units
        * @enum {string}
@@ -857,7 +971,7 @@ export interface components {
     };
     /**
      * PreferencesUpdate
-     * @description Only the fields sent are changed. Send null for hr_max or hr_rest to clear them.
+     * @description Only the fields sent are changed. Null clears the language, hr_max or hr_rest.
      */
     PreferencesUpdate: {
       /** Theme */
@@ -870,6 +984,72 @@ export interface components {
       hr_max?: number | null;
       /** Hr Rest */
       hr_rest?: number | null;
+    };
+    /** ProfileSummary */
+    ProfileSummary: {
+      /** Year */
+      year: number;
+      /**
+       * This Year
+       * @description This calendar year, by sport, most active first
+       */
+      this_year: components['schemas']['SportTotals'][];
+      /** All Time */
+      all_time: components['schemas']['SportTotals'][];
+      /**
+       * Since
+       * @description Start of the first activity
+       */
+      since: string | null;
+      /**
+       * Records
+       * @description Best time ever at each running distance
+       */
+      records: components['schemas']['Record'][];
+      /**
+       * Streak Weeks
+       * @description Weeks in a row with an activity, up to this week or the last
+       */
+      streak_weeks: number;
+      /**
+       * Device
+       * @description The device of the latest activity
+       */
+      device: string | null;
+    };
+    /**
+     * ProfileUpdate
+     * @description Only the fields sent are changed; null clears one (except the name, which cannot be empty).
+     */
+    ProfileUpdate: {
+      /** Display Name */
+      display_name?: string | null;
+      /** Location */
+      location?: string | null;
+      /** Birth Date */
+      birth_date?: string | null;
+      /** Sex */
+      sex?: ('female' | 'male' | 'other') | null;
+      /** Weight Kg */
+      weight_kg?: number | null;
+      /** Height Cm */
+      height_cm?: number | null;
+    };
+    /** Record */
+    Record: {
+      /** Distance Key */
+      distance_key: string;
+      /** Distance M */
+      distance_m: number;
+      /** Time S */
+      time_s: number;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Date
+       * Format: date-time
+       */
+      date: string;
     };
     /** RefreshRequest */
     RefreshRequest: {
@@ -902,6 +1082,41 @@ export interface components {
       /** Open */
       open: boolean;
     };
+    /** SourceStatus */
+    SourceStatus: {
+      /**
+       * Kind
+       * @constant
+       */
+      kind: 'garmin';
+      /**
+       * Configured
+       * @description The key is set on the server
+       */
+      configured: boolean;
+      /**
+       * Key Expires On
+       * @description When the key expires, if the server was told
+       */
+      key_expires_on: string | null;
+      /**
+       * Expiring Soon
+       * @description Less than two weeks left
+       */
+      expiring_soon: boolean;
+      /**
+       * Token Expires At
+       * @description The current short-lived access token
+       */
+      token_expires_at: string | null;
+      /** Last Sync At */
+      last_sync_at: string | null;
+      /**
+       * Last Error
+       * @description The latest sync's error, if it failed
+       */
+      last_error: string | null;
+    };
     /** SplitOut */
     SplitOut: {
       /** Distance M */
@@ -912,6 +1127,19 @@ export interface components {
       elevation_change_m: number | null;
       /** Avg Hr */
       avg_hr: number | null;
+    };
+    /** SportTotals */
+    SportTotals: {
+      /** Sport */
+      sport: string;
+      /** Count */
+      count: number;
+      /** Distance M */
+      distance_m: number;
+      /** Moving S */
+      moving_s: number;
+      /** Ascent M */
+      ascent_m: number;
     };
     /** StreamsInfo */
     StreamsInfo: {
@@ -1234,6 +1462,88 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Me'];
+        };
+      };
+    };
+  };
+  updateMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProfileUpdate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Me'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listDevices: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeviceOut'][];
+        };
+      };
+    };
+  };
+  deleteDevice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        device_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
         };
       };
     };
@@ -1804,6 +2114,46 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getProfileSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProfileSummary'];
+        };
+      };
+    };
+  };
+  listSources: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SourceStatus'][];
         };
       };
     };

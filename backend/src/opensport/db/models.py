@@ -30,6 +30,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from opensport.db.base import Base, Timestamps
 
 SOURCES = ("garmin", "strava", "file")
+SOURCE_KINDS = ("garmin", "google_health", "strava", "file")
 PLATFORMS = ("web", "android")
 SYNC_TRIGGERS = ("cron", "button", "initial", "import")
 SYNC_STATUSES = ("running", "success", "error")
@@ -181,3 +182,25 @@ class SyncRun(Base):
     new_count: Mapped[int] = mapped_column(Integer, server_default="0")
     progress: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     error: Mapped[str | None] = mapped_column(Text)
+
+
+class Source(Timestamps, Base):
+    """A connected data source and its sync state.
+
+    `access_token` holds short-lived tokens only (Garmin's lasts 24 h). Long-lived credentials such as
+    OAuth refresh tokens (OS-603) must be stored encrypted.
+    """
+
+    __tablename__ = "sources"
+    __table_args__ = (
+        UniqueConstraint("user_id", "kind"),
+        CheckConstraint(_in("kind", SOURCE_KINDS), name="kind"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    kind: Mapped[str] = mapped_column(String(20))
+    access_token: Mapped[str | None] = mapped_column(Text)
+    token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    sync_cursor: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="Source-specific sync state")

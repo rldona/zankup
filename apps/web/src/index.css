@@ -35,3 +35,15 @@ body {
 .placeholder p {
   color: var(--muted);
 }
+
+.status {
+  font-size: 0.875rem;
+}
+
+.status-ok {
+  color: #1f9d55;
+}
+
+.status-down {
+  color: #d64545;
+}

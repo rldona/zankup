@@ -1,4 +1,12 @@
-"""Genera docs/prototypes/data.js a partir de data/activities/*.fit|json (datos reales)."""
+"""Build docs/prototypes/data.js from local real data (never committed).
+
+Inputs: data/activities/*.fit|json (backend/garmin_sync.py) and, if present, the Strava bulk export
+unzipped in strava/export_95859/. Labels inside the generated data stay in Spanish because the
+prototype UI is in Spanish; comments and console output are in English.
+
+Usage: python3 tools/build_proto_data.py <repo-root>
+Optional: PROTO_LOCATION="City, Region" to show a location on the prototype profile.
+"""
 import csv, glob, gzip, io, json, math, os, sys
 import xml.etree.ElementTree as ET
 from concurrent.futures import ProcessPoolExecutor
@@ -9,7 +17,7 @@ import fitdecode
 ROOT = sys.argv[1]
 OUT = os.path.join(ROOT, 'docs/prototypes/data.js')
 HR_MAX, HR_REST = 185, 50
-ZB = [0.5, 0.6, 0.7, 0.8, 0.9]  # límites inferiores Z1..Z5 en % FC máx
+ZB = [0.5, 0.6, 0.7, 0.8, 0.9]  # lower bounds of Z1..Z5 as % of max HR
 K = 180 / 2**31
 BEST = [(400, '400 m'), (805, '½ milla'), (1000, '1 km'), (1609, '1 milla'), (3219, '2 millas'), (5000, '5 km'), (10000, '10 km'), (21097, 'Media'), (42195, 'Maratón')]
 PDUR = [5, 15, 30, 60, 120, 300, 600, 1200, 1800, 3600]
@@ -74,7 +82,7 @@ def best_efforts(recs):
             while j < len(pts) and pts[j][1] - pts[i][1] < D: j += 1
             if j == len(pts): break
             best = min(best, pts[j][0] - pts[i][0])
-        if D / best > 6.0: continue   # más rápido que 2:47/km: error de GPS, se descarta
+        if D / best > 6.0: continue   # faster than 2:47/km: GPS error, discarded
         out.append(dict(d=D, label=lab, t=round(best)))
     return out
 
@@ -95,7 +103,7 @@ def simplify(pts, n):
     return [pts[int(i * step)] for i in range(n)] + [pts[-1]]
 
 def derived(recs, sp):
-    """Métricas y series a partir de los registros a 1 Hz (común a Garmin y Strava)."""
+    """Metrics and series from the 1 Hz records (shared by Garmin and Strava)."""
     t0 = recs[0]['t'] if recs else 0
     keep = simplify(recs, 600)
     gps = [r for r in recs if r['lat'] is not None]
@@ -121,7 +129,7 @@ for jp in sorted(glob.glob(os.path.join(ROOT, 'data/activities/*.json'))):
     if prof and meta.get('startTimeLocal', '') > LAST_PROFILE[0]: LAST_PROFILE[:] = [meta['startTimeLocal'], prof]
     OWNER.update(name=meta.get('ownerFullName'), display=meta.get('ownerDisplayName'))
     dur = meta.get('duration') or 0
-    if dur < 120: continue  # descartamos fragmentos de menos de 2 min
+    if dur < 120: continue  # skip fragments shorter than 2 min
     sp = sport_of(meta)
     der = derived(recs, sp)
     acts.append(dict(
@@ -133,7 +141,7 @@ for jp in sorted(glob.glob(os.path.join(ROOT, 'data/activities/*.json'))):
         location=meta.get('locationName'), avgpw=ses.get('ap') or meta.get('avgPower'), np=ses.get('np') or meta.get('normPower'),
         laps=laps, device=(meta.get('deviceName') or 'fēnix 6X Pro'), gmt=meta.get('startTimeGMT'), source='garmin', **der))
 
-# ---------- histórico de Strava (exportación masiva) ----------
+# ---------- Strava history (bulk export) ----------
 SDIR = os.path.join(ROOT, 'strava/export_95859')
 MES = {'ene':1,'feb':2,'mar':3,'abr':4,'may':5,'jun':6,'jul':7,'ago':8,'sept':9,'sep':9,'oct':10,'nov':11,'dic':12}
 S_SPORT = {'Carrera':'run', 'Bicicleta':'ride', 'Bicicleta virtual':'ride', 'Entrenamiento con pesas':'strength', 'Entrenamiento':'strength',
@@ -159,7 +167,7 @@ def fnum(el):
 def ptime(s): return datetime.fromisoformat(s.strip().replace('Z', '+00:00')).timestamp()
 
 def read_xml(raw, kind):
-    root = ET.fromstring(raw.lstrip()); recs = []   # los TCX de Strava traen espacios antes de la cabecera XML
+    root = ET.fromstring(raw.lstrip()); recs = []   # Strava's TCX files have whitespace before the XML declaration
     pts = [e for e in root.iter() if local(e.tag) == ('Trackpoint' if kind == 'tcx' else 'trkpt')]
     for e in pts:
         tm = child(e, 'Time' if kind == 'tcx' else 'time')
@@ -176,7 +184,7 @@ def read_xml(raw, kind):
             pw, v = fnum(child(e, 'power')) or fnum(child(e, 'PowerInWatts')), None
         recs.append(dict(t=ptime(tm.text), d=d, lat=la, lon=lo, ele=ele, hr=int(hr) if hr else None, cad=cad, v=v, pw=pw))
     recs.sort(key=lambda r: r['t'])
-    if recs and all(r['d'] is None for r in recs):   # GPX: distancia acumulada por haversine
+    if recs and all(r['d'] is None for r in recs):   # GPX: cumulative distance with haversine
         acc, prev = 0.0, None
         for r in recs:
             if r['lat'] is not None and prev is not None: acc += hav((prev['lat'], prev['lon']), (r['lat'], r['lon']))
@@ -185,7 +193,7 @@ def read_xml(raw, kind):
     return recs
 
 def strava_one(row):
-    """Se ejecuta en un proceso aparte: lee el fichero de una actividad y calcula sus métricas."""
+    """Runs in a worker process: reads one activity file and computes its metrics."""
     sp, fn = row['sport'], row['file']
     recs, laps, ses = [], [], {}
     if fn:
@@ -199,7 +207,7 @@ def strava_one(row):
         except Exception as e:
             row['error'] = f'{type(e).__name__}: {e}'[:120]
     row.update(laps=laps if len(laps) > 1 else [], **derived(recs, sp))
-    if '.gpx' in (fn or ''): row['best'] = []   # GPX: distancia calculada con GPS, demasiado ruidosa para récords
+    if '.gpx' in (fn or ''): row['best'] = []   # GPX: GPS-computed distance, too noisy for records
     if ses.get('np'): row['np'] = ses['np']
     return row
 
@@ -240,26 +248,26 @@ for s in strava_rows:
     ts = datetime.fromisoformat(s['gmt']).timestamp()
     i = bisect.bisect_left(g_keys, ts - 120)
     match = next((a for k, a in g_by_time[i:i+3] if abs(k - ts) <= 120), None)
-    if match:   # misma actividad: gana el FIT de Garmin y se conservan los datos que pone el usuario en Strava
+    if match:   # same activity: Garmin's FIT wins, and what the user entered on Strava is kept
         match.update(name=s['name'] or match['name'], description=s['description'], gear=s['gear'], strava_re=s['strava_re'],
                      gap_dist=s['gap_dist'], weather=s['weather'], strava_id=s['strava_id'], source='garmin+strava')
         merged += 1
     else:
         todo.append(s)
 t_start = datetime.now()
-import multiprocessing  # 'fork': el script no tiene __main__ y en Python 3.14 el método por defecto es forkserver
+import multiprocessing  # 'fork': the script has no __main__ guard and Python 3.14 defaults to forkserver
 with ProcessPoolExecutor(mp_context=multiprocessing.get_context('fork')) as ex:
     parsed = list(ex.map(strava_one, todo, chunksize=8))
 errors = [p for p in parsed if p.get('error')]
 for p in parsed: p.pop('file', None)
 acts.extend(parsed)
-print(f'Strava: {len(strava_rows)} filas, {merged} fusionadas con Garmin, {len(parsed)} añadidas, {len(errors)} con error de lectura, {(datetime.now()-t_start).seconds} s')
+print(f'Strava: {len(strava_rows)} rows, {merged} merged with Garmin, {len(parsed)} added, {len(errors)} read errors, {(datetime.now()-t_start).seconds} s')
 for e in errors[:5]: print('   ', e['id'], e['type'], e['error'])
 acts.sort(key=lambda a: a['start'], reverse=True)
 for a in acts[80:]:
     a['streams'] = None
 
-# Forma (CTL 42 d), fatiga (ATL 7 d) y frescura (TSB) por día
+# Fitness (CTL 42 d), fatigue (ATL 7 d) and form (TSB) per day
 byday = {}
 for a in acts:
     d = a['start'][:10]; byday[d] = byday.get(d, 0) + a['trimp']
@@ -274,7 +282,7 @@ while d <= d1:
     daily.append(dict(date=d.isoformat(), trimp=tr, ctl=round(ctl, 1), atl=round(atl, 1), tsb=round(tsb, 1)))
     d += timedelta(days=1)
 
-# Récords personales (mejor marca entre todas las carreras)
+# Personal records (best mark across every run)
 prs = {}
 for a in acts:
     for b in a['best']:
@@ -286,12 +294,12 @@ for a in acts:
         if p['s'] not in pcurve or p['w'] > pcurve[p['s']]['w']:
             pcurve[p['s']] = dict(**p, id=a['id'])
 
-# ---------- racha, totales, estimaciones, estado diario ----------
+# ---------- streak, totals, estimates, daily status ----------
 TODAY = date(2026, 11, 7)
 def monday(d): return d - timedelta(days=d.weekday())
 weeks_active = {monday(date.fromisoformat(a['start'][:10])) for a in acts}
 streak, w = 0, monday(TODAY)
-if w not in weeks_active: w -= timedelta(days=7)   # la semana en curso aún puede llenarse
+if w not in weeks_active: w -= timedelta(days=7)   # the current week can still fill up
 while w in weeks_active: streak += 1; w -= timedelta(days=7)
 
 def totals(lst):
@@ -307,7 +315,7 @@ def vdot(dist_m, t_s):
     vo2 = -4.60 + 0.182258 * v + 0.000104 * v * v
     pct = 0.8 + 0.1894393 * math.exp(-0.012778 * tm) + 0.2989558 * math.exp(-0.1932605 * tm)
     return vo2 / pct
-def pace_at(vd, frac):   # velocidad (m/s) a una fracción del VO2max
+def pace_at(vd, frac):   # speed (m/s) at a fraction of VO2max
     target = vd * frac; a, b, c = 0.000104, 0.182258, -4.60 - target
     return (-b + math.sqrt(b*b - 4*a*c)) / (2*a) / 60
 recent = [a for a in acts if date.fromisoformat(a['start'][:10]) >= TODAY - timedelta(days=90)]
@@ -330,7 +338,7 @@ last28 = [dict(date=x['date'], st=status(x['tsb']), trimp=x['trimp']) for x in d
 wk_now = sum(x['trimp'] for x in daily if date.fromisoformat(x['date']) >= monday(TODAY))
 wk_avg = sum(x['trimp'] for x in daily[-35:-7]) / 4 if len(daily) > 35 else 0
 prof = LAST_PROFILE[1]
-profile = dict(name=OWNER.get('name'), display=OWNER.get('display'), location='',
+profile = dict(name=OWNER.get('name'), display=OWNER.get('display'), location=os.environ.get('PROTO_LOCATION', ''),
                since=min(a['start'] for a in acts)[:10], device='Garmin fēnix 6X Pro',
                weight=prof.get('weight'), height=prof.get('height'), gender=prof.get('gender'),
                streak=streak, year=totals(year), all=totals(acts), n_all=len(acts), n_year=len(year),
@@ -355,7 +363,7 @@ os.makedirs(os.path.dirname(OUT), exist_ok=True)
 with open(OUT, 'w') as f:
     f.write('window.OS_DATA = ' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n')
 from collections import Counter
-print(len(acts), 'actividades', Counter(a['sport'] for a in acts), os.path.getsize(OUT) // 1024, 'KB')
+print(len(acts), 'activities', Counter(a['sport'] for a in acts), os.path.getsize(OUT) // 1024, 'KB')
 print('PRs', [(p['label'], p['t']) for p in prs.values()])
 print('pcurve', [(p['s'], p['w']) for p in pcurve.values()])
 print('daily last', daily[-1])

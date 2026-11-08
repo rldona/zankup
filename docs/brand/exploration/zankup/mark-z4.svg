@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-label="Zankup">
+  <!-- Z4: Z walked bottom-up; the last stroke turns back and up (zank-up / back-up). Original design. -->
+  <path d="M100 76 H24 L96 28 H44" fill="none" stroke="#000" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <polygon points="20,28 40,14 40,42" fill="#000" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+</svg>

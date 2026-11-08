@@ -1,0 +1,37 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>F1 · flecha</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display&display=swap">
+<style>
+body{margin:0;font:14px system-ui;background:#f4f5f3;color:#111;padding:20px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.opt{background:#fff;border-radius:16px;padding:14px;display:grid;gap:10px;justify-items:center}
+.opt h2{margin:0;font-size:13px}.big{width:248px;height:180px;color:#111}
+.pair{display:flex;gap:8px}.ico{width:60px;height:60px;border-radius:15px;display:grid;place-items:center}.ico svg{width:42px;height:42px}
+.dark{background:#111;color:#fff}.light{background:#fff;color:#111;border:3px solid #111}.green{background:#0b8f6a;color:#fff}
+.tiny{display:flex;gap:10px;align-items:center}.tiny svg{width:16px;height:16px}.tiny .s24 svg{width:24px;height:24px}.tiny .s32 svg{width:32px;height:32px}
+.word{display:flex;align-items:center;gap:10px;font-size:28px;font-family:"Momo Trust Display"}.word svg{width:48px;height:36px}
+</style>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="a" viewBox="0 0 124 90">
+    <path d="M90 76 H24 L96 28 H44" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="105" cy="76" r="9.5" fill="none" stroke="currentColor" stroke-width="8"/>
+    <polygon points="20,28 40,14 40,42" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></symbol>
+  <symbol id="b" viewBox="0 0 124 90">
+    <path d="M90 76 H24 L96 28 H42" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="105" cy="76" r="9.5" fill="none" stroke="currentColor" stroke-width="8"/>
+    <polygon points="17.5,28 38,14 38,42" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></symbol>
+  <symbol id="c" viewBox="0 0 124 90">
+    <path d="M90 76 H24 L96 28 H40" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="105" cy="76" r="9.5" fill="none" stroke="currentColor" stroke-width="8"/>
+    <polygon points="14,28 35,14 35,42" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></symbol>
+</defs></svg>
+<div class="row">
+  <div class="opt"><h2>Actual · punta en x=20</h2><svg class="big" viewBox="0 0 124 90"><use href="#a"/><line x1="17.5" y1="4" x2="17.5" y2="88" stroke="#e8590c" stroke-width=".8" stroke-dasharray="2 2"/></svg></div>
+  <div class="opt"><h2>Ajustada · punta en el borde del vértice (x=17,5)</h2><svg class="big" viewBox="0 0 124 90"><use href="#b"/><line x1="17.5" y1="4" x2="17.5" y2="88" stroke="#e8590c" stroke-width=".8" stroke-dasharray="2 2"/></svg></div>
+  <div class="opt"><h2>Más adelantada · punta en x=14</h2><svg class="big" viewBox="0 0 124 90"><use href="#c"/><line x1="17.5" y1="4" x2="17.5" y2="88" stroke="#e8590c" stroke-width=".8" stroke-dasharray="2 2"/></svg></div>
+</div>
+<script>
+document.querySelectorAll('.opt').forEach(o => {
+  const id = o.querySelector('use').getAttribute('href'); const s = `<svg><use href="${id}"/></svg>`;
+  o.insertAdjacentHTML('beforeend', `<div class="pair"><div class="ico dark">${s}</div><div class="ico light">${s}</div><div class="ico green">${s}</div></div><div class="word">${s}Zankup</div><div class="tiny">${s}<span class="s24">${s}</span><span class="s32">${s}</span></div>`);
+});
+</script></html>

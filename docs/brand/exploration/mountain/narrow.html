@@ -1,0 +1,29 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>OpenSport · R3 estrechada</title>
+<style>
+body{margin:0;font:14px system-ui;background:#f4f5f3;color:#111;padding:24px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.opt{background:#fff;border-radius:16px;padding:18px;display:grid;gap:14px;justify-items:center}
+.opt h2{margin:0;font-size:14px}.big{width:240px;height:180px}
+.pair{display:flex;gap:10px}.ico{width:64px;height:64px;border-radius:16px;display:grid;place-items:center}.ico svg{width:46px;height:46px}
+.dark{background:#111;color:#fff}.light{background:#fff;color:#111;border:3px solid #111}.green{background:#0b8f6a;color:#fff}
+.word{display:flex;align-items:center;gap:8px;font-weight:750;font-size:20px}.word svg{width:36px;height:28px}
+</style>
+<div class="row" id="row"></div>
+<script>
+// R3: trazo de 9 con uniones redondas en las cumbres y flecha suavizada. "s" estrecha en horizontal alrededor del centro (x = 60)
+const BASE = {peaks: [[[10,80],[30,49],[50,80]], [[70,80],[90,49],[110,80]], [[26,80],[60,15],[94,80]]],
+  trail: [[47,86],[64,66],[50,57],[58,49]], arrow: [[65.7,33.8],[51.9,44.7],[65.1,51.3]]};
+const sx = (pts, s) => pts.map(([x, y]) => [+(60 + (x - 60) * s).toFixed(1), y]);
+const V = [['R3 · tal cual', 1], ['N1 · un poco más estrecha', 0.86], ['N2 · más estrecha', 0.76]];
+let n = 0;
+const svgFor = s => { n++; const id = 'm' + n;
+  const peaks = BASE.peaks.map(p => `<polygon points="${sx(p, s).join(' ')}"/>`).join('');
+  const tr = sx(BASE.trail, s).map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join(' ');
+  return `<svg viewBox="0 0 120 90"><defs><mask id="${id}"><rect width="120" height="90" fill="#fff"/>
+    <path d="${tr}" fill="none" stroke="#000" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <polygon points="${sx(BASE.arrow, s).join(' ')}" fill="#000" stroke="#000" stroke-width="3" stroke-linejoin="round"/></mask></defs>
+    <g mask="url(#${id})" fill="currentColor" stroke="currentColor" stroke-width="9" stroke-linejoin="round">${peaks}</g></svg>`; };
+document.getElementById('row').innerHTML = V.map(([t, s]) => `<div class="opt"><h2>${t}</h2>${svgFor(s).replace('<svg', '<svg class="big"')}
+  <div class="pair"><div class="ico dark">${svgFor(s)}</div><div class="ico light">${svgFor(s)}</div><div class="ico green">${svgFor(s)}</div></div>
+  <div class="word">${svgFor(s)}OpenSport</div></div>`).join('');
+</script>

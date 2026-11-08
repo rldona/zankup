@@ -53,6 +53,14 @@ class User(Timestamps, Base):
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     email: Mapped[str] = mapped_column(String(320), unique=True)
     display_name: Mapped[str | None] = mapped_column(String(120))
+    password_hash: Mapped[str | None] = mapped_column(String(255), comment="Argon2id")
+    totp_secret_enc: Mapped[str | None] = mapped_column(
+        Text, comment="Encrypted with a key derived from JWT_SECRET"
+    )
+    totp_enabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    totp_last_counter: Mapped[int | None] = mapped_column(
+        BigInteger, comment="Last accepted step: no replays"
+    )
 
 
 class UserSettings(Timestamps, Base):
@@ -77,7 +85,11 @@ class UserSettings(Timestamps, Base):
 
 
 class Device(Timestamps, Base):
-    """A signed-in client (browser or Android app) with its push endpoint. Revocable from Settings."""
+    """A signed-in client (browser or Android app): its session and its push endpoint.
+
+    The browser keeps an opaque session token in an httpOnly cookie and the app a refresh token; only
+    their SHA-256 is stored here. Deleting the row signs that client out (revocable from Settings).
+    """
 
     __tablename__ = "devices"
     __table_args__ = (CheckConstraint(_in("platform", PLATFORMS), name="platform"),)
@@ -89,6 +101,7 @@ class Device(Timestamps, Base):
     push_endpoint: Mapped[str | None] = mapped_column(Text)
     refresh_token_hash: Mapped[str | None] = mapped_column(String(128), unique=True)
     last_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Activity(Timestamps, Base):

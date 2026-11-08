@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import Engine
 
 from opensport import __version__
+from opensport.auth.routes import router as auth_router
 from opensport.core.config import Settings, get_settings
 from opensport.core.logging import configure_logging
 from opensport.db.session import database_status, get_engine
@@ -52,10 +53,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title="OpenSport API",
         version=__version__,
-        docs_url="/api/docs",
-        openapi_url="/api/openapi.json",
+        # Interactive docs only outside production: in production nothing but sign-in is public.
+        docs_url=None if settings.is_production else "/api/docs",
+        openapi_url=None if settings.is_production else "/api/openapi.json",
         lifespan=lifespan,
     )
+    app.include_router(auth_router)
 
     @app.get("/api/health", operation_id="getHealth")
     def health(engine: Annotated[Engine, Depends(get_engine)]) -> Health:

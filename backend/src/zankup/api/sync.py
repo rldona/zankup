@@ -31,6 +31,7 @@ class SyncProgress(BaseModel):
     downloaded: int | None = Field(None, description="Original files downloaded so far")
     window: int | None = Field(None, description="Date window being listed (long loads go window by window)")
     windows: int | None = Field(None, description="How many date windows the run covers")
+    no_fit: int | None = Field(None, description="Skipped: no FIT original (manual, or GPX/TCX uploads)")
 
 
 class SyncStatus(BaseModel):

@@ -231,3 +231,26 @@ def test_cli_loads_history_and_imports(
     assert count(sessions, Activity) == 3
     with sessions() as session:
         assert session.scalars(select(SyncRun.trigger)).one() == "initial"
+
+
+def test_activities_without_a_fit_are_skipped_and_remembered(
+    sessions: sessionmaker[Session], garmin_api: respx.Router, tmp_path: Path
+) -> None:
+    manual = PAGE[0]["activityId"]
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:  # what Garmin serves for a GPX upload from another app
+        archive.writestr(f"{manual}.gpx", "<gpx/>")
+    no_fit = garmin_api.get(BASE_URL + DOWNLOAD_PATH.format(id=manual)).mock(
+        return_value=httpx.Response(200, content=buffer.getvalue())
+    )
+    user_id, store, garmin = setup(sessions, tmp_path)
+    result = run_sync(sessions, store, garmin, user_id=user_id, since=date(2020, 1, 1), sleep=lambda _: None)
+    assert (result.listed, result.queued, result.no_fit, result.skipped) == (3, 2, 1, 0)
+    with sessions() as session:
+        run = session.get_one(SyncRun, result.run_id)
+        assert run.status == "success" and run.progress["no_fit"] == 1
+        assert session.scalar(select(Source.sync_cursor)) == {"no_fit": [str(manual)]}
+
+    again = run_sync(sessions, store, garmin, user_id=user_id, since=date(2020, 1, 1), sleep=lambda _: None)
+    assert (again.queued, again.no_fit, again.skipped) == (0, 0, 3)
+    assert no_fit.call_count == 1  # not downloaded again

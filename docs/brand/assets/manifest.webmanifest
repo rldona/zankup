@@ -1,7 +1,7 @@
 {
   "name": "Zankup",
   "short_name": "Zankup",
-  "description": "Your sports data, on another level.",
+  "description": "Your sports data, from start to finish.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111111",

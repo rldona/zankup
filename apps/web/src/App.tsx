@@ -1,9 +1,10 @@
-import { message, resolveLocale } from '@opensport/core';
+import { markMaskUrl, message, resolveLocale } from '@opensport/core';
 
 import { useApiHealth } from './useApiHealth';
 
 // Placeholder until the app skeleton (OS-201). The language follows the browser until Settings exists (OS-223).
 const locale = resolveLocale(navigator.languages);
+const mask = markMaskUrl();
 
 export function App() {
   const health = useApiHealth();
@@ -16,7 +17,10 @@ export function App() {
 
   return (
     <main className="placeholder" lang={locale}>
-      <h1>{message(locale, 'app.name')}</h1>
+      <h1 className="lockup">
+        <span className="mark" aria-hidden="true" style={{ maskImage: mask, WebkitMaskImage: mask }} />
+        <span className="wordmark">{message(locale, 'app.name')}</span>
+      </h1>
       <p>{message(locale, 'app.claim')}</p>
       <p className={`status status-${health.state}`} role="status">
         {status}

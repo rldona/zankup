@@ -8,6 +8,7 @@ dependencies = ["opensport", "opensport-metrics"]
 
 [dependency-groups]
 dev = [
+  "fitdecode>=0.10",
   "httpx2>=0.1",
   "mypy>=1.15",
   "pre-commit>=4.2",
@@ -30,20 +31,26 @@ opensport-metrics = { workspace = true }
 [tool.ruff]
 line-length = 110
 target-version = "py312"
-extend-exclude = ["docs", "tools", "apps", "node_modules"]
+extend-exclude = ["docs", "tools/build_proto_data.py", "apps", "node_modules"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["opensport", "opensport_metrics"]
+known-first-party = ["opensport", "opensport_metrics", "anonymise_fit", "anonymise_track", "check_fixtures"]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["backend/src", "packages/metrics/src"]
+files = ["backend/src", "packages/metrics/src", "tools/anonymise_fit.py", "tools/anonymise_track.py", "tools/check_fixtures.py"]
+mypy_path = "tools"
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+module = ["fitdecode", "fitdecode.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
-testpaths = ["backend/tests", "packages/metrics/tests"]
+testpaths = ["backend/tests", "packages/metrics/tests", "tools/tests"]
+pythonpath = ["tools"]
 addopts = "-q --import-mode=importlib"

@@ -19,6 +19,7 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 ISSUER = "Zankup"
 ACCESS_TTL = timedelta(minutes=15)
 CHALLENGE_TTL = timedelta(minutes=5)
+SETUP_TTL = timedelta(minutes=30)
 _hasher = PasswordHasher()  # Argon2id with the library's current recommended parameters
 
 
@@ -137,3 +138,24 @@ def create_challenge(user_id: int, secret: str | None, **extra: Any) -> str:
 
 def read_challenge(token: str, secret: str | None) -> dict[str, Any] | None:
     return _verify(token, secret, "mfa")
+
+
+def create_setup_token(user_id: int, secret: str | None) -> str:
+    """Proof that sign-up step 1 (setup code + password) was done, for the TOTP step that follows."""
+    return _sign({"purpose": "setup", "sub": str(user_id)}, secret, SETUP_TTL)
+
+
+def read_setup_token(token: str, secret: str | None) -> int | None:
+    claims = _verify(token, secret, "setup")
+    return int(claims["sub"]) if claims else None
+
+
+def encrypt_secret(value: str, jwt_secret: str | None, purpose: bytes) -> str:
+    return Fernet(base64.urlsafe_b64encode(_key(jwt_secret, purpose))).encrypt(value.encode()).decode()
+
+
+def decrypt_secret(encrypted: str, jwt_secret: str | None, purpose: bytes) -> str:
+    try:
+        return Fernet(base64.urlsafe_b64encode(_key(jwt_secret, purpose))).decrypt(encrypted).decode()
+    except InvalidToken as error:
+        raise AuthConfigError("Cannot decrypt: JWT_SECRET changed") from error

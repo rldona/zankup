@@ -17,6 +17,7 @@ export type ActivityPage = Json<'/api/activities', 'get'>;
 export type ActivitySummary = ActivityPage['items'][number];
 export type ActivityDetail = Json<'/api/activities/{activity_id}', 'get'>;
 export type Health = Json<'/api/health', 'get'>;
+export type SetupStatus = Json<'/api/setup', 'get'>;
 
 /** An API error with its HTTP status, so callers can tell "signed out" (401) from other failures. */
 export class ApiError extends Error {
@@ -41,6 +42,7 @@ function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T
 /** Keys: every query about the signed-in user's data starts with its scope, so sign-out clears them all. */
 export const queryKeys = {
   health: ['health'] as const,
+  setup: ['setup'] as const,
   me: ['me'] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
   activity: (id: number) => ['activity', id] as const,
@@ -85,5 +87,13 @@ export function activityQuery(api: ApiClient, id: number) {
       unwrap(
         await api.GET('/api/activities/{activity_id}', { params: { path: { activity_id: id } }, signal }),
       ),
+  };
+}
+
+/** Whether this instance still has no account, so /setup is open (OS-221). */
+export function setupStatusQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.setup,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/setup', { signal })),
   };
 }

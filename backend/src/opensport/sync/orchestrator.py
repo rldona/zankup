@@ -8,6 +8,10 @@ for it. The worker (OS-115) does the parsing and writing. Progress and the outco
 
 Incremental and idempotent: activities already imported or already queued are skipped, so a second run
 right after the first does nothing. Only one sync runs at a time per user (a Postgres advisory lock).
+
+Long ranges (the initial history load, OS-113) are listed in windows of WINDOW_DAYS, oldest first, and
+each window is downloaded and queued before the next is listed: imports start straight away, progress
+is visible per window, and an interrupted load resumes where it stopped (what is queued is skipped).
 """
 
 from __future__ import annotations
@@ -34,6 +38,7 @@ SOURCE = "garmin"
 FIRST_SYNC_DAYS = 30  # the full history is a separate, deliberate load (OS-113)
 OVERLAP = timedelta(days=1)
 LOCK_NAMESPACE = 0x05_9E_C0  # advisory lock key = namespace + user id
+WINDOW_DAYS = 180
 
 
 class SyncAlreadyRunning(RuntimeError):
@@ -74,6 +79,16 @@ def _start_date(session: Session, user_id: int, since: date | None) -> date:
     if last is None:
         return datetime.now(UTC).date() - timedelta(days=FIRST_SYNC_DAYS)
     return (last - OVERLAP).date()
+
+
+def history_windows(start: date, end: date, days: int = WINDOW_DAYS) -> list[tuple[date, date]]:
+    """Consecutive, non-overlapping [first, last] date windows covering start..end, oldest first."""
+    windows, first = [], start
+    while first <= end:
+        last = min(first + timedelta(days=days - 1), end)
+        windows.append((first, last))
+        first = last + timedelta(days=1)
+    return windows
 
 
 def _known_ids(session: Session, user_id: int) -> set[str]:
@@ -123,44 +138,65 @@ def run_sync(
             known = _known_ids(session, user_id)
         log.info("Sync started", extra={"run_id": run_id, "trigger": trigger, "since": start.isoformat()})
 
+        seen: set[str] = set()
+        queued = 0
         try:
-            listed = list(garmin.list_activities(start))
-            new = [a for a in reversed(listed) if str(a["activityId"]) not in known]  # oldest first
+            windows = history_windows(start, datetime.now(UTC).date() + timedelta(days=1), WINDOW_DAYS)
             _progress(
-                sessions, run_id, listed=len(listed), new=len(new), downloaded=0, since=start.isoformat()
+                sessions,
+                run_id,
+                since=start.isoformat(),
+                listed=0,
+                new=0,
+                downloaded=0,
+                window=0,
+                windows=len(windows),
             )
-            for done, activity in enumerate(new, start=1):
-                external_id = str(activity["activityId"])
-                fit = garmin.download_fit(int(external_id))
-                key = raw_key(user_id, SOURCE, external_id)
-                store.put(key, fit.data)
-                with sessions.begin() as session:
-                    enqueue(
-                        session,
-                        "ingest_fit",
-                        user_id=user_id,
-                        payload={"source": SOURCE, "external_id": external_id, "key": key, "meta": activity},
-                        dedupe_key=ingest_dedupe_key(user_id, external_id),
-                    )
-                    run = session.get_one(SyncRun, run_id)
-                    run.new_count = done
-                    run.progress = {**(run.progress or {}), "downloaded": done}
-                if done < len(new):
-                    sleep(pause_s)
-        except Exception as error:
+            for index, (first, last) in enumerate(windows, start=1):
+                page = [a for a in garmin.list_activities(first, last) if str(a["activityId"]) not in seen]
+                seen.update(str(a["activityId"]) for a in page)
+                new = [a for a in reversed(page) if str(a["activityId"]) not in known]  # oldest first
+                _progress(sessions, run_id, listed=len(seen), new=queued + len(new), window=index)
+                for activity in new:
+                    if queued:
+                        sleep(pause_s)  # between downloads: a personal API key, no rush
+                    external_id = str(activity["activityId"])
+                    fit = garmin.download_fit(int(external_id))
+                    key = raw_key(user_id, SOURCE, external_id)
+                    store.put(key, fit.data)
+                    known.add(external_id)
+                    queued += 1
+                    with sessions.begin() as session:
+                        enqueue(
+                            session,
+                            "ingest_fit",
+                            user_id=user_id,
+                            payload={
+                                "source": SOURCE,
+                                "external_id": external_id,
+                                "key": key,
+                                "meta": activity,
+                            },
+                            dedupe_key=ingest_dedupe_key(user_id, external_id),
+                        )
+                        run = session.get_one(SyncRun, run_id)
+                        run.new_count = queued
+                        run.progress = {**(run.progress or {}), "downloaded": queued}
+        except BaseException as error:  # also Ctrl+C on a long load: the run must not stay "running"
+            message = str(error) or error.__class__.__name__
             with sessions.begin() as session:
                 run = session.get_one(SyncRun, run_id)
-                run.status, run.finished_at, run.error = "error", datetime.now(UTC), str(error)[:2000]
-            log.error("Sync failed", extra={"run_id": run_id, "error": str(error)[:200]})
+                run.status, run.finished_at, run.error = "error", datetime.now(UTC), message[:2000]
+            log.error("Sync failed", extra={"run_id": run_id, "error": message[:200]})
             raise
 
         with sessions.begin() as session:
             run = session.get_one(SyncRun, run_id)
-            run.status, run.finished_at, run.new_count = "success", datetime.now(UTC), len(new)
+            run.status, run.finished_at, run.new_count = "success", datetime.now(UTC), queued
             source = session.scalar(select(Source).where(Source.user_id == user_id, Source.kind == SOURCE))
             if source is None:
                 source = Source(user_id=user_id, kind=SOURCE)
                 session.add(source)
             source.last_sync_at = datetime.now(UTC)
-        log.info("Sync finished", extra={"run_id": run_id, "listed": len(listed), "queued": len(new)})
-        return SyncResult(run_id, len(listed), len(new), len(listed) - len(new))
+        log.info("Sync finished", extra={"run_id": run_id, "listed": len(seen), "queued": queued})
+        return SyncResult(run_id, len(seen), queued, len(seen) - queued)

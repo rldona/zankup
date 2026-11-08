@@ -1666,6 +1666,30 @@
             ],
             "title": "Downloaded",
             "description": "Original files downloaded so far"
+          },
+          "window": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window",
+            "description": "Date window being listed (long loads go window by window)"
+          },
+          "windows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Windows",
+            "description": "How many date windows the run covers"
           }
         },
         "type": "object",

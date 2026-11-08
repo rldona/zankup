@@ -29,6 +29,8 @@ class SyncProgress(BaseModel):
     listed: int | None = Field(None, description="Activities the source returned")
     new: int | None = Field(None, description="Of those, not imported yet")
     downloaded: int | None = Field(None, description="Original files downloaded so far")
+    window: int | None = Field(None, description="Date window being listed (long loads go window by window)")
+    windows: int | None = Field(None, description="How many date windows the run covers")
 
 
 class SyncStatus(BaseModel):

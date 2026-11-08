@@ -14,6 +14,7 @@ Usage:
 
 Standard library only. Seed of the Garmin client (OS-103).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,6 +48,7 @@ PAUSE_S = 1.0  # pause between downloads: a personal client, no rush
 
 # ---------- configuration and state ----------
 
+
 def load_env() -> None:
     """Load variables from a .env at the repository root without overriding existing ones."""
     env = ROOT / ".env"
@@ -78,6 +80,7 @@ def save_state(state: dict) -> None:
 
 # ---------- HTTP ----------
 
+
 class ApiError(RuntimeError):
     pass
 
@@ -102,6 +105,7 @@ def http(method: str, path: str, headers: dict, params: dict | None = None) -> t
 
 # ---------- authentication ----------
 
+
 def jwt_exp(token: str) -> float:
     try:
         payload = token.split(".")[1]
@@ -118,8 +122,10 @@ def get_token() -> str:
             return cached["token"]
     key = os.environ.get("GARMIN_PERSONAL_API_KEY")
     if not key:
-        sys.exit("GARMIN_PERSONAL_API_KEY is missing: create it at "
-                 "https://connect.garmin.com/app/settings/personalApiToken and put it in .env")
+        sys.exit(
+            "GARMIN_PERSONAL_API_KEY is missing: create it at "
+            "https://connect.garmin.com/app/settings/personalApiToken and put it in .env"
+        )
     body, _ = http("POST", TOKEN_PATH, {"Accept": "*/*", "Authorization": f"ApiKey {key}"})
     token = body.decode().strip()
     if token.startswith("{"):  # in case it ever comes back as JSON
@@ -130,12 +136,17 @@ def get_token() -> str:
 
 # ---------- API ----------
 
+
 def list_activities(token: str, since: date) -> list[dict]:
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
     out, start = [], 0
     while True:
-        params = {"start": start, "limit": PAGE_SIZE, "startDate": since.isoformat(),
-                  "endDate": (date.today() + timedelta(days=1)).isoformat()}
+        params = {
+            "start": start,
+            "limit": PAGE_SIZE,
+            "startDate": since.isoformat(),
+            "endDate": (date.today() + timedelta(days=1)).isoformat(),
+        }
         body, _ = http("GET", LIST_PATH, headers, params)
         page = json.loads(body)
         if isinstance(page, dict):  # tolerate a wrapped response
@@ -147,8 +158,10 @@ def list_activities(token: str, since: date) -> list[dict]:
 
 
 def download_fit(token: str, activity_id: int) -> tuple[bytes, str]:
-    headers = {"Authorization": f"Bearer {token}",
-               "Accept": "application/zip, application/x-zip-compressed, application/octet-stream"}
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/zip, application/x-zip-compressed, application/octet-stream",
+    }
     body, _ = http("GET", DOWNLOAD_PATH.format(id=int(activity_id)), headers)
     if body[:2] == b"PK":
         with zipfile.ZipFile(io.BytesIO(body)) as z:
@@ -161,12 +174,15 @@ def download_fit(token: str, activity_id: int) -> tuple[bytes, str]:
 
 # ---------- main ----------
 
+
 def summary(a: dict) -> str:
     t = (a.get("activityType") or {}).get("typeKey", "?")
     dist = a.get("distance") or 0
     dur = a.get("duration") or 0
-    return (f"{a.get('startTimeLocal', '?'):<19}  {t:<20} {dist/1000:6.2f} km "
-            f"{int(dur//60):3d}:{int(dur%60):02d}  {a.get('activityName', '')}")
+    return (
+        f"{a.get('startTimeLocal', '?'):<19}  {t:<20} {dist / 1000:6.2f} km "
+        f"{int(dur // 60):3d}:{int(dur % 60):02d}  {a.get('activityName', '')}"
+    )
 
 
 def main() -> None:
@@ -177,8 +193,11 @@ def main() -> None:
 
     load_env()
     state = load_state()
-    since = args.since or (date.fromisoformat(state["last_sync"]) - timedelta(days=1)
-                           if state.get("last_sync") else date.today() - timedelta(days=30))
+    since = args.since or (
+        date.fromisoformat(state["last_sync"]) - timedelta(days=1)
+        if state.get("last_sync")
+        else date.today() - timedelta(days=30)
+    )
 
     token = get_token()
     acts = list_activities(token, since)
@@ -198,7 +217,7 @@ def main() -> None:
         fit, name = download_fit(token, aid)
         fit_path.write_bytes(fit)
         (ACTIVITIES / f"{aid}.json").write_text(json.dumps(a, indent=2, ensure_ascii=False))
-        print(f"  ↓ {aid}  {name}  ({len(fit)//1024} KB)")
+        print(f"  ↓ {aid}  {name}  ({len(fit) // 1024} KB)")
         new += 1
         time.sleep(PAUSE_S)
 

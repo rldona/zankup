@@ -2,12 +2,29 @@
 
 FastAPI API, Garmin sync, FIT parsing and the historical computation engine. Runs on Railway.
 
-Tooling (`uv`, `ruff`, `mypy`, `pytest`) arrives in OS-002 and the `opensport` package in OS-101.
-
-For now it holds `garmin_sync.py`, the standard-library prototype of the Garmin Personal API client and the seed of OS-103:
+Python 3.12+ managed with [uv](https://docs.astral.sh/uv/) as part of the workspace at the repository root (together with `packages/metrics`). Run everything from the root:
 
 ```bash
-python3 backend/garmin_sync.py --list
+uv sync                        # create .venv with both packages and the dev tools
+uv run pytest                  # tests
+uv run ruff check              # lint
+uv run ruff format             # format
+uv run mypy                    # strict type checking
+uv run pre-commit install      # run ruff and mypy on every commit
+uv run uvicorn opensport.api.main:app --reload   # API on http://127.0.0.1:8000/api/health
 ```
 
-It reads `GARMIN_PERSONAL_API_KEY` from the root `.env` and writes to `data/` (ignored by git).
+Layout:
+
+```
+src/opensport/      the `opensport` package (structure grows in OS-101)
+  api/main.py       FastAPI app, currently only GET /api/health
+tests/
+garmin_sync.py      standard-library prototype of the Garmin Personal API client (seed of OS-103)
+```
+
+`garmin_sync.py` reads `GARMIN_PERSONAL_API_KEY` from the root `.env` and writes to `data/` (ignored by git):
+
+```bash
+uv run python backend/garmin_sync.py --list
+```

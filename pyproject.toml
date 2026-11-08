@@ -8,6 +8,7 @@ dependencies = ["opensport", "opensport-metrics"]
 
 [dependency-groups]
 dev = [
+  "boto3-stubs[s3]>=1.38",
   "httpx2>=0.1",
   "respx>=0.22",
   "mypy>=1.15",

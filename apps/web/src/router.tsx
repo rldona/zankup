@@ -1,12 +1,14 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
 
 import { Activity } from './routes/Activity';
-import { Feed } from './routes/Feed';
+import { Feed, PickActivity } from './routes/Feed';
 import { NotFound } from './routes/NotFound';
+import { Profile } from './routes/Profile';
 import { RequireSession } from './routes/RequireSession';
-import { Shell } from './routes/Shell';
 import { Setup } from './routes/Setup';
+import { Shell } from './routes/Shell';
 import { SignIn } from './routes/SignIn';
+import { Soon } from './routes/Soon';
 
 /** Every screen. Public: /sign-in and /setup. Everything else needs a session. */
 export const routes: RouteObject[] = [
@@ -18,8 +20,18 @@ export const routes: RouteObject[] = [
       {
         element: <Shell />,
         children: [
-          { index: true, element: <Feed /> },
-          { path: 'activities/:id', element: <Activity /> },
+          {
+            element: <Feed />,
+            children: [
+              { index: true, element: <PickActivity /> },
+              { path: 'activities/:id', element: <Activity /> },
+            ],
+          },
+          { path: 'search', element: <Soon title="nav.search" body="soon.search" /> },
+          { path: 'stats', element: <Soon title="nav.stats" body="soon.stats" /> },
+          { path: 'sync', element: <Soon title="nav.sync" body="soon.sync" /> },
+          { path: 'settings', element: <Soon title="nav.settings" body="soon.settings" /> },
+          { path: 'profile', element: <Profile /> },
           { path: '*', element: <NotFound /> },
         ],
       },

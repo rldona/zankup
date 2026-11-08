@@ -6,7 +6,9 @@ Zankup is an open source, self-hosted alternative to Strava for your own trainin
 
 Each person runs their own instance with their own keys. There is no central service and nobody else's health data lives on our servers.
 
-> **Status:** milestone 1 is done: Garmin sync every 15 minutes, the full history load, the activities and sync API, sign-in with password and TOTP, alerts and daily backups. Phase 2 (the PWA) is next. See the [roadmap](docs/roadmap.md).
+> **Status:** milestones 1 and 2 are done: Garmin sync every 15 minutes and the full history from the app, an installable PWA that works offline (feed, activity detail with map and charts, strength sets, search, stats, profile, settings, eight themes, English and Spanish), and sign-in with password and TOTP, passkeys or Google. See the [roadmap](docs/roadmap.md).
+>
+> **Run your own:** [self-hosting guide](docs/self-hosting.md) (your server with one `docker compose`, or Railway and Vercel).
 >
 > Coming from a local database made before the rename? See [moving a local database](docs/brand/README.md#moving-a-local-database).
 
@@ -34,6 +36,7 @@ Other tasks: `make test`, `make lint`, `make format`, `make check` (what CI runs
 
 | Document | What it covers |
 |---|---|
+| [Self-hosting](docs/self-hosting.md) | Your own instance: keys, your server or Railway + Vercel, updates, backups, every variable |
 | [Architecture](docs/architecture.md) · [visual map](docs/architecture.html) | Components, deployment (Railway + Vercel), data model, API and product model |
 | [Roadmap](docs/roadmap.md) | Phases, tickets and definitions of done (also tracked as GitHub issues) |
 | [Findings](docs/findings.md) | Research on data sources and why this architecture |

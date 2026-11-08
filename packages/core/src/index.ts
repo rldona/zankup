@@ -6,3 +6,8 @@ export * from './format';
 export * from './i18n';
 export * from './tokens';
 export * from './geo/route';
+export * from './analysis/streams';
+export * from './map/colour';
+export * from './map/style';
+export * from './charts/theme';
+export * from './domain/strength';

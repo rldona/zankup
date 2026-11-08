@@ -15,6 +15,11 @@ PUBLIC_PATHS = {
     "/api/setup",
     "/api/setup/account",
     "/api/setup/totp",
+    "/api/auth/password/forgot",
+    "/api/auth/password/reset",
+    "/api/auth/google/providers",
+    "/api/auth/google/start",
+    "/api/auth/google/callback",
 }
 
 

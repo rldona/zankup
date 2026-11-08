@@ -1,12 +1,10 @@
 import {
   activitiesQuery,
   formatActivityDate,
-  formatDistance,
   formatDuration,
   formatHoursMinutes,
   formatMonth,
-  formatPace,
-  formatSpeed,
+  formatters,
   localStart,
   monthsQuery,
   routeThumbnail,
@@ -18,14 +16,16 @@ import {
   type Sport,
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { Fragment, useEffect, useRef, type CSSProperties, type RefObject } from 'react';
+import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type RefObject } from 'react';
 import { Link, NavLink, Outlet, useMatch, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { locale, t } from '../i18n';
+import { usePrefs } from '../prefs';
+import { WeekHeader } from '../week/WeekHeader';
 import { SportGlyph, SportIcon } from '../SportIcon';
 
-const UNITS = { locale, units: 'metric' } as const; // the units setting arrives with OS-212
+type Format = ReturnType<typeof formatters>;
 const CHIPS = SPORTS.filter((s) => s !== 'other');
 
 /**
@@ -40,6 +40,8 @@ export function Feed() {
   const sport = (CHIPS as readonly string[]).includes(chosen ?? '') ? (chosen as Sport) : null;
   const filter = sport ? [sport] : undefined;
 
+  const prefs = usePrefs();
+  const format = useMemo(() => formatters(prefs), [prefs]);
   const feed = useInfiniteQuery(activitiesQuery(api, filter));
   const months = useQuery(monthsQuery(api, filter));
   const allMonths = useQuery({ ...monthsQuery(api), enabled: sport !== null });
@@ -65,6 +67,7 @@ export function Feed() {
   return (
     <div className={`feedwrap${detail ? ' detail' : ''}`}>
       <section className="feedcol" ref={column}>
+        <WeekHeader />
         <h1>
           {t('feed.title')} <Since months={sport ? allMonths.data : months.data} />
         </h1>
@@ -95,8 +98,10 @@ export function Feed() {
 
         {cards.map(({ activity, start, month, index }) => (
           <Fragment key={activity.id}>
-            {month !== cards[index - 1]?.month && <MonthHeader month={month} totals={totals.get(month)} />}
-            <Card activity={activity} start={start} search={search} />
+            {month !== cards[index - 1]?.month && (
+              <MonthHeader month={month} totals={totals.get(month)} format={format} />
+            )}
+            <Card activity={activity} start={start} search={search} format={format} />
           </Fragment>
         ))}
 
@@ -163,7 +168,15 @@ function Since({ months }: { months: MonthTotals[] | undefined }) {
   );
 }
 
-function MonthHeader({ month, totals }: { month: string; totals: MonthTotals | undefined }) {
+function MonthHeader({
+  month,
+  totals,
+  format,
+}: {
+  month: string;
+  totals: MonthTotals | undefined;
+  format: Format;
+}) {
   return (
     <h2 className="mhead">
       <b>{formatMonth(month, locale)}</b>
@@ -171,7 +184,10 @@ function MonthHeader({ month, totals }: { month: string; totals: MonthTotals | u
         <span className="num">
           {t('feed.monthTotals', {
             count: totals.count,
-            distance: Math.round(totals.distance_m / 1000).toLocaleString(locale),
+            distance: Math.round(totals.distance_m / (format.unit === 'km' ? 1000 : 1609.344)).toLocaleString(
+              locale,
+            ),
+            unit: format.unit,
             time: formatHoursMinutes(totals.moving_s),
           })}
         </span>
@@ -184,7 +200,17 @@ function asSport(value: string): Sport {
   return (SPORTS as readonly string[]).includes(value) ? (value as Sport) : 'other';
 }
 
-function Card({ activity, start, search }: { activity: ActivitySummary; start: string; search: string }) {
+function Card({
+  activity,
+  start,
+  search,
+  format,
+}: {
+  activity: ActivitySummary;
+  start: string;
+  search: string;
+  format: Format;
+}) {
   const sport = asSport(activity.sport);
   const route = routeThumbnail(activity.route);
   const style = { '--sport': `var(--${sport})` } as CSSProperties;
@@ -203,7 +229,7 @@ function Card({ activity, start, search }: { activity: ActivitySummary; start: s
       </div>
       <div className="cbody">
         <dl className="cstats num">
-          {stats(activity, sport).map(([label, value]) => (
+          {stats(activity, sport, format).map(([label, value]) => (
             <div key={label}>
               <dd>{value}</dd>
               <dt>{t(label)}</dt>
@@ -223,19 +249,17 @@ function Card({ activity, start, search }: { activity: ActivitySummary; start: s
 type Stat = [label: MessageKey, value: string];
 
 /** Three figures per card: distance, time and pace (or speed); time and heart rate when there is no distance. */
-function stats(a: ActivitySummary, sport: Sport): Stat[] {
+function stats(a: ActivitySummary, sport: Sport, format: Format): Stat[] {
   const time = a.moving_s ?? a.duration_s;
   const hr: Stat | null = a.avg_hr ? ['feed.stat.hr', `${a.avg_hr} bpm`] : null;
   if (!a.distance_m) {
-    const ascent: Stat | null = a.ascent_m ? ['feed.stat.ascent', `${Math.round(a.ascent_m)} m`] : null;
+    const ascent: Stat | null = a.ascent_m ? ['feed.stat.ascent', format.elevation(a.ascent_m)] : null;
     return [['feed.stat.time', formatDuration(time)], hr, ascent].filter((s): s is Stat => s !== null);
   }
   const speed = time > 0 ? a.distance_m / time : 0;
   return [
-    ['feed.stat.distance', `${formatDistance(a.distance_m, UNITS)} km`],
+    ['feed.stat.distance', format.distance(a.distance_m)],
     ['feed.stat.time', formatDuration(time)],
-    usesPace(sport)
-      ? ['feed.stat.pace', `${formatPace(speed, UNITS)} /km`]
-      : ['feed.stat.speed', `${formatSpeed(speed, UNITS)} km/h`],
+    usesPace(sport) ? ['feed.stat.pace', format.pace(speed)] : ['feed.stat.speed', format.speed(speed)],
   ];
 }

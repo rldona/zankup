@@ -8,13 +8,19 @@ import { RequireSession } from './routes/RequireSession';
 import { Setup } from './routes/Setup';
 import { Shell } from './routes/Shell';
 import { SignIn } from './routes/SignIn';
+import { Catalogue } from './routes/Catalogue';
+import { ForgotPassword, ResetPassword } from './routes/Recover';
+import { Search } from './routes/Search';
 import { Settings } from './routes/Settings';
-import { Soon } from './routes/Soon';
+import { Stats } from './routes/Stats';
+import { Sync } from './routes/Sync';
 
 /** Every screen. Public: /sign-in and /setup. Everything else needs a session. */
 export const routes: RouteObject[] = [
   { path: '/sign-in', element: <SignIn /> },
   { path: '/setup', element: <Setup /> },
+  { path: '/forgot', element: <ForgotPassword /> },
+  { path: '/reset-password', element: <ResetPassword /> },
   {
     element: <RequireSession />,
     children: [
@@ -28,10 +34,11 @@ export const routes: RouteObject[] = [
               { path: 'activities/:id', element: <Activity /> },
             ],
           },
-          { path: 'search', element: <Soon title="nav.search" body="soon.search" /> },
-          { path: 'stats', element: <Soon title="nav.stats" body="soon.stats" /> },
-          { path: 'sync', element: <Soon title="nav.sync" body="soon.sync" /> },
+          { path: 'search', element: <Search /> },
+          { path: 'stats', element: <Stats /> },
+          { path: 'sync', element: <Sync /> },
           { path: 'settings', element: <Settings /> },
+          { path: 'catalogue', element: <Catalogue /> },
           { path: 'profile', element: <Profile /> },
           { path: '*', element: <NotFound /> },
         ],

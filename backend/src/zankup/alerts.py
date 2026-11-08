@@ -42,6 +42,20 @@ class Email:
         response.raise_for_status()
 
 
+def send_email(settings: Settings, to: str, subject: str, text: str) -> bool:
+    """One e-mail to any address of the instance's user (password recovery). False when e-mail is not
+    configured or Resend refuses it; the caller decides whether that matters."""
+    if settings.resend_api_key is None:
+        log.warning("E-mail not sent: RESEND_API_KEY is not set", extra={"subject": subject})
+        return False
+    try:
+        Email(settings.resend_api_key.get_secret_value(), settings.alert_from, to).send(subject, text)
+    except httpx.HTTPError as error:
+        log.warning("E-mail not sent", extra={"subject": subject, "error": str(error)[:200]})
+        return False
+    return True
+
+
 def email_sender(settings: Settings) -> Sender | None:
     if settings.resend_api_key is None or not settings.alert_email:
         return None

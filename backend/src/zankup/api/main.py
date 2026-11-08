@@ -12,8 +12,12 @@ from sqlalchemy import Engine
 from zankup import __version__
 from zankup.api.activities import router as activities_router
 from zankup.api.preferences import router as preferences_router
+from zankup.api.profile import router as profile_router
 from zankup.api.sync import router as sync_router
+from zankup.api.week import router as week_router
+from zankup.auth.google import router as google_router
 from zankup.auth.passkeys import router as passkeys_router
+from zankup.auth.password_reset import router as password_router
 from zankup.auth.routes import router as auth_router
 from zankup.auth.setup import router as setup_router
 from zankup.core.config import Settings, get_settings
@@ -55,18 +59,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         if settings.environment != "test":
             _announce_setup_code(settings)
-        worker = scheduler = None
+        workers = []
+        scheduler = None
         if settings.run_worker:
             from zankup.jobs.scheduler import build_scheduler
-            from zankup.jobs.worker import build_worker
+            from zankup.jobs.worker import build_workers
 
-            worker = build_worker()
-            worker.start_thread()  # a thread with its own DB connections: requests never wait for jobs
+            workers = build_workers()
+            for worker in workers:
+                worker.start_thread()  # threads with their own DB connections: requests never wait for jobs
             scheduler = build_scheduler()
             if scheduler is not None:
                 scheduler.start_thread()
         yield
-        for background in (worker, scheduler):
+        for background in (*workers, scheduler):
             if background is not None:
                 background.stop()
 
@@ -80,10 +86,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(auth_router)
     app.include_router(passkeys_router)
+    app.include_router(password_router)
+    app.include_router(google_router)
     app.include_router(setup_router)
     app.include_router(activities_router)
     app.include_router(sync_router)
     app.include_router(preferences_router)
+    app.include_router(profile_router)
+    app.include_router(week_router)
 
     @app.get("/api/health", operation_id="getHealth")
     def health(engine: Annotated[Engine, Depends(get_engine)]) -> Health:

@@ -17,7 +17,7 @@ from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
-from sqlalchemy import Interval, case, cast, func, literal, select, tuple_
+from sqlalchemy import Interval, case, cast, exists, func, literal, select, tuple_
 from sqlalchemy.orm import defer
 
 from zankup.api.routing import protected_router
@@ -69,6 +69,22 @@ class ActivityPage(BaseModel):
     next_cursor: str | None = Field(description="Pass it as `cursor` for the next page; null at the end")
 
 
+class SearchTotals(BaseModel):
+    count: int
+    distance_m: float
+    moving_s: float
+    ascent_m: float
+
+
+class SearchPage(BaseModel):
+    items: list[ActivitySummary]
+    totals: SearchTotals = Field(description="Of every activity that matches, not just this page")
+    next_offset: int | None = Field(description="Pass it as `offset` for the next page; null at the end")
+
+
+SORTS = {"date", "distance", "duration", "elevation", "speed"}
+
+
 class MonthTotals(BaseModel):
     """One month of the feed, in the activities' own local time."""
 
@@ -106,6 +122,17 @@ class BestEffortOut(BaseModel):
     start_distance_m: float
 
 
+class SetOut(BaseModel):
+    """A strength set (OS-225)."""
+
+    start_s: float
+    duration_s: float
+    kind: str = Field(description="active or rest")
+    reps: int | None
+    weight_kg: float | None
+    category: str | None = Field(description="FIT exercise category, e.g. squat; null when unknown")
+
+
 class StreamsInfo(BaseModel):
     series: list[str] = Field(description="Series present, always including t")
     sample_count: int
@@ -125,6 +152,7 @@ class ActivityDetail(ActivitySummary):
     laps: list[LapOut]
     splits: list[SplitOut]
     best_efforts: list[BestEffortOut]
+    sets: list[SetOut] = Field(description="Strength sets, rests included; empty for other activities")
     streams: StreamsInfo | None
 
 
@@ -225,6 +253,120 @@ def list_activities(
     )
 
 
+@router.get("/search", operation_id="searchActivities")
+def search_activities(
+    db: DbSession,
+    user: CurrentUser,
+    q: Annotated[str | None, Query(max_length=200, description="Words in the name or description")] = None,
+    sport: Annotated[list[str] | None, Query(description="Only these sports (repeat to combine)")] = None,
+    start: Annotated[datetime | None, Query(alias="from", description="From this moment (inclusive)")] = None,
+    end: Annotated[datetime | None, Query(alias="to", description="Until this moment (exclusive)")] = None,
+    min_distance: Annotated[float | None, Query(ge=0, description="Metres")] = None,
+    max_distance: Annotated[float | None, Query(ge=0)] = None,
+    min_duration: Annotated[float | None, Query(ge=0, description="Moving seconds")] = None,
+    max_duration: Annotated[float | None, Query(ge=0)] = None,
+    min_ascent: Annotated[float | None, Query(ge=0, description="Metres")] = None,
+    min_hr: Annotated[int | None, Query(ge=0)] = None,
+    max_hr: Annotated[int | None, Query(ge=0)] = None,
+    with_record: bool = False,
+    with_description: bool = False,
+    with_gps: bool = False,
+    source: Annotated[list[str] | None, Query(description="garmin, strava…")] = None,
+    sort: Annotated[str, Query(description="date, distance, duration, elevation or speed")] = "date",
+    order: Annotated[str, Query(pattern="^(asc|desc)$")] = "desc",
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=MAX_PAGE)] = 50,
+) -> SearchPage:
+    """Advanced search (OS-219): any combination of filters, sorted, with totals of all the matches."""
+    if sort not in SORTS:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, f"sort must be one of {sorted(SORTS)}")
+    moving = func.coalesce(Activity.moving_s, Activity.duration_s)
+    conditions = [Activity.user_id == user.id]
+    if q and q.strip():
+        words = " & ".join(
+            f"{w}:*" for w in "".join(c if c.isalnum() else " " for c in q.lower()).split()
+        )  # every word, as a prefix
+        if words:
+            conditions.append(
+                func.zankup_search_text(Activity.name, Activity.description).op("@@")(
+                    func.to_tsquery("simple", func.unaccent(words))
+                )
+            )
+    if sport:
+        conditions.append(Activity.sport.in_(sport))
+    if source:
+        conditions.append(Activity.source.in_(source))
+    if start:
+        conditions.append(Activity.start_utc >= start)
+    if end:
+        conditions.append(Activity.start_utc < end)
+    if min_distance is not None:
+        conditions.append(Activity.distance_m >= min_distance)
+    if max_distance is not None:
+        conditions.append(Activity.distance_m <= max_distance)
+    if min_duration is not None:
+        conditions.append(moving >= min_duration)
+    if max_duration is not None:
+        conditions.append(moving <= max_duration)
+    if min_ascent is not None:
+        conditions.append(Activity.ascent_m >= min_ascent)
+    if min_hr is not None:
+        conditions.append(Activity.avg_hr >= min_hr)
+    if max_hr is not None:
+        conditions.append(Activity.avg_hr <= max_hr)
+    if with_description:
+        conditions.append(func.length(func.trim(func.coalesce(Activity.description, ""))) > 0)
+    if with_gps:
+        conditions.append(Activity.has_gps.is_(True))
+    if with_record:
+        best = (
+            select(BestEffort.distance_key, func.min(BestEffort.time_s).label("time_s"))
+            .where(BestEffort.user_id == user.id)
+            .group_by(BestEffort.distance_key)
+            .subquery()
+        )
+        conditions.append(
+            exists().where(
+                BestEffort.activity_id == Activity.id,
+                BestEffort.distance_key == best.c.distance_key,
+                BestEffort.time_s == best.c.time_s,
+            )
+        )
+
+    totals = db.execute(
+        select(
+            func.count(),
+            func.coalesce(func.sum(Activity.distance_m), 0),
+            func.coalesce(func.sum(moving), 0),
+            func.coalesce(func.sum(Activity.ascent_m), 0),
+        ).where(*conditions)
+    ).one()
+    key = {
+        "date": Activity.start_utc,
+        "distance": Activity.distance_m,
+        "duration": moving,
+        "elevation": Activity.ascent_m,
+        "speed": Activity.distance_m / func.nullif(moving, 0),
+    }[sort]
+    ordered = key.desc().nulls_last() if order == "desc" else key.asc().nulls_last()
+    rows = list(
+        db.scalars(
+            select(Activity)
+            .where(*conditions)
+            .options(defer(Activity.raw_meta), defer(Activity.splits))
+            .order_by(ordered, Activity.id.desc())
+            .offset(offset)
+            .limit(limit + 1)
+        )
+    )
+    more = len(rows) > limit
+    return SearchPage(
+        items=[ActivitySummary(**_summary_fields(a)) for a in rows[:limit]],
+        totals=SearchTotals(count=totals[0], distance_m=totals[1], moving_s=totals[2], ascent_m=totals[3]),
+        next_offset=offset + limit if more else None,
+    )
+
+
 @router.get("/months", operation_id="listActivityMonths")
 def list_months(
     db: DbSession,
@@ -283,6 +425,7 @@ def get_activity(activity_id: int, db: DbSession, user: CurrentUser) -> Activity
         laps=[LapOut.model_validate(lap, from_attributes=True) for lap in laps],
         splits=[SplitOut.model_validate(split) for split in activity.splits or []],
         best_efforts=[BestEffortOut.model_validate(e, from_attributes=True) for e in efforts],
+        sets=[SetOut.model_validate(s) for s in activity.sets or []],
         streams=StreamsInfo(series=stream.series, sample_count=stream.sample_count) if stream else None,
     )
 

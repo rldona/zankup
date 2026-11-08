@@ -1,10 +1,11 @@
 """Account administration from the server's shell, for emergencies: the account is created at /setup
 (OS-221) and recovered by e-mail (OS-222). On Railway, through `railway ssh`, use /app/.venv/bin/python.
 
-    python -m zankup.admin set-password      # asks for the password twice
+    python -m zankup.admin set-password      # asks for the password twice (alias: reset-password)
     python -m zankup.admin enable-totp       # shows the key for the authenticator app, asks for a code
     python -m zankup.admin sessions          # lists signed-in devices
     python -m zankup.admin sign-out-all      # ends every session
+    python -m zankup.admin reprocess --sport strength   # re-reads stored FIT files (new fields)
 
 They act on the owner account (OWNER_EMAIL until sign-up sets the real one; --email to change it).
 """
@@ -27,7 +28,7 @@ from zankup.auth.security import (
     verify_totp,
 )
 from zankup.core.config import get_settings
-from zankup.db.models import Device, User
+from zankup.db.models import Activity, Device, User
 from zankup.db.session import get_engine
 from zankup.users import ensure_owner
 
@@ -55,10 +56,40 @@ def enable_totp(user: User, secret: str, code: str, jwt_secret: str | None) -> N
     user.totp_last_counter = counter
 
 
+def queue_reprocess(session: Session, user_id: int, sport: str | None = None) -> int:
+    """Queue every stored original to be read again, so fields added to the parser (strength sets,
+    OS-225) reach activities imported before them. The worker does the work."""
+    from zankup.jobs.queue import enqueue
+
+    query = select(Activity).where(Activity.user_id == user_id, Activity.fit_path.is_not(None))
+    if sport:
+        query = query.where(Activity.sport == sport)
+    count = 0
+    for activity in session.scalars(query):
+        enqueue(
+            session,
+            "ingest_fit",
+            user_id=user_id,
+            payload={
+                "source": activity.source,
+                "external_id": activity.external_id,
+                "key": activity.fit_path,
+                "meta": activity.raw_meta,
+                "reprocess": True,
+            },
+        )
+        count += 1
+    return count
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m zankup.admin", description=__doc__.splitlines()[0])
-    parser.add_argument("command", choices=["set-password", "enable-totp", "sessions", "sign-out-all"])
+    parser.add_argument(
+        "command",
+        choices=["set-password", "reset-password", "enable-totp", "sessions", "sign-out-all", "reprocess"],
+    )
     parser.add_argument("--email", help="change the owner account's e-mail")
+    parser.add_argument("--sport", help="reprocess: only activities of this sport")
     args = parser.parse_args(argv)
     settings = get_settings()
     jwt_secret = settings.jwt_secret.get_secret_value() if settings.jwt_secret else None
@@ -69,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
             user = ensure_owner(session, settings.owner_email)
             if args.email:
                 user.email = args.email.strip().lower()
-            if args.command == "set-password":
+            if args.command in ("set-password", "reset-password"):
                 password = getpass.getpass("New password: ")
                 if password != getpass.getpass("Repeat it: "):
                     raise AdminError("The passwords do not match")
@@ -81,6 +112,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  Key: {secret}\n  Or open: {totp_uri(secret, user.email)}")
                 enable_totp(user, secret, input("Code shown by the app: "), jwt_secret)
                 print("Two-factor authentication is on.")
+            elif args.command == "reprocess":
+                print(f"Queued {queue_reprocess(session, user.id, args.sport)} activities to re-read.")
             elif args.command == "sessions":
                 for device in session.scalars(select(Device).where(Device.user_id == user.id)):
                     print(

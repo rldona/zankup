@@ -212,3 +212,23 @@ def test_months_add_up_every_activity_in_its_local_month(ctx: Ctx) -> None:
         assert months[0]["moving_s"] == pytest.approx(run.moving_s or run.duration_s)
     only_runs = ctx.http.get("/api/activities/months", params={"sport": "run"}).json()
     assert [m["month"] for m in only_runs] == ["2026-11"]
+
+
+def test_strength_detail_has_its_sets_and_old_imports_can_be_reread(ctx: Ctx) -> None:
+    from zankup.admin import queue_reprocess
+    from zankup.jobs.handlers import default_handlers
+    from zankup.jobs.worker import Worker
+
+    detail = ctx.http.get(f"/api/activities/{ctx.ids['strength']}").json()
+    assert [(s["kind"], s["reps"], s["category"]) for s in detail["sets"]] == [("active", 4, None)]
+    assert ctx.http.get(f"/api/activities/{ctx.ids['run']}").json()["sets"] == []
+
+    with ctx.sessions.begin() as db:  # as if imported before the parser read sets
+        db.execute(update(Activity).values(sets=None))
+    with ctx.sessions.begin() as db:
+        user_id = db.get_one(Activity, ctx.ids["strength"]).user_id
+        assert queue_reprocess(db, user_id, "strength") == 1
+    worker = Worker(ctx.sessions, default_handlers(ctx.store))
+    while worker.run_once():
+        pass
+    assert len(ctx.http.get(f"/api/activities/{ctx.ids['strength']}").json()["sets"]) == 1

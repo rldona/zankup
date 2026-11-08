@@ -67,6 +67,17 @@ def _apply(activity: Activity, parsed: ParsedActivity) -> None:
     activity.has_gps = parsed.has_gps
     activity.bbox = parsed.bbox
     activity.route_simplified = route_polyline(parsed.streams)
+    activity.sets = [
+        {
+            "start_s": s.start_s,
+            "duration_s": s.duration_s,
+            "kind": s.kind,
+            "reps": s.reps,
+            "weight_kg": s.weight_kg,
+            "category": s.category,
+        }
+        for s in parsed.sets
+    ] or None
     activity.splits = [
         {
             "distance_m": round(split.distance_m, 1),

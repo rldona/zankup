@@ -173,6 +173,108 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Update Me",
+        "description": "Edit the profile (OS-218): name, location, date of birth, sex, weight and height.",
+        "operationId": "updateMe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/devices": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "List Devices",
+        "description": "Open sessions: every browser and app signed in, the current one marked.",
+        "operationId": "listDevices",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listdevices"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/devices/{device_id}": {
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Delete Device",
+        "description": "Sign a session out from elsewhere. Signing out this one is POST /logout.",
+        "operationId": "deleteDevice",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/auth/passkeys": {
@@ -371,6 +473,245 @@
         }
       }
     },
+    "/api/auth/password/forgot": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Forgot",
+        "description": "E-mail a recovery link. The answer is the same whether or not the account exists.",
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/password/reset": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Reset",
+        "description": "Choose a new password with the link's token and a code. Signs every session out.",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google/providers": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Providers",
+        "description": "Which extra sign-in methods this instance offers (public: the sign-in screen asks).",
+        "operationId": "authProviders",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Providers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google/start": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Start",
+        "description": "Off to Google. `link` needs a signed-in session (Profile → Account → Sign-in methods).",
+        "operationId": "googleStart",
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "login",
+                "link"
+              ],
+              "type": "string",
+              "default": "login",
+              "title": "Mode"
+            }
+          },
+          {
+            "name": "next",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 512,
+              "default": "/",
+              "title": "Next"
+            }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Callback",
+        "description": "Back from Google: link the account, or sign in the one linked to it.",
+        "operationId": "googleCallback",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google": {
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Unlink",
+        "description": "Unlink Google. Another strong method must remain: password with TOTP, or a passkey.",
+        "operationId": "googleUnlink",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
     "/api/setup": {
       "get": {
         "tags": [
@@ -542,6 +883,340 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ActivityPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/search": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Search Activities",
+        "description": "Advanced search (OS-219): any combination of filters, sorted, with totals of all the matches.",
+        "operationId": "searchActivities",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Words in the name or description",
+              "title": "Q"
+            },
+            "description": "Words in the name or description"
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports (repeat to combine)",
+              "title": "Sport"
+            },
+            "description": "Only these sports (repeat to combine)"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "From this moment (inclusive)",
+              "title": "From"
+            },
+            "description": "From this moment (inclusive)"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Until this moment (exclusive)",
+              "title": "To"
+            },
+            "description": "Until this moment (exclusive)"
+          },
+          {
+            "name": "min_distance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Metres",
+              "title": "Min Distance"
+            },
+            "description": "Metres"
+          },
+          {
+            "name": "max_distance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Distance"
+            }
+          },
+          {
+            "name": "min_duration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Moving seconds",
+              "title": "Min Duration"
+            },
+            "description": "Moving seconds"
+          },
+          {
+            "name": "max_duration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Duration"
+            }
+          },
+          {
+            "name": "min_ascent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Metres",
+              "title": "Min Ascent"
+            },
+            "description": "Metres"
+          },
+          {
+            "name": "min_hr",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Hr"
+            }
+          },
+          {
+            "name": "max_hr",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Hr"
+            }
+          },
+          {
+            "name": "with_record",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Record"
+            }
+          },
+          {
+            "name": "with_description",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Description"
+            }
+          },
+          {
+            "name": "with_gps",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Gps"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "garmin, strava…",
+              "title": "Source"
+            },
+            "description": "garmin, strava…"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "date, distance, duration, elevation or speed",
+              "default": "date",
+              "title": "Sort"
+            },
+            "description": "date, distance, duration, elevation or speed"
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(asc|desc)$",
+              "default": "desc",
+              "title": "Order"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPage"
                 }
               }
             }
@@ -766,8 +1441,25 @@
           "sync"
         ],
         "summary": "Start Sync",
-        "description": "Sync Garmin now. Returns the new run, or the one already queued or running.",
+        "description": "Sync Garmin now (or load its whole history). Returns the new run, or the one already going.",
         "operationId": "startSync",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SyncRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "202": {
             "description": "Successful Response",
@@ -781,6 +1473,16 @@
           },
           "409": {
             "description": "Garmin is not configured on this instance"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       },
@@ -919,6 +1621,105 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Preferences"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profile/summary": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Profile Summary",
+        "operationId": "getProfileSummary",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sources": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "List Sources",
+        "description": "Data sources and their state, for Settings and the profile's Account tab.",
+        "operationId": "listSources",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceStatus"
+                  },
+                  "type": "array",
+                  "title": "Response Listsources"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/week": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Week",
+        "operationId": "getWeek",
+        "parameters": [
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The user's today (YYYY-MM-DD); UTC if missing",
+              "title": "Today"
+            },
+            "description": "The user's today (YYYY-MM-DD); UTC if missing"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Week"
                 }
               }
             }
@@ -1249,6 +2050,14 @@
             "type": "array",
             "title": "Best Efforts"
           },
+          "sets": {
+            "items": {
+              "$ref": "#/components/schemas/SetOut"
+            },
+            "type": "array",
+            "title": "Sets",
+            "description": "Strength sets, rests included; empty for other activities"
+          },
           "streams": {
             "anyOf": [
               {
@@ -1290,6 +2099,7 @@
           "laps",
           "splits",
           "best_efforts",
+          "sets",
           "streams"
         ],
         "title": "ActivityDetail"
@@ -1771,6 +2581,133 @@
         ],
         "title": "Challenge"
       },
+      "Day": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/DayActivity"
+            },
+            "type": "array",
+            "title": "Activities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "activities"
+        ],
+        "title": "Day"
+      },
+      "DayActivity": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sport",
+          "name"
+        ],
+        "title": "DayActivity"
+      },
+      "DeviceOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "current": {
+            "type": "boolean",
+            "title": "Current",
+            "description": "The session making this request"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "platform",
+          "created_at",
+          "last_seen",
+          "expires_at",
+          "current"
+        ],
+        "title": "DeviceOut"
+      },
+      "ForgotRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "ForgotRequest"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1949,6 +2886,72 @@
           "totp_enabled": {
             "type": "boolean",
             "title": "Totp Enabled"
+          },
+          "google_linked": {
+            "type": "boolean",
+            "title": "Google Linked",
+            "default": false
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "birth_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "sex": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "female",
+                  "male",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sex"
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg"
+          },
+          "height_cm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height Cm"
           }
         },
         "type": "object",
@@ -2069,11 +3072,76 @@
               "sunset"
             ],
             "title": "Theme"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "en",
+                  "es"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language",
+            "description": "Null until picked: clients use the device's language"
+          },
+          "units": {
+            "type": "string",
+            "enum": [
+              "metric",
+              "imperial"
+            ],
+            "title": "Units"
+          },
+          "hr_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Max",
+            "description": "Max heart rate set by the user"
+          },
+          "hr_rest": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Rest",
+            "description": "Resting heart rate set by the user"
+          },
+          "hr_max_estimate": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Max Estimate",
+            "description": "Highest heart rate recorded in an activity: the zones use it until hr_max is set"
           }
         },
         "type": "object",
         "required": [
-          "theme"
+          "theme",
+          "language",
+          "units",
+          "hr_max",
+          "hr_rest",
+          "hr_max_estimate"
         ],
         "title": "Preferences"
       },
@@ -2099,11 +3167,306 @@
               }
             ],
             "title": "Theme"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "en",
+                  "es"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "metric",
+                  "imperial"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "hr_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 240.0,
+                "minimum": 100.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Max"
+          },
+          "hr_rest": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 120.0,
+                "minimum": 25.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Rest"
           }
         },
         "type": "object",
         "title": "PreferencesUpdate",
-        "description": "Only the fields sent are changed."
+        "description": "Only the fields sent are changed. Null clears the language, hr_max or hr_rest."
+      },
+      "ProfileSummary": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "this_year": {
+            "items": {
+              "$ref": "#/components/schemas/SportTotals"
+            },
+            "type": "array",
+            "title": "This Year",
+            "description": "This calendar year, by sport, most active first"
+          },
+          "all_time": {
+            "items": {
+              "$ref": "#/components/schemas/SportTotals"
+            },
+            "type": "array",
+            "title": "All Time"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since",
+            "description": "Start of the first activity"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "type": "array",
+            "title": "Records",
+            "description": "Best time ever at each running distance"
+          },
+          "streak_weeks": {
+            "type": "integer",
+            "title": "Streak Weeks",
+            "description": "Weeks in a row with an activity, up to this week or the last"
+          },
+          "device": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device",
+            "description": "The device of the latest activity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "year",
+          "this_year",
+          "all_time",
+          "since",
+          "records",
+          "streak_weeks",
+          "device"
+        ],
+        "title": "ProfileSummary"
+      },
+      "ProfileUpdate": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "birth_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "sex": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "female",
+                  "male",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sex"
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 300.0,
+                "minimum": 20.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg"
+          },
+          "height_cm": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 250.0,
+                "minimum": 100.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height Cm"
+          }
+        },
+        "type": "object",
+        "title": "ProfileUpdate",
+        "description": "Only the fields sent are changed; null clears one (except the name, which cannot be empty)."
+      },
+      "Providers": {
+        "properties": {
+          "google": {
+            "type": "boolean",
+            "title": "Google"
+          }
+        },
+        "type": "object",
+        "required": [
+          "google"
+        ],
+        "title": "Providers"
+      },
+      "RecentRecord": {
+        "properties": {
+          "distance_key": {
+            "type": "string",
+            "title": "Distance Key"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_key",
+          "distance_m",
+          "time_s",
+          "activity_id",
+          "date"
+        ],
+        "title": "RecentRecord"
+      },
+      "Record": {
+        "properties": {
+          "distance_key": {
+            "type": "string",
+            "title": "Distance Key"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_key",
+          "distance_m",
+          "time_s",
+          "activity_id",
+          "date"
+        ],
+        "title": "Record"
       },
       "RefreshRequest": {
         "properties": {
@@ -2139,6 +3502,157 @@
         ],
         "title": "RegisterRequest"
       },
+      "ResetRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Token"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "title": "Password"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Code",
+            "description": "Authenticator code or a recovery code",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "password"
+        ],
+        "title": "ResetRequest"
+      },
+      "SearchPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivitySummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/SearchTotals",
+            "description": "Of every activity that matches, not just this page"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Offset",
+            "description": "Pass it as `offset` for the next page; null at the end"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "totals",
+          "next_offset"
+        ],
+        "title": "SearchPage"
+      },
+      "SearchTotals": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "ascent_m": {
+            "type": "number",
+            "title": "Ascent M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "distance_m",
+          "moving_s",
+          "ascent_m"
+        ],
+        "title": "SearchTotals"
+      },
+      "SetOut": {
+        "properties": {
+          "start_s": {
+            "type": "number",
+            "title": "Start S"
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "active or rest"
+          },
+          "reps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reps"
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category",
+            "description": "FIT exercise category, e.g. squat; null when unknown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_s",
+          "duration_s",
+          "kind",
+          "reps",
+          "weight_kg",
+          "category"
+        ],
+        "title": "SetOut",
+        "description": "A strength set (OS-225)."
+      },
       "SetupDone": {
         "properties": {
           "me": {
@@ -2171,6 +3685,86 @@
           "open"
         ],
         "title": "SetupStatus"
+      },
+      "SourceStatus": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "garmin",
+            "title": "Kind"
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "The key is set on the server"
+          },
+          "key_expires_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Expires On",
+            "description": "When the key expires, if the server was told"
+          },
+          "expiring_soon": {
+            "type": "boolean",
+            "title": "Expiring Soon",
+            "description": "Less than two weeks left"
+          },
+          "token_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token Expires At",
+            "description": "The current short-lived access token"
+          },
+          "last_sync_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sync At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error",
+            "description": "The latest sync's error, if it failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "configured",
+          "key_expires_on",
+          "expiring_soon",
+          "token_expires_at",
+          "last_sync_at",
+          "last_error"
+        ],
+        "title": "SourceStatus"
       },
       "SplitOut": {
         "properties": {
@@ -2213,6 +3807,39 @@
           "avg_hr"
         ],
         "title": "SplitOut"
+      },
+      "SportTotals": {
+        "properties": {
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "ascent_m": {
+            "type": "number",
+            "title": "Ascent M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sport",
+          "count",
+          "distance_m",
+          "moving_s",
+          "ascent_m"
+        ],
+        "title": "SportTotals"
       },
       "StreamsInfo": {
         "properties": {
@@ -2325,6 +3952,31 @@
         },
         "type": "object",
         "title": "SyncProgress"
+      },
+      "SyncRequest": {
+        "properties": {
+          "history": {
+            "type": "boolean",
+            "title": "History",
+            "description": "Load the whole history (from 2000), not just what is new",
+            "default": false
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since",
+            "description": "Or load from this day on"
+          }
+        },
+        "type": "object",
+        "title": "SyncRequest"
       },
       "SyncStatus": {
         "properties": {
@@ -2519,6 +4171,90 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Week": {
+        "properties": {
+          "today": {
+            "type": "string",
+            "format": "date",
+            "title": "Today"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/Day"
+            },
+            "type": "array",
+            "title": "Days",
+            "description": "Monday to Sunday of this week (future days are empty)"
+          },
+          "this_week": {
+            "$ref": "#/components/schemas/WeekTotals"
+          },
+          "previous": {
+            "items": {
+              "$ref": "#/components/schemas/WeekTotals"
+            },
+            "type": "array",
+            "title": "Previous",
+            "description": "The 12 weeks before, newest first"
+          },
+          "streak_weeks": {
+            "type": "integer",
+            "title": "Streak Weeks"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/RecentRecord"
+            },
+            "type": "array",
+            "title": "Records",
+            "description": "All-time bests set in the last 30 days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "today",
+          "days",
+          "this_week",
+          "previous",
+          "streak_weeks",
+          "records"
+        ],
+        "title": "Week"
+      },
+      "WeekTotals": {
+        "properties": {
+          "week_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Week Start"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "ascent_m": {
+            "type": "number",
+            "title": "Ascent M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "week_start",
+          "count",
+          "distance_m",
+          "moving_s",
+          "ascent_m"
+        ],
+        "title": "WeekTotals"
       },
       "zankup__auth__passkeys__LoginRequest": {
         "properties": {

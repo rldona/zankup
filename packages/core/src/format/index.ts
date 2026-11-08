@@ -92,3 +92,27 @@ export function formatMonth(month: string, locale: Locale): string {
     timeZone: 'UTC',
   });
 }
+
+/** Elevation in metres or feet, rounded: 123 → "123 m" or "404 ft". */
+export function formatElevation(metres: number, { locale, units }: FormatOptions): string {
+  const value = units === 'metric' ? metres : metres / 0.3048;
+  return `${Math.round(value).toLocaleString(locale)} ${units === 'metric' ? 'm' : 'ft'}`;
+}
+
+/** Formatters with their units, for screens that show many figures. */
+export function formatters(options: FormatOptions) {
+  const unit = distanceUnit(options.units);
+  return {
+    distance: (metres: number) => `${formatDistance(metres, options)} ${unit}`,
+    pace: (metresPerSecond: number) => `${formatPace(metresPerSecond, options)} /${unit}`,
+    speed: (metresPerSecond: number) =>
+      `${formatSpeed(metresPerSecond, options)} ${options.units === 'metric' ? 'km/h' : 'mph'}`,
+    elevation: (metres: number) => formatElevation(metres, options),
+    /** Pace for running-like sports, speed for the rest. */
+    speedFor: (metresPerSecond: number, pace: boolean) =>
+      pace
+        ? `${formatPace(metresPerSecond, options)} /${unit}`
+        : `${formatSpeed(metresPerSecond, options)} ${options.units === 'metric' ? 'km/h' : 'mph'}`,
+    unit,
+  };
+}

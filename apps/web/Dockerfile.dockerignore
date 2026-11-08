@@ -1,0 +1,11 @@
+# Only what the web build needs (Docker reads this file for apps/web/Dockerfile).
+**
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!apps/web
+!apps/mobile-poc/package.json
+!packages/core
+!deploy/Caddyfile
+**/node_modules
+**/dist

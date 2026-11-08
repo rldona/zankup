@@ -3,11 +3,15 @@
 `POST /api/sync` records a `queued` run and queues the job for the worker, then answers at once with
 the run, which the client polls with `GET /api/sync/{id}` until it is `success` or `error`. Pressing
 the button while a sync is queued or running returns that sync instead of starting another one.
+
+With `{"history": true}` (OS-226) it loads the whole Garmin history, window by window, as a
+background job: closing the tab does not stop it, and starting it again resumes (what is already
+imported is skipped).
 """
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Literal
 
 from fastapi import HTTPException, Query, Response, status
@@ -22,6 +26,13 @@ from zankup.jobs.queue import enqueue
 router = protected_router(prefix="/api/sync", tags=["sync"])
 
 ACTIVE_FOR = timedelta(minutes=30)  # a queued or running run older than this is not waited for
+HISTORY_ACTIVE_FOR = timedelta(hours=24)  # a whole history can take hours
+HISTORY_SINCE = date(2000, 1, 1)
+
+
+class SyncRequest(BaseModel):
+    history: bool = Field(False, description="Load the whole history (from 2000), not just what is new")
+    since: date | None = Field(None, description="Or load from this day on")
 
 
 class SyncProgress(BaseModel):
@@ -77,16 +88,25 @@ def _status(run: SyncRun, pending: int) -> SyncStatus:
     status_code=status.HTTP_202_ACCEPTED,
     responses={409: {"description": "Garmin is not configured on this instance"}},
 )
-def start_sync(db: DbSession, user: CurrentUser, settings: AppSettings, response: Response) -> SyncStatus:
-    """Sync Garmin now. Returns the new run, or the one already queued or running."""
+def start_sync(
+    db: DbSession,
+    user: CurrentUser,
+    settings: AppSettings,
+    response: Response,
+    body: SyncRequest | None = None,
+) -> SyncStatus:
+    """Sync Garmin now (or load its whole history). Returns the new run, or the one already going."""
     if settings.garmin_personal_api_key is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "Garmin is not configured on this instance")
+    request = body or SyncRequest()
+    now = datetime.now(UTC)
     active = db.scalar(
         select(SyncRun)
         .where(
             SyncRun.user_id == user.id,
             SyncRun.status.in_(("queued", "running")),
-            SyncRun.started_at > datetime.now(UTC) - ACTIVE_FOR,
+            (SyncRun.started_at > now - ACTIVE_FOR)
+            | ((SyncRun.trigger == "initial") & (SyncRun.started_at > now - HISTORY_ACTIVE_FOR)),
         )
         .order_by(SyncRun.started_at.desc())
         .limit(1)
@@ -95,14 +115,16 @@ def start_sync(db: DbSession, user: CurrentUser, settings: AppSettings, response
         response.status_code = status.HTTP_200_OK
         return _status(active, _pending_imports(db, user.id))
 
-    run = SyncRun(user_id=user.id, trigger="button", status="queued", progress={})
+    since = HISTORY_SINCE if request.history else request.since
+    trigger = "initial" if since else "button"
+    run = SyncRun(user_id=user.id, trigger=trigger, status="queued", progress={})
     db.add(run)
     db.flush()
     enqueue(
         db,
         "sync_garmin",
         user_id=user.id,
-        payload={"trigger": "button", "run_id": run.id},
+        payload={"trigger": trigger, "run_id": run.id} | ({"since": since.isoformat()} if since else {}),
         dedupe_key=f"sync:garmin:{user.id}:run:{run.id}",
     )
     db.commit()

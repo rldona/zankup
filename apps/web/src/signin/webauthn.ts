@@ -61,3 +61,40 @@ export function assertionJson(credential: PublicKeyCredential): Json {
     clientExtensionResults: credential.getClientExtensionResults?.() ?? {},
   };
 }
+
+/** Server options (from /api/auth/passkeys/register/options) → PublicKeyCredentialCreationOptions. */
+export function creationOptions(options: Json): PublicKeyCredentialCreationOptions {
+  const user = options.user as { id: string; name: string; displayName: string };
+  const exclude =
+    (options.excludeCredentials as {
+      id: string;
+      type: 'public-key';
+      transports?: AuthenticatorTransport[];
+    }[]) ?? [];
+  return {
+    challenge: toBytes(options.challenge as string),
+    rp: options.rp as PublicKeyCredentialRpEntity,
+    user: { ...user, id: toBytes(user.id) },
+    pubKeyCredParams: options.pubKeyCredParams as PublicKeyCredentialParameters[],
+    timeout: options.timeout as number | undefined,
+    excludeCredentials: exclude.map((c) => ({ ...c, id: toBytes(c.id) })),
+    authenticatorSelection: options.authenticatorSelection as AuthenticatorSelectionCriteria | undefined,
+    attestation: options.attestation as AttestationConveyancePreference | undefined,
+  };
+}
+
+/** The new credential from navigator.credentials.create() → the JSON the server verifies. */
+export function attestationJson(credential: PublicKeyCredential): Json {
+  const response = credential.response as AuthenticatorAttestationResponse;
+  return {
+    id: credential.id,
+    rawId: toBase64url(credential.rawId),
+    type: credential.type,
+    response: {
+      clientDataJSON: toBase64url(response.clientDataJSON),
+      attestationObject: toBase64url(response.attestationObject),
+      transports: response.getTransports?.() ?? [],
+    },
+    clientExtensionResults: credential.getClientExtensionResults?.() ?? {},
+  };
+}

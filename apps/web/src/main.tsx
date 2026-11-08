@@ -16,6 +16,6 @@ if (!root) throw new Error('Missing #root element');
 
 createRoot(root).render(
   <StrictMode>
-    <App queryClient={queryClient} router={createRouter()} />
+    <App queryClient={queryClient} router={createRouter()} offline />
   </StrictMode>,
 );

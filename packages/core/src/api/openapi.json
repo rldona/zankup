@@ -2050,6 +2050,14 @@
             "type": "array",
             "title": "Best Efforts"
           },
+          "sets": {
+            "items": {
+              "$ref": "#/components/schemas/SetOut"
+            },
+            "type": "array",
+            "title": "Sets",
+            "description": "Strength sets, rests included; empty for other activities"
+          },
           "streams": {
             "anyOf": [
               {
@@ -2091,6 +2099,7 @@
           "laps",
           "splits",
           "best_efforts",
+          "sets",
           "streams"
         ],
         "title": "ActivityDetail"
@@ -3581,6 +3590,68 @@
           "ascent_m"
         ],
         "title": "SearchTotals"
+      },
+      "SetOut": {
+        "properties": {
+          "start_s": {
+            "type": "number",
+            "title": "Start S"
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "active or rest"
+          },
+          "reps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reps"
+          },
+          "weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Kg"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category",
+            "description": "FIT exercise category, e.g. squat; null when unknown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_s",
+          "duration_s",
+          "kind",
+          "reps",
+          "weight_kg",
+          "category"
+        ],
+        "title": "SetOut",
+        "description": "A strength set (OS-225)."
       },
       "SetupDone": {
         "properties": {

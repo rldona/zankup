@@ -233,6 +233,9 @@ class Activity(Timestamps, Base):
     splits: Mapped[list[dict[str, Any]] | None] = mapped_column(
         JSONB, comment="Per-km splits: distance_m, time_s, elevation_change_m, avg_hr"
     )
+    sets: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        JSONB, comment="Strength sets (OS-225): start_s, duration_s, kind, reps, weight_kg, category"
+    )
     raw_meta: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="Source metadata, as received")
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

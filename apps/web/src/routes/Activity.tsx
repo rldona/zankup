@@ -33,6 +33,7 @@ import { api } from '../api';
 import { ZoneBar } from '../charts/static';
 import { Profile } from '../detail/Profile';
 import { RouteMap } from '../detail/RouteMap';
+import { Strength } from '../detail/Strength';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { SportIcon } from '../SportIcon';
@@ -103,6 +104,8 @@ function Detail({ activity }: { activity: ActivityDetail }) {
       {activity.streams && !series && <p className="state">{t('activity.loadingSeries')}</p>}
       {series && <RoutePanel series={series} sport={sport} pace={pace} format={format} units={prefs.units} />}
 
+      {/* Kept offline before sets existed, an activity may come without them. */}
+      {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
       {series?.hr?.some((v) => v != null) && (
         <Zones series={series} hrMax={prefs.hrMax} estimated={prefs.hrMaxEstimated} />
       )}

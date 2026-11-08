@@ -793,6 +793,11 @@ export interface components {
       splits: components['schemas']['SplitOut'][];
       /** Best Efforts */
       best_efforts: components['schemas']['BestEffortOut'][];
+      /**
+       * Sets
+       * @description Strength sets, rests included; empty for other activities
+       */
+      sets: components['schemas']['SetOut'][];
       streams: components['schemas']['StreamsInfo'] | null;
     };
     /** ActivityPage */
@@ -1313,6 +1318,30 @@ export interface components {
       moving_s: number;
       /** Ascent M */
       ascent_m: number;
+    };
+    /**
+     * SetOut
+     * @description A strength set (OS-225).
+     */
+    SetOut: {
+      /** Start S */
+      start_s: number;
+      /** Duration S */
+      duration_s: number;
+      /**
+       * Kind
+       * @description active or rest
+       */
+      kind: string;
+      /** Reps */
+      reps: number | null;
+      /** Weight Kg */
+      weight_kg: number | null;
+      /**
+       * Category
+       * @description FIT exercise category, e.g. squat; null when unknown
+       */
+      category: string | null;
     };
     /** SetupDone */
     SetupDone: {

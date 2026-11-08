@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-label="Zankup">
+  <!-- R1: the Z as a recorded route, start ring and finish dot. Original design. -->
+  <path d="M88 74 H26 L94 30 H40" fill="none" stroke="#000" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="100" cy="74" r="10" fill="none" stroke="#000" stroke-width="8"/>
+  <circle cx="34" cy="30" r="12" fill="#000"/>
+</svg>

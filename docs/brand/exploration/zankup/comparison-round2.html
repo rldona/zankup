@@ -1,0 +1,39 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>Zankup · finalistas sin montaña</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@800&family=Sora:wght@700&display=swap">
+<style>
+body{margin:0;font:14px system-ui;background:#f4f5f3;color:#111;padding:20px}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.opt{background:#fff;border-radius:16px;padding:14px;display:grid;gap:10px;justify-items:center}
+.opt h2{margin:0;font-size:13px}.big{width:170px;height:128px;color:#111}
+.pair{display:flex;gap:8px}.ico{width:60px;height:60px;border-radius:15px;display:grid;place-items:center}.ico svg{width:40px;height:40px}
+.dark{background:#111;color:#fff}.light{background:#fff;color:#111;border:3px solid #111}.green{background:#0b8f6a;color:#fff}
+.tiny{display:flex;gap:10px;align-items:center}.tiny svg{width:16px;height:16px}.tiny .s24 svg{width:24px;height:24px}.tiny .s32 svg{width:32px;height:32px}
+.word{display:flex;align-items:center;gap:8px;font-size:22px;letter-spacing:-.03em;font-family:Manrope;font-weight:800}.word svg{width:36px;height:27px}
+.word.sora{font-family:Sora;font-weight:700}
+</style>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="z4" viewBox="0 0 120 90">
+    <path d="M100 76 H24 L96 28 H44" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <polygon points="20,28 40,14 40,42" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></symbol>
+  <symbol id="r1" viewBox="0 0 120 90">
+    <path d="M88 74 H26 L94 30 H40" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="100" cy="74" r="10" fill="none" stroke="currentColor" stroke-width="8"/>
+    <circle cx="34" cy="30" r="12" fill="currentColor"/></symbol>
+  <symbol id="r2" viewBox="0 0 120 90">
+    <g stroke="currentColor" stroke-width="16" stroke-linecap="round" fill="none">
+      <path d="M22 76 H62"/><path d="M40 51 H80"/><path d="M58 26 H98"/></g></symbol>
+  <symbol id="r3" viewBox="0 0 120 90">
+    <path d="M98 76 H24 L96 30 H44 V12" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
+<div class="row">
+  <div class="opt"><h2>Z4 · Z que vuelve y sube (back-up)</h2><svg class="big"><use href="#z4"/></svg></div>
+  <div class="opt"><h2>R1 · Ruta: salida y llegada</h2><svg class="big"><use href="#r1"/></svg></div>
+  <div class="opt"><h2>R2 · Tres tramos que suben</h2><svg class="big"><use href="#r2"/></svg></div>
+  <div class="opt"><h2>R3 · Z que termina hacia arriba</h2><svg class="big"><use href="#r3"/></svg></div>
+</div>
+<script>
+document.querySelectorAll('.opt').forEach(o => {
+  const id = o.querySelector('use').getAttribute('href'); const s = `<svg><use href="${id}"/></svg>`;
+  o.insertAdjacentHTML('beforeend', `<div class="pair"><div class="ico dark">${s}</div><div class="ico light">${s}</div><div class="ico green">${s}</div></div><div class="word">${s}Zankup</div><div class="word sora">${s}Zankup</div><div class="tiny">${s}<span class="s24">${s}</span><span class="s32">${s}</span></div>`);
+});
+</script></html>

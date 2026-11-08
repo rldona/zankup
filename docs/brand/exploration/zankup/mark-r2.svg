@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-label="Zankup">
+  <!-- R2: three strides stepping up, which also read as a Z. Original design. -->
+  <g stroke="#000" stroke-width="16" stroke-linecap="round" fill="none">
+    <path d="M22 76 H62"/><path d="M40 51 H80"/><path d="M58 26 H98"/>
+  </g>
+</svg>

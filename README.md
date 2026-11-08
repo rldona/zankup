@@ -35,6 +35,7 @@ Other tasks: `make test`, `make lint`, `make format`, `make check` (what CI runs
 | [Findings](docs/findings.md) | Research on data sources and why this architecture |
 | [Strava export analysis](docs/strava-export-analysis.md) | What FIT and GPX exports contain and how Strava's numbers are reproduced |
 | [Prototypes](docs/prototypes/index.html) | Clickable desktop and mobile prototypes (need locally generated data) |
+| [Brand guide](docs/brand/README.md) | The new name (Zankup), mark, wordmark, assets and the migration checklist |
 
 ## Repository layout
 

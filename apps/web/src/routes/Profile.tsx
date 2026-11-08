@@ -4,6 +4,7 @@ import {
   meQuery,
   passkeysQuery,
   profileSummaryQuery,
+  providersQuery,
   queryKeys,
   sourcesQuery,
   SPORTS,
@@ -393,6 +394,7 @@ function Account({ me }: { me: Me }) {
           {t('profile.passwordTotp')}: {me.totp_enabled ? t('profile.on') : '—'}
         </p>
         <Passkeys />
+        <Google me={me} />
       </section>
       <section className="panel">
         <div className="ph">
@@ -415,6 +417,49 @@ function Account({ me }: { me: Me }) {
         </div>
       </section>
     </div>
+  );
+}
+
+/** Link or unlink a Google account (OS-220), when this instance offers it. */
+function Google({ me }: { me: Me }) {
+  const queryClient = useQueryClient();
+  const providers = useQuery({ ...providersQuery(api), retry: false });
+  const [params] = useSearchParams();
+  const unlink = useMutation({
+    mutationFn: async () => {
+      const { response } = await api.DELETE('/api/auth/google');
+      if (!response.ok)
+        throw new Error(response.status === 409 ? t('profile.googleNeedsOther') : t('common.error'));
+    },
+    onSuccess: () => queryClient.setQueryData(queryKeys.me, { ...me, google_linked: false }),
+  });
+  if (!providers.data?.google) return null;
+  return (
+    <>
+      <h3>{t('profile.google')}</h3>
+      {params.get('google') === 'error' && (
+        <p className="note" role="alert">
+          {t('profile.googleError')}
+        </p>
+      )}
+      {me.google_linked ? (
+        <div className="rows">
+          <p className="note">{t('profile.googleLinked')}</p>
+          <button type="button" onClick={() => unlink.mutate()} disabled={unlink.isPending}>
+            {t('profile.googleUnlink')}
+          </button>
+          {unlink.isError && (
+            <p className="note" role="alert">
+              {unlink.error.message}
+            </p>
+          )}
+        </div>
+      ) : (
+        <a className="button" href="/api/auth/google/start?mode=link">
+          {t('profile.googleLink')}
+        </a>
+      )}
+    </>
   );
 }
 

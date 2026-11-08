@@ -1026,6 +1026,27 @@ button.syncbtn {
   border-bottom: 1px solid var(--line);
 }
 
+/* Links that look like buttons (Google sign-in, linking). */
+a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+
+a.button.block {
+  display: flex;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+}
+
 /* Chart catalogue (OS-215): each block is drawn in its own theme. */
 .cat {
   background: var(--surface);

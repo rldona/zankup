@@ -14,7 +14,9 @@ from zankup.api.activities import router as activities_router
 from zankup.api.preferences import router as preferences_router
 from zankup.api.profile import router as profile_router
 from zankup.api.sync import router as sync_router
+from zankup.auth.google import router as google_router
 from zankup.auth.passkeys import router as passkeys_router
+from zankup.auth.password_reset import router as password_router
 from zankup.auth.routes import router as auth_router
 from zankup.auth.setup import router as setup_router
 from zankup.core.config import Settings, get_settings
@@ -83,6 +85,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(auth_router)
     app.include_router(passkeys_router)
+    app.include_router(password_router)
+    app.include_router(google_router)
     app.include_router(setup_router)
     app.include_router(activities_router)
     app.include_router(sync_router)

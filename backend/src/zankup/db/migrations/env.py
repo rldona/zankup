@@ -7,6 +7,7 @@ from sqlalchemy import engine_from_config, pool
 
 from zankup.core.config import get_settings
 from zankup.db import Base
+from zankup.db.manual import include_object
 
 config = context.config
 if config.config_file_name is not None:
@@ -23,6 +24,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         compare_type=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -33,7 +35,12 @@ def run_migrations_online() -> None:
         config.get_section(config.config_ini_section, {}), prefix="sqlalchemy.", poolclass=pool.NullPool
     )
     with engine.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            include_object=include_object,
+        )
         with context.begin_transaction():
             context.run_migrations()
 

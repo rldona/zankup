@@ -5,12 +5,13 @@ has a single user: it keeps a hosted, multi-user version possible without a data
 Enumerated values are plain text with CHECK constraints, which are simpler to evolve than Postgres enums.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -49,6 +50,7 @@ class User(Timestamps, Base):
     """The owner of the instance. Sign-in methods arrive with authentication (OS-110)."""
 
     __tablename__ = "users"
+    __table_args__ = (CheckConstraint("sex IN ('female', 'male', 'other')", name="sex"),)
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     email: Mapped[str] = mapped_column(String(320), unique=True)
@@ -61,6 +63,15 @@ class User(Timestamps, Base):
     totp_last_counter: Mapped[int | None] = mapped_column(
         BigInteger, comment="Last accepted step: no replays"
     )
+    google_sub: Mapped[str | None] = mapped_column(
+        String(255), unique=True, comment="Linked Google account (OS-220): only this one can sign in"
+    )
+    # Profile (OS-218): optional, used by the metrics engine (age, weight) and shown on the profile.
+    location: Mapped[str | None] = mapped_column(String(120))
+    birth_date: Mapped[date | None] = mapped_column(Date)
+    sex: Mapped[str | None] = mapped_column(String(10))
+    weight_kg: Mapped[float | None] = mapped_column(Float)
+    height_cm: Mapped[int | None] = mapped_column(SmallInteger)
 
 
 class UserSettings(Timestamps, Base):
@@ -73,7 +84,9 @@ class UserSettings(Timestamps, Base):
     )
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    language: Mapped[str] = mapped_column(String(5), server_default="en")
+    language: Mapped[str | None] = mapped_column(
+        String(5), comment="Null until the user picks one: the browser's language is used"
+    )
     units: Mapped[str] = mapped_column(String(10), server_default="metric")
     theme: Mapped[str] = mapped_column(String(20), server_default="system")
     hr_max: Mapped[int | None] = mapped_column(SmallInteger)
@@ -130,6 +143,19 @@ class RecoveryCode(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class PasswordReset(Base):
+    """A password recovery link (OS-222): single use, 30 minutes. Only the token's SHA-256 is kept."""
+
+    __tablename__ = "password_resets"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Passkey(Base):
     """A WebAuthn credential (OS-405): signs in without password or TOTP, since the device already checks
     the fingerprint, face or PIN. Bound to the instance's domain (WEBAUTHN_RP_ID)."""
@@ -172,6 +198,9 @@ class Activity(Timestamps, Base):
         CheckConstraint(_in("source", SOURCES), name="source"),
         Index("ix_activities_user_start", "user_id", "start_utc"),
         Index("ix_activities_user_sport_start", "user_id", "sport", "start_utc"),
+        Index("ix_activities_user_distance", "user_id", "distance_m"),
+        # Full-text search (OS-219) uses ix_activities_search, an expression index created in its
+        # migration: see zankup_search_text there.
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -203,6 +232,9 @@ class Activity(Timestamps, Base):
     route_simplified: Mapped[str | None] = mapped_column(Text, comment="Encoded polyline for thumbnails")
     splits: Mapped[list[dict[str, Any]] | None] = mapped_column(
         JSONB, comment="Per-km splits: distance_m, time_s, elevation_change_m, avg_hr"
+    )
+    sets: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        JSONB, comment="Strength sets (OS-225): start_s, duration_s, kind, reps, weight_kg, category"
     )
     raw_meta: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="Source metadata, as received")
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

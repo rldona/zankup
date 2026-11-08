@@ -28,7 +28,8 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 - **Brand applied.** The product is **Zankup**; the name, mark, wordmark and colours are in the [brand guide](brand/README.md). The reference instance runs on **zankup.com** (PWA and API proxy on Vercel) and **api.zankup.com** (API on Railway, for the Android app). A self-hosted instance can keep its `*.vercel.app` and `*.up.railway.app` URLs or use its own domain.
 
 **Working rules:**
-- One ticket = one branch = one small PR with tests.
+- Related tickets are built together: one block = one branch = one PR with tests (decided 8 Nov 2026,
+  to have fewer PRs and merges; each merge to `main` is a paid production build on Vercel).
 - Commits, PRs, branches, docs and code comments are written in English.
 - Every phase ends with something deployed and usable.
 - Anything not critical for the phase milestone moves to the next phase.
@@ -146,6 +147,11 @@ The production domain (OS-D06) is done: `zankup.com` → Vercel (`www` redirects
 ## Phase 2 · PWA MVP → **M2**
 
 **Goal:** use Zankup every day on desktop and mobile.
+
+**Status (9 Nov 2026):** done, built in four blocks (detail; settings, language and profile; sync and
+offline; accounts, search, strength, self-hosting and quality). Left for later: the "Deploy on
+Railway" template button (it is published from a Railway account), the Stats cards that need the
+metrics engine (phase 3), gear, and importing and exporting (phase 4).
 
 - **OS-501 · React Native performance proof of concept** (M) · depends on OS-008 and OS-111
   - **Runs first in this phase**, right after M1, so the React Native vs Kotlin decision is made before the PWA and `packages/core` take shape. The rest of the Android app stays in phase 5.

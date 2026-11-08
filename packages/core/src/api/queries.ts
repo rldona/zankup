@@ -16,10 +16,19 @@ export type Me = Json<'/api/auth/me', 'get'>;
 export type ActivityPage = Json<'/api/activities', 'get'>;
 export type ActivitySummary = ActivityPage['items'][number];
 export type MonthTotals = Json<'/api/activities/months', 'get'>[number];
+export type ActivityStreams = Json<'/api/activities/{activity_id}/streams', 'get'>;
 export type ActivityDetail = Json<'/api/activities/{activity_id}', 'get'>;
 export type Health = Json<'/api/health', 'get'>;
 export type SetupStatus = Json<'/api/setup', 'get'>;
 export type Preferences = Json<'/api/settings', 'get'>;
+export type DeviceSession = Json<'/api/auth/devices', 'get'>[number];
+export type ProfileSummary = Json<'/api/profile/summary', 'get'>;
+export type SourceStatus = Json<'/api/sources', 'get'>[number];
+export type SyncRun = Json<'/api/sync/{run_id}', 'get'>;
+export type Week = Json<'/api/week', 'get'>;
+export type SearchParams = NonNullable<paths['/api/activities/search']['get']['parameters']['query']>;
+export type SearchPage = Json<'/api/activities/search', 'get'>;
+export type PasskeyInfo = Json<'/api/auth/passkeys', 'get'>[number];
 
 /** An API error with its HTTP status, so callers can tell "signed out" (401) from other failures. */
 export class ApiError extends Error {
@@ -47,9 +56,18 @@ export const queryKeys = {
   setup: ['setup'] as const,
   me: ['me'] as const,
   settings: ['settings'] as const,
+  devices: ['devices'] as const,
+  profile: ['profile'] as const,
+  sources: ['sources'] as const,
+  passkeys: ['passkeys'] as const,
+  syncs: ['syncs'] as const,
+  providers: ['providers'] as const,
+  search: (params: object) => ['activities', 'search', params] as const,
+  week: (today: string) => ['activities', 'week', today] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
   months: (sport?: readonly string[]) => ['activities', 'months', { sport: sport ?? [] }] as const,
   activity: (id: number) => ['activity', id] as const,
+  streams: (id: number) => ['activity', id, 'streams'] as const,
 };
 
 export function healthQuery(api: ApiClient) {
@@ -122,5 +140,100 @@ export function settingsQuery(api: ApiClient) {
     queryKey: queryKeys.settings,
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/settings', { signal })),
+  };
+}
+
+/** All the series of an activity (sent gzip-compressed; the browser decompresses them). */
+export function streamsQuery(api: ApiClient, id: number) {
+  return {
+    queryKey: queryKeys.streams(id),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities/{activity_id}/streams', {
+          params: { path: { activity_id: id } },
+          signal,
+        }),
+      ),
+    staleTime: Infinity, // a recorded activity's series never change
+  };
+}
+
+/** Open sessions: every browser and app signed in (Settings → Sessions). */
+export function devicesQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.devices,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/auth/devices', { signal })),
+  };
+}
+
+/** The profile's numbers: this year and all time by sport, records, streak and device (OS-218). */
+export function profileSummaryQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.profile,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/profile/summary', { signal })),
+  };
+}
+
+/** Data sources (Garmin) and their state. */
+export function sourcesQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.sources,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/sources', { signal })),
+  };
+}
+
+/** The passkeys registered for this account (OS-405). */
+export function passkeysQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.passkeys,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/auth/passkeys', { signal })),
+  };
+}
+
+/** The latest Garmin syncs, newest first (the first one is the one to follow while it runs). */
+export function syncsQuery(api: ApiClient, limit = 10) {
+  return {
+    queryKey: queryKeys.syncs,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/sync', { params: { query: { limit } }, signal })),
+  };
+}
+
+/** Extra sign-in methods this instance offers (Google), for the sign-in screen. Public. */
+export function providersQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.providers,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/auth/google/providers', { signal })),
+    staleTime: Infinity,
+  };
+}
+
+/** This week (OS-217): days with their activities, totals, the weeks before, streak, recent records. */
+export function weekQuery(api: ApiClient, today: string) {
+  return {
+    queryKey: queryKeys.week(today),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/week', { params: { query: { today } }, signal })),
+  };
+}
+
+/** Advanced search (OS-219), a page at a time: any combination of filters, sorted, with totals. */
+export function searchQuery(api: ApiClient, params: SearchParams, limit = 50) {
+  return {
+    queryKey: queryKeys.search(params),
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }: { pageParam: number; signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities/search', {
+          params: { query: { ...params, offset: pageParam, limit } },
+          signal,
+        }),
+      ),
+    getNextPageParam: (last: SearchPage) => last.next_offset ?? undefined,
   };
 }

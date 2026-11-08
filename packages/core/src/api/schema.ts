@@ -98,6 +98,50 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
+    /**
+     * Update Me
+     * @description Edit the profile (OS-218): name, location, date of birth, sex, weight and height.
+     */
+    patch: operations['updateMe'];
+    trace?: never;
+  };
+  '/api/auth/devices': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Devices
+     * @description Open sessions: every browser and app signed in, the current one marked.
+     */
+    get: operations['listDevices'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/devices/{device_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete Device
+     * @description Sign a session out from elsewhere. Signing out this one is POST /logout.
+     */
+    delete: operations['deleteDevice'];
+    options?: never;
+    head?: never;
     patch?: never;
     trace?: never;
   };
@@ -215,6 +259,126 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/auth/password/forgot': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Forgot
+     * @description E-mail a recovery link. The answer is the same whether or not the account exists.
+     */
+    post: operations['forgotPassword'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/password/reset': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Reset
+     * @description Choose a new password with the link's token and a code. Signs every session out.
+     */
+    post: operations['resetPassword'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/google/providers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Providers
+     * @description Which extra sign-in methods this instance offers (public: the sign-in screen asks).
+     */
+    get: operations['authProviders'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/google/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Start
+     * @description Off to Google. `link` needs a signed-in session (Profile → Account → Sign-in methods).
+     */
+    get: operations['googleStart'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/google/callback': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Callback
+     * @description Back from Google: link the account, or sign in the one linked to it.
+     */
+    get: operations['googleCallback'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/google': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Unlink
+     * @description Unlink Google. Another strong method must remain: password with TOTP, or a passkey.
+     */
+    delete: operations['googleUnlink'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/setup': {
     parameters: {
       query?: never;
@@ -284,6 +448,26 @@ export interface paths {
      * @description The feed: newest first.
      */
     get: operations['listActivities'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/activities/search': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Search Activities
+     * @description Advanced search (OS-219): any combination of filters, sorted, with totals of all the matches.
+     */
+    get: operations['searchActivities'];
     put?: never;
     post?: never;
     delete?: never;
@@ -387,7 +571,7 @@ export interface paths {
     put?: never;
     /**
      * Start Sync
-     * @description Sync Garmin now. Returns the new run, or the one already queued or running.
+     * @description Sync Garmin now (or load its whole history). Returns the new run, or the one already going.
      */
     post: operations['startSync'];
     delete?: never;
@@ -432,6 +616,60 @@ export interface paths {
     head?: never;
     /** Update Preferences */
     patch: operations['updateSettings'];
+    trace?: never;
+  };
+  '/api/profile/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Profile Summary */
+    get: operations['getProfileSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/sources': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Sources
+     * @description Data sources and their state, for Settings and the profile's Account tab.
+     */
+    get: operations['listSources'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/week': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Week */
+    get: operations['getWeek'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   '/api/health': {
@@ -555,6 +793,11 @@ export interface components {
       splits: components['schemas']['SplitOut'][];
       /** Best Efforts */
       best_efforts: components['schemas']['BestEffortOut'][];
+      /**
+       * Sets
+       * @description Strength sets, rests included; empty for other activities
+       */
+      sets: components['schemas']['SetOut'][];
       streams: components['schemas']['StreamsInfo'] | null;
     };
     /** ActivityPage */
@@ -710,6 +953,53 @@ export interface components {
       /** Challenge */
       challenge: string;
     };
+    /** Day */
+    Day: {
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
+      /** Activities */
+      activities: components['schemas']['DayActivity'][];
+    };
+    /** DayActivity */
+    DayActivity: {
+      /** Id */
+      id: number;
+      /** Sport */
+      sport: string;
+      /** Name */
+      name: string | null;
+    };
+    /** DeviceOut */
+    DeviceOut: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /** Platform */
+      platform: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Last Seen */
+      last_seen: string | null;
+      /** Expires At */
+      expires_at: string | null;
+      /**
+       * Current
+       * @description The session making this request
+       */
+      current: boolean;
+    };
+    /** ForgotRequest */
+    ForgotRequest: {
+      /** Email */
+      email: string;
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -770,6 +1060,21 @@ export interface components {
       display_name: string | null;
       /** Totp Enabled */
       totp_enabled: boolean;
+      /**
+       * Google Linked
+       * @default false
+       */
+      google_linked: boolean;
+      /** Location */
+      location?: string | null;
+      /** Birth Date */
+      birth_date?: string | null;
+      /** Sex */
+      sex?: ('female' | 'male' | 'other') | null;
+      /** Weight Kg */
+      weight_kg?: number | null;
+      /** Height Cm */
+      height_cm?: number | null;
     };
     /**
      * MonthTotals
@@ -829,14 +1134,134 @@ export interface components {
        * @enum {string}
        */
       theme: 'system' | 'light' | 'dark' | 'oled' | 'highContrast' | 'forest' | 'ocean' | 'sunset';
+      /**
+       * Language
+       * @description Null until picked: clients use the device's language
+       */
+      language: ('en' | 'es') | null;
+      /**
+       * Units
+       * @enum {string}
+       */
+      units: 'metric' | 'imperial';
+      /**
+       * Hr Max
+       * @description Max heart rate set by the user
+       */
+      hr_max: number | null;
+      /**
+       * Hr Rest
+       * @description Resting heart rate set by the user
+       */
+      hr_rest: number | null;
+      /**
+       * Hr Max Estimate
+       * @description Highest heart rate recorded in an activity: the zones use it until hr_max is set
+       */
+      hr_max_estimate: number | null;
     };
     /**
      * PreferencesUpdate
-     * @description Only the fields sent are changed.
+     * @description Only the fields sent are changed. Null clears the language, hr_max or hr_rest.
      */
     PreferencesUpdate: {
       /** Theme */
       theme?: ('system' | 'light' | 'dark' | 'oled' | 'highContrast' | 'forest' | 'ocean' | 'sunset') | null;
+      /** Language */
+      language?: ('en' | 'es') | null;
+      /** Units */
+      units?: ('metric' | 'imperial') | null;
+      /** Hr Max */
+      hr_max?: number | null;
+      /** Hr Rest */
+      hr_rest?: number | null;
+    };
+    /** ProfileSummary */
+    ProfileSummary: {
+      /** Year */
+      year: number;
+      /**
+       * This Year
+       * @description This calendar year, by sport, most active first
+       */
+      this_year: components['schemas']['SportTotals'][];
+      /** All Time */
+      all_time: components['schemas']['SportTotals'][];
+      /**
+       * Since
+       * @description Start of the first activity
+       */
+      since: string | null;
+      /**
+       * Records
+       * @description Best time ever at each running distance
+       */
+      records: components['schemas']['Record'][];
+      /**
+       * Streak Weeks
+       * @description Weeks in a row with an activity, up to this week or the last
+       */
+      streak_weeks: number;
+      /**
+       * Device
+       * @description The device of the latest activity
+       */
+      device: string | null;
+    };
+    /**
+     * ProfileUpdate
+     * @description Only the fields sent are changed; null clears one (except the name, which cannot be empty).
+     */
+    ProfileUpdate: {
+      /** Display Name */
+      display_name?: string | null;
+      /** Location */
+      location?: string | null;
+      /** Birth Date */
+      birth_date?: string | null;
+      /** Sex */
+      sex?: ('female' | 'male' | 'other') | null;
+      /** Weight Kg */
+      weight_kg?: number | null;
+      /** Height Cm */
+      height_cm?: number | null;
+    };
+    /** Providers */
+    Providers: {
+      /** Google */
+      google: boolean;
+    };
+    /** RecentRecord */
+    RecentRecord: {
+      /** Distance Key */
+      distance_key: string;
+      /** Distance M */
+      distance_m: number;
+      /** Time S */
+      time_s: number;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
+    };
+    /** Record */
+    Record: {
+      /** Distance Key */
+      distance_key: string;
+      /** Distance M */
+      distance_m: number;
+      /** Time S */
+      time_s: number;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Date
+       * Format: date-time
+       */
+      date: string;
     };
     /** RefreshRequest */
     RefreshRequest: {
@@ -858,6 +1283,66 @@ export interface components {
        */
       name: string;
     };
+    /** ResetRequest */
+    ResetRequest: {
+      /** Token */
+      token: string;
+      /** Password */
+      password: string;
+      /**
+       * Code
+       * @description Authenticator code or a recovery code
+       * @default
+       */
+      code: string;
+    };
+    /** SearchPage */
+    SearchPage: {
+      /** Items */
+      items: components['schemas']['ActivitySummary'][];
+      /** @description Of every activity that matches, not just this page */
+      totals: components['schemas']['SearchTotals'];
+      /**
+       * Next Offset
+       * @description Pass it as `offset` for the next page; null at the end
+       */
+      next_offset: number | null;
+    };
+    /** SearchTotals */
+    SearchTotals: {
+      /** Count */
+      count: number;
+      /** Distance M */
+      distance_m: number;
+      /** Moving S */
+      moving_s: number;
+      /** Ascent M */
+      ascent_m: number;
+    };
+    /**
+     * SetOut
+     * @description A strength set (OS-225).
+     */
+    SetOut: {
+      /** Start S */
+      start_s: number;
+      /** Duration S */
+      duration_s: number;
+      /**
+       * Kind
+       * @description active or rest
+       */
+      kind: string;
+      /** Reps */
+      reps: number | null;
+      /** Weight Kg */
+      weight_kg: number | null;
+      /**
+       * Category
+       * @description FIT exercise category, e.g. squat; null when unknown
+       */
+      category: string | null;
+    };
     /** SetupDone */
     SetupDone: {
       me: components['schemas']['Me'];
@@ -869,6 +1354,41 @@ export interface components {
       /** Open */
       open: boolean;
     };
+    /** SourceStatus */
+    SourceStatus: {
+      /**
+       * Kind
+       * @constant
+       */
+      kind: 'garmin';
+      /**
+       * Configured
+       * @description The key is set on the server
+       */
+      configured: boolean;
+      /**
+       * Key Expires On
+       * @description When the key expires, if the server was told
+       */
+      key_expires_on: string | null;
+      /**
+       * Expiring Soon
+       * @description Less than two weeks left
+       */
+      expiring_soon: boolean;
+      /**
+       * Token Expires At
+       * @description The current short-lived access token
+       */
+      token_expires_at: string | null;
+      /** Last Sync At */
+      last_sync_at: string | null;
+      /**
+       * Last Error
+       * @description The latest sync's error, if it failed
+       */
+      last_error: string | null;
+    };
     /** SplitOut */
     SplitOut: {
       /** Distance M */
@@ -879,6 +1399,19 @@ export interface components {
       elevation_change_m: number | null;
       /** Avg Hr */
       avg_hr: number | null;
+    };
+    /** SportTotals */
+    SportTotals: {
+      /** Sport */
+      sport: string;
+      /** Count */
+      count: number;
+      /** Distance M */
+      distance_m: number;
+      /** Moving S */
+      moving_s: number;
+      /** Ascent M */
+      ascent_m: number;
     };
     /** StreamsInfo */
     StreamsInfo: {
@@ -927,6 +1460,20 @@ export interface components {
        * @description Skipped: no FIT original (manual, or GPX/TCX uploads)
        */
       no_fit?: number | null;
+    };
+    /** SyncRequest */
+    SyncRequest: {
+      /**
+       * History
+       * @description Load the whole history (from 2000), not just what is new
+       * @default false
+       */
+      history: boolean;
+      /**
+       * Since
+       * @description Or load from this day on
+       */
+      since?: string | null;
     };
     /** SyncStatus */
     SyncStatus: {
@@ -1012,6 +1559,48 @@ export interface components {
       input?: unknown;
       /** Context */
       ctx?: Record<string, never>;
+    };
+    /** Week */
+    Week: {
+      /**
+       * Today
+       * Format: date
+       */
+      today: string;
+      /**
+       * Days
+       * @description Monday to Sunday of this week (future days are empty)
+       */
+      days: components['schemas']['Day'][];
+      this_week: components['schemas']['WeekTotals'];
+      /**
+       * Previous
+       * @description The 12 weeks before, newest first
+       */
+      previous: components['schemas']['WeekTotals'][];
+      /** Streak Weeks */
+      streak_weeks: number;
+      /**
+       * Records
+       * @description All-time bests set in the last 30 days
+       */
+      records: components['schemas']['RecentRecord'][];
+    };
+    /** WeekTotals */
+    WeekTotals: {
+      /**
+       * Week Start
+       * Format: date
+       */
+      week_start: string;
+      /** Count */
+      count: number;
+      /** Distance M */
+      distance_m: number;
+      /** Moving S */
+      moving_s: number;
+      /** Ascent M */
+      ascent_m: number;
     };
     /** LoginRequest */
     zankup__auth__passkeys__LoginRequest: {
@@ -1205,6 +1794,88 @@ export interface operations {
       };
     };
   };
+  updateMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProfileUpdate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Me'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listDevices: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeviceOut'][];
+        };
+      };
+    };
+  };
+  deleteDevice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        device_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
   listPasskeys: {
     parameters: {
       query?: never;
@@ -1360,6 +2031,169 @@ export interface operations {
       };
     };
   };
+  forgotPassword: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ForgotRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  resetPassword: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResetRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  authProviders: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Providers'];
+        };
+      };
+    };
+  };
+  googleStart: {
+    parameters: {
+      query?: {
+        mode?: 'login' | 'link';
+        next?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      303: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  googleCallback: {
+    parameters: {
+      query?: {
+        code?: string | null;
+        state?: string | null;
+        error?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      303: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  googleUnlink: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   getSetupStatus: {
     parameters: {
       query?: never;
@@ -1467,6 +2301,64 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ActivityPage'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  searchActivities: {
+    parameters: {
+      query?: {
+        /** @description Words in the name or description */
+        q?: string | null;
+        /** @description Only these sports (repeat to combine) */
+        sport?: string[] | null;
+        /** @description From this moment (inclusive) */
+        from?: string | null;
+        /** @description Until this moment (exclusive) */
+        to?: string | null;
+        /** @description Metres */
+        min_distance?: number | null;
+        max_distance?: number | null;
+        /** @description Moving seconds */
+        min_duration?: number | null;
+        max_duration?: number | null;
+        /** @description Metres */
+        min_ascent?: number | null;
+        min_hr?: number | null;
+        max_hr?: number | null;
+        with_record?: boolean;
+        with_description?: boolean;
+        with_gps?: boolean;
+        /** @description garmin, strava… */
+        source?: string[] | null;
+        /** @description date, distance, duration, elevation or speed */
+        sort?: string;
+        order?: string;
+        offset?: number;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SearchPage'];
         };
       };
       /** @description Validation Error */
@@ -1671,7 +2563,11 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SyncRequest'] | null;
+      };
+    };
     responses: {
       /** @description Successful Response */
       202: {
@@ -1688,6 +2584,15 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
       };
     };
   };
@@ -1762,6 +2667,78 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Preferences'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getProfileSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProfileSummary'];
+        };
+      };
+    };
+  };
+  listSources: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SourceStatus'][];
+        };
+      };
+    };
+  };
+  getWeek: {
+    parameters: {
+      query?: {
+        /** @description The user's today (YYYY-MM-DD); UTC if missing */
+        today?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Week'];
         };
       };
       /** @description Validation Error */

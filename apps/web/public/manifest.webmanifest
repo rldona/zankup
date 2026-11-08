@@ -1,9 +1,14 @@
 {
+  "id": "/",
   "name": "Zankup",
   "short_name": "Zankup",
   "description": "Your sports data, from start to finish.",
+  "lang": "en",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "any",
+  "categories": ["sports", "health", "fitness"],
   "background_color": "#20c997",
   "theme_color": "#111111",
   "icons": [

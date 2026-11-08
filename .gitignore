@@ -34,3 +34,7 @@ dist/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Playwright (OS-213)
+test-results/
+playwright-report/

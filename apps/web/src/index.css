@@ -502,6 +502,925 @@ svg.i {
   margin: 12px 0 24px;
 }
 
+/* Activity detail (OS-205 to OS-208, OS-216), from the prototype. */
+.page.detail {
+  max-width: 980px;
+}
+
+.dhead {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.dhead h1 {
+  font-size: 22px;
+  margin: 0;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.dhead .sp {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.dhead .sp svg.i {
+  width: 24px;
+  height: 24px;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column-reverse;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.kpi dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.kpi dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.ph {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.ph h2 {
+  font-size: 16px;
+  margin: 0;
+  flex: 1;
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.seg button {
+  border: 0;
+  border-radius: 0;
+  padding: 5px 10px;
+  font-size: 13px;
+  background: var(--surface);
+}
+
+.seg button + button {
+  border-left: 1px solid var(--line);
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend i {
+  display: block;
+  width: 72px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.map {
+  height: 340px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+  margin: 0 0 8px;
+}
+
+.map.fallback {
+  height: auto;
+  padding: 8px;
+}
+
+.map.fallback svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.map.fallback polyline {
+  fill: none;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.map.fallback figcaption {
+  margin: 6px 4px 0;
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  min-height: 24px;
+  margin: 6px 2px 0;
+  font-size: 13px;
+}
+
+.readout.note {
+  margin-top: 6px;
+}
+
+.readout.section b {
+  color: var(--accent);
+}
+
+button.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.panel th,
+.panel td {
+  text-align: left;
+  padding: 7px 8px 7px 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.panel thead th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.panel tr:last-child > * {
+  border-bottom: 0;
+}
+
+.panel .muted {
+  color: var(--muted);
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+.track {
+  width: 40%;
+}
+
+.track i {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--accent);
+  min-width: 2px;
+}
+
+.zbar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: var(--surface-2);
+}
+
+.zbar i {
+  display: block;
+}
+
+.desc {
+  white-space: pre-line;
+  margin: 0;
+}
+
+.origin {
+  margin: 6px 2px 30px;
+}
+
+.spark {
+  width: 100%;
+  height: 30px;
+  display: block;
+}
+
+.spark polyline {
+  fill: none;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+/* MapLibre's controls in the theme's colours. */
+.maplibregl-ctrl-group,
+.maplibregl-ctrl-attrib {
+  background: var(--surface) !important;
+  color: var(--muted);
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--muted);
+}
+
+/* Settings and profile (OS-212, OS-218). */
+.page h3 {
+  font-size: 14px;
+  margin: 14px 0 4px;
+}
+
+input,
+select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 7px 10px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 16px;
+  margin: 10px 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rows {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 14px;
+}
+
+.rows li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.rows li > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.badge.streak {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}
+
+.ok {
+  color: var(--accent);
+  margin: 0 0 4px;
+}
+
+.warn {
+  color: var(--run);
+  margin: 0 0 4px;
+}
+
+.phead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.phead h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.phead .note {
+  margin: 2px 0 6px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+  font-size: 22px;
+  flex: none;
+}
+
+.page.profile {
+  max-width: 980px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  margin: 6px 0 14px;
+  scrollbar-width: none;
+}
+
+.tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  padding: 8px 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tabs button[aria-selected='true'] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 0 14px;
+}
+
+.grid2 .panel th,
+.grid2 .panel td {
+  white-space: normal;
+}
+
+.pairs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.pairs dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pairs dd {
+  margin: 0;
+  font-weight: 650;
+}
+
+.cell-sport {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell-sport .sp {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.cell-sport .sp svg.i {
+  width: 15px;
+  height: 15px;
+}
+
+/* Sync (OS-209, OS-226): a sheet with the run's progress, over the page. */
+button.syncbtn {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.spinning {
+  display: inline-grid;
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinning {
+    animation: none;
+  }
+}
+
+.sheet {
+  position: fixed;
+  left: 248px;
+  bottom: 20px;
+  width: min(380px, calc(100vw - 32px));
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  padding: 14px 16px;
+  z-index: 20;
+}
+
+.sheet p {
+  margin: 0 0 6px;
+}
+
+.syncprogress progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.badge.success {
+  color: var(--accent);
+}
+
+.badge.error {
+  color: var(--run);
+}
+
+@media (max-width: 1023px) {
+  .sheet {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Offline (OS-211). */
+.offline {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Links that look like buttons (Google sign-in, linking). */
+a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+
+a.button.block {
+  display: flex;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+}
+
+/* This week (OS-217): above the feed, and the "Now" cards in Stats. */
+.week {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.weekhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.weekhead h2 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 10px;
+  text-align: center;
+}
+
+.days li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dot {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line);
+  color: var(--sport);
+}
+
+.dot.on {
+  border: 0;
+  background: color-mix(in srgb, var(--sport) 18%, var(--surface));
+}
+
+.dot svg.i {
+  width: 17px;
+  height: 17px;
+}
+
+.dot .more {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  font-size: 10px;
+  background: var(--fg);
+  color: var(--bg);
+  border-radius: 999px;
+  padding: 0 4px;
+}
+
+.days .today .dot {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.days .today .dlabel {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.days .future {
+  opacity: 0.45;
+}
+
+.dlabel {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+.weeknums {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.weeknums div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.weeknums dd {
+  margin: 0;
+  font-weight: 650;
+}
+
+.weeknums dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0 14px;
+}
+
+.big {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.meterbar {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--surface-2);
+}
+
+.meterbar i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--accent);
+}
+
+.meterbar b {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--fg);
+}
+
+.bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  height: 150px;
+  align-items: end;
+}
+
+.bars div {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  gap: 2px;
+}
+
+.bars i {
+  display: block;
+  width: 70%;
+  min-height: 2px;
+  border-radius: 6px 6px 0 0;
+  background: var(--accent);
+}
+
+/* Advanced search (OS-219). */
+.page.search {
+  max-width: 1180px;
+}
+
+.searchbox {
+  width: 100%;
+  font-size: 16px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sortby {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.chips.wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.chip.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}
+
+.searchgrid {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.filters {
+  display: grid;
+  gap: 8px;
+}
+
+.filters h3 {
+  margin: 8px 0 0;
+}
+
+.range {
+  display: flex;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.range legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.range input {
+  width: 100%;
+  min-width: 0;
+}
+
+.checks {
+  display: grid;
+  gap: 6px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.rtable td.nm a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.rtable .sp {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+}
+
+.rtable .sp svg.i {
+  width: 14px;
+  height: 14px;
+}
+
+.page.search .only-mobile {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .searchgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page.search .only-mobile {
+    display: block;
+  }
+
+  .filters {
+    display: none;
+  }
+
+  .filters.open {
+    display: grid;
+    position: fixed;
+    inset: auto 0 0 0;
+    max-height: 85dvh;
+    overflow: auto;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    border-radius: 16px 16px 0 0;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    z-index: 30;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .rtable .wide {
+    display: none;
+  }
+}
+
+/* Strength (OS-225): sets by exercise and the body map. */
+.exercise h3 {
+  margin: 12px 0 4px;
+}
+
+.bodymap {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.bodymap figure {
+  margin: 0;
+  text-align: center;
+}
+
+.bodymap svg {
+  width: 110px;
+  height: 220px;
+}
+
+.bodymap .body {
+  fill: var(--surface-2);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.bodymap .muscle {
+  fill: var(--line);
+  stroke: var(--surface);
+  stroke-width: 0.6;
+}
+
+.bodymap .muscle.on {
+  fill: var(--strength);
+}
+
+/* Chart catalogue (OS-215): each block is drawn in its own theme. */
+.cat {
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.catgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.catgrid figure {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
 /* Theme picker (OS-214): each preview is a tiny app drawn with its own theme's variables. */
 .page h2 {
   font-size: 16px;

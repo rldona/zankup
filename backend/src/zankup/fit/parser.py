@@ -79,6 +79,67 @@ class Streams:
         return [name for name in self.SERIES if any(v is not None for v in getattr(self, name))]
 
 
+# FIT profile's exercise_category (strength sets, OS-225). 65534 means "unknown".
+EXERCISE_CATEGORIES = (
+    "bench_press",
+    "calf_raise",
+    "cardio",
+    "carry",
+    "chop",
+    "core",
+    "crunch",
+    "curl",
+    "deadlift",
+    "flye",
+    "hip_raise",
+    "hip_stability",
+    "hip_swing",
+    "hyperextension",
+    "lateral_raise",
+    "leg_curl",
+    "leg_raise",
+    "lunge",
+    "olympic_lift",
+    "plank",
+    "plyo",
+    "pull_up",
+    "push_up",
+    "row",
+    "shoulder_press",
+    "shoulder_stability",
+    "shrug",
+    "sit_up",
+    "squat",
+    "total_body",
+    "triceps_extension",
+    "warm_up",
+    "run",
+)
+
+
+@dataclass
+class StrengthSet:
+    """One set of a strength workout, as the watch recorded it."""
+
+    start_s: float  # from the start of the activity
+    duration_s: float
+    kind: str  # "active" or "rest"
+    reps: int | None
+    weight_kg: float | None
+    category: str | None  # an EXERCISE_CATEGORIES name, or None when the watch did not know it
+
+
+def _category(value: Any) -> str | None:
+    """The set's exercise category. Like Garmin Connect, only the first value counts (the rest are
+    alternatives the watch considered); 65534 is "unknown"."""
+    first = value[0] if isinstance(value, tuple | list) and value else value
+    if isinstance(first, str):
+        return None if first == "unknown" else first
+    if isinstance(first, int) and 0 <= first < len(EXERCISE_CATEGORIES):
+        return EXERCISE_CATEGORIES[first]
+    return None
+
+
 @dataclass
 class ParsedActivity:
     sport: str
@@ -100,6 +161,7 @@ class ParsedActivity:
     device: str | None
     laps: list[Lap]
     streams: Streams
+    sets: list[StrengthSet] = field(default_factory=list)
 
     @property
     def has_gps(self) -> bool:
@@ -172,6 +234,7 @@ def parse_fit(data: bytes) -> ParsedActivity:
     activity: dict[str, Any] = {}
     raw_laps: list[dict[str, Any]] = []
     records: list[dict[str, Any]] = []
+    raw_sets: list[dict[str, Any]] = []
 
     try:
         with fitdecode.FitReader(io.BytesIO(data), check_crc=fitdecode.CrcCheck.WARN) as reader:
@@ -184,6 +247,8 @@ def parse_fit(data: bytes) -> ParsedActivity:
                         records.append(values)
                     case "lap":
                         raw_laps.append(values)
+                    case "set":
+                        raw_sets.append(values)
                     case "session" if session is None:  # multisport files: the first session for now
                         session = values
                     case "file_id":
@@ -267,4 +332,29 @@ def parse_fit(data: bytes) -> ParsedActivity:
         device=_device_name(file_id, creator),
         laps=laps,
         streams=streams,
+        sets=_sets(raw_sets, start),
     )
+
+
+def _sets(raw: list[dict[str, Any]], start: datetime) -> list[StrengthSet]:
+    """Strength sets (OS-225): reps, weight and exercise per set, rests included, in time order."""
+    sets = []
+    for values in raw:
+        began = values.get("start_time")
+        duration = _num(values.get("duration"))
+        if not isinstance(began, datetime) or duration is None:
+            continue
+        reps = values.get("repetitions")
+        weight = _num(values.get("weight"))
+        kind = values.get("set_type")
+        sets.append(
+            StrengthSet(
+                start_s=round((began - start).total_seconds(), 1),
+                duration_s=round(duration, 1),
+                kind="rest" if kind == "rest" or kind == 0 else "active",
+                reps=int(reps) if isinstance(reps, int | float) else None,
+                weight_kg=round(weight, 2) if weight else None,
+                category=_category(values.get("category")),
+            )
+        )
+    return sorted(sets, key=lambda s: s.start_s)

@@ -88,3 +88,26 @@ def test_sport_mapping(sport: str | None, sub_sport: str | None, expected: str) 
 def test_rejects_files_that_are_not_activities() -> None:
     with pytest.raises(FitParseError):
         parse_fit(b"not a fit file at all")
+
+
+def test_strength_sets_match_garmin_connect() -> None:
+    """Garmin Connect's summary of this workout: 1 set, 4 reps, no weight, exercise UNKNOWN."""
+    garmin = GARMIN["Strength Training"]["summarizedExerciseSets"]
+    sets = parse("strength").sets
+    active = [s for s in sets if s.kind == "active"]
+    assert len(active) == sum(g["sets"] for g in garmin) == 1
+    assert sum(s.reps or 0 for s in active) == sum(g["reps"] for g in garmin) == 4
+    assert all(s.weight_kg is None for s in active) and garmin[0]["maxWeight"] == 0
+    assert active[0].category is None and garmin[0]["category"] == "UNKNOWN"
+    assert active[0].duration_s == round(garmin[0]["duration"] / 1000, 1)
+    assert active[0].start_s >= 0
+    assert parse("run").sets == []
+
+
+def test_set_categories() -> None:
+    from zankup.fit.parser import _category
+
+    assert _category((28, 0)) == "squat"
+    assert _category((65534, 7)) is None  # the first value decides, as in Garmin Connect
+    assert _category("bench_press") == "bench_press"
+    assert _category(None) is None

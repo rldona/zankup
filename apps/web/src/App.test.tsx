@@ -118,8 +118,8 @@ describe('app skeleton', () => {
     const router = renderAt('/');
     const months = await screen.findAllByRole('heading', { level: 2 });
     expect(months.map((h) => h.textContent)).toEqual([
-      'November 20263 act. · 21 km · 2 h 3 min',
-      'October 20269 act. · 98 km · 8 h 20 min',
+      'November 20263 activities · 21 km · 2 h 3 min',
+      'October 20269 activities · 98 km · 8 h 20 min',
     ]);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Activities · 12 since 2026');
     const run = screen.getByRole('link', { name: /Morning run/ });
@@ -152,6 +152,91 @@ describe('app skeleton', () => {
     expect(router.state.location.pathname).toBe('/activities/7');
   });
 
+  it('shows the detail: figures, route, zones, best efforts, laps and the file', async () => {
+    const n = 61;
+    const streams = {
+      t: Array.from({ length: n }, (_, i) => i * 10),
+      dist: Array.from({ length: n }, (_, i) => i * 30),
+      alt: Array.from({ length: n }, (_, i) => 100 + i),
+      hr: Array.from({ length: n }, (_, i) => (i < 30 ? 120 : 170)),
+      lat: Array.from({ length: n }, (_, i) => 40 + i * 0.0001),
+      lon: Array.from({ length: n }, () => -3.7),
+    };
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/settings': () =>
+        Response.json({
+          theme: 'system',
+          language: 'en',
+          units: 'metric',
+          hr_max: 190,
+          hr_rest: null,
+          hr_max_estimate: 188,
+        }),
+      '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
+      '/api/activities/7': () =>
+        Response.json({
+          ...RUN,
+          max_hr: 171,
+          device: 'fēnix 6X Pro',
+          has_fit: true,
+          streams: { series: ['t', 'dist', 'alt', 'hr', 'lat', 'lon'], sample_count: n },
+          laps: [
+            {
+              idx: 0,
+              start_utc: RUN.start_utc,
+              duration_s: 900,
+              distance_m: 3000,
+              avg_hr: 130,
+              max_hr: 140,
+              avg_power: null,
+              ascent_m: 20,
+              descent_m: 5,
+            },
+            {
+              idx: 1,
+              start_utc: RUN.start_utc,
+              duration_s: 850,
+              distance_m: 3000,
+              avg_hr: 160,
+              max_hr: 171,
+              avg_power: null,
+              ascent_m: 20,
+              descent_m: 15,
+            },
+          ],
+          splits: [],
+          best_efforts: [
+            { distance_key: '5k', distance_m: 5000, time_s: 1450, start_s: 0, start_distance_m: 0 },
+          ],
+        }),
+      '/api/activities/7/streams': () => Response.json(streams),
+    });
+    renderAt('/activities/7');
+    const detail = await screen.findByRole('article');
+    const kpis = within(detail);
+    expect(await kpis.findByRole('heading', { name: 'Morning run' })).toBeInTheDocument();
+    expect(detail).toHaveTextContent('fēnix 6X Pro');
+    expect(kpis.getByText('6.00 km').nextElementSibling).toHaveTextContent('Distance');
+    expect(kpis.getByText('171 bpm')).toBeInTheDocument();
+
+    // Without WebGL (jsdom), the route's shape stands in for the map.
+    expect(await kpis.findByText(/The map needs WebGL/)).toBeInTheDocument();
+    expect(kpis.getByRole('group', { name: 'Colour by' })).toHaveTextContent('PaceHeart rateAltitude');
+
+    const zones = kpis.getByRole('heading', { name: 'Heart rate zones' }).closest('section');
+    expect(zones).toHaveTextContent('Z2114–132 bpm5:00'); // 120 bpm, 300 s
+    expect(zones).toHaveTextContent('Z4152–170 bpm5:00'); // 170 bpm, 300 s
+    expect(kpis.getByRole('row', { name: /5 km 24:10 4:50 \/km/ })).toBeInTheDocument();
+    expect(kpis.getByRole('heading', { name: 'Laps' }).closest('section')).toHaveTextContent(
+      '3.00 km15:005:00 /km',
+    );
+    expect(kpis.getByRole('link', { name: 'Download file' })).toHaveAttribute(
+      'href',
+      '/api/activities/7/fit',
+    );
+  });
+
   it("says when an activity does not exist or is someone else's", async () => {
     mockApi({ '/api/auth/me': () => Response.json(ME) });
     renderAt('/activities/999');
@@ -174,8 +259,8 @@ describe('app skeleton', () => {
       },
       '/api/activities': () => Response.json({ items: [], next_cursor: null }),
     });
-    const router = renderAt('/profile');
-    expect(await screen.findByText('runner@example.com')).toBeInTheDocument();
+    const router = renderAt('/profile?tab=account');
+    expect(await screen.findByText('runner@example.com', { selector: 'b' })).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sign-in');
@@ -196,7 +281,7 @@ describe('app skeleton', () => {
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Activities');
 
     await userEvent.click(within(tabbar).getByRole('link', { name: 'Search' }));
-    expect(await screen.findByText('Advanced search arrives with OS-219.')).toBeInTheDocument();
+    expect(await screen.findByRole('searchbox', { name: 'Search' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/search');
   });
 

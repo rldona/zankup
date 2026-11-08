@@ -1,8 +1,16 @@
-import { isThemeChoice, settingsQuery, THEME_STORAGE_KEY, type ThemeChoice } from '@zankup/core';
+import {
+  isThemeChoice,
+  settingsQuery,
+  THEME_STORAGE_KEY,
+  type Preferences,
+  type ThemeChoice,
+  type ThemeName,
+} from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useSyncExternalStore } from 'react';
 
 import { api } from './api';
+import { chosenLanguage, switchLanguage } from './i18n';
 
 /**
  * Themes (OS-214). The CSS variables of every theme and the script that applies the saved one are
@@ -11,7 +19,9 @@ import { api } from './api';
  */
 
 const listeners = new Set<() => void>();
-const dark = typeof matchMedia === 'undefined' ? null : matchMedia('(prefers-color-scheme: dark)');
+const media = (query: string) => (typeof matchMedia === 'undefined' ? null : matchMedia(query));
+const dark = media('(prefers-color-scheme: dark)');
+const moreContrast = media('(prefers-contrast: more)');
 
 function read(): ThemeChoice {
   try {
@@ -50,6 +60,31 @@ export function installTheme(doc: Document = document): void {
   dark?.addEventListener('change', () => paintBrowserChrome(doc));
 }
 
+/** The theme actually on screen: the choice, or what the device asks for under "system". */
+export function resolveTheme(choice: ThemeChoice): ThemeName {
+  if (choice !== 'system') return choice;
+  if (moreContrast?.matches) return 'highContrast';
+  return dark?.matches ? 'dark' : 'light';
+}
+
+/** The theme on screen, for what CSS variables cannot reach (map styles, canvas charts). */
+export function useResolvedTheme(): ThemeName {
+  const choice = useThemeChoice();
+  const system = useSyncExternalStore(
+    (notify) => {
+      dark?.addEventListener('change', notify);
+      moreContrast?.addEventListener('change', notify);
+      return () => {
+        dark?.removeEventListener('change', notify);
+        moreContrast?.removeEventListener('change', notify);
+      };
+    },
+    () => resolveTheme('system'),
+    () => 'light' as ThemeName,
+  );
+  return choice === 'system' ? system : choice;
+}
+
 export function useThemeChoice(): ThemeChoice {
   return useSyncExternalStore(
     (notify) => {
@@ -75,7 +110,10 @@ export function useSetTheme() {
   });
   return (theme: ThemeChoice) => {
     applyTheme(theme);
-    queryClient.setQueryData(settingsQuery(api).queryKey, { theme }); // so a refetch cannot undo it
+    // So a refetch cannot undo it before the server has it.
+    queryClient.setQueryData<Preferences>(settingsQuery(api).queryKey, (old) =>
+      old ? { ...old, theme } : old,
+    );
     save.mutate(theme);
   };
 }
@@ -90,4 +128,20 @@ export function useServerTheme(): void {
   useEffect(() => {
     if (isThemeChoice(theme) && theme !== read()) applyTheme(theme);
   }, [theme]);
+}
+
+/**
+ * Signed in: the language saved in the account wins over this browser's copy (a choice made on
+ * another device), and a choice made here before the account had one is sent to it.
+ */
+export function useServerLanguage(): void {
+  const settings = useQuery(settingsQuery(api));
+  const loaded = settings.isSuccess;
+  const server = settings.data?.language ?? null;
+  useEffect(() => {
+    if (!loaded) return;
+    const local = chosenLanguage();
+    if (server && server !== local) switchLanguage(server);
+    else if (!server && local) void api.PATCH('/api/settings', { body: { language: local } });
+  }, [loaded, server]);
 }

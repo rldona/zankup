@@ -123,7 +123,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - `sync_run` with status and progress, incremental since the last sync, and a lock so two never run at once.
   - *Done when:* `python -m opensport.sync` imports what is new and a second run does nothing.
 - **OS-109 · Cron on Railway** (S) · depends on OS-108
-  - Cron Job every 15 min.
+  - Every 15 min. Done as a scheduler thread next to the worker (a Railway Cron Job cannot reach the API's volume), queuing one sync job per time slot.
   - *Done when:* a new activity from the watch shows up in the database with no intervention.
 - **OS-110 · Authentication** (L) · depends on OS-102
   - One user per instance. Sign-in with password + TOTP (passkeys are in the backlog, OS-405). `httpOnly` session cookie for the web and access + refresh tokens for Android. Rate limiting.

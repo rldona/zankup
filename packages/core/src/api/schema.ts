@@ -13,7 +13,9 @@ export interface paths {
     };
     /**
      * Health
-     * @description Liveness check used by Railway and by the PWA through the Vercel proxy.
+     * @description Liveness and database check, used by Railway on deploy and by the PWA through the Vercel proxy.
+     *
+     *     Always 200: a database outage is reported as `degraded`, so the API itself stays observable.
      */
     get: operations['getHealth'];
     put?: never;
@@ -30,10 +32,24 @@ export interface components {
   schemas: {
     /** Health */
     Health: {
-      /** Status */
-      status: string;
+      /**
+       * Status
+       * @description degraded when the database is unreachable
+       * @enum {string}
+       */
+      status: 'ok' | 'degraded';
       /** Version */
       version: string;
+      /**
+       * Database
+       * @enum {string}
+       */
+      database: 'ok' | 'unavailable';
+      /**
+       * Schema Revision
+       * @description Alembic revision applied to the database
+       */
+      schema_revision: string | null;
     };
   };
   responses: never;

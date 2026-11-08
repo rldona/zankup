@@ -9,6 +9,7 @@ Every test uses only these files. They come from real activities, anonymised so 
 | `fit/ride-power.fit` | ROUVY virtual ride (39 min) with a smart trainer and HR strap | Power, virtual route, sensors |
 | `tcx/run-2019-strava.tcx` | Strava bulk export, 2019 run, first 300 track points | TCX with whitespace before the XML declaration (Strava quirk) |
 | `gpx/ride-2012-strava.gpx` | Strava bulk export, 2012 ride recorded with Endomondo | GPX with time and position only |
+| `garmin/activity-list.json` | A page of the Garmin Personal API activity list (the three FIT activities above) | Response shape for the Garmin client (OS-103); IDs are fake (`9000000001`…) |
 
 ## Rules (checked in CI)
 
@@ -16,7 +17,7 @@ Every test uses only these files. They come from real activities, anonymised so 
 - **Dates:** every date moves by whole weeks to the first weeks of 2020, so weekday, time of day and durations are kept; every date in a fixture must be in 2020. The export date in GPX metadata is removed.
 - **FIT:** the user profile is blank, serial numbers are `1234567890`, ANT+ IDs and digit runs in device names are zeroed, and undocumented or developer fields are blank. Laps, sessions and every metric are byte-for-byte the original.
 - **TCX/GPX:** no author, e-mail or links, device unit IDs are `0`.
-- **Recorded HTTP responses** (`.yaml`/`.json`, from OS-103 on): no `Authorization`, API key or cookie headers, no bearer tokens or JWTs, no e-mail addresses, and coordinates inside the neutral area.
+- **Recorded HTTP responses** (`.yaml`/`.json`): no `Authorization`, API key or cookie headers, no bearer tokens or JWTs, no e-mail addresses, no owner or location fields, coordinates inside the neutral area and dates in 2020. Activity IDs are replaced with fake ones.
 - Any other file type fails until it gets a rule.
 
 ## Adding a fixture
@@ -24,6 +25,7 @@ Every test uses only these files. They come from real activities, anonymised so 
 ```bash
 uv run python tools/anonymise_fit.py data/activities/<id>.fit fixtures/fit/<name>.fit
 cd tools && uv run python anonymise_track.py <export>.tcx.gz ../fixtures/tcx/<name>.tcx --max-points 300
+uv run python tools/scrub_garmin_list.py fixtures/garmin/activity-list.json <activity-id> [<activity-id>…]
 uv run python tools/check_fixtures.py
 ```
 

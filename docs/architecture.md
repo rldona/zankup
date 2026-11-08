@@ -1,0 +1,405 @@
+# OpenSport architecture (v1)
+
+A **personal**, Strava-like platform: it syncs Garmin activities automatically, keeps the original FIT files and shows them with a map, laps and **its own advanced metrics** (what Strava charges for in Premium). There are two clients: first a **PWA for desktop and mobile, hosted on Vercel**, and later a **native Android app**. Both use the same backend, which runs on Railway.
+
+Visual map: [architecture.html](architecture.html) · Why this architecture: [findings.md](findings.md)
+
+## Principles
+
+1. **The original FIT is the source of truth.** It is stored as is and never modified. Everything else can be recomputed from it.
+2. **API first.** The backend exposes a REST API shared by the PWA and the Android app. No business logic lives in the clients.
+3. **A TypeScript monorepo for the clients.** The PWA (React) and the Android app (React Native + Expo) share a `core` package with the API client, data hooks, formatting logic, design tokens and translations.
+4. **Always available.** The backend runs in the cloud (Railway): it syncs on its own and sends notifications even when the PC is off.
+5. **Private by default.** A single user, everything behind authentication, no public profiles. Privacy zones apply to anything shared.
+6. **Only official channels for automation:** the Garmin Personal API. Manual files (Strava ZIP, loose FITs) come in through an importer.
+7. **Our own metrics.** Zones, load, fitness and records are computed with OpenSport's settings, not the watch's.
+8. **English by default, Spanish available.** Every user-facing text goes through i18n from day one (see [Internationalisation](#internationalisation-i18n)).
+
+## Diagram
+
+```mermaid
+flowchart TB
+  subgraph Sources
+    W[⌚ fēnix 6X] -->|Bluetooth| GCM[Garmin Connect app] --> GC[(Garmin Connect)]
+    STZ[Strava ZIP · history]
+    FA[Fitbit Air] --> GH[(Google Health API)]
+    FIT[Loose FIT files]
+  end
+
+  subgraph Railway["☁️ Railway"]
+    CRON[Cron · every 15 min] --> SYNC
+    SYNC[Sync service] --> RAW
+    IMP[Importer] --> RAW
+    RAW[(Volume · original FITs)] --> PARSE[FIT parser]
+    PARSE --> MET[Metrics engine<br/>zones · TRIMP · fitness · GAP<br/>records · power curve]
+    MET --> DB[(Postgres<br/>activities · laps · metrics<br/>1 Hz streams)]
+    DB --> API[REST API · FastAPI<br/>auth · /sync · /activities · /stats]
+    PRIV[Privacy] --> API
+    API --> PUSH[Notifications<br/>Web Push · FCM]
+    DB --> AI[AI layer<br/>minimisation · summaries · Coach]
+    AI <-->|no coordinates| LLM[(Claude Haiku 5.5<br/>Anthropic API)]
+    AI --> API
+  end
+
+  GC -->|Personal API · original FIT| SYNC
+  GH -->|OAuth · webhooks · sleep, HRV, HR| SYNC
+  STZ --> IMP
+  FIT --> IMP
+
+  subgraph Vercel["▲ Vercel"]
+    PWA[PWA · desktop and mobile<br/>feed · detail · stats · offline]
+    RW[Rewrites /api/* → Railway]
+  end
+  subgraph Clients
+    AND[Android app · phase 5<br/>React Native + Expo]
+  end
+  PWA --> RW
+  RW <-->|HTTPS · same origin · cookie| API
+  API <-->|HTTPS + token| AND
+  PUSH -.-> PWA
+  PUSH -.-> AND
+```
+
+## Deployment: Railway
+
+| Piece | On Railway | Notes |
+|---|---|---|
+| **API** | Web service (FastAPI + Uvicorn) | API only: the PWA is on Vercel. HTTPS and domain included |
+| **Scheduled sync** | Railway Cron Job (`*/15 * * * *`) running `python -m opensport.sync` | Can also be triggered by hand with the "Sync" button (`POST /api/sync`) |
+| **Database** | Managed Postgres | Backups and private-network connection. 1 Hz streams go in compressed `jsonb` or `bytea` columns |
+| **Original FITs** | Persistent volume mounted at `/data/raw` | A few MB per year (about 50–120 KB per activity). Can be copied elsewhere |
+| **Secrets** | Railway environment variables | `GARMIN_PERSONAL_API_KEY`, `JWT_SECRET`, `VAPID_*`, `FCM_*`, `RESEND_API_KEY` |
+
+**Why Railway?** It deploys straight from git, offers Postgres, volumes and cron in the same project, and costs about $5/month for this usage.
+
+**Alternatives:**
+- **Fly.io:** similar, with volumes and Postgres.
+- **Hetzner VPS:** about €4/month, full control, but maintenance is on you.
+- **Home server on Tailscale:** data never leaves home, but the machine has to be always on.
+
+The application is packaged as a container (Dockerfile) so the provider can be changed without touching code.
+
+## Deployment: Vercel (PWA)
+
+| Piece | On Vercel | Notes |
+|---|---|---|
+| **PWA** | Static project (Vite build), connected to the repository | Every PR gets a preview URL. Production on the main domain |
+| **API proxy** | `vercel.json` → `rewrites: [{ "source": "/api/:path*", "destination": "https://<api>.up.railway.app/api/:path*" }]` | The PWA calls `/api/...` on its own origin: **no CORS**, `httpOnly` and `SameSite=Strict` cookies, and it also works on previews |
+| **Variables** | `VITE_VAPID_PUBLIC_KEY` (public) | No secrets on Vercel: they all live on Railway |
+
+**Why the proxy instead of calling Railway directly:** if each part were on a different domain, CORS would be needed, cookies would be cross-site (which browsers block more and more) and Vercel previews would not have a fixed origin. With rewrites, the browser only talks to Vercel.
+
+**Cost of the proxy:** Vercel limits the duration of proxied requests, so sync progress is polled every 2 s (`GET /api/sync/{id}`) instead of keeping an SSE connection open. The Android app talks to Railway directly, with tokens.
+
+**Alternative if ever needed:** a custom domain with `app.` on Vercel and `api.` on Railway. They count as the same site for cookies, so `SameSite=Lax` with CORS restricted to `app.` would work.
+
+**What being in the cloud implies:** your location and health data live with a third party (Railway) and the service is exposed to the internet. That is why authentication is mandatory from day one and nothing is public by default.
+
+## Components
+
+| Component | Responsibility | Status |
+|---|---|---|
+| **Sync service** | Key → 24 h token → new activities → ZIP → FIT. Triggered by cron or by the button | ✅ Prototype in `sync/garmin_sync.py` |
+| **Importer** | Loose FITs, Garmin ZIP and Strava bulk ZIP for history. Deduplicates by start time and device | Pending |
+| **FIT parser** | FIT → session, laps, 1 Hz streams, device and power | ✅ Logic tested |
+| **Metrics engine** | See "Advanced metrics" | Partial: exact best efforts |
+| **Historical computation engine** | Job queue in Postgres and a worker on Railway. Processes history incrementally, with versioned full recomputation. Produces estimates, curves, progress and events | Pending |
+| **REST API** | FastAPI, OpenAPI generated automatically. Used by the PWA and Android | Pending |
+| **Authentication** | One user: sign-in with password + TOTP, **Google account** (OpenID Connect, only the linked account) or passkey (WebAuthn). The PWA uses an `httpOnly` session cookie (same origin, thanks to the Vercel proxy). Android uses a short access token and a long refresh token. Devices can be revoked | Pending |
+| **Sign-up and recovery** | One-time initial sign-up protected by a **setup code** (printed in the server logs on first boot). Recovery by email with a single-use link (30 min) that also requires the TOTP code or a recovery code | Pending |
+| **Transactional email** | Resend with a verified domain: recovery links, security alerts (password changed, new sign-in) and an optional weekly report, in the user's language | Pending |
+| **Google Health connector** | Google OAuth and Google Health API webhooks (Fitbit Air): sleep with stages, HRV, resting HR, SpO₂. Priority rules between sources | Phase 6 |
+| **AI layer** | Minimised context (no coordinates or profile data), per-activity summaries, weekly report (batched) and a Coach with tools over our API | Phase 7 |
+| **Notifications** | Web Push with VAPID for the PWA and FCM for Android: new activity, record, sync failure, key about to expire | Pending |
+| **Privacy** | Privacy zones (centre and radius) applied when serving or exporting anything shareable | Pending |
+| **Internationalisation** | English by default, Spanish selectable. Shared catalogues, locale-aware formatting, server-side texts in the user's language | Pending |
+| **PWA** | See "Clients" | Prototype |
+| **Android app** | React Native + Expo. See "Clients" | Phase 5 (starts with a performance proof of concept) |
+
+## Advanced metrics (Strava's "Premium", built by us)
+
+| Metric | Computation | Data source |
+|---|---|---|
+| **HR and pace zones** | Time in zones using the max/resting HR or threshold configured in OpenSport (not the watch's) | 1 Hz HR and speed |
+| **Relative effort** | Banister TRIMP (or Edwards by zones) per activity | 1 Hz HR and resting/max HR |
+| **Fitness and freshness** | Fitness (CTL, 42-day exponential average), Fatigue (ATL, 7-day) and Form (TSB = CTL − ATL) from daily effort | Relative effort |
+| **Grade-adjusted pace (GAP)** | Pace corrected for gradient (Minetti model) | Barometric altitude and distance |
+| **Records and their progression** | Best efforts (400 m … marathon) per activity, all-time and per-season personal records | Cumulative distance |
+| **Race prediction** | Riegel from recent best efforts | Best efforts |
+| **Power curve** | Best average power for each duration (5 s … 60 min) on rides and indoor rides (ROUVY) | 1 Hz power |
+| **Matched routes** | Group activities by route similarity and compare times (Strava's "Matched Runs") | Simplified GPS track |
+| **Personal heatmap** | Density of all routes | GPS from every activity |
+| **Volume and trends** | Distance, time, elevation and load per week, month and year, per sport | Summaries |
+| **Garmin-only data** | Training Effect, load, HRV and sleep (later phase) | FIT and Personal API |
+
+They are computed when each activity is imported. Daily metrics (fitness and freshness) are recomputed incrementally. All of this is produced by the historical computation engine described next.
+
+## Historical computation engine ("cooking" the data)
+
+Like Strava, OpenSport computes nothing heavy when you open a screen. A **background engine processes the whole history** and prepares the tables of metrics, estimates and progress. Screens only read precomputed results, so they open instantly even with thousands of activities.
+
+### What it produces
+
+| Family | Examples | How it is estimated |
+|---|---|---|
+| **Per activity** | Splits, best efforts (distance and duration), zones, TRIMP, GAP, normalised power, HR/pace decoupling | From the 1 Hz streams |
+| **Best-effort curves** | Pace and power for each duration (5 s … 2 h), per period (last 42 days, 90 days, season, all time) | Maximums of the per-activity curves |
+| **Performance estimates** | Estimated FTP, threshold and critical pace, threshold HR (LTHR), observed max HR, estimated VO₂max (VDOT), 5K, 10K, half and marathon predictions | FTP ≈ 95% of the best 20 min or a critical power model. Critical pace from 3–30 min efforts. Daniels' VDOT and Riegel from recent best efforts. LTHR from average HR of 20–60 min efforts |
+| **Load and fitness** | Daily TRIMP, fitness, fatigue and form, weekly ramp (overload risk), monotony | Daily series with exponential averages |
+| **Progress** | Records and their progression, comparison with the same week or month last year, trend of each estimate, aerobic efficiency (pace at equal HR), matched routes getting faster | Time series from the tables above |
+| **Goals and streaks** | Km or hours per week, month or year, streaks of active weeks, end-of-month projection | Per-period aggregates |
+| **Health** (phase 6) | Trend of HRV, resting HR and sleep, "readiness" combined with form | Daily data from Garmin and Google Health |
+
+Every estimate stores **value, date, method, source activities and confidence**, so the app can explain where each number comes from ("Estimated FTP 205 W, from your best 20 min on 12 October").
+
+### How it works
+
+```mermaid
+flowchart LR
+  NEW[New activity<br/>or health data] --> Q[(Job queue<br/>Postgres)]
+  CFG[Settings change<br/>max HR, zones, FTP] --> Q
+  VER[New version<br/>of an algorithm] --> Q
+  Q --> W[Worker<br/>Railway]
+  W --> A1[1 · Activity metrics]
+  A1 --> A2[2 · Affected days<br/>load, fitness]
+  A2 --> A3[3 · Curves and records<br/>per period]
+  A3 --> A4[4 · Estimates<br/>and predictions]
+  A4 --> A5[5 · Progress,<br/>goals, streaks]
+  A5 --> EV[Events<br/>"new record", "FTP up"]
+  EV --> N[Notifications · AI]
+```
+
+- **Incremental by default:** a new activity only recomputes what depends on it: its own record, the days from its date onwards (fitness carries forward), the curves of the periods that include it and the estimates that use it. A few seconds per activity.
+- **Full recomputation in the background:** when settings change (max HR, zones, FTP) or an algorithm version changes, the whole history is reprocessed from the original FITs without blocking the app, which shows a "recomputing" notice.
+- **Versioning:** every computed table carries `metrics_version`. Improving an algorithm means bumping the version and triggering the recomputation, with no manual migrations.
+- **Idempotent and reproducible:** running it twice gives the same result, and everything can be regenerated from the original FITs.
+- **Queue in Postgres** (no new services), run by a **worker** on Railway. It is the same container as the API, started in worker mode.
+- **Output events:** "new 5K record", "your estimated FTP rises to 210 W" or "high load ramp this week". They feed notifications and the AI layer.
+
+## Charts
+
+There are three kinds of charts, depending on how much they move and how much you can interact with them:
+
+| Kind | What it is | Examples |
+|---|---|---|
+| **Static** | Drawn once, no animation or interaction. Lightweight, also usable as an image | Route thumbnail in the feed, sparklines on cards, zone bar, share cards, notification image |
+| **Passive dynamic** | Moves without you touching it: animates on appear, updates live with new data and transitions when the period or theme changes | Fitness and freshness after a sync, goal rings, volume bars when switching from week to month, sync progress |
+| **Active dynamic** | Responds to you: hover cursor with values, zoom and range selection, click to drill down, toggling series, cursors synced between charts and map | Activity profile (selecting a section shows its numbers and highlights it on the map), fitness and freshness (clicking a day opens its activities), best-effort curves comparing periods, progression of records and estimates |
+
+### Catalogue
+
+| Chart | Screen | Kind | Interaction |
+|---|---|---|---|
+| Route thumbnail | Feed | Static | — |
+| Trend sparklines | Cards and stats | Static | — |
+| Zone bar and table | Detail | Static | — |
+| Profile (altitude + pace, HR, power, cadence) | Detail | Active | Cursor synced with the map, zoom, select a section (with its numbers), toggle series |
+| Route map | Detail | Active | Colour by metric, synced cursor, highlight laps and sections |
+| Year-over-year progress | Stats | Active | One line per year, the selected one highlighted. Cursor compares every year on the same date |
+| Fitness, fatigue and form | Stats | Passive + active | Animates on load and after a sync. Per-day cursor, range zoom, click → that day's activities |
+| Weekly, monthly and yearly volume | Stats | Passive + active | Transition when the period changes. Breakdown by sport, comparison with last year |
+| Best-effort curves (pace and power) | Stats and detail | Active | Compare periods, point → source activity |
+| Progression of records and estimates | Stats | Active | Cursor, click → activity |
+| Goals and streaks | Home and stats | Passive | Animated rings and bars |
+| Heatmap | Stats | Active | Zoom and filter by sport and period |
+| Health (HRV, sleep, resting HR) | Health | Passive + active | Cursor, range, comparison with the average |
+
+### Technology
+
+- **Dynamic charts on the web:** **Apache ECharts**. It renders on canvas with point reduction (LTTB), so it handles long 1 Hz series easily. It comes with hover tooltips, zoom (`dataZoom`), range selection (`brush`), cursor syncing between charts (`connect`) and enter/update animations. One ECharts theme is registered per OpenSport theme, generated from the tokens. If a very long series is slow on modest phones, plan B is **uPlot** for the profile only.
+- **Static charts:** our own SVG components, no library: light, crisp and easy to turn into images. Share cards and notification images are generated on the server.
+- **Mobile app:** **Victory Native XL** (or ECharts for React Native), both drawn with Skia on the GPU, using the token colours. The cursor and gestures run on the UI thread with Reanimated.
+- **Accessibility and performance:** with `prefers-reduced-motion`, passive animations are turned off. Every chart has an accessible summary (and an alternative data table for the main ones). Off-screen charts are not drawn until they appear.
+
+## Internationalisation (i18n)
+
+- **Languages:** **English by default** and **Spanish** selectable in Settings → Language. On first launch the app suggests the device language if it is supported, otherwise English. The structure allows more languages to be added later without code changes.
+- **Shared catalogues:** translations live in `packages/core/i18n/{en,es}.json`, used by the PWA and the Android app with **i18next** (`react-i18next`). ICU messages for plurals and variables ("1 activity" / "3 activities"). Keys are in English; `en` is the reference catalogue and CI fails if `es` is missing a key.
+- **Locale-aware formatting** with `Intl`: dates, numbers (6.61 km vs 6,61 km), durations, paces and relative times. Units are a separate setting (metric or imperial) and do not depend on the language.
+- **Server-generated text in the user's language:** the language is stored in `settings`, and emails, push notifications, share cards and AI summaries (the prompt asks the model to answer in that language) are produced in it.
+- **Data stays as entered:** activity names, descriptions and gear are never translated.
+- **Search** uses Postgres full-text search with the `simple` configuration plus `unaccent`, so it works for English and Spanish names alike.
+- **Applies to the public screens too** (sign-in, sign-up, password recovery), which detect the browser language before the user signs in.
+
+## Clients
+
+### PWA for desktop and mobile (on Vercel)
+
+- **Technology:** TypeScript, React and Vite, with `vite-plugin-pwa` (Workbox) for the service worker and manifest. TanStack Query for data caching, MapLibre GL for maps (vector, smooth on mobile) and i18next for translations. Built to static files and deployed on Vercel.
+- **Responsive design:**
+  - **Desktop (≥ 1024 px):** sidebar navigation. Feed and detail in two columns (list on the left, activity on the right). Large map with the synced profile underneath, full lap and zone tables, and full-width fitness charts.
+  - **Mobile:** bottom tab bar (Feed · Search · Sync · Stats · You). Single-column detail with the map on top, metric cards and touch-friendly charts.
+  - One codebase with breakpoints. No separate versions.
+- **Screens:** home (your week and the feed), activity detail (map, profile, laps, zones, records), advanced search, stats ("Now" highlights, per-period stats, fitness, volume, records, power curve, heatmap), profile, settings (theme, language, max/resting HR, privacy zones, devices, Garmin key expiry) and the "Sync" button with progress.
+- **Public screens** (the only ones visible without a session): sign-in, initial sign-up and password recovery. **They show no user data.** Their side panel has gentle animated waves drawn with **Canvas 2D and `requestAnimationFrame`**, with no library: Three.js would add about 600 KB for what amounts to 25 sine waves. They pause when the tab is hidden and stay still with `prefers-reduced-motion`.
+- **Installable:** on desktop (Chrome and Edge), on Android and on iOS 16.4+ ("Add to Home Screen").
+- **Themes:** light, dark and alternative styles, built on a system of **design tokens** (CSS variables: background, surfaces, text, lines, accent, sport and zone colours, shadows, radii).
+  - Each theme is a `[data-theme="…"]` block that redefines the tokens. Components only use tokens, never hard-coded colours, so adding a theme touches no component.
+  - Initial themes: **System** (follows `prefers-color-scheme`), **Light**, **Dark**, **OLED Black** (pure black, saves battery), **High contrast** (accessibility, also offered when the system asks for `prefers-contrast: more`), **Forest**, **Ocean** and **Sunset**.
+  - The preference is stored in `localStorage`, to paint without flicker before anything loads, and in the user's settings on the backend, so it follows you across devices and reaches the Android app.
+  - Maps and charts change too: light or dark vector style in MapLibre, and series colours taken from the tokens. `theme-color` and `color-scheme` are updated for the browser bar and native controls.
+  - Every theme passes a WCAG AA contrast check (text ≥ 4.5:1) in CI.
+- **Offline:** the service worker caches the app. Viewed activities and their 1 Hz streams are stored in IndexedDB, and already-viewed map tiles stay cached.
+- **Notifications:** Web Push on desktop (Chrome, Edge, Firefox) and Android. On iOS only if the PWA is installed.
+
+### Android app (phase 5): React Native + Expo
+
+- **Why React Native and not Kotlin:** it shares with the PWA the language (TypeScript), React, the API client, data hooks, domain logic, tokens and translations. One person, one stack, and iOS almost for free. React Native's new architecture (Fabric, JSI, Hermes) performs practically like native for this kind of app: heavy computation happens on the backend, and maps and charts are drawn natively or on the GPU.
+- **Technology:**
+  - Expo (current SDK, new architecture) with Expo Router, EAS builds and OTA updates for JavaScript changes.
+  - Maps with `@maplibre/maplibre-react-native` (the same engine as the web).
+  - Charts with Skia (Victory Native XL), gestures and animations with Reanimated and Gesture Handler.
+  - Lists with FlashList.
+  - Offline with TanStack Query's persistent cache and `expo-sqlite`.
+  - Background sync with `expo-background-task` (WorkManager underneath).
+  - Notifications with FCM (`expo-notifications`).
+  - Health Connect with `react-native-health-connect`.
+  - i18next with the shared catalogues and `expo-localization` to detect the device language.
+  - **Sign-in:** native Google (`@react-native-google-signin/google-signin`, Credential Manager), password + TOTP or passkey (`react-native-passkey`, the same as on the web thanks to `assetlinks.json`).
+  - **Fingerprint unlock:** the refresh token is stored in `expo-secure-store` protected by strong biometrics (`expo-local-authentication`). On many Samsung phones face recognition is weak biometrics and cannot release keys, so the fingerprint is used there.
+- **Themes:** the same tokens as the PWA, from the single source in `packages/core`, plus Android dynamic colour (Material You) through a small module.
+- **The only native-specific piece:** the home-screen widget (with `react-native-android-widget` or an Expo module in Kotlin).
+- **Performance:** the demanding screen is the activity detail (dragging along the profile with the cursor synced on the map). It is validated with a **proof of concept** at the start of the phase. Criteria: cold start under 1.5 s, 60 fps while dragging and reasonable memory on a mid-range phone. If they are not met, plan B is Kotlin, having lost only those days.
+- **Advantages over the PWA:** more reliable notifications and sync, widget, Health Connect, and the door open to iOS or to recording with the phone's GPS.
+
+### Monorepo structure
+
+```
+backend/            Python · FastAPI · computation engine (Railway)
+apps/web/           PWA · React + Vite (Vercel)
+apps/mobile/        App · React Native + Expo (EAS)
+packages/core/      Shared TypeScript: API client generated from OpenAPI, TanStack Query hooks,
+                    formatting and domain (paces, zones, durations), design tokens → CSS and React Native theme,
+                    i18n catalogues (en, es)
+docs/  tools/
+```
+
+What is shared is the logic, not the visual components: the web uses the DOM (ECharts, MapLibre GL JS) and mobile uses native components (Skia, native MapLibre). React Native Web is not used.
+
+## Health sources: Google Health API (Fitbit Air)
+
+- **What it is:** the API Google launched in May 2026 together with the Fitbit Air. It replaces the old Fitbit Web API, which stopped working on 2 November 2026. It offers about 31 data types, including sleep with stages, HR, HRV, SpO₂ and respiration, plus webhooks that notify when new data is available.
+- **Access:** a Google Cloud project with OAuth 2.0 and minimal read-only scopes. Tokens are stored encrypted in Postgres.
+- **To check before building:** in "Testing" mode, Google OAuth apps issue refresh tokens that expire after 7 days, and health scopes may require Google's verification. If that is not viable for personal use, the alternative is reading **Health Connect** from the Android app (phase 5), where the Google Health app also writes.
+- **Multiple sources:** every data point stores its source. Configurable priority rules decide what is shown when Garmin and Fitbit measure the same thing (for example, sleep from the Fitbit Air and activities from Garmin).
+
+## AI layer (small LLM via API)
+
+- **Model:** **Claude Haiku 5.5** (`claude-haiku-5-5`) with the official Python SDK `anthropic`. It costs $0.10 per million input tokens and $0.50 per million output tokens (prompts up to 100K tokens). An activity summary (about 3K input tokens and 300 output) costs about $0.0005: **cents per month** for one user.
+- **Uses:**
+  1. **Summary when each activity is imported**, with structured output (`output_config.format`).
+  2. **Weekly report** with the Batch API, at half price because it does not need to be immediate.
+  3. **Coach**: natural-language questions. The model uses tools (`search_activities`, `fitness_stats`, `records`, `daily_health`) that query our API, instead of receiving the whole history. Streamed answers.
+- **Language:** the model answers in the user's interface language (English or Spanish).
+- **Cost under control:** stable system prompt and tools to benefit from prompt caching, token logging per call and a monthly spending cap.
+- **Privacy:** the LLM **never receives coordinates, routes or profile data**, only aggregated numbers. There is a global "use AI" switch and Settings explains what is sent. The provider's data retention and usage terms must be reviewed when the account is activated.
+- **No invented numbers:** answers quote data returned by the tools, and an evaluation set checks that the numbers match the database before the prompt or the model changes. If an analysis needs more capability, only that route can be tried on a larger model, measured with the same evaluation.
+
+## Data model (Postgres)
+
+```
+activities    id (Garmin activityId) · source · name · sport · sub_sport · start_utc · tz
+              duration_s · moving_s · distance_m · ascent_m · descent_m · avg_hr · max_hr
+              calories · training_effect · trimp · device · fit_path · fit_sha256
+              has_gps · bbox · route_simplified (polyline) · raw_meta jsonb · imported_at
+streams       activity_id · series (lat, lon, dist, alt, hr, cad, speed, power, temp) compressed
+laps          activity_id · idx · start_utc · duration_s · distance_m · avg_hr · max_hr · ascent_m
+best_efforts  activity_id · distance_m · time_s · start_offset_m
+power_curve   activity_id · duration_s · watts
+zone_time     activity_id · kind (hr|pace|power) · zone · seconds
+daily_load    date · trimp · ctl · atl · tsb
+route_groups  id · activities[] · representative_route
+sleep_sessions  id · source · start_utc · end_utc · stages jsonb · score · external_id
+daily_health  date · source · resting_hr · hrv · spo2 · resp_rate · steps · external_id
+sources       id · kind (garmin|google_health|strava|file) · credentials_enc · last_sync · priority
+jobs          id · kind · payload jsonb · status · run_after · attempts · error   ← computation engine queue
+effort_curves activity_id | period · sport · kind (pace|power|hr) · duration_s · value · metrics_version
+estimates     date · kind (ftp|threshold_pace|critical_pace|lthr|hr_max|vdot|race_5k…) · value · method · confidence · source_activities[] · metrics_version
+progress      period · metric · value · prev_value · goal · metrics_version
+events        id · kind (pr|estimate_up|ramp_warning…) · payload · created_at · notified
+llm_calls     id · purpose (summary|weekly|coach) · model · input_tokens · output_tokens · cost_usd · created_at
+settings      language (en|es) · units (metric|imperial) · theme · hr_max · hr_rest · lthr · ftp · zone_model · privacy_zones
+auth_methods  id · kind (password_totp|google|passkey) · google_sub · email · credential_id · created_at · last_used
+devices       id · name · platform (web|android) · push_endpoint · refresh_token_hash · last_seen
+sync_runs     id · trigger (cron|button) · started_at · finished_at · new_count · status · error
+```
+
+## REST API
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/auth/login` · `/refresh` · `/logout` | Session with access and refresh tokens |
+| `GET/POST` | `/api/auth/setup` | Initial sign-up status and creation of the single account (requires the setup code) |
+| `POST` | `/api/auth/totp/setup` · `/api/auth/totp/verify` · `/api/auth/recovery-codes` | Enable 2FA and generate recovery codes |
+| `POST` | `/api/auth/password/forgot` · `/api/auth/password/reset` | Recovery: send the link, then change with token + TOTP or a recovery code |
+| `GET` | `/api/auth/google/start` · `/api/auth/google/callback` | Google sign-in on the web (OIDC with PKCE). Only the linked `sub` gets in |
+| `POST` | `/api/auth/google/mobile` | Google sign-in from the app: receives the ID token from the native SDK and applies the same rule |
+| `POST` | `/api/auth/passkey/register` · `/api/auth/passkey/login` | Passkeys (WebAuthn), shared by the PWA and the app |
+| `GET` | `/.well-known/assetlinks.json` | Links the Android app to the domain so passkeys are shared (served from Vercel) |
+| `POST/DELETE` | `/api/auth/google/link` | Link or unlink the Google account (requires another active method) |
+| `POST` | `/api/sync` | Starts a sync and returns `sync_run_id` |
+| `GET` | `/api/sync/{id}` | Status and progress (the PWA polls it every 2 s through the Vercel proxy) |
+| `GET` | `/api/activities?sport=&cursor=` | Paginated feed (home) |
+| `GET` | `/api/activities/search?q=&sports=&from=&to=&dist_min=&dist_max=&dur_min=&dur_max=&asc_min=&hr_min=&hr_max=&gear=&has=pr,desc,gps&source=&sort=&cursor=` | Advanced search, with Postgres full-text search |
+| `GET` | `/api/activities/{id}` | Summary, laps, records, zones and effort |
+| `GET` | `/api/activities/{id}/streams` | 1 Hz streams (gzip), with privacy zones applied |
+| `GET` | `/api/activities/{id}/fit` | Downloads the original FIT |
+| `GET` | `/api/stats/fitness?from=&to=` | Fitness, fatigue and form |
+| `GET` | `/api/stats/summary?from=&to=&compare=prev_year` | Totals for the period and the same period last year |
+| `GET` | `/api/stats/progress?sport=` | Cumulative distance per day of the year, per year |
+| `GET` | `/api/stats/records` · `/volume` · `/power-curve` · `/heatmap` | Stats |
+| `POST` | `/api/import` | Uploads a FIT or ZIP |
+| `GET/PUT` | `/api/settings` | Language, units, theme, HR, thresholds, privacy zones |
+| `POST/DELETE` | `/api/devices` | Register or revoke a device and its notification endpoint |
+
+## Sync flow
+
+```mermaid
+sequenceDiagram
+  participant C as Cron / Sync button
+  participant B as Backend (Railway)
+  participant G as Garmin Personal API
+  participant D as Postgres + volume
+  participant P as PWA / Android
+  C->>B: sync (every 15 min or POST /api/sync)
+  B->>G: token (if expired) · list since last sync
+  loop each new activity
+    B->>G: download-service/files/activity/{id}
+    B->>D: original FIT to the volume
+    B->>B: parse · metrics · records
+    B->>D: activity, streams, metrics
+  end
+  B->>D: fitness and freshness (incremental)
+  B-->>P: notification "New activity: 6.6 km run · 1 km record"
+  P->>B: GET /api/activities (and local cache)
+```
+
+## Risks
+
+| Risk | Mitigation |
+|---|---|
+| Garmin changes or limits the Personal API | Stored FITs are not lost. The manual importer and USB remain as plan B |
+| The key expires (1 year at most) | Notification 2 weeks before and a warning in settings |
+| Unpublished usage limits | Incremental sync every 15 min, one request at a time, retries on 429 |
+| Sensitive data with a third party | Strong authentication, nothing public, privacy zones, encrypted backups you can download |
+| Dependency on Railway | Standard container, standard Postgres and FITs as files: moving to Fly.io or a VPS is a redeploy |
+| Google OAuth in "Testing" mode (7-day tokens) and health scope verification | Check it at the start of phase 6. Alternative: Health Connect from Android |
+| The LLM invents numbers or receives too much data | Tools over real data, number evaluation, minimisation without coordinates, "use AI" switch |
+| Unreliable PWA notifications | The Android app with FCM solves it in phase 5 |
+| React Native performance on the activity detail | Proof of concept at the start of phase 5 with measurable criteria. Plan B: Kotlin |
+| React Native or Expo updates breaking dependencies | Follow the Expo SDK, few and well-maintained native libraries, update once per Expo release |
+| Vercel proxy limits (duration, size) | Small paginated responses, compressed streams, progress polled every 2 s instead of SSE. If not enough: an `api.` subdomain straight to Railway |
+| Two platforms to coordinate | The Railway URL in one place (`vercel.json`). No secrets in the PWA. The API client is generated from OpenAPI |
+| Untranslated or inconsistent texts | `en` is the reference catalogue, CI fails on missing `es` keys, no hard-coded strings (lint rule) |
+
+## Phases
+
+Details with tickets, dependencies and definitions of done: [roadmap.md](roadmap.md). Phase 0 (foundations: repository, CI, Railway and Vercel) comes before all of them.
+
+1. **Backend on Railway:** `opensport` package (sync, parser, basic metrics), Postgres, volume, authentication, activities API and cron.
+2. **PWA on Vercel:** desktop and mobile, home, detail based on the prototype, search, Sync button with progress, themes, English and Spanish, installable and offline.
+3. **Advanced metrics:** own zones, relative effort, fitness and freshness, GAP, records, power curve, matched routes, heatmap.
+4. **Notifications, history and privacy:** Web Push, Strava ZIP import, server-side privacy zones and activity sharing.
+5. **Android app:** React Native + Expo on top of `packages/core`. Starts with a performance proof of concept.
+6. **Multi-source health:** sleep, HRV and daily data from Garmin and Google Health (Fitbit Air), with priority rules, and Health Connect on Android.
+7. **AI assistant:** summaries, weekly report and Coach with Claude Haiku 5.5, with minimised data.

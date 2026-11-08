@@ -19,6 +19,7 @@ dependencies = [
   "pyjwt>=2.10",
   "cryptography>=44",
   "boto3>=1.38",
+  "webauthn>=3.0.1",
 ]
 
 [tool.uv.sources]

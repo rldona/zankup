@@ -5,7 +5,14 @@ from fastapi import APIRouter, Depends
 
 from zankup.auth.deps import current_user
 
-PUBLIC_PATHS = {"/api/health", "/api/auth/login", "/api/auth/login/totp", "/api/auth/refresh"}
+PUBLIC_PATHS = {
+    "/api/health",
+    "/api/auth/login",
+    "/api/auth/login/totp",
+    "/api/auth/refresh",
+    "/api/auth/passkeys/login/options",
+    "/api/auth/passkeys/login",
+}
 
 
 def protected_router(**kwargs: object) -> APIRouter:

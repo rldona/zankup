@@ -56,6 +56,13 @@ class Settings(BaseSettings):
     pg_dump_command: str = "pg_dump"
     pg_restore_command: str = "pg_restore"
 
+    # Passkeys (OS-405): the domain they are bound to, and the origins allowed to use them.
+    webauthn_rp_id: str = Field(default="localhost", description="zankup.com in production; never change it")
+    webauthn_origins: list[str] = Field(
+        default=["http://localhost:5173", "http://localhost:8000"],
+        description="Origins of the PWA (and later the Android app's apk-key-hash origin)",
+    )
+
     google_client_id: str | None = None
     google_client_secret: SecretStr | None = None
     anthropic_api_key: SecretStr | None = None

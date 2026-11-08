@@ -290,7 +290,29 @@ There are three kinds of charts, depending on how much they move and how much yo
   - **Fingerprint unlock:** the refresh token is stored in `expo-secure-store` protected by strong biometrics (`expo-local-authentication`). On many Samsung phones face recognition is weak biometrics and cannot release keys, so the fingerprint is used there.
 - **Themes:** the same tokens as the PWA, from the single source in `packages/core`, plus Android dynamic colour (Material You) through a small module.
 - **The only native-specific piece:** the home-screen widget (with `react-native-android-widget` or an Expo module in Kotlin).
-- **Performance:** the demanding screen is the activity detail (dragging along the profile with the cursor synced on the map). It is validated with a **proof of concept** (OS-501) at the start of phase 2, before the PWA and `packages/core` take shape. Criteria: cold start under 1.5 s, 60 fps while dragging and reasonable memory on a mid-range phone. If they are not met, plan B is Kotlin, having lost only those days.
+- **Performance:** the demanding screen is the activity detail (dragging along the profile with the cursor synced on the map). It was validated with a **proof of concept** (OS-501, `apps/mobile-poc`) before the PWA and `packages/core` take shape. Criteria: cold start under 1.5 s, 60 fps while dragging and reasonable memory on a mid-range phone; plan B was Kotlin.
+
+#### OS-501 result: React Native (2026-11-08)
+
+The proof of concept is the activity detail with real data from the API, signed in like the app will be: MapLibre map with the route (OpenFreeMap tiles), elevation and heart-rate profile drawn with Skia, a cursor that follows the finger and a dot that follows it on the map, and section selection highlighted on both with its distance, time, pace, gain and average HR. Release build (Hermes, new architecture), Expo SDK 58, React Native 0.88, measured with `apps/mobile-poc/scripts/measure.sh`:
+
+| | Measured | Criterion |
+|---|---|---|
+| Cold start: process start to the detail with its map loaded (10 runs) | median **294 ms**, worst 494 ms | < 1,500 ms |
+| Dragging the cursor along the profile (5 × 2 s) | **120 fps** (the screen's rate); one second at 85 fps at the start of the first drag, worst frame 21 ms | 60 fps |
+| Memory (PSS) with the detail open | **~280–300 MB**, of which ~150 MB graphics (map and canvas surfaces at 1440×3120) | reasonable |
+| APK (arm64 only) | 52 MB | — |
+
+**Decision: React Native.** The margins are wide: start-up is 5× under the limit and the drag runs at twice the target. The UI-thread design holds up: the cursor, readout and selection band are Reanimated shared values drawn by Skia without touching JS, and only the map dot crosses to JS (coalesced to one update per frame), which still keeps up at 120 fps. `packages/core` was used as is (API client and formatting).
+
+**Caveat:** measured on a high-end phone (Samsung SM-S948B, Snapdragon SM8850, 120 Hz), not a mid-range one. The margins make a failure there unlikely, but the measurement has to be repeated on a mid-range phone with the same script before phase 5 starts; if it falls short, first optimise (smaller map surface, fewer profile points, map dot as a native marker) before reconsidering Kotlin.
+
+**Lessons for phase 5:**
+- `openapi-fetch` middleware must return nothing (not the same `Response`) when it does not change a response, or every request fails.
+- An empty `LineString` is invalid GeoJSON: MapLibre drops the source for good. Sources that can be empty must be empty `FeatureCollection`s.
+- Skia 2 paths are immutable: build them with `Skia.PathBuilder`.
+- Measurements need a release build and must stay away from the screen edges, where the system back gesture is.
+- `expo-dev-client` and some Expo packages publish often; the two-week minimum release age sometimes means pinning the SDK patch version a little behind.
 - **Advantages over the PWA:** more reliable notifications and sync, widget, Health Connect, and the door open to iOS or to recording with the phone's GPS.
 
 ### Monorepo structure

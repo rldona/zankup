@@ -1,7 +1,5 @@
+/* Colours come from the design tokens in packages/core (theme.ts injects them as CSS variables). */
 :root {
-  --bg: #f7f7f5;
-  --fg: #16181d;
-  --muted: #5b6070;
   font-family:
     system-ui,
     -apple-system,
@@ -10,18 +8,24 @@
     sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1115;
-    --fg: #eef0f4;
-    --muted: #a3a9b8;
-  }
-}
-
 body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
+}
+
+a {
+  color: var(--accent);
+}
+
+button {
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
 }
 
 .placeholder {
@@ -32,8 +36,18 @@ body {
   padding: 16px;
 }
 
-.placeholder p {
+.placeholder h1 {
+  margin: 0 0 0.25em;
+}
+
+.placeholder p,
+.state {
   color: var(--muted);
+}
+
+.soon {
+  max-width: 36ch;
+  margin-inline: auto;
 }
 
 .status {
@@ -41,15 +55,76 @@ body {
 }
 
 .status-ok {
-  color: #1f9d55;
+  color: var(--accent);
 }
 
 .status-down {
-  color: #d64545;
+  color: var(--run);
 }
 
 .status-degraded {
-  color: #d9480f;
+  color: var(--run);
+}
+
+/* Signed-in frame (placeholder: the responsive layout is OS-202). */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .brand {
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.topbar nav {
+  flex: 1;
+}
+
+.topbar nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.topbar nav a.active {
+  color: var(--fg);
+}
+
+.who {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.list a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.list span {
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 
 /* Brand lock-up (docs/brand/README.md, sections 2-4): one-colour mark as a mask over currentColor, so it
@@ -58,8 +133,6 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
-  margin: 0 auto 0.25em;
-  font-size: 2.5rem;
   font-weight: 400;
 }
 

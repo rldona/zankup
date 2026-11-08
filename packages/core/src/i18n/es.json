@@ -11,5 +11,19 @@
   "sport.walk": "Caminata",
   "sport.row": "Remo",
   "sport.swim": "Natación",
-  "sport.other": "Otro"
+  "sport.other": "Otro",
+  "nav.feed": "Actividades",
+  "nav.signOut": "Cerrar sesión",
+  "common.loading": "Cargando…",
+  "common.error": "Algo ha fallado. Inténtalo de nuevo.",
+  "common.retry": "Reintentar",
+  "signIn.title": "Iniciar sesión",
+  "signIn.soon": "La pantalla de inicio de sesión llega con OS-203. Hasta entonces, entra a través de la API o de la app.",
+  "feed.title": "Actividades",
+  "feed.empty": "Aún no hay actividades. Aparecen aquí tras la primera sincronización con Garmin.",
+  "feed.more": "Cargar más",
+  "activity.back": "Volver a actividades",
+  "activity.notFound": "Esta actividad no existe o no es tuya.",
+  "notFound.title": "Página no encontrada",
+  "notFound.home": "Ir a las actividades"
 }

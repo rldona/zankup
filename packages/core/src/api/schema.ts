@@ -181,6 +181,50 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/sync': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Syncs
+     * @description Latest runs, newest first: when the last sync happened and how it went.
+     */
+    get: operations['listSyncs'];
+    put?: never;
+    /**
+     * Start Sync
+     * @description Sync Garmin now. Returns the new run, or the one already queued or running.
+     */
+    post: operations['startSync'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/sync/{run_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Sync
+     * @description One run and its progress. Poll it every couple of seconds while it is queued or running.
+     */
+    get: operations['getSync'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -548,6 +592,64 @@ export interface components {
       /** Sample Count */
       sample_count: number;
     };
+    /** SyncProgress */
+    SyncProgress: {
+      /**
+       * Since
+       * @description First day asked to the source (YYYY-MM-DD)
+       */
+      since?: string | null;
+      /**
+       * Listed
+       * @description Activities the source returned
+       */
+      listed?: number | null;
+      /**
+       * New
+       * @description Of those, not imported yet
+       */
+      new?: number | null;
+      /**
+       * Downloaded
+       * @description Original files downloaded so far
+       */
+      downloaded?: number | null;
+    };
+    /** SyncStatus */
+    SyncStatus: {
+      /** Id */
+      id: number;
+      /**
+       * Trigger
+       * @enum {string}
+       */
+      trigger: 'cron' | 'button' | 'initial' | 'import';
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'queued' | 'running' | 'success' | 'error';
+      /**
+       * Started At
+       * Format: date-time
+       */
+      started_at: string;
+      /** Finished At */
+      finished_at: string | null;
+      /**
+       * New Count
+       * @description New activities found and queued for import
+       */
+      new_count: number;
+      progress: components['schemas']['SyncProgress'];
+      /**
+       * Pending Imports
+       * @description Activities downloaded but not imported yet (all runs)
+       */
+      pending_imports: number;
+      /** Error */
+      error: string | null;
+    };
     /** TotpRequest */
     TotpRequest: {
       /** Challenge */
@@ -857,6 +959,95 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listSyncs: {
+    parameters: {
+      query?: {
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SyncStatus'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  startSync: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SyncStatus'];
+        };
+      };
+      /** @description Garmin is not configured on this instance */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getSync: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        run_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SyncStatus'];
+        };
       };
       /** @description Validation Error */
       422: {

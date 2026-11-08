@@ -5,7 +5,8 @@ Rules for everything under fixtures/:
   whole weeks), no user profile values, no unknown or developer fields with data, serial numbers
   neutral, no author or e-mail.
 - Recorded HTTP responses (cassettes, .yaml/.yml/.json): no Authorization or API key headers, no bearer
-  tokens or JWTs, no e-mail addresses, and every latitude/longitude inside the neutral area.
+  tokens or JWTs, no e-mail addresses, no owner or location fields, every latitude/longitude inside the
+  neutral area and every date in 2020.
 - Any other file type fails, so new kinds of fixtures get a rule before they are committed.
 
 Usage:
@@ -26,7 +27,7 @@ from anonymise_fit import NEUTRAL_END, NEUTRAL_LAT, NEUTRAL_LON, NEUTRAL_RADIUS_
 
 SEMICIRCLE_TO_DEG = 180 / 2**31
 NEUTRAL_YEAR_START = datetime(2020, 1, 1, tzinfo=UTC)
-ISO_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}")
+ANY_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})[T ]\d{2}:\d{2}")  # ISO and Garmin's "YYYY-MM-DD HH:MM"
 ROOT = Path(__file__).resolve().parent.parent / "fixtures"
 
 COORD_PATTERNS = [
@@ -48,6 +49,10 @@ SECRETS = [
     (re.compile(r"(?i)\b(bearer|apikey)\s+[A-Za-z0-9._~+/=-]{12,}"), "token"),
     (re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"), "JWT"),
     (re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), "e-mail"),
+    (
+        re.compile(r'"(owner\w*|locationName|userProfile\w*|displayName|fullName)"\s*:'),
+        "owner or location field",
+    ),
 ]
 TRACK_PERSONAL = [
     (re.compile(r"<author>|<email\b"), "author or e-mail"),
@@ -104,11 +109,11 @@ def check_text(path: Path, text: str, track: bool) -> Iterator[str]:
             if not inside(lat, lon):
                 yield f"{path.name}: coordinate {lat:.4f}, {lon:.4f} is outside the neutral area"
                 break
-    if track:
-        for match in ISO_DATE.finditer(text):
-            if match.group(1) != "2020":
-                yield f"{path.name}: date {match.group(0)[:10]} is not in 2020 (dates must be moved)"
-                break
+    # Tracks and recorded responses alike: every date must have been moved to 2020.
+    for match in ANY_DATE.finditer(text):
+        if match.group(1) != "2020":
+            yield f"{path.name}: date {match.group(0)[:10]} is not in 2020 (dates must be moved)"
+            break
     for pattern, label in TRACK_PERSONAL if track else SECRETS:
         if pattern.search(text):
             yield f"{path.name}: contains a {label}"

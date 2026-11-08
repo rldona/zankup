@@ -1,4 +1,5 @@
-"""Scheduled work (OS-109): queue a Garmin sync every SYNC_INTERVAL_MINUTES and prune old jobs.
+"""Scheduled work: a Garmin sync every SYNC_INTERVAL_MINUTES (OS-109), the daily backup at
+BACKUP_HOUR_UTC (OS-114) and pruning of old jobs.
 
 Not a Railway cron service: it would not see the volume with the original FIT files, so the schedule
 lives next to the worker. Time is cut into slots of the interval, and each slot's sync job has the slot
@@ -30,40 +31,64 @@ class Scheduler:
         self,
         sessions: sessionmaker[Session],
         *,
-        interval: timedelta,
+        interval: timedelta | None,
         owner_email: str,
+        backup_hour: int | None = None,
         tick_s: float = TICK_S,
     ) -> None:
         self.sessions, self.interval, self.owner_email, self.tick_s = sessions, interval, owner_email, tick_s
+        self.backup_hour = backup_hour
         self.stop_event = threading.Event()
 
     def slot(self, when: datetime) -> int:
+        assert self.interval is not None
         return int(when.timestamp() // self.interval.total_seconds())
 
+    def queue_backup(self, session: Session, user_id: int, when: datetime) -> int | None:
+        """Today's backup, due at the backup hour; one per day (the day is in the dedupe key)."""
+        if self.backup_hour is None:
+            return None
+        due = when.replace(hour=self.backup_hour, minute=0, second=0, microsecond=0)
+        return enqueue(
+            session,
+            "backup",
+            user_id=user_id,
+            run_after=max(due, when),
+            dedupe_key=f"backup:{when.date().isoformat()}",
+            max_attempts=3,
+        )
+
     def tick(self, when: datetime | None = None) -> int | None:
-        """Queue this slot's sync if it is not queued yet and prune old finished jobs. Returns the job id."""
+        """Queue this slot's sync and today's backup if they are not queued yet, and prune old finished
+        jobs. Returns the id of the sync job queued, if any."""
         when = when or datetime.now(UTC)
+        job_id = backup_id = None
         with self.sessions.begin() as session:
             user_id = ensure_owner(session, self.owner_email).id
-            job_id = enqueue(
-                session,
-                "sync_garmin",
-                user_id=user_id,
-                payload={"trigger": "cron"},
-                dedupe_key=f"sync:garmin:{user_id}:{self.slot(when)}",
-                max_attempts=2,  # the next slot is a retry anyway
-            )
+            if self.interval is not None:
+                job_id = enqueue(
+                    session,
+                    "sync_garmin",
+                    user_id=user_id,
+                    payload={"trigger": "cron"},
+                    dedupe_key=f"sync:garmin:{user_id}:{self.slot(when)}",
+                    max_attempts=2,  # the next slot is a retry anyway
+                )
+            backup_id = self.queue_backup(session, user_id, when)
             pruned = session.execute(
                 delete(Job).where(Job.status.in_(("done", "failed")), Job.finished_at < when - KEEP_FINISHED)
             ).rowcount  # type: ignore[attr-defined]
         if job_id is not None:
             log.info("Scheduled sync queued", extra={"job_id": job_id, "slot": self.slot(when)})
+        if backup_id is not None:
+            log.info("Daily backup queued", extra={"job_id": backup_id})
         if pruned:
             log.info("Old jobs pruned", extra={"count": pruned})
         return job_id
 
     def run_forever(self) -> None:
-        log.info("Scheduler started", extra={"interval_min": self.interval.total_seconds() / 60})
+        interval = self.interval.total_seconds() / 60 if self.interval else None
+        log.info("Scheduler started", extra={"interval_min": interval, "backup_hour": self.backup_hour})
         while not self.stop_event.is_set():
             try:
                 self.tick()
@@ -81,15 +106,18 @@ class Scheduler:
 
 
 def build_scheduler() -> Scheduler | None:
-    """The scheduler, or None when automatic syncs are off (no Garmin key, or an interval of 0)."""
+    """The scheduler, or None when there is nothing to schedule (no Garmin sync and no backups)."""
     from opensport.core.config import get_settings
     from opensport.db.session import get_engine
 
     settings = get_settings()
-    if settings.garmin_personal_api_key is None or settings.sync_interval_minutes == 0:
+    syncs = settings.garmin_personal_api_key is not None and settings.sync_interval_minutes > 0
+    backups = settings.integrations()["backups"]
+    if not syncs and not backups:
         return None
     return Scheduler(
         sessionmaker(get_engine(), expire_on_commit=False),
-        interval=timedelta(minutes=settings.sync_interval_minutes),
+        interval=timedelta(minutes=settings.sync_interval_minutes) if syncs else None,
         owner_email=settings.owner_email,
+        backup_hour=settings.backup_hour_utc if backups else None,
     )

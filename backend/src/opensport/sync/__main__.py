@@ -18,6 +18,7 @@ from datetime import date
 
 from sqlalchemy.orm import sessionmaker
 
+from opensport.alerts import email_sender
 from opensport.core.config import get_settings
 from opensport.core.logging import configure_logging
 from opensport.db.session import get_engine
@@ -63,7 +64,14 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         result = run_sync(
-            sessions, store, garmin, user_id=user_id, trigger=trigger, since=start, pause_s=args.pause
+            sessions,
+            store,
+            garmin,
+            user_id=user_id,
+            trigger=trigger,
+            since=start,
+            pause_s=args.pause,
+            alert=email_sender(settings),
         )
     except SyncAlreadyRunning as error:
         print(error, file=sys.stderr)

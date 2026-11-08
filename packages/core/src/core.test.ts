@@ -12,6 +12,8 @@ import {
   formatSpeed,
   message,
   resolveLocale,
+  allThemesCss,
+  themeBootScript,
   themeCss,
   themes,
   THEMES,
@@ -69,6 +71,21 @@ describe('i18n', () => {
 });
 
 describe('tokens', () => {
+  it('applies the saved theme before the first paint, and ignores anything else', () => {
+    const run = (saved: string | null) => {
+      const root = { dataset: {} as Record<string, string> };
+      new Function('localStorage', 'document', themeBootScript())(
+        { getItem: () => saved },
+        { documentElement: root },
+      );
+      return root.dataset.theme;
+    };
+    expect(run('oled')).toBe('oled');
+    expect(run('system')).toBeUndefined();
+    expect(run('"><script>')).toBeUndefined();
+    expect(run(null)).toBeUndefined();
+  });
+
   it('defines the same tokens in every theme', () => {
     const keys = Object.keys(themes.light).sort();
     for (const name of THEMES) expect(Object.keys(themes[name]).sort()).toEqual(keys);
@@ -76,6 +93,11 @@ describe('tokens', () => {
 
   it('builds CSS variables', () => {
     expect(cssVariables('dark')['--accent-fg']).toBe('#06221a');
+    const css = allThemesCss();
+    expect(css.startsWith(':root{color-scheme:light;')).toBe(true);
+    expect(css).toContain('@media (prefers-color-scheme: dark){:root:not([data-theme]){color-scheme:dark;');
+    expect(css).toContain('@media (prefers-contrast: more){:root:not([data-theme]){color-scheme:light;');
+    for (const name of THEMES) expect(css).toContain(`[data-theme="${name}"]{`);
     expect(themeCss('oled')).toMatch(/^\[data-theme="oled"\]\{color-scheme:dark;--radius:14px;/);
   });
 });

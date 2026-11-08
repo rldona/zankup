@@ -19,6 +19,7 @@ export type MonthTotals = Json<'/api/activities/months', 'get'>[number];
 export type ActivityDetail = Json<'/api/activities/{activity_id}', 'get'>;
 export type Health = Json<'/api/health', 'get'>;
 export type SetupStatus = Json<'/api/setup', 'get'>;
+export type Preferences = Json<'/api/settings', 'get'>;
 
 /** An API error with its HTTP status, so callers can tell "signed out" (401) from other failures. */
 export class ApiError extends Error {
@@ -45,6 +46,7 @@ export const queryKeys = {
   health: ['health'] as const,
   setup: ['setup'] as const,
   me: ['me'] as const,
+  settings: ['settings'] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
   months: (sport?: readonly string[]) => ['activities', 'months', { sport: sport ?? [] }] as const,
   activity: (id: number) => ['activity', id] as const,
@@ -111,5 +113,14 @@ export function setupStatusQuery(api: ApiClient) {
   return {
     queryKey: queryKeys.setup,
     queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/setup', { signal })),
+  };
+}
+
+/** The signed-in user's preferences (the theme for now), as stored on the server. */
+export function settingsQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.settings,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/settings', { signal })),
   };
 }

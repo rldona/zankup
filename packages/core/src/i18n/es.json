@@ -115,8 +115,21 @@
   "soon.title": "Próximamente",
   "soon.search": "La búsqueda avanzada llega con OS-219.",
   "soon.stats": "Las estadísticas llegan con la fase 3 y OS-217.",
-  "soon.settings": "Los ajustes llegan con OS-212 (idioma, unidades, tema).",
+  "soon.settings": "Idioma, unidades, frecuencia cardiaca y dispositivos llegan con OS-212.",
   "soon.sync": "El botón de sincronizar con progreso llega con OS-209. Garmin ya se sincroniza cada 15 minutos.",
   "profile.title": "Perfil",
-  "profile.more": "El perfil completo llega con OS-218."
+  "profile.more": "El perfil completo llega con OS-218.",
+  "settings.appearance": "Apariencia",
+  "settings.themeHelp": "Se guarda en tu cuenta: te sigue a otros navegadores y a la app.",
+  "theme.system": "Sistema",
+  "theme.systemNote": "Sigue a tu dispositivo",
+  "theme.light": "Claro",
+  "theme.dark": "Oscuro",
+  "theme.oled": "Negro OLED",
+  "theme.oledNote": "Ahorra batería",
+  "theme.highContrast": "Alto contraste",
+  "theme.highContrastNote": "Máxima legibilidad",
+  "theme.forest": "Bosque",
+  "theme.ocean": "Océano",
+  "theme.sunset": "Atardecer"
 }

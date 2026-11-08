@@ -17,7 +17,9 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 | **6 · Multi-source health** | Sleep, HRV and daily data from Garmin and Google Health (Fitbit Air), without duplicates | Health dashboard | **M6: "I see my recovery, wherever it comes from"** |
 | **7 · AI assistant** | Summaries, analysis and natural-language questions with a small LLM (Claude Haiku 5.5) | Per-activity summary, weekly report and "Coach" chat | **M7: "I ask OpenSport how I'm doing"** |
 
-**Size estimate:** S ≈ half a day · M ≈ 1–2 days · L ≈ 3–5 days.
+**Size estimate:** S ≈ half a day · M ≈ 1–2 days · L ≈ 3–5 days. Rough totals: M1 ≈ 20–25 working days (phases 0 and 1), M2 ≈ another 30–35.
+
+**Tracking:** every ticket is a GitHub issue with `phase-N`, `size-S/M/L` and `type` labels and a milestone per phase; dependencies are linked in each issue. This file remains the plan; the issues are the work.
 
 **Working rules:**
 - One ticket = one branch = one small PR with tests.
@@ -39,21 +41,43 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 
 ---
 
+## Decisions before starting
+
+These are owner decisions, tracked as issues with the `decision` label.
+
+- **OS-D06 · Choose the production domain** (S)
+  - Needed by passkeys (the relying party ID must stay stable; changing it invalidates them), Resend (SPF/DKIM), Google OAuth redirect URLs and Vercel.
+  - *Done when:* the domain is registered and pointed at Vercel.
+- **OS-D07 · Choose the licence and repository visibility** (S)
+  - Open source (MIT or AGPL-3.0, in line with "Your sports data: 100% free") or private. AGPL keeps hosted forks open; MIT is the most permissive.
+  - *Done when:* `LICENSE` is in the repository and the visibility is set.
+- **OS-D08 · Create the service accounts** (S)
+  - Railway, Vercel, Resend, Google Cloud, Anthropic and Sentry. Expected cost at the start: about $5–10/month.
+  - *Done when:* every account exists and its keys are stored only in Railway's variables and the local `.env`.
+
 ## Phase 0 · Foundations
 
 **Goal:** any change reaches production with a `git push`.
 
 - **OS-001 · Repository and structure** (S)
-  - GitHub repository (private), pnpm-workspaces monorepo: `backend/`, `apps/web/`, `apps/mobile/` (empty until phase 5), `packages/core/`, `docs/` and `tools/`. `README`, licence and `.gitignore` (including `.env`, `data/`, `strava/`, `docs/prototypes/data.js` and the sample files with personal data).
-  - *Done when:* the repository exists and contains no personal data or secrets.
+  - pnpm-workspaces monorepo: `backend/`, `apps/web/`, `apps/mobile/` (empty until phase 5), `packages/core/`, `docs/` and `tools/`. `README`, licence (OS-D07) and `.gitignore` (including `.env`, `data/`, `strava/`, `docs/prototypes/data.js` and the sample files with personal data).
+  - Migrate what already exists: `sync/garmin_sync.py` → `backend/` (as the seed of OS-103), `tools/build_proto_data.py` stays in `tools/`, prototypes stay in `docs/prototypes/`. Translate code comments and messages to English.
+  - *Done when:* the structure is in place, nothing personal or secret is tracked, and the existing scripts still run from their new location.
 - **OS-002 · Backend tooling** (S) · depends on OS-001
   - Python 3.12+, `uv`, `ruff`, `mypy` and `pytest`, with `pre-commit`.
   - *Done when:* `uv run pytest` and `ruff check` pass locally.
 - **OS-003 · Web tooling** (S) · depends on OS-001
   - Vite + React + TypeScript, `eslint`, `prettier`, `vitest` and pnpm.
   - *Done when:* `pnpm dev`, `pnpm test` and `pnpm build` work.
-- **OS-008 · Shared package `packages/core`** (S) · depends on OS-003
+- **OS-008 · Shared package `packages/core`** (S) · depends on OS-001 and OS-003
   - Strict TypeScript. API client generation from OpenAPI, formatting and domain utilities (the prototype's), design tokens in JSON and the `en`/`es` i18n catalogues. Tests with vitest. The PWA uses it from day one.
+- **OS-009 · Local development environment** (S) · depends on OS-002 and OS-003
+  - `docker compose` with Postgres (and the API in watch mode), `.env.example` with every variable, and `make dev` / `make test` (or `just`) to start everything with one command. Short "Getting started" section in the README.
+  - *Done when:* a fresh clone runs the API, the database and the web app locally in under 10 minutes following the README.
+- **OS-010 · Anonymised test fixtures** (M) · depends on OS-001
+  - A `tools/anonymise_fit` script that produces test FITs from real ones: coordinates shifted to a neutral location, user profile (weight, height, sex, resting HR) removed, serial numbers and IDs replaced, timing and metrics kept. Fixtures for run, strength, indoor ride with power and an old TCX/GPX.
+  - Recorded HTTP responses (VCR cassettes) for the Garmin and Google APIs are scrubbed of tokens, keys, emails and real IDs before being committed, with a CI check that fails if a cassette contains an `Authorization` header or coordinates outside the neutral area.
+  - *Done when:* every test uses only anonymised fixtures and the CI check is active.
 - **OS-004 · CI on GitHub Actions** (S) · depends on OS-002 and OS-003
   - Lint, tests and build for the backend and the web on every PR.
   - *Done when:* a PR shows green checks.
@@ -76,19 +100,19 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 - **OS-102 · Database schema and migrations** (M) · depends on OS-101
   - SQLAlchemy + Alembic. Tables `activities`, `laps`, `streams`, `sync_runs`, `settings`, `users` and `devices` (model in [architecture.md](architecture.md)).
   - *Done when:* `alembic upgrade head` creates the schema locally and on Railway.
-- **OS-103 · Garmin Personal API client** (M) · depends on OS-101
+- **OS-103 · Garmin Personal API client** (M) · depends on OS-101 and OS-010
   - Turn `garmin_sync.py` into a module: cached token (in the database, not a file), paginated list, ZIP download and FIT extraction, retries on 429.
-  - *Done when:* tests with recorded responses (VCR) cover the token, the list and the download.
+  - *Done when:* tests with recorded responses (VCR, scrubbed as in OS-010) cover the token, the list and the download.
 - **OS-104 · Original FIT store** (S) · depends on OS-101
   - Immutable `/data/raw/{activityId}.fit`, with its `sha256` stored. An interface that allows switching to object storage later.
-- **OS-105 · FIT parser → normalised model** (M) · depends on OS-102
+- **OS-105 · FIT parser → normalised model** (M) · depends on OS-102 and OS-010
   - Session, laps, 1 Hz streams (lat, lon, distance, altitude, HR, cadence ×2, speed, power, temperature) and device. Semicircles → degrees.
-  - *Done when:* tests with the run, strength and ROUVY FITs match Garmin's numbers.
+  - *Done when:* tests with the anonymised run, strength and ROUVY fixtures (OS-010) match Garmin's numbers.
 - **OS-106 · Ingestion: store activity, laps and streams** (M) · depends on OS-104 and OS-105
   - Idempotent by `activityId`. Compressed streams. Simplified route for thumbnails and `bbox`.
 - **OS-107 · Basic metrics on import** (M) · depends on OS-106
   - Smoothed pace and speed, per-km splits and best efforts (400 m … marathon), validated against the Strava numbers in [findings.md](findings.md). GPS speed spikes are filtered out before computing records.
-- **OS-108 · Sync orchestrator** (M) · depends on OS-103 and OS-106
+- **OS-108 · Sync orchestrator** (M) · depends on OS-103, OS-106 and OS-115
   - `sync_run` with status and progress, incremental since the last sync, and a lock so two never run at once.
   - *Done when:* `python -m opensport.sync` imports what is new and a second run does nothing.
 - **OS-109 · Cron on Railway** (S) · depends on OS-108
@@ -105,6 +129,7 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
   - `sync --since YYYY-MM-DD` command, with pauses, to bring in everything on Garmin Connect.
 - **OS-114 · Observability and backups** (S) · depends on OS-005
   - Error tracking (Sentry or similar), an alert if sync fails 3 times in a row, daily backups of Postgres and the volume.
+  - *Done when:* a backup has been restored into a fresh database and volume and the app works with it (restore tested, not just backup).
 - **OS-115 · Job queue and worker** (M) · depends on OS-102
   - `jobs` table in Postgres (with `SKIP LOCKED`), retries with backoff and a worker that is the same container started in worker mode on Railway. Sync and ingestion become jobs.
   - *Done when:* importing 70 activities does not block the API and a failure retries on its own.
@@ -364,7 +389,7 @@ It can start as soon as M3 is done (it needs the metrics), in parallel with phas
 
 ## Recommended starting order
 
-1. **OS-007** (rotate the key), **OS-001 → OS-006** and **OS-008** (foundations).
+1. **OS-D06 → OS-D08** (owner decisions), **OS-007** (rotate the key), then **OS-001**, **OS-002/OS-003**, **OS-008 → OS-010** and **OS-004 → OS-006** (foundations).
 2. **OS-101 → OS-109**: the critical path for M1, testable without a UI.
 3. **OS-110 → OS-112**, in parallel with **OS-201 → OS-202** and **OS-223** (web and i18n from the start).
 4. The rest of phase 2 in number order.

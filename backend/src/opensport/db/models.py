@@ -128,6 +128,9 @@ class Activity(Timestamps, Base):
     has_gps: Mapped[bool] = mapped_column(server_default="false")
     bbox: Mapped[list[float] | None] = mapped_column(JSONB, comment="[min_lat, min_lon, max_lat, max_lon]")
     route_simplified: Mapped[str | None] = mapped_column(Text, comment="Encoded polyline for thumbnails")
+    splits: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        JSONB, comment="Per-km splits: distance_m, time_s, elevation_change_m, avg_hr"
+    )
     raw_meta: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="Source metadata, as received")
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -148,6 +151,25 @@ class Lap(Base):
     avg_power: Mapped[int | None] = mapped_column(SmallInteger)
     ascent_m: Mapped[float | None] = mapped_column(Float)
     descent_m: Mapped[float | None] = mapped_column(Float)
+
+
+class BestEffort(Base):
+    """Fastest time over a standard distance within one activity (OS-107). Records come from here."""
+
+    __tablename__ = "best_efforts"
+    __table_args__ = (Index("ix_best_efforts_user_distance_time", "user_id", "distance_key", "time_s"),)
+
+    activity_id: Mapped[int] = mapped_column(
+        ForeignKey("activities.id", ondelete="CASCADE"), primary_key=True
+    )
+    distance_key: Mapped[str] = mapped_column(
+        String(20), primary_key=True, comment="e.g. 1k, 5k, half_marathon"
+    )
+    user_id: Mapped[int] = _user_fk()
+    distance_m: Mapped[float] = mapped_column(Float)
+    time_s: Mapped[float] = mapped_column(Float)
+    start_s: Mapped[float] = mapped_column(Float, comment="Seconds from the start of the activity")
+    start_distance_m: Mapped[float] = mapped_column(Float)
 
 
 class Stream(Base):

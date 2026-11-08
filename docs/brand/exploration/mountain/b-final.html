@@ -1,0 +1,35 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>OpenSport · ajuste de la flecha</title>
+<style>
+body{margin:0;font:14px system-ui;background:#f4f5f3;color:#111;padding:24px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.opt{background:#fff;border-radius:16px;padding:20px;display:grid;gap:14px;justify-items:center}
+.opt h2{margin:0;font-size:15px}.big{width:200px;height:150px}
+.pair{display:flex;gap:12px}.ico{width:72px;height:72px;border-radius:18px;display:grid;place-items:center}.ico svg{width:48px;height:48px}
+.dark{background:#111;color:#fff}.light{background:#fff;color:#111;border:3px solid #111}.green{background:#0b8f6a;color:#fff}
+.word{display:flex;align-items:center;gap:10px;font-weight:750;font-size:22px}.word svg{width:40px;height:32px}
+</style>
+<div class="row">
+ <div class="opt"><h2>Antes (B3)</h2>
+  <svg class="big" viewBox="0 0 120 90"><defs><mask id="m1"><rect width="120" height="90" fill="#fff"/>
+   <path d="M40 84 L58 64 L44 54 L50 40" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+   <polygon points="50,24 42,38 58,38" fill="#000"/></mask></defs>
+   <g mask="url(#m1)" fill="currentColor"><polygon points="6,82 50,10 94,82"/><polygon points="70,82 92,46 114,82"/></g></svg></div>
+ <div class="opt"><h2>Ahora · punta de la B1, más baja</h2>
+  <svg class="big" viewBox="0 0 120 90"><defs><mask id="m2"><rect width="120" height="90" fill="#fff"/>
+   <path d="M40 84 L58 67 L44 58 L50 50" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+   <polygon points="50,32 42.6,48 57.4,48" fill="#000"/></mask></defs>
+   <g mask="url(#m2)" fill="currentColor"><polygon points="6,82 50,10 94,82"/><polygon points="70,82 92,46 114,82"/></g></svg></div>
+ <div class="opt"><h2>Alternativa · aún más baja</h2>
+  <svg class="big" viewBox="0 0 120 90"><defs><mask id="m3"><rect width="120" height="90" fill="#fff"/>
+   <path d="M40 84 L57 70 L45 62 L50 55" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+   <polygon points="50,37 42.6,53 57.4,53" fill="#000"/></mask></defs>
+   <g mask="url(#m3)" fill="currentColor"><polygon points="6,82 50,10 94,82"/><polygon points="70,82 92,46 114,82"/></g></svg></div>
+</div>
+<script>
+let n = 0;
+document.querySelectorAll('.opt').forEach(o => {
+  const base = o.querySelector('svg.big').outerHTML.replace('class="big"', '');
+  const copy = () => { n++; return base.replace(/id="(m\d)"/, `id="$1x${n}"`).replace(/url\(#(m\d)\)/, `url(#$1x${n})`); };
+  o.insertAdjacentHTML('beforeend', `<div class="pair"><div class="ico dark">${copy()}</div><div class="ico light">${copy()}</div><div class="ico green">${copy()}</div></div><div class="word">${copy()}OpenSport</div>`);
+});
+</script>

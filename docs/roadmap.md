@@ -25,7 +25,7 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 - **Open source and self-hosted.** Each person deploys their own instance (Railway + Vercel, or Docker on their own server) and uses **their own keys**: Garmin Personal API, Google OAuth, Google Health and, optionally, Anthropic. That keeps every instance within the Garmin Personal API's personal-use terms, and nobody else's health data lives on our servers.
 - **Licences:** `packages/metrics` (the metrics engine) under **MIT**, so anyone can reuse it; everything else under **AGPL-3.0**, so hosted forks stay open.
 - **No payments for now.** Nothing in the design should close the door to a hosted version later: every table carries `user_id` from the start, even though each deployment has a single user.
-- **Brand on hold.** OpenSport is the working name; logo (#116) and domain (OS-D06) are in the backlog. Instances run on their `*.vercel.app` and `*.up.railway.app` URLs.
+- **Brand decided, not applied yet.** The product will be called **Zankup**; the name, mark and wordmark are in the [brand guide](brand/README.md). OpenSport stays in the code until the rename (guide, section 7); the mark and icons are #116 and the domain is OS-D06. Instances run on their `*.vercel.app` and `*.up.railway.app` URLs.
 
 **Working rules:**
 - One ticket = one branch = one small PR with tests.
@@ -448,8 +448,8 @@ Not planned in any phase. Each one comes back when its reason to wait goes away.
   - MapLibre with terrain elevation for the activity and replay (OS-414).
 - **Error tracking with Sentry** (S)
   - Backend (FastAPI) and web (React) SDKs with data scrubbing and no IP addresses, in its own Sentry organisation (EU region). Comes back when structured logs and the sync-failure alert (OS-114) are no longer enough, for example once other people run their own instances.
-- **Brand: name and logo** (#116)
-  - OpenSport is the working name; the current mountain mark stays.
+- **Brand: apply the Zankup mark and icons** (#116)
+  - Name, mark and wordmark are decided (see the [brand guide](brand/README.md)). What remains is implementation: the mark as a single source of truth in `packages/core`, PWA icons and manifest, Expo adaptive icon and splash, and removing the traced mountain mark from the prototypes. The product rename is a separate task (guide, section 7.2) that waits for the domain and trademark checks.
 
 ## Recommended starting order
 

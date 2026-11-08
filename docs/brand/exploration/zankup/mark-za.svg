@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-label="Zankup">
+  <!-- ZA: three rounded peaks (from candidate N1) with the letter Z cut out as a switchback trail. Original design. -->
+  <defs>
+    <mask id="trail">
+      <rect width="120" height="90" fill="#fff"/>
+      <path d="M44 61 L76 61 L46 79 L78 79" fill="none" stroke="#000" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <g mask="url(#trail)" fill="#000" stroke="#000" stroke-width="9" stroke-linejoin="round">
+    <polygon points="17,80 34.2,49 51.4,80"/>
+    <polygon points="68.6,80 85.8,49 103,80"/>
+    <polygon points="30.8,80 60,15 89.2,80"/>
+  </g>
+</svg>

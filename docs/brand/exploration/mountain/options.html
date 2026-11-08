@@ -1,0 +1,31 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>OpenSport · símbolos</title>
+<style>
+body{margin:0;font:14px system-ui;background:#f4f5f3;color:#111;padding:24px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.opt{background:#fff;border-radius:16px;padding:20px;display:grid;gap:16px;justify-items:center}
+.opt h2{margin:0;font-size:16px}
+.big{width:180px;height:140px;color:#111}
+.pair{display:flex;gap:14px;align-items:center}
+.ico{width:72px;height:72px;border-radius:18px;display:grid;place-items:center}
+.ico svg{width:46px;height:46px}
+.dark{background:#111;color:#fff}.light{background:#fff;color:#111;border:3px solid #111}.green{background:#0b8f6a;color:#fff}
+.word{display:flex;align-items:center;gap:10px;font-weight:750;font-size:22px}.word svg{width:40px;height:32px}
+.tiny{display:flex;gap:10px;align-items:center}.tiny svg{width:16px;height:16px}
+</style>
+<div class="row">
+ <div class="opt"><h2>A · Perfil</h2>
+  <svg class="big" id="A" viewBox="0 0 120 90"><path d="M8 80 L42 24 L60 50 L76 32 L112 80" fill="none" stroke="currentColor" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/><circle cx="97" cy="16" r="8" fill="currentColor"/></svg>
+ </div>
+ <div class="opt"><h2>B · Sendero</h2>
+  <svg class="big" id="B" viewBox="0 0 120 90"><defs><mask id="mB"><rect width="120" height="90" fill="#fff"/><path d="M40 84 L58 62 L44 52 L60 36" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></mask></defs><g mask="url(#mB)" fill="currentColor"><polygon points="6,82 50,10 94,82"/><polygon points="70,82 92,46 114,82"/></g></svg>
+ </div>
+ <div class="opt"><h2>C · Cima abierta</h2>
+  <svg class="big" id="C" viewBox="0 0 120 90"><path d="M24 74 A38 38 0 1 1 96 74" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/><polygon points="22,82 50,38 64,58 74,46 98,82" fill="currentColor"/></svg>
+ </div>
+</div>
+<script>
+document.querySelectorAll('.opt').forEach(o => {
+  const s = o.querySelector('svg.big').outerHTML.replace('class="big"', '');
+  o.insertAdjacentHTML('beforeend', `<div class="pair"><div class="ico dark">${s}</div><div class="ico light">${s}</div><div class="ico green">${s}</div></div><div class="word">${s}OpenSport</div><div class="tiny">${s}${s.replace('<svg','<svg style="width:24px;height:24px"')} favicon</div>`);
+});
+</script>

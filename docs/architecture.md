@@ -75,7 +75,8 @@ flowchart TB
 |---|---|---|
 | **API** | Web service (FastAPI + Uvicorn) | API only: the PWA is on Vercel. HTTPS and domain included |
 | **Scheduled sync** | A scheduler thread in the API queues a `sync_garmin` job every 15 min (`SYNC_INTERVAL_MINUTES`), one per time slot | Not a Railway Cron Job: it would not see the volume with the FIT files. Also by hand with the "Sync" button (`POST /api/sync`) or `python -m opensport.sync` |
-| **Database** | Managed Postgres | Backups and private-network connection. 1 Hz streams go in compressed `jsonb` or `bytea` columns |
+| **Database** | Managed Postgres | Private-network connection. 1 Hz streams go in compressed `jsonb` or `bytea` columns |
+| **Backups** | Bucket `backups` (S3-compatible, Amsterdam) in the same project | Daily `pg_dump` + the original FITs, see "Backups and alerts" below |
 | **Original FITs** | Persistent volume mounted at `/data/raw` | A few MB per year (about 50–120 KB per activity). Can be copied elsewhere |
 | **Secrets** | Railway environment variables | `GARMIN_PERSONAL_API_KEY`, `JWT_SECRET`, `VAPID_*`, `FCM_*`, `RESEND_API_KEY` |
 
@@ -84,6 +85,21 @@ flowchart TB
 - **Build:** `backend/Dockerfile` (path set on the service). **Pre-deploy:** `alembic -c backend/alembic.ini upgrade head`, so a failing migration stops the deploy and the running version stays up. **Health check:** `/api/health`, which also reports the database and the applied migration (`schema_revision`).
 - **Background jobs** (OS-115) run in a worker thread inside the API process, on a `jobs` table claimed with `FOR UPDATE SKIP LOCKED`. Not a separate service because a Railway volume attaches to one service only, and the worker needs the original FIT files on `/data`. `RUN_WORKER=false` turns it off; `python -m opensport.jobs.worker` runs it on its own (self-hosting on one machine, or a future setup with object storage).
 - **Railway treats `railway.json` (config as code) as deprecated** and does not apply every field from it: the pre-deploy command in the file was ignored until it was set on the service itself through the API. The service settings are the source of truth; `railway.json` stays only as documentation of them and must be kept in sync by hand. The self-hosting kit (OS-224) will set these settings by script.
+
+### Backups and alerts (OS-114)
+
+- **Logs:** JSON lines on stdout (`LOG_FORMAT=json` in production), searchable in Railway's log view: every sync, job, import and failure carries its IDs as fields.
+- **Sync alert:** an e-mail through Resend at the **third failed sync in a row**, and another when it works again. A long outage is one e-mail, not one every 15 minutes. `ALERT_EMAIL` sets the recipient; without `RESEND_API_KEY` alerts are only logged.
+- **Daily backup** (a `backup` job queued by the scheduler for `BACKUP_HOUR_UTC`, 03:00 by default): `pg_dump --format=custom` of the whole database to `db/opensport-YYYY-MM-DD.dump` (the last 30 are kept), the original FITs to `raw/` (immutable, so each is uploaded once and kept for good) and `latest.json` with the newest dump and its SHA-256. A backup that fails three times e-mails the owner. Nothing else needs backing up: streams and metrics are in the database or recomputed from the FITs.
+- **Where:** a Railway bucket in the same project, whose credentials reach the `api` service as variable references (`BACKUP_S3_*` = `${{backups.*}}`). It is a different storage system from the volumes, though the same provider: for copies outside Railway, point `BACKUP_S3_*` at Cloudflare R2 or Backblaze B2. Railway's own volume snapshots need the Pro plan and are not used.
+- **Restore** (tested in CI, and against the production bucket into a fresh database and data folder):
+
+  ```bash
+  python -m opensport.backup list
+  python -m opensport.backup restore --database-url postgresql://… --data-dir /data [--date YYYY-MM-DD]
+  ```
+
+  It drops and recreates every table in the target database, checks the dump against `latest.json` and copies back the FITs that are missing. To restore production: create a new Postgres, restore into it, point the `api` service's `DATABASE_URL` at it and run the restore command in the `api` service for `/data`.
 
 **Why Railway?** It deploys straight from git, offers Postgres, volumes and cron in the same project, and costs about $5/month for this usage.
 

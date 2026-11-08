@@ -8,6 +8,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from opensport.alerts import Sender
+from opensport.core.config import Settings
 from opensport.db.models import Job
 from opensport.ingest import ingest_fit
 from opensport.storage import RawStore
@@ -39,7 +41,9 @@ def ingest_stored_fit(store: RawStore) -> Handler:
     return handle
 
 
-def sync_garmin(sessions: sessionmaker[Session], store: RawStore, api_key: str) -> Handler:
+def sync_garmin(
+    sessions: sessionmaker[Session], store: RawStore, api_key: str, alert: Sender | None = None
+) -> Handler:
     """Run a Garmin sync (OS-108) for the job's user.
 
     Payload: optional trigger, since (YYYY-MM-DD) and run_id (a `queued` run created by the Sync button,
@@ -76,6 +80,7 @@ def sync_garmin(sessions: sessionmaker[Session], store: RawStore, api_key: str) 
                 trigger=str(job.payload.get("trigger", "cron")),
                 since=date.fromisoformat(since) if since else None,
                 run_id=int(run_id) if run_id is not None else None,
+                alert=alert,
             )
         except SyncAlreadyRunning:
             if run_id is None:
@@ -93,10 +98,42 @@ def sync_garmin(sessions: sessionmaker[Session], store: RawStore, api_key: str) 
     return handle
 
 
+def backup(settings: Settings, alert: Sender | None = None) -> Handler:
+    """The daily backup (OS-114). On its last failed attempt it e-mails the owner."""
+    from opensport.backup import backup_store, run_backup
+
+    def handle(_: Session, job: Job) -> None:
+        store = backup_store(settings)
+        if store is None:
+            log.info("Backup skipped: not configured", extra={"job_id": job.id})
+            return
+        try:
+            run_backup(settings, store)
+        except Exception as error:
+            if job.attempts >= job.max_attempts and alert is not None:
+                try:
+                    alert(
+                        "OpenSport: the daily backup failed",
+                        f"The daily backup failed {job.attempts} times today and will try again "
+                        f"tomorrow.\n\nError:\n{str(error)[:2000]}",
+                    )
+                except Exception:
+                    log.exception("Could not send the backup alert")
+            raise
+
+    return handle
+
+
 def default_handlers(
-    store: RawStore, sessions: sessionmaker[Session] | None = None, garmin_api_key: str | None = None
+    store: RawStore,
+    sessions: sessionmaker[Session] | None = None,
+    garmin_api_key: str | None = None,
+    alert: Sender | None = None,
+    settings: Settings | None = None,
 ) -> dict[str, Handler]:
     handlers = {"ingest_fit": ingest_stored_fit(store)}
     if sessions is not None and garmin_api_key:
-        handlers["sync_garmin"] = sync_garmin(sessions, store, garmin_api_key)
+        handlers["sync_garmin"] = sync_garmin(sessions, store, garmin_api_key, alert)
+    if settings is not None:
+        handlers["backup"] = backup(settings, alert)
     return handlers

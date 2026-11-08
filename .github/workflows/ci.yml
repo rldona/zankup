@@ -39,6 +39,11 @@ jobs:
           enable-cache: true
       - name: Install
         run: uv sync --frozen
+      - name: PostgreSQL 18 client (pg_dump and pg_restore for the backup tests)
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
       - name: Lint
         run: uv run ruff check --output-format=github
       - name: Format

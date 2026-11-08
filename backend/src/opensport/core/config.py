@@ -37,6 +37,25 @@ class Settings(BaseSettings):
     garmin_personal_api_key: SecretStr | None = None
     jwt_secret: SecretStr | None = None
     resend_api_key: SecretStr | None = None
+    alert_email: str | None = Field(default=None, description="Where sync failure alerts go (OS-114)")
+    alert_from: str = Field(
+        default="OpenSport <onboarding@resend.dev>",
+        description="Sender; Resend's test sender only delivers to the Resend account's own address",
+    )
+    # Daily backups (OS-114): an S3-compatible bucket, or a local directory (another disk).
+    backup_s3_endpoint: str | None = None
+    backup_s3_bucket: str | None = None
+    backup_s3_region: str = "auto"
+    backup_s3_access_key_id: str | None = None
+    backup_s3_secret_access_key: SecretStr | None = None
+    backup_dir: Path | None = None
+    backup_keep_days: int = Field(
+        default=30, ge=1, description="Database dumps kept; FIT files are kept forever"
+    )
+    backup_hour_utc: int = Field(default=3, ge=0, le=23, description="When the daily backup runs")
+    pg_dump_command: str = "pg_dump"
+    pg_restore_command: str = "pg_restore"
+
     google_client_id: str | None = None
     google_client_secret: SecretStr | None = None
     anthropic_api_key: SecretStr | None = None
@@ -68,6 +87,7 @@ class Settings(BaseSettings):
         return {
             "garmin": self.garmin_personal_api_key is not None,
             "email": self.resend_api_key is not None,
+            "backups": self.backup_s3_bucket is not None or self.backup_dir is not None,
             "google_sign_in": self.google_client_id is not None and self.google_client_secret is not None,
             "ai": self.anthropic_api_key is not None,
         }

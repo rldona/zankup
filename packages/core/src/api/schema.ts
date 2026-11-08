@@ -759,6 +759,11 @@ export interface components {
        * @description How many date windows the run covers
        */
       windows?: number | null;
+      /**
+       * No Fit
+       * @description Skipped: no FIT original (manual, or GPX/TCX uploads)
+       */
+      no_fit?: number | null;
     };
     /** SyncStatus */
     SyncStatus: {

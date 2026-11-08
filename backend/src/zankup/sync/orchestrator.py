@@ -31,7 +31,7 @@ from zankup.alerts import Sender, notify_sync_outcome
 from zankup.db.models import Activity, Job, Source, SyncRun
 from zankup.jobs.queue import enqueue
 from zankup.storage import RawStore, raw_key
-from zankup.sync.garmin import GarminClient
+from zankup.sync.garmin import GarminClient, NoFitFile
 
 log = logging.getLogger("zankup.sync")
 
@@ -52,6 +52,7 @@ class SyncResult:
     listed: int
     queued: int
     skipped: int
+    no_fit: int = 0
 
 
 def ingest_dedupe_key(user_id: int, external_id: str) -> str:
@@ -100,7 +101,30 @@ def _known_ids(session: Session, user_id: int) -> set[str]:
         select(Job.dedupe_key).where(Job.user_id == user_id, Job.kind == "ingest_fit", Job.status != "failed")
     )
     prefix = ingest_dedupe_key(user_id, "")
-    return set(imported) | {key.removeprefix(prefix) for key in queued if key and key.startswith(prefix)}
+    return (
+        set(imported)
+        | {key.removeprefix(prefix) for key in queued if key and key.startswith(prefix)}
+        | _no_fit_ids(session, user_id)
+    )
+
+
+def _no_fit_ids(session: Session, user_id: int) -> set[str]:
+    """Activities Garmin has no FIT for (manual, or GPX/TCX uploads): remembered, never downloaded again."""
+    cursor = session.scalar(
+        select(Source.sync_cursor).where(Source.user_id == user_id, Source.kind == SOURCE)
+    )
+    return set((cursor or {}).get("no_fit", []))
+
+
+def _remember_no_fit(sessions: sessionmaker[Session], user_id: int, external_id: str) -> None:
+    with sessions.begin() as session:
+        source = session.scalar(select(Source).where(Source.user_id == user_id, Source.kind == SOURCE))
+        if source is None:
+            source = Source(user_id=user_id, kind=SOURCE)
+            session.add(source)
+        cursor = dict(source.sync_cursor or {})
+        cursor["no_fit"] = sorted({*cursor.get("no_fit", []), external_id})
+        source.sync_cursor = cursor
 
 
 def _progress(sessions: sessionmaker[Session], run_id: int, **values: Any) -> None:
@@ -141,7 +165,7 @@ def run_sync(
         log.info("Sync started", extra={"run_id": run_id, "trigger": trigger, "since": start.isoformat()})
 
         seen: set[str] = set()
-        queued = 0
+        queued = no_fit = 0
         try:
             windows = history_windows(start, datetime.now(UTC).date() + timedelta(days=1), WINDOW_DAYS)
             _progress(
@@ -163,7 +187,18 @@ def run_sync(
                     if queued:
                         sleep(pause_s)  # between downloads: a personal API key, no rush
                     external_id = str(activity["activityId"])
-                    fit = garmin.download_fit(int(external_id))
+                    try:
+                        fit = garmin.download_fit(int(external_id))
+                    except NoFitFile as missing:
+                        log.warning(
+                            "Activity without a FIT file skipped",
+                            extra={"external_id": external_id, "files": missing.files},
+                        )
+                        _remember_no_fit(sessions, user_id, external_id)
+                        known.add(external_id)
+                        no_fit += 1
+                        _progress(sessions, run_id, no_fit=no_fit)
+                        continue
                     key = raw_key(user_id, SOURCE, external_id)
                     store.put(key, fit.data)
                     known.add(external_id)
@@ -202,7 +237,9 @@ def run_sync(
                 source = Source(user_id=user_id, kind=SOURCE)
                 session.add(source)
             source.last_sync_at = datetime.now(UTC)
-        log.info("Sync finished", extra={"run_id": run_id, "listed": len(seen), "queued": queued})
+        log.info(
+            "Sync finished", extra={"run_id": run_id, "listed": len(seen), "queued": queued, "no_fit": no_fit}
+        )
         with sessions() as session:
             notify_sync_outcome(session, user_id, alert)
-        return SyncResult(run_id, len(seen), queued, len(seen) - queued)
+        return SyncResult(run_id, len(seen), queued, len(seen) - queued - no_fit, no_fit)

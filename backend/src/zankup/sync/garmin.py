@@ -41,6 +41,17 @@ class GarminError(RuntimeError):
     """The Personal API answered with something we cannot use."""
 
 
+class NoFitFile(GarminError):
+    """The activity has no FIT original: entered by hand, or uploaded to Garmin as GPX or TCX from
+    another app. Not an error of the sync: the activity is skipped."""
+
+    def __init__(self, activity_id: int, files: list[str]) -> None:
+        super().__init__(
+            f"The ZIP for activity {activity_id} has no FIT file ({', '.join(files) or 'empty'})"
+        )
+        self.activity_id, self.files = activity_id, files
+
+
 class GarminAuthError(GarminError):
     """The personal key was rejected (revoked, expired or mistyped)."""
 
@@ -160,7 +171,7 @@ class GarminClient:
             with zipfile.ZipFile(io.BytesIO(body)) as archive:
                 names = [n for n in archive.namelist() if n.lower().endswith(".fit")]
                 if not names:
-                    raise GarminError(f"The ZIP for activity {activity_id} has no FIT file")
+                    raise NoFitFile(int(activity_id), archive.namelist())
                 return FitFile(activity_id, archive.read(names[0]), names[0])
         if body[8:12] == b".FIT":
             return FitFile(activity_id, body, f"{activity_id}.fit")

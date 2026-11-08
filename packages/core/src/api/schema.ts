@@ -101,6 +101,120 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/auth/passkeys': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Passkeys */
+    get: operations['listPasskeys'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/passkeys/register/options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register Options
+     * @description Step 1 of adding a passkey: options for navigator.credentials.create().
+     */
+    post: operations['passkeyRegisterOptions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/passkeys/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register
+     * @description Step 2: verify the new credential and keep its public key.
+     */
+    post: operations['passkeyRegister'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/passkeys/{passkey_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Passkey */
+    delete: operations['deletePasskey'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/passkeys/login/options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Login Options
+     * @description Step 1 of signing in: options for navigator.credentials.get(). No e-mail needed.
+     */
+    post: operations['passkeyLoginOptions'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/passkeys/login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Login
+     * @description Step 2: verify the signature and start a session, like password + TOTP would.
+     */
+    post: operations['passkeyLogin'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/activities': {
     parameters: {
       query?: never;
@@ -532,29 +646,6 @@ export interface components {
       /** Descent M */
       descent_m: number | null;
     };
-    /** LoginRequest */
-    LoginRequest: {
-      /** Email */
-      email: string;
-      /** Password */
-      password: string;
-      /**
-       * Remember
-       * @default false
-       */
-      remember: boolean;
-      /**
-       * Client
-       * @default web
-       * @enum {string}
-       */
-      client: 'web' | 'android';
-      /**
-       * Device Name
-       * @default Browser
-       */
-      device_name: string;
-    };
     /** Me */
     Me: {
       /** Id */
@@ -566,10 +657,54 @@ export interface components {
       /** Totp Enabled */
       totp_enabled: boolean;
     };
+    /**
+     * Options
+     * @description `publicKey` options for navigator.credentials.create() or .get(), as JSON (binary as base64url).
+     */
+    Options: {
+      /** Options */
+      options: {
+        [key: string]: unknown;
+      };
+    };
+    /** PasskeyOut */
+    PasskeyOut: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Last Used At */
+      last_used_at: string | null;
+      /**
+       * Backed Up
+       * @description Synced by a password manager (Google, iCloud…)
+       */
+      backed_up: boolean;
+    };
     /** RefreshRequest */
     RefreshRequest: {
       /** Refresh Token */
       refresh_token: string;
+    };
+    /** RegisterRequest */
+    RegisterRequest: {
+      /**
+       * Credential
+       * @description The PublicKeyCredential, serialised with toJSON()
+       */
+      credential: {
+        [key: string]: unknown;
+      };
+      /**
+       * Name
+       * @default Passkey
+       */
+      name: string;
     };
     /** SplitOut */
     SplitOut: {
@@ -680,6 +815,52 @@ export interface components {
       /** Context */
       ctx?: Record<string, never>;
     };
+    /** LoginRequest */
+    zankup__auth__passkeys__LoginRequest: {
+      /** Credential */
+      credential: {
+        [key: string]: unknown;
+      };
+      /**
+       * Remember
+       * @default false
+       */
+      remember: boolean;
+      /**
+       * Client
+       * @default web
+       * @enum {string}
+       */
+      client: 'web' | 'android';
+      /**
+       * Device Name
+       * @default Browser
+       */
+      device_name: string;
+    };
+    /** LoginRequest */
+    zankup__auth__routes__LoginRequest: {
+      /** Email */
+      email: string;
+      /** Password */
+      password: string;
+      /**
+       * Remember
+       * @default false
+       */
+      remember: boolean;
+      /**
+       * Client
+       * @default web
+       * @enum {string}
+       */
+      client: 'web' | 'android';
+      /**
+       * Device Name
+       * @default Browser
+       */
+      device_name: string;
+    };
   };
   responses: never;
   parameters: never;
@@ -698,7 +879,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['LoginRequest'];
+        'application/json': components['schemas']['zankup__auth__routes__LoginRequest'];
       };
     };
     responses: {
@@ -822,6 +1003,161 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Me'];
+        };
+      };
+    };
+  };
+  listPasskeys: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PasskeyOut'][];
+        };
+      };
+    };
+  };
+  passkeyRegisterOptions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Options'];
+        };
+      };
+    };
+  };
+  passkeyRegister: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PasskeyOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deletePasskey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        passkey_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  passkeyLoginOptions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Options'];
+        };
+      };
+    };
+  };
+  passkeyLogin: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['zankup__auth__passkeys__LoginRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Me'] | components['schemas']['AppTokens'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
         };
       };
     };

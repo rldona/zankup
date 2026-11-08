@@ -88,5 +88,21 @@
   "setup.error.short": "La contraseña debe tener al menos 12 caracteres.",
   "setup.error.expired": "Ha pasado demasiado tiempo. Empieza de nuevo con el código de configuración.",
   "signIn.firstTime": "¿Primera vez?",
-  "signIn.createAccount": "Crea tu cuenta"
+  "signIn.createAccount": "Crea tu cuenta",
+  "nav.search": "Buscar",
+  "nav.stats": "Estadísticas",
+  "nav.profile": "Perfil",
+  "nav.settings": "Ajustes",
+  "nav.sync": "Sincronizar",
+  "nav.you": "Tú",
+  "nav.back": "Volver",
+  "nav.main": "Principal",
+  "feed.pick": "Elige una actividad para ver su detalle.",
+  "soon.title": "Próximamente",
+  "soon.search": "La búsqueda avanzada llega con OS-219.",
+  "soon.stats": "Las estadísticas llegan con la fase 3 y OS-217.",
+  "soon.settings": "Los ajustes llegan con OS-212 (idioma, unidades, tema).",
+  "soon.sync": "El botón de sincronizar con progreso llega con OS-209. Garmin ya se sincroniza cada 15 minutos.",
+  "profile.title": "Perfil",
+  "profile.more": "El perfil completo llega con OS-218."
 }

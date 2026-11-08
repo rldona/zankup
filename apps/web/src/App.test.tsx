@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -81,7 +81,6 @@ describe('app skeleton', () => {
     });
     renderAt('/');
     expect(await screen.findByText('Morning run')).toBeInTheDocument();
-    expect(screen.getByText('runner@example.com')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
     expect(await screen.findByText('Older ride')).toBeInTheDocument();
     expect(calls).toContain('GET /api/activities?limit=30&cursor=abc');
@@ -122,11 +121,46 @@ describe('app skeleton', () => {
       },
       '/api/activities': () => Response.json({ items: [], next_cursor: null }),
     });
-    const router = renderAt('/');
+    const router = renderAt('/profile');
+    expect(await screen.findByText('runner@example.com')).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sign-in');
     expect(calls).toContain('POST /api/auth/logout');
+  });
+
+  it('has every section in the sidebar and the tab bar', async () => {
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/activities': () => Response.json({ items: [], next_cursor: null }),
+    });
+    const router = renderAt('/');
+    const [sidebar, tabbar] = await screen.findAllByRole('navigation', { name: 'Main' });
+    if (!sidebar || !tabbar) throw new Error('missing navigation');
+    const names = (nav: HTMLElement) => Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
+    expect(names(sidebar)).toEqual(['Activities', 'Search', 'Stats', 'Profile', 'Settings']);
+    expect(names(tabbar)).toEqual(['Feed', 'Search', 'Stats', 'Sync', 'You']);
+    expect(sidebar.querySelector('a.on')?.textContent).toBe('Activities');
+
+    await userEvent.click(within(tabbar).getByRole('link', { name: 'Search' }));
+    expect(await screen.findByText('Advanced search arrives with OS-219.')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/search');
+  });
+
+  it('keeps the feed beside the detail on wide screens', async () => {
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
+      '/api/activities/7': () => Response.json({ ...RUN, laps: [], splits: [], best_efforts: [] }),
+    });
+    renderAt('/activities/7');
+    expect(await screen.findByRole('heading', { name: 'Morning run' })).toBeInTheDocument();
+    const item = screen.getByRole('link', { name: /Morning run/ });
+    expect(item).toHaveClass('on'); // the open activity is marked in the list
+    expect(document.querySelector('.feedwrap')).toHaveClass('detail'); // mobile shows only the detail
+    for (const nav of screen.getAllByRole('navigation', { name: 'Main' })) {
+      expect(nav.querySelector('a.on')).toHaveAttribute('href', '/'); // still in the feed section
+    }
   });
 
   it('only redirects to paths inside the app after signing in', () => {

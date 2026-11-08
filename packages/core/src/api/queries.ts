@@ -25,6 +25,7 @@ export type DeviceSession = Json<'/api/auth/devices', 'get'>[number];
 export type ProfileSummary = Json<'/api/profile/summary', 'get'>;
 export type SourceStatus = Json<'/api/sources', 'get'>[number];
 export type SyncRun = Json<'/api/sync/{run_id}', 'get'>;
+export type Week = Json<'/api/week', 'get'>;
 export type PasskeyInfo = Json<'/api/auth/passkeys', 'get'>[number];
 
 /** An API error with its HTTP status, so callers can tell "signed out" (401) from other failures. */
@@ -59,6 +60,7 @@ export const queryKeys = {
   passkeys: ['passkeys'] as const,
   syncs: ['syncs'] as const,
   providers: ['providers'] as const,
+  week: (today: string) => ['activities', 'week', today] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
   months: (sport?: readonly string[]) => ['activities', 'months', { sport: sport ?? [] }] as const,
   activity: (id: number) => ['activity', id] as const,
@@ -205,5 +207,14 @@ export function providersQuery(api: ApiClient) {
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/auth/google/providers', { signal })),
     staleTime: Infinity,
+  };
+}
+
+/** This week (OS-217): days with their activities, totals, the weeks before, streak, recent records. */
+export function weekQuery(api: ApiClient, today: string) {
+  return {
+    queryKey: queryKeys.week(today),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/week', { params: { query: { today } }, signal })),
   };
 }

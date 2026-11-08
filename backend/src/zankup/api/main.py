@@ -56,18 +56,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         if settings.environment != "test":
             _announce_setup_code(settings)
-        worker = scheduler = None
+        workers = []
+        scheduler = None
         if settings.run_worker:
             from zankup.jobs.scheduler import build_scheduler
-            from zankup.jobs.worker import build_worker
+            from zankup.jobs.worker import build_workers
 
-            worker = build_worker()
-            worker.start_thread()  # a thread with its own DB connections: requests never wait for jobs
+            workers = build_workers()
+            for worker in workers:
+                worker.start_thread()  # threads with their own DB connections: requests never wait for jobs
             scheduler = build_scheduler()
             if scheduler is not None:
                 scheduler.start_thread()
         yield
-        for background in (worker, scheduler):
+        for background in (*workers, scheduler):
             if background is not None:
                 background.stop()
 

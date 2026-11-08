@@ -11,6 +11,7 @@ import { SignIn } from './routes/SignIn';
 import { Catalogue } from './routes/Catalogue';
 import { Settings } from './routes/Settings';
 import { Soon } from './routes/Soon';
+import { Sync } from './routes/Sync';
 
 /** Every screen. Public: /sign-in and /setup. Everything else needs a session. */
 export const routes: RouteObject[] = [
@@ -31,7 +32,7 @@ export const routes: RouteObject[] = [
           },
           { path: 'search', element: <Soon title="nav.search" body="soon.search" /> },
           { path: 'stats', element: <Soon title="nav.stats" body="soon.stats" /> },
-          { path: 'sync', element: <Soon title="nav.sync" body="soon.sync" /> },
+          { path: 'sync', element: <Sync /> },
           { path: 'settings', element: <Settings /> },
           { path: 'catalogue', element: <Catalogue /> },
           { path: 'profile', element: <Profile /> },

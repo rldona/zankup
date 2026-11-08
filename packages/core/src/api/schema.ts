@@ -431,7 +431,7 @@ export interface paths {
     put?: never;
     /**
      * Start Sync
-     * @description Sync Garmin now. Returns the new run, or the one already queued or running.
+     * @description Sync Garmin now (or load its whole history). Returns the new run, or the one already going.
      */
     post: operations['startSync'];
     delete?: never;
@@ -1188,6 +1188,20 @@ export interface components {
        * @description Skipped: no FIT original (manual, or GPX/TCX uploads)
        */
       no_fit?: number | null;
+    };
+    /** SyncRequest */
+    SyncRequest: {
+      /**
+       * History
+       * @description Load the whole history (from 2000), not just what is new
+       * @default false
+       */
+      history: boolean;
+      /**
+       * Since
+       * @description Or load from this day on
+       */
+      since?: string | null;
     };
     /** SyncStatus */
     SyncStatus: {
@@ -2014,7 +2028,11 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SyncRequest'] | null;
+      };
+    };
     responses: {
       /** @description Successful Response */
       202: {
@@ -2031,6 +2049,15 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
       };
     };
   };

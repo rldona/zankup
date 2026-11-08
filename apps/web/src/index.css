@@ -953,6 +953,79 @@ select {
   height: 15px;
 }
 
+/* Sync (OS-209, OS-226): a sheet with the run's progress, over the page. */
+button.syncbtn {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.spinning {
+  display: inline-grid;
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinning {
+    animation: none;
+  }
+}
+
+.sheet {
+  position: fixed;
+  left: 248px;
+  bottom: 20px;
+  width: min(380px, calc(100vw - 32px));
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  padding: 14px 16px;
+  z-index: 20;
+}
+
+.sheet p {
+  margin: 0 0 6px;
+}
+
+.syncprogress progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.badge.success {
+  color: var(--accent);
+}
+
+.badge.error {
+  color: var(--run);
+}
+
+@media (max-width: 1023px) {
+  .sheet {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Offline (OS-211). */
+.offline {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-bottom: 1px solid var(--line);
+}
+
 /* Chart catalogue (OS-215): each block is drawn in its own theme. */
 .cat {
   background: var(--surface);

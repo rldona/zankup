@@ -8,6 +8,10 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
+      // Long enough for what is kept offline (OS-211) to be restored on the next visit.
+      gcTime: 7 * 24 * 60 * 60 * 1000,
+      // Offline, show what is cached instead of waiting for a network that is not there.
+      networkMode: 'offlineFirst',
       // A 4xx will not fix itself by asking again; network and 5xx errors get two more tries.
       retry: (failures, error) => !(error instanceof ApiError && error.status < 500) && failures < 2,
     },

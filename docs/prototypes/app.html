@@ -294,6 +294,50 @@ body.auth .app{grid-template-columns:1fr;grid-template-rows:1fr}
   .lform{align-items:start;padding:26px 20px}
 }
 
+/* ---------- ondas, registro y recuperación ---------- */
+.lart canvas.waves{position:absolute;inset:0;width:100%;height:100%}
+.steps-dots{display:flex;gap:6px;margin-bottom:18px}
+.steps-dots i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps-dots i.on{background:var(--accent)}
+.meter{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin:-6px 0 4px}
+.meter i{display:block;height:100%;width:0;transition:width .2s,background .2s}
+.hint{font-size:12px;color:var(--muted);margin-bottom:12px}
+.qrbox{display:flex;gap:16px;align-items:center;margin:4px 0 16px;flex-wrap:wrap}
+.qrbox svg{width:128px;height:128px;background:#fff;padding:8px;border-radius:10px;border:1px solid var(--line);flex:none}
+.secret{font:600 14px ui-monospace,Menlo,monospace;letter-spacing:1px;background:var(--surface2);padding:8px 10px;border-radius:8px;word-break:break-all}
+.codes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0 12px}
+.codes code{font-size:14px;text-align:center;padding:8px 0;background:var(--surface2);border-radius:8px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:6px 0 16px;cursor:pointer}
+.done-ico{width:56px;height:56px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:28px;margin-bottom:12px}
+.nexts{display:grid;gap:8px;margin:12px 0 18px}
+.nexts div{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px}
+.lswitch{text-align:center;font-size:13px;margin-top:16px;color:var(--muted)}
+.lswitch a{color:var(--accent);font-weight:600;text-decoration:none}
+
+/* ---------- búsqueda ---------- */
+.searchwrap{display:grid;grid-template-columns:300px 1fr;height:100%;min-width:0}
+.fpanel{border-right:1px solid var(--line);overflow:auto;padding:20px}
+.fpanel h3{font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.fpanel h3:first-of-type{margin-top:4px}
+.fpanel .chips{flex-wrap:wrap;overflow:visible}
+.range{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.range input,.fpanel select,.fpanel input[type=date]{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--fg);width:100%;min-width:0}
+.fpanel label.ck{display:flex;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.rescol{overflow:auto;min-width:0}
+.sbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.sbar input{flex:1;font:inherit;font-size:15px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);min-width:0}
+.sbar select{font:inherit;font-size:13px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg)}
+.active-f{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.active-f button{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}
+.rtable{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rtable th{position:sticky;top:0;background:var(--surface2);z-index:1}
+.rtable tbody tr{cursor:pointer}
+.rtable tbody tr:hover{background:var(--surface2)}
+.rtable td.nm{max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.rtable td.nm .sp{display:inline-grid;vertical-align:middle;margin-right:8px;border-radius:7px}
+.ftoggle{display:none}
+.fclose{display:none!important}
+
 /* ---------- filtro de periodo ---------- */
 .period{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .period select,.period input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
@@ -362,7 +406,7 @@ body.auth .app{grid-template-columns:1fr;grid-template-rows:1fr}
   .topbar .brand b{display:inline-grid;vertical-align:middle;margin-right:8px}
   .topbar .grow{flex:1}
   .iconbtn{border:0;background:var(--surface2);width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
-  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
   .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);padding:4px}
   .tab.on{color:var(--accent)}
   .feedwrap{grid-template-columns:1fr}
@@ -377,6 +421,15 @@ body.auth .app{grid-template-columns:1fr;grid-template-rows:1fr}
   .kpis{grid-template-columns:repeat(3,1fr)}
   .kpi b{font-size:17px}
   .statgrid{grid-template-columns:1fr}
+  .searchwrap{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .fpanel{display:none;border-right:0}
+  .fpanel.open{display:block;position:fixed;left:0;right:0;bottom:0;max-height:80vh;z-index:45;background:var(--surface);border-radius:18px 18px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.25);padding-bottom:0}
+  .fclose{display:flex!important;position:sticky;bottom:0;margin:16px -20px 0;border-radius:0;padding:14px}
+  .ftoggle{display:inline-flex}
+  .sbar{flex-wrap:wrap}
+  .sbar input{flex-basis:100%}
+  .sbar .ftoggle,.sbar select{flex:1}
+  .rtable{display:none}
   .hl{margin:0 -16px 4px;padding:2px 16px 10px;grid-auto-columns:78%}
   .pstats{grid-template-columns:repeat(2,1fr)}
   .pgrid{grid-template-columns:1fr}
@@ -395,6 +448,7 @@ body.auth .app{grid-template-columns:1fr;grid-template-rows:1fr}
   <aside class="side">
     <div class="brand"><b>OS</b>OpenSport</div>
     <button class="nav" data-go="feed"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Actividades</button>
+    <button class="nav" data-go="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Buscar</button>
     <button class="nav" data-go="stats"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Estadísticas</button>
     <button class="nav" data-go="profile"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Perfil</button>
     <button class="nav" data-go="settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
@@ -415,6 +469,7 @@ body.auth .app{grid-template-columns:1fr;grid-template-rows:1fr}
 
   <nav class="tabbar">
     <button class="tab" data-go="feed"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Feed</button>
+    <button class="tab" data-go="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Buscar</button>
     <button class="tab" data-go="stats"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Estadísticas</button>
     <button class="tab" data-sync><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5"/></svg>Sync</button>
     <button class="tab" data-go="profile"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Tú</button>
@@ -498,8 +553,10 @@ function go(hash) { location.hash = hash; }
 function parse() {
   const h = location.hash.replace(/^#\/?/, '');
   const [r, id] = h.split('/');
-  state.route = ['feed','stats','settings','profile','a','login'].includes(r) ? r : 'feed';
-  if (!loggedIn() && state.route !== 'login') { location.replace('#/login'); return; }
+  const PUBLIC = ['login','registro','recuperar'];
+  state.route = ['feed','stats','settings','profile','a','search',...PUBLIC].includes(r) ? r : 'feed';
+  state.sub = PUBLIC.includes(r) ? id : null;
+  if (!loggedIn() && !PUBLIC.includes(state.route)) { location.replace('#/login'); return; }
   state.id = r === 'a' ? id : (state.route === 'feed' && !isMobile() ? (state.id || String(A[0].id)) : null);
   render();
 }
@@ -513,15 +570,20 @@ function setNav(r) {
   document.querySelectorAll('[data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === (r === 'a' ? 'feed' : r)));
   $('#backbtn').style.display = isMobile() && (r === 'a' || r === 'settings') ? '' : 'none';
   $('#gearbtn').style.display = isMobile() && r === 'profile' ? '' : 'none';
-  $('#toptitle').innerHTML = isMobile() && r === 'a' ? (byId[state.id]?.name || '') .replace(/</g,'&lt;') : r === 'stats' ? 'Estadísticas' : r === 'settings' ? 'Ajustes' : r === 'profile' ? 'Tú' : '<b>OS</b>OpenSport';
+  $('#toptitle').innerHTML = isMobile() && r === 'a' ? (byId[state.id]?.name || '') .replace(/</g,'&lt;') : r === 'stats' ? 'Estadísticas' : r === 'settings' ? 'Ajustes' : r === 'profile' ? 'Tú' : r === 'search' ? 'Buscar' : '<b>OS</b>OpenSport';
 }
 
 let currentMap = null;
 function render() {
   if (currentMap) { currentMap.remove(); currentMap = null; }
-  document.body.classList.toggle('auth', state.route === 'login');
+  const isAuth = ['login','registro','recuperar'].includes(state.route);
+  document.body.classList.toggle('auth', isAuth);
+  if (!isAuth) stopWaves();
   if (state.route === 'login') return renderLogin();
+  if (state.route === 'registro') return renderRegister(state.sub || 'cuenta');
+  if (state.route === 'recuperar') return renderRecover(state.sub || 'pedir');
   setNav(state.route);
+  if (state.route === 'search') return renderSearch();
   if (state.route === 'stats') return renderStats();
   if (state.route === 'settings') return renderSettings();
   if (state.route === 'profile') return renderProfile();
@@ -574,25 +636,19 @@ function grouped(shown, all) {   // tarjetas agrupadas por mes, con el resumen d
 function renderFeed() {
   if (currentMap) { try { currentMap.remove(); } catch (_) {} currentMap = null; }
   const w = weekSummary();
-  const fp = state.fp, q = (fp.q || '').trim().toLowerCase();
-  const list = A.filter(a => (state.filter === 'all' || a.sport === state.filter) && inPeriod(a, fp) && (!q || (a.name || '').toLowerCase().includes(q) || (a.description || '').toLowerCase().includes(q)));
-  const filtered = fp.y !== 'all' || q || state.filter !== 'all';
+  const list = A.filter(a => state.filter === 'all' || a.sport === state.filter);
   const showDetail = state.route === 'a' || (!isMobile() && state.id);
   view.innerHTML = `<div class="feedwrap ${state.route === 'a' ? 'detail' : ''}">
     <section class="feedcol"><div class="pad">
       ${weekHeader(w)}
-      ${highlights()}
       ${isMobile() ? '' : '<h2 style="margin:18px 0 10px">Actividades <span class="muted" style="font-weight:400;font-size:13px">· '+A.length.toLocaleString('es-ES')+' desde ' + dt(P.since).getFullYear() + '</span></h2>'}
       <div class="chips">${[['all','Todas'],['run','Carrera'],['ride','Ciclismo'],['strength','Fuerza'],['walk','Caminar'],['row','Remo'],['swim','Natación']].map(([k,n]) => `<button class="chip ${state.filter===k?'on':''}" data-f="${k}">${n}</button>`).join('')}</div>
-      ${periodBar(fp, 'fp', true)}
-      ${filtered ? periodSummary(list, null) : ''}
-      ${list.length ? '' : '<div class="emptybox">No hay actividades con estos filtros.</div>'}
+      ${list.length ? '' : '<div class="emptybox">No hay actividades de este deporte.</div>'}<div class="note" style="margin:-2px 2px 4px">¿Buscas algo concreto? <a href="#/search" style="color:var(--accent);font-weight:600">Búsqueda avanzada ›</a></div>
       ${grouped(list.slice(0, state.limit || 40), list)}
       ${list.length > (state.limit || 40) ? '<button class="btn more" id="more">Ver más actividades</button>' : ''}
     </div></section>
     <section class="detailcol" id="detail">${showDetail && byId[state.id] ? '' : '<div class="empty">Elige una actividad</div>'}</section></div>`;
   view.querySelectorAll('.chip').forEach(c => c.onclick = () => { state.filter = c.dataset.f; state.limit = 40; renderFeed(); });
-  bindPeriod(view, renderFeed);
   const more = $('#more'); if (more) more.onclick = () => { state.limit = (state.limit || 40) + 40; const y = $('.feedcol').scrollTop; renderFeed(); $('.feedcol').scrollTop = y; };
   view.querySelectorAll('[data-href]').forEach(el => el.onclick = () => go(el.dataset.href));
   view.querySelectorAll('.card').forEach(c => c.onclick = () => isMobile() ? go('#/a/' + c.dataset.id) : (state.id = c.dataset.id, history.replaceState(null, '', '#/feed'), renderFeed()));
@@ -601,24 +657,16 @@ function renderFeed() {
 }
 
 // ---------- acceso (prototipo: no comprueba credenciales reales) ----------
+const GLOGO = '<svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+function appLang() { try { return localStorage.getItem('os-lang') || 'en'; } catch (_) { return 'en'; } }
 function googleLinked() { try { const v = localStorage.getItem('os-google'); return v === 'none' ? null : (v || 'r•••••@gmail.com'); } catch (_) { return null; } }
 function loggedIn() { try { return localStorage.getItem('os-session') !== 'out'; } catch (_) { return true; } }
 function logout() { try { localStorage.setItem('os-session', 'out'); } catch (_) {} go('#/login'); }
-function routesArt() {   // fondo abstracto (curvas de nivel generadas): la pantalla de acceso no muestra ningún dato del usuario
-  const lines = [];
-  for (let k = 0; k < 26; k++) {
-    const base = 40 + k * 30, amp = 18 + (k % 5) * 6, ph = k * 0.7;
-    let d = '';
-    for (let x = -20; x <= 620; x += 20) { const y = base + Math.sin(x / 90 + ph) * amp + Math.sin(x / 37 + k) * amp * 0.35; d += (d ? ' L' : 'M') + x + ',' + y.toFixed(1); }
-    lines.push(`<path d="${d}" fill="none" stroke="currentColor" stroke-width="${k % 4 === 0 ? 1.8 : 1}"/>`);
-  }
-  return `<svg class="routes" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice">${lines.join('')}</svg>`;
-}
 function renderLogin(step = 'pass') {
   view.innerHTML = `<div class="login">
-    <section class="lart">${routesArt()}
+    <section class="lart"><canvas class="waves"></canvas>
       <div class="brand"><b>OS</b>OpenSport</div>
-      <div><h2>Tus datos deportivos, en tu casa.</h2><p>Instancia privada de OpenSport. Sincroniza con Garmin, analiza tu histórico y sigue tu forma sin depender de nadie.</p></div>
+      <div><h2>Tus datos deportivos: 100% libres.</h2><p>Tu instancia privada de OpenSport. Sincroniza con Garmin, analiza tu histórico y sigue tu forma sin depender de nadie.</p></div>
     </section>
     <section class="lform"><div class="lcard">${step === 'pass' ? `
       <h1>Hola de nuevo</h1><div class="sub">Entra en tu OpenSport</div>
@@ -626,12 +674,13 @@ function renderLogin(step = 'pass') {
       <form id="lf" novalidate>
         <label class="fld">Correo electrónico<input id="lu" type="email" autocomplete="username" placeholder="tu@correo.com" value=""></label>
         <label class="fld">Contraseña<span class="pw"><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" id="eye" aria-label="Mostrar contraseña"><svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
-        <div class="lrow"><label><input type="checkbox" checked> Recordar este dispositivo 30 días</label><a href="#" onclick="return false" title="En una instancia personal se restablece desde el servidor">¿La olvidaste?</a></div>
+        <div class="lrow"><label><input type="checkbox" checked> Recordar este dispositivo 30 días</label><a href="#/recuperar">¿La olvidaste?</a></div>
         <button class="btn primary block" id="lgo" type="submit">Entrar</button>
       </form>
       <div class="or">o</div>
       <div class="alt"><button class="btn block gbtn" id="gg"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continuar con Google</button>
       <button class="btn block" id="pk"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="8" r="4"/><path d="M2 21c1-4 3.5-6 6-6 1.5 0 3 .6 4 1.6M15 11a3 3 0 1 1 3 3v6l-1.5 1.5L15 20v-1l1-1-1-1v-3.2"/></svg>Entrar con passkey</button></div>
+      <div class="lswitch">¿Primera vez? <a href="#/registro">Crea tu cuenta</a></div>
       <div class="lfoot">Prototipo: cualquier correo y contraseña sirven.<br>Instancia privada · un solo usuario</div>` : `
       <h1>Verificación en dos pasos</h1><div class="sub">Introduce el código de 6 dígitos de tu app de autenticación.</div>
       <div class="lerr" id="lerr" role="alert"></div>
@@ -640,6 +689,7 @@ function renderLogin(step = 'pass') {
       <div class="lrow" style="margin-top:14px"><a href="#" id="lback">← Volver</a><a href="#" onclick="return false">Usar un código de recuperación</a></div>
       <div class="lfoot">Prototipo: cualquier código de 6 dígitos sirve.</div>`}
     </div></section></div>`;
+  startWaves();
   const err = msg => { const e = $('#lerr'); e.textContent = msg; e.classList.toggle('show', !!msg); };
   const busy = (b, label) => { const g = $('#lgo'); g.disabled = b; g.innerHTML = b ? '<span class="spin"></span>' : label; };
   const enter = () => { try { localStorage.setItem('os-session', 'in'); } catch (_) {} go('#/feed'); };
@@ -664,6 +714,255 @@ function renderLogin(step = 'pass') {
       if (!boxes.every(x => x.value)) return err('Faltan dígitos.');
       err(''); busy(true); setTimeout(enter, 700); };
   }
+}
+
+// ---------- ondas animadas del panel de acceso (canvas 2D, sin librerías) ----------
+let waveRAF = null, waveRO = null;
+function stopWaves() { if (waveRAF) cancelAnimationFrame(waveRAF); waveRAF = null; if (waveRO) waveRO.disconnect(); waveRO = null; }
+function startWaves() {
+  stopWaves();
+  const cv = document.querySelector('.lart canvas.waves'); if (!cv) return;
+  const ctx = cv.getContext('2d'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W = 0, H = 0;
+  const size = () => { const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size(); waveRO = new ResizeObserver(() => { size(); if (reduce) draw(0); }); waveRO.observe(cv);
+  const color = getComputedStyle(cv.parentElement).color;
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    const n = Math.ceil(H / 30) + 2;
+    for (let k = 0; k < n; k++) {
+      const base = 20 + k * 30, amp = 16 + (k % 5) * 5, ph = k * 0.7;
+      ctx.beginPath();
+      for (let x = -20; x <= W + 20; x += 12) {
+        // dos ondas superpuestas que se desplazan muy despacio, cada línea con su propio ritmo
+        const y = base + Math.sin(x / 110 + ph + t * 0.00018 * (1 + (k % 3) * 0.25)) * amp
+                       + Math.sin(x / 47 + k - t * 0.00031) * amp * 0.35;
+        x === -20 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = color; ctx.globalAlpha = k % 4 === 0 ? 0.32 : 0.18; ctx.lineWidth = k % 4 === 0 ? 1.6 : 1;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  if (reduce) { draw(0); return; }
+  const loop = t => { if (!document.hidden) draw(t); waveRAF = requestAnimationFrame(loop); };
+  waveRAF = requestAnimationFrame(loop);
+}
+
+// ---------- pantallas públicas: registro y recuperación ----------
+function authShell(card) {
+  view.innerHTML = `<div class="login">
+    <section class="lart"><canvas class="waves"></canvas>
+      <div class="brand"><b>OS</b>OpenSport</div>
+      <div><h2>Tus datos deportivos: 100% libres.</h2><p>Tu instancia privada de OpenSport. Sincroniza con Garmin, analiza tu histórico y sigue tu forma sin depender de nadie.</p></div>
+    </section>
+    <section class="lform"><div class="lcard">${card}</div></section></div>`;
+  startWaves();
+}
+const lerr = msg => { const e = $('#lerr'); if (e) { e.textContent = msg; e.classList.toggle('show', !!msg); } };
+function pwStrength(v) {
+  let s = 0; if (v.length >= 12) s++; if (v.length >= 16) s++; if (/[a-z]/.test(v) && /[A-Z]/.test(v)) s++; if (/\d/.test(v)) s++; if (/[^\w]/.test(v)) s++;
+  return Math.min(4, s);
+}
+function bindStrength() {
+  const i = $('#np'), m = $('#meter'), h = $('#pwhint'); if (!i) return;
+  i.oninput = () => { const s = pwStrength(i.value), c = ['var(--st-sobrecarga)', 'var(--st-sobrecarga)', 'var(--z4)', 'var(--st-productivo)', 'var(--st-productivo)'][s];
+    m.style.width = (i.value ? (s + 1) * 20 : 0) + '%'; m.style.background = c;
+    h.textContent = !i.value ? 'Mínimo 12 caracteres. Mejor una frase larga que una palabra rara.' : ['Muy débil', 'Débil', 'Aceptable', 'Fuerte', 'Muy fuerte'][s] + (i.value.length < 12 ? ' · faltan ' + (12 - i.value.length) + ' caracteres' : ''); };
+}
+function fakeQR() {   // patrón decorativo con forma de QR (en el producto lo genera el servidor)
+  let s = 7, cells = '';
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  for (let y = 0; y < 25; y++) for (let x = 0; x < 25; x++) {
+    const finder = (x < 7 && y < 7) || (x > 17 && y < 7) || (x < 7 && y > 17);
+    if (finder) { const fx = x > 17 ? x - 18 : x, fy = y > 17 ? y - 18 : y; if (fx === 0 || fx === 6 || fy === 0 || fy === 6 || (fx > 1 && fx < 5 && fy > 1 && fy < 5)) cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`; }
+    else if (rnd() > .5) cells += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+  }
+  return `<svg viewBox="0 0 25 25" shape-rendering="crispEdges" fill="#111">${cells}</svg>`;
+}
+const RCODES = ['7KQ2-M9XD', 'H4TR-2PLW', 'Z8NC-6VBE', 'Q3JF-K7YA', 'W5GU-8RMS', 'B9LX-3TDH', 'E2PV-N6QK', 'R7CY-4FJZ'];
+function renderRegister(step) {
+  const dots = n => `<div class="steps-dots">${[1, 2, 3].map(k => `<i class="${k <= n ? 'on' : ''}"></i>`).join('')}</div>`;
+  if (step === 'cuenta') {
+    authShell(`${dots(1)}<h1>Crea tu cuenta</h1><div class="sub">Esta instancia es personal: solo se puede crear una cuenta. Después el registro se cierra.</div>
+      <div class="lerr" id="lerr" role="alert"></div>
+      <form id="rf" novalidate>
+        <label class="fld">Código de instalación<input id="rs" autocomplete="off" placeholder="OS-XXXX-XXXX" style="font-family:ui-monospace,Menlo,monospace"></label>
+        <div class="hint" style="margin-top:-8px">Aparece en los registros del servidor (Railway) al desplegar. Así nadie más puede crear la cuenta antes que tú.</div>
+        <label class="fld">Nombre<input id="rn" autocomplete="name" placeholder="Tu nombre"></label>
+        <label class="fld">Correo electrónico<input id="re" type="email" autocomplete="email" placeholder="tu@correo.com"></label>
+        <label class="fld">Contraseña<input id="np" type="password" autocomplete="new-password" placeholder="Mínimo 12 caracteres"></label>
+        <div class="meter"><i id="meter"></i></div><div class="hint" id="pwhint">Mínimo 12 caracteres. Mejor una frase larga que una palabra rara.</div>
+        <label class="fld">Repite la contraseña<input id="np2" type="password" autocomplete="new-password"></label>
+        <label class="check"><input type="checkbox" id="rok"> He leído <a href="#" onclick="return false" style="color:var(--accent)">qué datos guarda OpenSport y dónde</a>.</label>
+        <button class="btn primary block" type="submit">Crear cuenta</button>
+      </form>
+      <div class="or">o</div>
+      <button class="btn block gbtn" id="rg">${GLOGO}Crear con Google</button>
+      <div class="lswitch">¿Ya tienes cuenta? <a href="#/login">Entra</a></div>`);
+    bindStrength(); $('#rs').focus();
+    $('#rf').onsubmit = e => { e.preventDefault();
+      if ($('#rs').value.trim().length < 6) return lerr('Introduce el código de instalación que muestra el servidor.');
+      if (!$('#rn').value.trim()) return lerr('Escribe tu nombre.');
+      if (!/^\S+@\S+\.\S+$/.test($('#re').value)) return lerr('Introduce un correo válido.');
+      if ($('#np').value.length < 12) return lerr('La contraseña necesita al menos 12 caracteres.');
+      if ($('#np').value !== $('#np2').value) return lerr('Las contraseñas no coinciden.');
+      if (!$('#rok').checked) return lerr('Confirma que has leído cómo se tratan tus datos.');
+      go('#/registro/2fa'); };
+    $('#rg').onclick = () => $('#rs').value.trim().length < 6 ? lerr('Introduce primero el código de instalación.') : go('#/registro/listo');
+  } else if (step === '2fa') {
+    authShell(`${dots(2)}<h1>Protege tu cuenta</h1><div class="sub">Escanea el código con tu app de autenticación (Google Authenticator, 1Password, Aegis…).</div>
+      <div class="qrbox">${fakeQR()}<div><div class="note" style="margin-bottom:6px">¿No puedes escanearlo? Escribe esta clave:</div><div class="secret">JBSW Y3DP EHPK 3PXP</div></div></div>
+      <div class="lerr" id="lerr" role="alert"></div>
+      <form id="rf" novalidate><label class="fld">Código de 6 dígitos<input id="rc" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"></label>
+      <button class="btn primary block" type="submit">Verificar y activar</button></form>
+      <div class="lfoot">Prototipo: cualquier código de 6 dígitos sirve.</div>`);
+    $('#rc').focus();
+    $('#rf').onsubmit = e => { e.preventDefault(); if (!/^\d{6}$/.test($('#rc').value)) return lerr('El código tiene 6 dígitos.'); go('#/registro/codigos'); };
+  } else if (step === 'codigos') {
+    authShell(`${dots(3)}<h1>Guarda tus códigos de recuperación</h1><div class="sub">Si pierdes el móvil, cada código te deja entrar una vez. No los volverás a ver.</div>
+      <div class="codes num">${RCODES.map(c => `<code>${c}</code>`).join('')}</div>
+      <div style="display:flex;gap:8px;margin-bottom:6px"><button class="btn" id="cc" style="flex:1">Copiar</button><button class="btn" id="cd" style="flex:1">Descargar .txt</button></div>
+      <label class="check"><input type="checkbox" id="cok"> Los he guardado en un lugar seguro.</label>
+      <div class="lerr" id="lerr" role="alert"></div>
+      <button class="btn primary block" id="cgo">Continuar</button>`);
+    $('#cc').onclick = () => { try { navigator.clipboard.writeText(RCODES.join('\n')); } catch (_) {} $('#cc').textContent = 'Copiados ✓'; };
+    $('#cd').onclick = () => { const b = new Blob(['Códigos de recuperación de OpenSport\n\n' + RCODES.join('\n')], {type: 'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'opensport-codigos-recuperacion.txt'; a.click(); };
+    $('#cgo').onclick = () => $('#cok').checked ? go('#/registro/listo') : lerr('Confirma que los has guardado.');
+  } else {
+    authShell(`<div class="done-ico">✓</div><h1>Todo listo</h1><div class="sub">Tu cuenta está creada y protegida. Para empezar a ver tus datos:</div>
+      <div class="nexts"><div>⌚ <span><b>Conecta Garmin</b> con tu clave de la Personal API</span></div><div>🗂 <span><b>Importa tu histórico</b> desde el ZIP de Strava</span></div><div>🎨 <span><b>Elige tema</b> y tus zonas de FC en Ajustes</span></div></div>
+      <button class="btn primary block" id="dgo">Entrar en OpenSport</button>`);
+    $('#dgo').onclick = () => { try { localStorage.setItem('os-session', 'in'); } catch (_) {} go('#/feed'); };
+  }
+}
+function renderRecover(step) {
+  if (step === 'pedir') {
+    authShell(`<h1>Recupera tu contraseña</h1><div class="sub">Te enviaremos un enlace al correo de tu cuenta.</div>
+      <div class="lerr" id="lerr" role="alert"></div>
+      <form id="rf" novalidate><label class="fld">Correo electrónico<input id="re" type="email" autocomplete="username" placeholder="tu@correo.com"></label>
+      <button class="btn primary block" type="submit">Enviar enlace</button></form>
+      <div class="lswitch"><a href="#/login">← Volver al acceso</a></div>`);
+    $('#re').focus();
+    $('#rf').onsubmit = e => { e.preventDefault(); if (!/^\S+@\S+\.\S+$/.test($('#re').value)) return lerr('Introduce un correo válido.'); go('#/recuperar/enviado'); };
+  } else if (step === 'enviado') {
+    authShell(`<div class="done-ico">✉</div><h1>Revisa tu correo</h1><div class="sub">Si ese correo es el de tu cuenta, te llegará un enlace para elegir una contraseña nueva. Caduca en 30 minutos y solo sirve una vez.</div>
+      <button class="btn primary block" id="open">Abrir el enlace del correo (simulación)</button>
+      <div class="lswitch">¿No llega? Mira en spam o <a href="#" id="again">reenvíalo</a></div>
+      <div class="lswitch"><a href="#/login">← Volver al acceso</a></div>`);
+    $('#open').onclick = () => go('#/recuperar/nueva');
+    $('#again').onclick = e => { e.preventDefault(); const a = $('#again'); a.textContent = 'reenviado ✓ (podrás pedir otro en 60 s)'; a.style.pointerEvents = 'none'; };
+  } else if (step === 'nueva') {
+    authShell(`<h1>Nueva contraseña</h1><div class="sub">Por seguridad, confirma también tu código de verificación.</div>
+      <div class="lerr" id="lerr" role="alert"></div>
+      <form id="rf" novalidate>
+        <label class="fld">Contraseña nueva<input id="np" type="password" autocomplete="new-password" placeholder="Mínimo 12 caracteres"></label>
+        <div class="meter"><i id="meter"></i></div><div class="hint" id="pwhint">Mínimo 12 caracteres.</div>
+        <label class="fld">Repite la contraseña<input id="np2" type="password" autocomplete="new-password"></label>
+        <label class="fld">Código de tu app de autenticación<input id="rc" inputmode="numeric" autocomplete="one-time-code" maxlength="9" placeholder="123456 o un código de recuperación"></label>
+        <button class="btn primary block" type="submit">Cambiar contraseña</button>
+      </form>`);
+    bindStrength(); $('#np').focus();
+    $('#rf').onsubmit = e => { e.preventDefault();
+      if ($('#np').value.length < 12) return lerr('La contraseña necesita al menos 12 caracteres.');
+      if ($('#np').value !== $('#np2').value) return lerr('Las contraseñas no coinciden.');
+      if (!/^(\d{6}|[A-Z0-9]{4}-[A-Z0-9]{4})$/i.test($('#rc').value.trim())) return lerr('Introduce el código de 6 dígitos o un código de recuperación.');
+      go('#/recuperar/hecho'); };
+  } else {
+    authShell(`<div class="done-ico">✓</div><h1>Contraseña cambiada</h1><div class="sub">Hemos cerrado la sesión en tus otros dispositivos y te hemos avisado por correo del cambio.</div>
+      <a class="btn primary block" href="#/login">Ir al acceso</a>`);
+  }
+}
+
+// ---------- búsqueda avanzada ----------
+state.sq = {q: '', sports: [], y: 'all', m: 'all', from: '', to: '', dmin: '', dmax: '', tmin: '', tmax: '', amin: '', hrmin: '', hrmax: '', gear: '', pr: false, desc: false, map: false, src: '', sort: 'new'};
+const SORTS = {new: ['Más recientes', (a, b) => b.start.localeCompare(a.start)], old: ['Más antiguas', (a, b) => a.start.localeCompare(b.start)],
+  dist: ['Mayor distancia', (a, b) => b.dist - a.dist], time: ['Mayor duración', (a, b) => b.moving - a.moving], asc: ['Mayor desnivel', (a, b) => (b.asc || 0) - (a.asc || 0)],
+  eff: ['Más esfuerzo', (a, b) => (b.trimp || 0) - (a.trimp || 0)], pace: ['Más rápidas', (a, b) => avgSpeed(b) - avgSpeed(a)]};
+function searchResults() {
+  const f = state.sq, q = f.q.trim().toLowerCase(), num = v => v === '' ? null : +v;
+  const prIdsAll = new Set(D.prs.map(p => String(p.id)));
+  const from = f.from ? new Date(f.from) : null, to = f.to ? new Date(f.to + 'T23:59:59') : null;
+  return A.filter(a => {
+    if (q && !((a.name || '').toLowerCase().includes(q) || (a.description || '').toLowerCase().includes(q) || (a.location || '').toLowerCase().includes(q))) return false;
+    if (f.sports.length && !f.sports.includes(a.sport)) return false;
+    if (!inPeriod(a, f)) return false;
+    if (from && dt(a.start) < from) return false; if (to && dt(a.start) > to) return false;
+    const km = a.dist / 1000, min = a.moving / 60;
+    if (num(f.dmin) !== null && km < num(f.dmin)) return false; if (num(f.dmax) !== null && km > num(f.dmax)) return false;
+    if (num(f.tmin) !== null && min < num(f.tmin)) return false; if (num(f.tmax) !== null && min > num(f.tmax)) return false;
+    if (num(f.amin) !== null && (a.asc || 0) < num(f.amin)) return false;
+    if (num(f.hrmin) !== null && (a.hr || 0) < num(f.hrmin)) return false; if (num(f.hrmax) !== null && (!a.hr || a.hr > num(f.hrmax))) return false;
+    if (f.gear && a.gear !== f.gear) return false;
+    if (f.pr && !prIdsAll.has(String(a.id))) return false;
+    if (f.desc && !a.description) return false;
+    if (f.map && !a.route) return false;
+    if (f.src && !(a.source || '').includes(f.src)) return false;
+    return true;
+  }).sort(SORTS[f.sort][1]);
+}
+function activeFilters() {
+  const f = state.sq, out = [];
+  f.sports.forEach(s => out.push([SPORT[s].n, () => f.sports = f.sports.filter(x => x !== s)]));
+  if (f.y !== 'all') out.push([periodLabel(f), () => { f.y = 'all'; f.m = 'all'; }]);
+  if (f.from || f.to) out.push([`${f.from || '…'} → ${f.to || '…'}`, () => { f.from = ''; f.to = ''; }]);
+  if (f.dmin || f.dmax) out.push([`${f.dmin || 0}–${f.dmax || '∞'} km`, () => { f.dmin = ''; f.dmax = ''; }]);
+  if (f.tmin || f.tmax) out.push([`${f.tmin || 0}–${f.tmax || '∞'} min`, () => { f.tmin = ''; f.tmax = ''; }]);
+  if (f.amin) out.push([`≥ ${f.amin} m desnivel`, () => f.amin = '']);
+  if (f.hrmin || f.hrmax) out.push([`FC ${f.hrmin || 0}–${f.hrmax || '∞'}`, () => { f.hrmin = ''; f.hrmax = ''; }]);
+  if (f.gear) out.push([f.gear, () => f.gear = '']);
+  if (f.pr) out.push(['Con récord', () => f.pr = false]);
+  if (f.desc) out.push(['Con descripción', () => f.desc = false]);
+  if (f.map) out.push(['Con mapa', () => f.map = false]);
+  if (f.src) out.push([f.src === 'garmin' ? 'De Garmin' : 'De Strava', () => f.src = '']);
+  return out;
+}
+function renderSearch() {
+  const f = state.sq, res = searchResults(), s = sums(res), act = activeFilters();
+  const gears = [...new Set(A.map(a => a.gear).filter(Boolean))];
+  const shown = res.slice(0, state.slimit || 50);
+  const paceCell = a => !a.dist ? '—' : a.sport === 'ride' ? fmtSpeed(avgSpeed(a)) + ' km/h' : fmtPace(avgSpeed(a)) + ' /km';
+  view.innerHTML = `<div class="searchwrap">
+    <aside class="fpanel ${state.fopen ? 'open' : ''}" id="fp">
+      <h3>Deporte</h3><div class="chips">${['run', 'ride', 'strength', 'walk', 'row', 'swim'].map(k => `<button class="chip ${f.sports.includes(k) ? 'on' : ''}" data-sp="${k}">${SPORT[k].n}</button>`).join('')}</div>
+      <h3>Periodo</h3>${periodBar(f, 'sq', false)}
+      <div class="range"><input type="date" data-f="from" value="${f.from}" aria-label="Desde"><span>a</span><input type="date" data-f="to" value="${f.to}" aria-label="Hasta"></div>
+      <h3>Distancia (km)</h3><div class="range"><input inputmode="decimal" data-f="dmin" value="${f.dmin}" placeholder="mín"><span>–</span><input inputmode="decimal" data-f="dmax" value="${f.dmax}" placeholder="máx"></div>
+      <h3>Duración (min)</h3><div class="range"><input inputmode="numeric" data-f="tmin" value="${f.tmin}" placeholder="mín"><span>–</span><input inputmode="numeric" data-f="tmax" value="${f.tmax}" placeholder="máx"></div>
+      <h3>Desnivel mínimo (m)</h3><div class="range"><input inputmode="numeric" data-f="amin" value="${f.amin}" placeholder="0"><span></span><span></span></div>
+      <h3>FC media (ppm)</h3><div class="range"><input inputmode="numeric" data-f="hrmin" value="${f.hrmin}" placeholder="mín"><span>–</span><input inputmode="numeric" data-f="hrmax" value="${f.hrmax}" placeholder="máx"></div>
+      <h3>Equipo</h3><select data-f="gear"><option value="">Cualquiera</option>${gears.map(g => `<option ${g === f.gear ? 'selected' : ''}>${g}</option>`).join('')}</select>
+      <h3>Más</h3>
+      <label class="ck"><input type="checkbox" data-f="pr" ${f.pr ? 'checked' : ''}> Con algún récord personal</label>
+      <label class="ck"><input type="checkbox" data-f="desc" ${f.desc ? 'checked' : ''}> Con descripción</label>
+      <label class="ck"><input type="checkbox" data-f="map" ${f.map ? 'checked' : ''}> Con recorrido GPS</label>
+      <h3>Origen</h3><select data-f="src"><option value="">Todos</option><option value="garmin" ${f.src === 'garmin' ? 'selected' : ''}>Garmin</option><option value="strava" ${f.src === 'strava' ? 'selected' : ''}>Strava</option></select>
+      <button class="btn primary block fclose" id="fclose">Ver ${res.length.toLocaleString('es-ES')} resultados</button>
+    </aside>
+    <section class="rescol"><div class="pad">
+      ${isMobile() ? '' : '<h1 style="margin-bottom:12px">Buscar actividades</h1>'}
+      <div class="sbar"><input type="search" id="sq" placeholder="Nombre, descripción o lugar" value="${f.q.replace(/"/g, '&quot;')}">
+        <button class="btn ftoggle" id="ft">Filtros${act.length ? ` (${act.length})` : ''}</button>
+        <select id="ssort" aria-label="Ordenar">${Object.entries(SORTS).map(([k, [n]]) => `<option value="${k}" ${k === f.sort ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      ${act.length ? `<div class="active-f">${act.map(([n], i) => `<button data-rm="${i}">${n} ✕</button>`).join('')}<button data-rm="all" style="background:none">Quitar todo</button></div>` : ''}
+      ${periodSummary(res, null)}
+      ${res.length ? `<table class="rtable num"><thead><tr><th>Fecha</th><th style="text-align:left">Actividad</th><th>Distancia</th><th>Tiempo</th><th>Ritmo</th><th>Desnivel</th><th>FC</th><th>Esfuerzo</th></tr></thead><tbody>
+        ${shown.map(a => `<tr data-id="${a.id}"><td>${dt(a.start).toLocaleDateString('es-ES', {day: 'numeric', month: 'short', year: '2-digit'})}</td><td class="nm">${icon(a.sport, 22)} ${a.name || SPORT[a.sport].n}</td><td>${a.dist ? fmtKm(a.dist) + ' km' : '—'}</td><td>${fmtDur(a.moving)}</td><td>${paceCell(a)}</td><td>${a.asc ? Math.round(a.asc) + ' m' : '—'}</td><td>${a.hr || '—'}</td><td>${a.trimp || '—'}</td></tr>`).join('')}</tbody></table>
+        <div class="mcards">${isMobile() ? shown.map(card).join('') : ''}</div>` : '<div class="emptybox">Ninguna actividad cumple estos filtros.</div>'}
+      ${res.length > shown.length ? `<button class="btn more" id="smore">Ver más (${res.length - shown.length} restantes)</button>` : ''}
+    </div></section></div>`;
+  const rerender = () => { state.slimit = 50; renderSearch(); };
+  const qi = $('#sq'); qi.oninput = () => { clearTimeout(qi._t); qi._t = setTimeout(() => { f.q = qi.value; rerender(); const n = $('#sq'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
+  $('#ssort').onchange = e => { f.sort = e.target.value; rerender(); };
+  $('#ft').onclick = () => { state.fopen = !state.fopen; renderSearch(); };
+  $('#fclose').onclick = () => { state.fopen = false; renderSearch(); };
+  if (state.fopen && isMobile()) { const fp = $('#fp'); fp.scrollTop = state.fscroll || 0; fp.onscroll = () => state.fscroll = fp.scrollTop; }
+  view.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { const k = b.dataset.sp; f.sports = f.sports.includes(k) ? f.sports.filter(x => x !== k) : [...f.sports, k]; rerender(); });
+  view.querySelectorAll('.fpanel [data-f]').forEach(el => { el.onchange = () => { f[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value; rerender(); }; });
+  view.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { if (b.dataset.rm === 'all') Object.assign(f, {sports: [], y: 'all', m: 'all', from: '', to: '', dmin: '', dmax: '', tmin: '', tmax: '', amin: '', hrmin: '', hrmax: '', gear: '', pr: false, desc: false, map: false, src: ''}); else act[+b.dataset.rm][1](); rerender(); });
+  bindPeriod(view, rerender);
+  view.querySelectorAll('.rtable tbody tr, .mcards .card').forEach(r => r.onclick = () => go('#/a/' + r.dataset.id));
+  const more = $('#smore'); if (more) more.onclick = () => { state.slimit = (state.slimit || 50) + 50; renderSearch(); };
 }
 
 // ---------- periodos: año, mes, últimos 12 meses ----------
@@ -1079,6 +1378,9 @@ function renderStats() {
   const pcur = Object.values(pc).sort((a, b) => a.s - b.s);
   const pr5 = best['5 km'], riegel = (t, d1, d2) => t * Math.pow(d2 / d1, 1.06);
   view.innerHTML = `<div class="pad">${isMobile() ? '' : '<h1 style="margin-bottom:12px">Estadísticas</h1>'}
+    <h2 style="margin:0 0 10px">Ahora</h2>
+    ${highlights()}
+    <h2 style="margin:14px 0 10px">Por periodo</h2>
     ${periodBar(p, 'sp', false)}
     ${periodSummary(list, prev)}
     <div class="panel"><div class="ph"><h2>Forma y frescura · ${periodLabel(p)}</h2><div class="flegend"><span><i style="background:var(--ctl)"></i>Forma (42 d)</span><span><i style="background:var(--atl)"></i>Fatiga (7 d)</span><span><i style="background:var(--tsbp)"></i>Frescura</span></div></div>
@@ -1091,6 +1393,7 @@ function renderStats() {
       <div class="panel"><div class="ph"><h2>Curva de potencia</h2><div class="legend"><i style="width:14px;background:var(--ride)"></i>periodo <i style="width:14px;background:var(--line);margin-left:8px"></i>de siempre</div></div><div class="pb">${pcur.length ? powerCurve(pcur, D.pcurve) : '<div class="note">Sin datos de potencia en este periodo.</div>'}</div></div>
     </div></div>`;
   bindPeriod(view, renderStats);
+  view.querySelectorAll('[data-href]').forEach(el => el.onclick = () => go(el.dataset.href));
   setupProgress();
   view.querySelectorAll('[data-vm]').forEach(b => b.onclick = () => { state.vm = b.dataset.vm; renderStats(); });
 }
@@ -1171,6 +1474,11 @@ function renderSettings() {
     <div class="themes">${THEMES.map(th => `<button class="theme" data-pick="${th.id}" aria-pressed="${th.id === themeId}">
       <span class="tprev" ${th.id === 'system' ? '' : `data-theme="${th.id}"`}><i class="tbar"></i><i class="tcard"><b></b><b></b></i><i class="tdot"></i></span>
       <span class="tname">${th.n}</span>${th.d ? `<span class="note">${th.d}</span>` : ''}</button>`).join('')}</div>
+    <h2 style="margin:10px 0 0">Idioma · Language</h2>
+    <div class="field"><div><b>Idioma de la app</b><div class="note">Inglés por defecto. Fechas y números siguen el idioma; las unidades se eligen aparte. Prototipo: la interfaz se muestra en español.</div></div>
+      <select id="lang" style="font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);color:var(--fg)">
+        <option value="en" ${appLang() === 'en' ? 'selected' : ''}>English</option><option value="es" ${appLang() === 'es' ? 'selected' : ''}>Español</option></select></div>
+    <div class="field"><div><b>Unidades</b><div class="note">Independientes del idioma</div></div><span class="muted">Métricas (km, m) ›</span></div>
     <h2 style="margin:10px 0 0">Fisiología</h2>
     <div class="field"><div><b>FC máxima</b><div class="note">Base de las zonas y del esfuerzo relativo</div></div><input type="number" value="${D.settings.hr_max}"></div>
     <div class="field"><div><b>FC en reposo</b><div class="note">El reloj indica 30 ppm, que no es realista</div></div><input type="number" value="${D.settings.hr_rest}"></div>
@@ -1186,6 +1494,7 @@ function renderSettings() {
   </div></div>`;
   view.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => applyTheme(b.dataset.pick));
   view.querySelectorAll('[data-logout]').forEach(b => b.onclick = logout);
+  const lg = $('#lang'); if (lg) lg.onchange = () => { try { localStorage.setItem('os-lang', lg.value); } catch (_) {} document.documentElement.lang = lg.value; };
 }
 
 // ---------- sincronización (simulada) ----------

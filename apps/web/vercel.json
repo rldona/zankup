@@ -1,9 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ../../packages/core ../../pnpm-lock.yaml ../../package.json",
+  "ignoreCommand": "[ \"$VERCEL_ENV\" != \"production\" ] || git diff --quiet HEAD^ HEAD -- . ../../packages/core ../../pnpm-lock.yaml ../../package.json",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://api-production-c6f1.up.railway.app/api/:path*" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/api/:path*",
+      "destination": "https://api-production-c6f1.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "**": false
+    }
+  }
 }

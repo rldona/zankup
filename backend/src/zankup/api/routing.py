@@ -12,6 +12,9 @@ PUBLIC_PATHS = {
     "/api/auth/refresh",
     "/api/auth/passkeys/login/options",
     "/api/auth/passkeys/login",
+    "/api/setup",
+    "/api/setup/account",
+    "/api/setup/totp",
 }
 
 

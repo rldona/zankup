@@ -229,6 +229,9 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - Language, units, max/resting HR, Garmin key status and expiry, devices with an open session.
 - **OS-213 · Quality** (M) · depends on OS-204…OS-209
   - End-to-end tests (Playwright) of the main flows in both languages, Lighthouse on mobile (≥ 90 for performance and PWA) and basic accessibility.
+- **OS-225 · Strength training detail** (M) · depends on OS-105 and OS-205
+  - The parser reads Garmin's set data from the FIT (exercise, reps, weight, duration and rest per set). The detail shows sets grouped by exercise, total volume (reps × weight) and a front/back body map with the muscle groups worked, as in the prototype's strength screen.
+  - *Done when:* the anonymised strength fixture shows the same sets, reps and weights as Garmin Connect.
 - **OS-224 · Self-hosting kit** (M) · depends on OS-005, OS-006 and OS-009
   - A production `docker compose` (API, worker, Postgres, volume and the built PWA behind one origin) for your own server, and a **"Deploy on Railway" template** plus Vercel instructions for the cloud path.
   - `docs/self-hosting.md`, step by step and in English: getting your own Garmin Personal API key, creating the Google OAuth client (OS-220), Resend, Sentry, and later the Google Health client (OS-603) and the optional Anthropic key (OS-701). Every variable in `.env.example` is explained there.
@@ -282,6 +285,20 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - `GET /api/stats/*?from=&to=` endpoints served from the engine's precomputed tables (OS-313).
 - **OS-322 · Year-over-year progress** (S) · depends on OS-321
   - Cumulative distance per day of the year, one line per year (the selected one highlighted), per sport. Hovering compares every year on the same date.
+- **OS-323 · Validation against Strava's values** (M) · depends on OS-406, OS-302, OS-303, OS-305 and OS-324
+  - The Strava export's `activities.csv` carries Strava's own Relative Effort, calories and grade-adjusted distance for every activity (stored as references by OS-406). The engine compares them with ours: correlation (R²), mean absolute error, a scatter chart and the activities that differ the most, with links to them.
+  - Shown in Stats → "How these metrics compare", for anyone who imported a Strava export. Each metric keeps its own documented formula (TRIMP, Minetti, Keytel): the comparison measures how close they are, it does not train a model to imitate Strava.
+  - Optional "Strava-like effort scale": a linear fit of minutes per HR zone against the imported Relative Effort, computed in each instance from that person's own data, with the coefficients visible. Nothing trained on one person's data ships with the code.
+  - For development, `tools/metrics_benchmark` runs `packages/metrics` over a local Strava export and prints only aggregate numbers. Its output is never committed; CI keeps using the anonymised fixtures (OS-010).
+  - *Done when:* on the real history, best efforts match exactly, grade-adjusted distance reaches R² ≥ 0.98, effort and calories have their R² and error measured and shown, and every number in the screen links to the activities behind it.
+- **OS-324 · Calorie estimate** (S) · depends on OS-301
+  - Keytel's formula (from HR, weight, age and sex) with a MET-based fallback when there is no HR, in `packages/metrics`. Used for activities without device calories (GPX, TCX, old imports); the device's value from the FIT always wins.
+- **OS-325 · Personal segments** (L) · depends on OS-216 and OS-309
+  - Save any stretch selected on an activity's profile (OS-216) as a segment with a name. The engine finds it in every past and future activity that goes through it (route matching on the simplified track, then exact start and end on the streams) and stores each effort.
+  - Segment screen: map, elevation profile, your efforts over time with the trend, your best and the conditions of each attempt (HR, power, date). On the activity detail, the segments it went through and how it compared with your best. No leaderboards: only your own efforts.
+  - *Done when:* a segment created from one activity is found in the rest of the history in the background, and a new activity through it shows its time and position among your efforts.
+- **OS-326 · Training calendar** (M) · depends on OS-303 and OS-308
+  - Week and month views with one bubble per activity sized by its load and coloured by sport, weekly totals in the margin and the form (TSB) for each day. Click → activity; drag across days → summary of the selection.
 - **OS-320 · Dynamic stats charts** (L) · depends on OS-215, OS-315 and OS-316
   - Following the catalogue in [architecture.md](architecture.md#charts): fitness and freshness (animated on load and after a sync, per-day cursor, click → activities), volume with period transitions, best-effort curves comparing periods, progression of records and estimates, animated goals.
 
@@ -312,6 +329,12 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - Shoes and bikes, with a mileage warning. Preloaded from `bikes.csv`, `shoes.csv` and the gear on each activity in the Strava export.
 - **OS-411 · Export all your data** (S) · depends on OS-104
   - ZIP with the original FITs and JSON.
+- **OS-412 · Photos in activities** (S) · depends on OS-406 and OS-205
+  - The photos from the Strava export are stored next to their activity on the volume; you can also add or remove photos. Gallery in the detail and a thumbnail on the feed card. EXIF location is removed before anything is shared.
+- **OS-413 · Year and month in review** (M) · depends on OS-321 and OS-408
+  - A recap of each month and each year: totals, records, longest and hardest activities, most-used gear and progress against the previous period, as a sequence of cards. Each card can be shared as an image, with privacy zones applied and no route unless you choose to.
+- **OS-414 · Activity replay** (S) · depends on OS-207
+  - Animated 2D playback of the route on the map with the cursor moving along the profile and the charts, at 10×–100× speed, with pause and seeking. Respects `prefers-reduced-motion`.
 
 **M4 is done when** your whole history is in OpenSport, notifications reach you and you can share an activity without revealing where you live.
 
@@ -398,6 +421,9 @@ It can start as soon as M3 is done (it needs the metrics), in parallel with phas
   - A set of 30–50 real activities and questions with expected answers, in both languages. It checks that the quoted numbers match the database (nothing invented). Run before changing the prompt or the model.
 - **OS-708 · Privacy and transparency** (S) · depends on OS-702
   - A global "use AI" switch in settings, an explanation of what data is sent, and nothing stored with the provider that is not needed.
+- **OS-709 · Read-only MCP server** (S) · depends on OS-705 and OS-702
+  - Exposes the Coach's tools (`search_activities`, `fitness_stats`, `records`, `daily_health`) as an MCP server so you can ask any AI assistant about your data. Read-only, behind a personal token created in Settings and revocable, with the same minimisation as OS-702 (no coordinates).
+  - Works without an Anthropic key: the assistant you use brings its own model.
 
 **M7 is done when** every new activity arrives with its summary, the weekly report arrives on Monday and the Coach answers questions like "how am I doing for a 10K?" with correct numbers.
 
@@ -414,6 +440,12 @@ Not planned in any phase. Each one comes back when its reason to wait goes away.
   - Passkey registration and sign-in on the PWA (verified with the device's fingerprint or face recognition), synced by the password manager (Google or iCloud). Managed in Profile → Sign-in methods.
   - The relying party ID is the instance's URL, which must stay stable (changing it invalidates every passkey). A stable `*.vercel.app` subdomain works, and `/.well-known/assetlinks.json` would let **the same passkey work in the Android app** (OS-503).
   - Waits because Google sign-in and the fingerprint in the app already cover convenient access.
+- **Route builder and sending routes to the watch** (L)
+  - Draw a route on the map with elevation and surface, save it and export it as GPX or FIT course. Sending it straight to the watch depends on whether the Garmin Personal API accepts uploads; to be checked.
+- **Structured workouts and training plans** (L)
+  - Interval workouts by pace, HR or power, and multi-week plans built on the engine's estimates. Same open question about sending them to the watch.
+- **3D route view** (M)
+  - MapLibre with terrain elevation for the activity and replay (OS-414).
 - **Brand: name and logo** (#116)
   - OpenSport is the working name; the current mountain mark stays.
 

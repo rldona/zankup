@@ -416,6 +416,24 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/settings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Preferences */
+    get: operations['getSettings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update Preferences */
+    patch: operations['updateSettings'];
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -803,6 +821,22 @@ export interface components {
        * @description Synced by a password manager (Google, iCloud…)
        */
       backed_up: boolean;
+    };
+    /** Preferences */
+    Preferences: {
+      /**
+       * Theme
+       * @enum {string}
+       */
+      theme: 'system' | 'light' | 'dark' | 'oled' | 'highContrast' | 'forest' | 'ocean' | 'sunset';
+    };
+    /**
+     * PreferencesUpdate
+     * @description Only the fields sent are changed.
+     */
+    PreferencesUpdate: {
+      /** Theme */
+      theme?: ('system' | 'light' | 'dark' | 'oled' | 'highContrast' | 'forest' | 'ocean' | 'sunset') | null;
     };
     /** RefreshRequest */
     RefreshRequest: {
@@ -1675,6 +1709,59 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SyncStatus'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Preferences'];
+        };
+      };
+    };
+  };
+  updateSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PreferencesUpdate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Preferences'];
         };
       };
       /** @description Validation Error */

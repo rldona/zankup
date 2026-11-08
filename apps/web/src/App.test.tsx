@@ -55,6 +55,8 @@ const signedOut = () => Response.json({ detail: 'Not signed in' }, { status: 401
 
 describe('app skeleton', () => {
   afterEach(() => {
+    localStorage.clear();
+    delete document.documentElement.dataset.theme;
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -212,6 +214,41 @@ describe('app skeleton', () => {
     for (const nav of screen.getAllByRole('navigation', { name: 'Main' })) {
       expect(nav.querySelector('a.on')).toHaveAttribute('href', '/'); // still in the feed section
     }
+  });
+
+  it('picks a theme, applies it at once and saves it in the account', async () => {
+    let saved = 'system';
+    const calls = mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/settings': (_url, request) => {
+        if (request.method === 'PATCH') saved = 'ocean';
+        return Response.json({ theme: saved });
+      },
+    });
+    renderAt('/settings');
+    const ocean = await screen.findByRole('button', { name: 'Ocean' });
+    expect(screen.getByRole('button', { name: /System/ })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(ocean);
+    expect(document.documentElement.dataset.theme).toBe('ocean');
+    expect(localStorage.getItem('zankup-theme')).toBe('ocean');
+    expect(ocean).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(calls).toContain('PATCH /api/settings'));
+
+    await userEvent.click(screen.getByRole('button', { name: /System/ }));
+    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(localStorage.getItem('zankup-theme')).toBeNull();
+  });
+
+  it('follows the theme saved in the account from another device', async () => {
+    localStorage.setItem('zankup-theme', 'light');
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/settings': () => Response.json({ theme: 'oled' }),
+      '/api/activities': () => Response.json({ items: [], next_cursor: null }),
+    });
+    renderAt('/');
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('oled'));
+    expect(localStorage.getItem('zankup-theme')).toBe('oled');
   });
 
   it('only redirects to paths inside the app after signing in', () => {

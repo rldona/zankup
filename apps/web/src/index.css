@@ -1047,6 +1047,178 @@ a.button.block {
   padding: 10px 12px;
 }
 
+/* This week (OS-217): above the feed, and the "Now" cards in Stats. */
+.week {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.weekhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.weekhead h2 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 10px;
+  text-align: center;
+}
+
+.days li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dot {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line);
+  color: var(--sport);
+}
+
+.dot.on {
+  border: 0;
+  background: color-mix(in srgb, var(--sport) 18%, var(--surface));
+}
+
+.dot svg.i {
+  width: 17px;
+  height: 17px;
+}
+
+.dot .more {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  font-size: 10px;
+  background: var(--fg);
+  color: var(--bg);
+  border-radius: 999px;
+  padding: 0 4px;
+}
+
+.days .today .dot {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.days .today .dlabel {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.days .future {
+  opacity: 0.45;
+}
+
+.dlabel {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+.weeknums {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.weeknums div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.weeknums dd {
+  margin: 0;
+  font-weight: 650;
+}
+
+.weeknums dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0 14px;
+}
+
+.big {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.meterbar {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--surface-2);
+}
+
+.meterbar i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--accent);
+}
+
+.meterbar b {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--fg);
+}
+
+.bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  height: 150px;
+  align-items: end;
+}
+
+.bars div {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  gap: 2px;
+}
+
+.bars i {
+  display: block;
+  width: 70%;
+  min-height: 2px;
+  border-radius: 6px 6px 0 0;
+  background: var(--accent);
+}
+
 /* Chart catalogue (OS-215): each block is drawn in its own theme. */
 .cat {
   background: var(--surface);

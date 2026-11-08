@@ -1351,6 +1351,58 @@
         }
       }
     },
+    "/api/week": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Week",
+        "operationId": "getWeek",
+        "parameters": [
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The user's today (YYYY-MM-DD); UTC if missing",
+              "title": "Today"
+            },
+            "description": "The user's today (YYYY-MM-DD); UTC if missing"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Week"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health",
@@ -2186,6 +2238,58 @@
         ],
         "title": "Challenge"
       },
+      "Day": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/DayActivity"
+            },
+            "type": "array",
+            "title": "Activities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "activities"
+        ],
+        "title": "Day"
+      },
+      "DayActivity": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sport",
+          "name"
+        ],
+        "title": "DayActivity"
+      },
       "DeviceOut": {
         "properties": {
           "id": {
@@ -2953,6 +3057,40 @@
         ],
         "title": "Providers"
       },
+      "RecentRecord": {
+        "properties": {
+          "distance_key": {
+            "type": "string",
+            "title": "Distance Key"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_key",
+          "distance_m",
+          "time_s",
+          "activity_id",
+          "date"
+        ],
+        "title": "RecentRecord"
+      },
       "Record": {
         "properties": {
           "distance_key": {
@@ -3566,6 +3704,90 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Week": {
+        "properties": {
+          "today": {
+            "type": "string",
+            "format": "date",
+            "title": "Today"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/Day"
+            },
+            "type": "array",
+            "title": "Days",
+            "description": "Monday to Sunday of this week (future days are empty)"
+          },
+          "this_week": {
+            "$ref": "#/components/schemas/WeekTotals"
+          },
+          "previous": {
+            "items": {
+              "$ref": "#/components/schemas/WeekTotals"
+            },
+            "type": "array",
+            "title": "Previous",
+            "description": "The 12 weeks before, newest first"
+          },
+          "streak_weeks": {
+            "type": "integer",
+            "title": "Streak Weeks"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/RecentRecord"
+            },
+            "type": "array",
+            "title": "Records",
+            "description": "All-time bests set in the last 30 days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "today",
+          "days",
+          "this_week",
+          "previous",
+          "streak_weeks",
+          "records"
+        ],
+        "title": "Week"
+      },
+      "WeekTotals": {
+        "properties": {
+          "week_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Week Start"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "ascent_m": {
+            "type": "number",
+            "title": "Ascent M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "week_start",
+          "count",
+          "distance_m",
+          "moving_s",
+          "ascent_m"
+        ],
+        "title": "WeekTotals"
       },
       "zankup__auth__passkeys__LoginRequest": {
         "properties": {

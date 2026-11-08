@@ -12,6 +12,7 @@ import { Catalogue } from './routes/Catalogue';
 import { ForgotPassword, ResetPassword } from './routes/Recover';
 import { Settings } from './routes/Settings';
 import { Soon } from './routes/Soon';
+import { Stats } from './routes/Stats';
 import { Sync } from './routes/Sync';
 
 /** Every screen. Public: /sign-in and /setup. Everything else needs a session. */
@@ -34,7 +35,7 @@ export const routes: RouteObject[] = [
             ],
           },
           { path: 'search', element: <Soon title="nav.search" body="soon.search" /> },
-          { path: 'stats', element: <Soon title="nav.stats" body="soon.stats" /> },
+          { path: 'stats', element: <Stats /> },
           { path: 'sync', element: <Sync /> },
           { path: 'settings', element: <Settings /> },
           { path: 'catalogue', element: <Catalogue /> },

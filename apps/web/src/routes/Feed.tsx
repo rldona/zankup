@@ -22,6 +22,7 @@ import { Link, NavLink, Outlet, useMatch, useSearchParams } from 'react-router';
 import { api } from '../api';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
+import { WeekHeader } from '../week/WeekHeader';
 import { SportGlyph, SportIcon } from '../SportIcon';
 
 type Format = ReturnType<typeof formatters>;
@@ -66,6 +67,7 @@ export function Feed() {
   return (
     <div className={`feedwrap${detail ? ' detail' : ''}`}>
       <section className="feedcol" ref={column}>
+        <WeekHeader />
         <h1>
           {t('feed.title')} <Since months={sport ? allMonths.data : months.data} />
         </h1>

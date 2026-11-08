@@ -635,6 +635,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/week': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Week */
+    get: operations['getWeek'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -911,6 +928,25 @@ export interface components {
       /** Challenge */
       challenge: string;
     };
+    /** Day */
+    Day: {
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
+      /** Activities */
+      activities: components['schemas']['DayActivity'][];
+    };
+    /** DayActivity */
+    DayActivity: {
+      /** Id */
+      id: number;
+      /** Sport */
+      sport: string;
+      /** Name */
+      name: string | null;
+    };
     /** DeviceOut */
     DeviceOut: {
       /** Id */
@@ -1169,6 +1205,22 @@ export interface components {
     Providers: {
       /** Google */
       google: boolean;
+    };
+    /** RecentRecord */
+    RecentRecord: {
+      /** Distance Key */
+      distance_key: string;
+      /** Distance M */
+      distance_m: number;
+      /** Time S */
+      time_s: number;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
     };
     /** Record */
     Record: {
@@ -1435,6 +1487,48 @@ export interface components {
       input?: unknown;
       /** Context */
       ctx?: Record<string, never>;
+    };
+    /** Week */
+    Week: {
+      /**
+       * Today
+       * Format: date
+       */
+      today: string;
+      /**
+       * Days
+       * @description Monday to Sunday of this week (future days are empty)
+       */
+      days: components['schemas']['Day'][];
+      this_week: components['schemas']['WeekTotals'];
+      /**
+       * Previous
+       * @description The 12 weeks before, newest first
+       */
+      previous: components['schemas']['WeekTotals'][];
+      /** Streak Weeks */
+      streak_weeks: number;
+      /**
+       * Records
+       * @description All-time bests set in the last 30 days
+       */
+      records: components['schemas']['RecentRecord'][];
+    };
+    /** WeekTotals */
+    WeekTotals: {
+      /**
+       * Week Start
+       * Format: date
+       */
+      week_start: string;
+      /** Count */
+      count: number;
+      /** Distance M */
+      distance_m: number;
+      /** Moving S */
+      moving_s: number;
+      /** Ascent M */
+      ascent_m: number;
     };
     /** LoginRequest */
     zankup__auth__passkeys__LoginRequest: {
@@ -2492,6 +2586,38 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SourceStatus'][];
+        };
+      };
+    };
+  };
+  getWeek: {
+    parameters: {
+      query?: {
+        /** @description The user's today (YYYY-MM-DD); UTC if missing */
+        today?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Week'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
         };
       };
     };

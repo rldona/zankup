@@ -114,7 +114,6 @@
   "feed.pick": "Pick an activity to see its details.",
   "soon.title": "Coming soon",
   "soon.search": "Advanced search arrives with OS-219.",
-  "soon.stats": "Stats arrive with phase 3 and OS-217.",
   "profile.title": "Profile",
   "settings.appearance": "Appearance",
   "settings.themeHelp": "Saved in your account: it follows you to other browsers and the app.",
@@ -301,5 +300,16 @@
   "profile.googleLink": "Link Google",
   "profile.googleUnlink": "Unlink",
   "profile.googleError": "Google could not be linked: it may be linked to another account.",
-  "profile.googleNeedsOther": "Set up another way in first: a passkey, or password with two-step verification."
+  "profile.googleNeedsOther": "Set up another way in first: a passkey, or password with two-step verification.",
+  "week.title": "This week",
+  "week.streak": "{count, plural, =0 {No streak yet} one {# week in a row} other {# weeks in a row}}",
+  "week.today": "Today",
+  "stats.now": "Now",
+  "stats.load": "This week against your usual",
+  "stats.loadNote": "Moving time against the average of the previous 12 weeks ({average}).",
+  "stats.lastWeeks": "Last 4 weeks",
+  "stats.recentRecords": "Recent records",
+  "stats.noRecords": "No new records in the last 30 days.",
+  "stats.engineSoon": "Training status, estimated VO₂max and FTP, and weekly goals appear here once the metrics engine (phase 3) computes them.",
+  "stats.week": "Week of {date}"
 }

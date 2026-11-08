@@ -10,7 +10,9 @@ export function App() {
   const status =
     health.state === 'ok'
       ? message(locale, 'api.connected', { version: health.version })
-      : message(locale, health.state === 'down' ? 'api.down' : 'api.checking');
+      : health.state === 'degraded'
+        ? message(locale, 'api.degraded')
+        : message(locale, health.state === 'down' ? 'api.down' : 'api.checking');
 
   return (
     <main className="placeholder" lang={locale}>

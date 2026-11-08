@@ -3,20 +3,25 @@
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Annotated, Literal
 
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import Depends, FastAPI
+from pydantic import BaseModel, Field
+from sqlalchemy import Engine
 
 from opensport import __version__
 from opensport.core.config import Settings, get_settings
 from opensport.core.logging import configure_logging
+from opensport.db.session import database_status, get_engine
 
 log = logging.getLogger("opensport.api")
 
 
 class Health(BaseModel):
-    status: str
+    status: Literal["ok", "degraded"] = Field(description="degraded when the database is unreachable")
     version: str
+    database: Literal["ok", "unavailable"]
+    schema_revision: str | None = Field(description="Alembic revision applied to the database")
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -40,9 +45,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     @app.get("/api/health", operation_id="getHealth")
-    def health() -> Health:
-        """Liveness check used by Railway and by the PWA through the Vercel proxy."""
-        return Health(status="ok", version=__version__)
+    def health(engine: Annotated[Engine, Depends(get_engine)]) -> Health:
+        """Liveness and database check, used by Railway on deploy and by the PWA through the Vercel proxy.
+
+        Always 200: a database outage is reported as `degraded`, so the API itself stays observable.
+        """
+        reachable, revision = database_status(engine)
+        if not reachable:
+            log.warning("Database unreachable from the health check")
+        return Health(
+            status="ok" if reachable else "degraded",
+            version=__version__,
+            database="ok" if reachable else "unavailable",
+            schema_revision=revision,
+        )
 
     return app
 

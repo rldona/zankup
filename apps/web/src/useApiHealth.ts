@@ -1,7 +1,11 @@
 import { createApiClient } from '@opensport/core';
 import { useEffect, useState } from 'react';
 
-export type ApiHealth = { state: 'checking' } | { state: 'ok'; version: string } | { state: 'down' };
+export type ApiHealth =
+  | { state: 'checking' }
+  | { state: 'ok'; version: string }
+  | { state: 'degraded'; version: string }
+  | { state: 'down' };
 
 const api = createApiClient();
 
@@ -14,7 +18,8 @@ export function useApiHealth(): ApiHealth {
     api
       .GET('/api/health', { signal: controller.signal })
       .then(({ data }) => {
-        setHealth(data?.status === 'ok' ? { state: 'ok', version: data.version } : { state: 'down' });
+        if (!data) return setHealth({ state: 'down' });
+        setHealth({ state: data.status === 'ok' ? 'ok' : 'degraded', version: data.version });
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {

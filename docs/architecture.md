@@ -1,6 +1,6 @@
 # OpenSport architecture (v1)
 
-A **personal**, Strava-like platform: it syncs Garmin activities automatically, keeps the original FIT files and shows them with a map, laps and **its own advanced metrics** (what Strava charges for in Premium). There are two clients: first a **PWA for desktop and mobile, hosted on Vercel**, and later a **native Android app**. Both use the same backend, which runs on Railway.
+A **personal, open source and self-hosted**, Strava-like platform: it syncs Garmin activities automatically, keeps the original FIT files and shows them with a map, laps and **its own advanced metrics** (what Strava charges for in Premium). There are two clients: first a **PWA for desktop and mobile, hosted on Vercel**, and later a **native Android app**. Both use the same backend, which runs on Railway.
 
 Visual map: [architecture.html](architecture.html) · Why this architecture: [findings.md](findings.md)
 
@@ -10,10 +10,19 @@ Visual map: [architecture.html](architecture.html) · Why this architecture: [fi
 2. **API first.** The backend exposes a REST API shared by the PWA and the Android app. No business logic lives in the clients.
 3. **A TypeScript monorepo for the clients.** The PWA (React) and the Android app (React Native + Expo) share a `core` package with the API client, data hooks, formatting logic, design tokens and translations.
 4. **Always available.** The backend runs in the cloud (Railway): it syncs on its own and sends notifications even when the PC is off.
-5. **Private by default.** A single user, everything behind authentication, no public profiles. Privacy zones apply to anything shared.
+5. **Private by default.** A single user per instance, everything behind authentication, no public profiles. Privacy zones apply to anything shared.
 6. **Only official channels for automation:** the Garmin Personal API. Manual files (Strava ZIP, loose FITs) come in through an importer.
 7. **Our own metrics.** Zones, load, fitness and records are computed with OpenSport's settings, not the watch's.
 8. **English by default, Spanish available.** Every user-facing text goes through i18n from day one (see [Internationalisation](#internationalisation-i18n)).
+9. **Open source and self-hosted.** Each person deploys their own instance with their own keys (see [Product model](#product-model)).
+
+## Product model
+
+- **Self-hosted, bring your own keys.** There is no central OpenSport service. Each person deploys an instance (Railway + Vercel, or `docker compose` on their own server) and configures their own Garmin Personal API key, Google OAuth client, Resend account, Google Health client and, optionally, Anthropic key. This keeps every instance within the Personal API's personal-use terms and keeps health data with its owner. Setup guide: `docs/self-hosting.md` (OS-224).
+- **Optional integrations degrade gracefully:** without an Anthropic key the AI features are hidden; without a Google client there is no Google sign-in or Google Health; the core (Garmin sync, metrics, PWA) only needs the Garmin key.
+- **Licences:** `packages/metrics` is MIT (a reusable metrics library); the backend, the PWA and the app are AGPL-3.0.
+- **No payments.** Every user-owned table has `user_id` and every query filters by it, so a hosted multi-user version stays possible without a migration, but nothing else (billing, plans, quotas) is built.
+- **URLs:** instances run on `*.vercel.app` (PWA and proxy) and `*.up.railway.app` (API). A custom domain is optional and in the backlog.
 
 ## Diagram
 
@@ -105,16 +114,16 @@ The application is packaged as a container (Dockerfile) so the provider can be c
 | **Metrics engine** | See "Advanced metrics" | Partial: exact best efforts |
 | **Historical computation engine** | Job queue in Postgres and a worker on Railway. Processes history incrementally, with versioned full recomputation. Produces estimates, curves, progress and events | Pending |
 | **REST API** | FastAPI, OpenAPI generated automatically. Used by the PWA and Android | Pending |
-| **Authentication** | One user: sign-in with password + TOTP, **Google account** (OpenID Connect, only the linked account) or passkey (WebAuthn). The PWA uses an `httpOnly` session cookie (same origin, thanks to the Vercel proxy). Android uses a short access token and a long refresh token. Devices can be revoked | Pending |
+| **Authentication** | One user per instance: sign-in with password + TOTP or **Google account** (OpenID Connect, only the linked account). Passkeys (WebAuthn) are in the backlog. The PWA uses an `httpOnly` session cookie (same origin, thanks to the Vercel proxy). Android uses a short access token and a long refresh token. Devices can be revoked | Pending |
 | **Sign-up and recovery** | One-time initial sign-up protected by a **setup code** (printed in the server logs on first boot). Recovery by email with a single-use link (30 min) that also requires the TOTP code or a recovery code | Pending |
-| **Transactional email** | Resend with a verified domain: recovery links, security alerts (password changed, new sign-in) and an optional weekly report, in the user's language | Pending |
+| **Transactional email** | Resend, one account per instance (the test sender delivers to the owner's address, so no custom domain is required): recovery links, security alerts (password changed, new sign-in) and an optional weekly report, in the user's language | Pending |
 | **Google Health connector** | Google OAuth and Google Health API webhooks (Fitbit Air): sleep with stages, HRV, resting HR, SpO₂. Priority rules between sources | Phase 6 |
 | **AI layer** | Minimised context (no coordinates or profile data), per-activity summaries, weekly report (batched) and a Coach with tools over our API | Phase 7 |
 | **Notifications** | Web Push with VAPID for the PWA and FCM for Android: new activity, record, sync failure, key about to expire | Pending |
 | **Privacy** | Privacy zones (centre and radius) applied when serving or exporting anything shareable | Pending |
 | **Internationalisation** | English by default, Spanish selectable. Shared catalogues, locale-aware formatting, server-side texts in the user's language | Pending |
 | **PWA** | See "Clients" | Prototype |
-| **Android app** | React Native + Expo. See "Clients" | Phase 5 (starts with a performance proof of concept) |
+| **Android app** | React Native + Expo. See "Clients" | Proof of concept at the start of phase 2, the app in phase 5 |
 
 ## Advanced metrics (Strava's "Premium", built by us)
 
@@ -255,17 +264,19 @@ There are three kinds of charts, depending on how much they move and how much yo
   - Notifications with FCM (`expo-notifications`).
   - Health Connect with `react-native-health-connect`.
   - i18next with the shared catalogues and `expo-localization` to detect the device language.
-  - **Sign-in:** native Google (`@react-native-google-signin/google-signin`, Credential Manager), password + TOTP or passkey (`react-native-passkey`, the same as on the web thanks to `assetlinks.json`).
+  - **Sign-in:** native Google (`@react-native-google-signin/google-signin`, Credential Manager) or password + TOTP, against the instance URL entered on first launch. Passkeys (`react-native-passkey`) come with OS-405, from the backlog.
   - **Fingerprint unlock:** the refresh token is stored in `expo-secure-store` protected by strong biometrics (`expo-local-authentication`). On many Samsung phones face recognition is weak biometrics and cannot release keys, so the fingerprint is used there.
 - **Themes:** the same tokens as the PWA, from the single source in `packages/core`, plus Android dynamic colour (Material You) through a small module.
 - **The only native-specific piece:** the home-screen widget (with `react-native-android-widget` or an Expo module in Kotlin).
-- **Performance:** the demanding screen is the activity detail (dragging along the profile with the cursor synced on the map). It is validated with a **proof of concept** at the start of the phase. Criteria: cold start under 1.5 s, 60 fps while dragging and reasonable memory on a mid-range phone. If they are not met, plan B is Kotlin, having lost only those days.
+- **Performance:** the demanding screen is the activity detail (dragging along the profile with the cursor synced on the map). It is validated with a **proof of concept** (OS-501) at the start of phase 2, before the PWA and `packages/core` take shape. Criteria: cold start under 1.5 s, 60 fps while dragging and reasonable memory on a mid-range phone. If they are not met, plan B is Kotlin, having lost only those days.
 - **Advantages over the PWA:** more reliable notifications and sync, widget, Health Connect, and the door open to iOS or to recording with the phone's GPS.
 
 ### Monorepo structure
 
 ```
-backend/            Python · FastAPI · computation engine (Railway)
+backend/            Python · FastAPI · computation engine (Railway) · AGPL-3.0
+packages/metrics/   Python · opensport-metrics: pure metric algorithms (TRIMP, CTL/ATL/TSB, GAP, curves,
+                    estimates…) with no database or network dependency · MIT
 apps/web/           PWA · React + Vite (Vercel)
 apps/mobile/        App · React Native + Expo (EAS)
 packages/core/      Shared TypeScript: API client generated from OpenAPI, TanStack Query hooks,
@@ -296,6 +307,8 @@ What is shared is the logic, not the visual components: the web uses the DOM (EC
 - **No invented numbers:** answers quote data returned by the tools, and an evaluation set checks that the numbers match the database before the prompt or the model changes. If an analysis needs more capability, only that route can be tried on a larger model, measured with the same evaluation.
 
 ## Data model (Postgres)
+
+Every user-owned table also has `user_id` (omitted below for brevity), even though each instance has a single user.
 
 ```
 activities    id (Garmin activityId) · source · name · sport · sub_sport · start_utc · tz
@@ -334,8 +347,6 @@ sync_runs     id · trigger (cron|button) · started_at · finished_at · new_co
 | `POST` | `/api/auth/password/forgot` · `/api/auth/password/reset` | Recovery: send the link, then change with token + TOTP or a recovery code |
 | `GET` | `/api/auth/google/start` · `/api/auth/google/callback` | Google sign-in on the web (OIDC with PKCE). Only the linked `sub` gets in |
 | `POST` | `/api/auth/google/mobile` | Google sign-in from the app: receives the ID token from the native SDK and applies the same rule |
-| `POST` | `/api/auth/passkey/register` · `/api/auth/passkey/login` | Passkeys (WebAuthn), shared by the PWA and the app |
-| `GET` | `/.well-known/assetlinks.json` | Links the Android app to the domain so passkeys are shared (served from Vercel) |
 | `POST/DELETE` | `/api/auth/google/link` | Link or unlink the Google account (requires another active method) |
 | `POST` | `/api/sync` | Starts a sync and returns `sync_run_id` |
 | `GET` | `/api/sync/{id}` | Status and progress (the PWA polls it every 2 s through the Vercel proxy) |
@@ -386,7 +397,9 @@ sequenceDiagram
 | Google OAuth in "Testing" mode (7-day tokens) and health scope verification | Check it at the start of phase 6. Alternative: Health Connect from Android |
 | The LLM invents numbers or receives too much data | Tools over real data, number evaluation, minimisation without coordinates, "use AI" switch |
 | Unreliable PWA notifications | The Android app with FCM solves it in phase 5 |
-| React Native performance on the activity detail | Proof of concept at the start of phase 5 with measurable criteria. Plan B: Kotlin |
+| React Native performance on the activity detail | Proof of concept at the start of phase 2 with measurable criteria. Plan B: Kotlin |
+| Garmin Personal API terms (personal use) | Self-hosted with each person's own key, no central service |
+| Self-hosting too hard | Railway template, Docker Compose and a guide tested by someone else (OS-224) |
 | React Native or Expo updates breaking dependencies | Follow the Expo SDK, few and well-maintained native libraries, update once per Expo release |
 | Vercel proxy limits (duration, size) | Small paginated responses, compressed streams, progress polled every 2 s instead of SSE. If not enough: an `api.` subdomain straight to Railway |
 | Two platforms to coordinate | The Railway URL in one place (`vercel.json`). No secrets in the PWA. The API client is generated from OpenAPI |
@@ -397,9 +410,9 @@ sequenceDiagram
 Details with tickets, dependencies and definitions of done: [roadmap.md](roadmap.md). Phase 0 (foundations: repository, CI, Railway and Vercel) comes before all of them.
 
 1. **Backend on Railway:** `opensport` package (sync, parser, basic metrics), Postgres, volume, authentication, activities API and cron.
-2. **PWA on Vercel:** desktop and mobile, home, detail based on the prototype, search, Sync button with progress, themes, English and Spanish, installable and offline.
+2. **PWA on Vercel:** starts with the React Native proof of concept, then desktop and mobile, home, detail based on the prototype, search, Sync button with progress, themes, English and Spanish, installable and offline, and the self-hosting kit.
 3. **Advanced metrics:** own zones, relative effort, fitness and freshness, GAP, records, power curve, matched routes, heatmap.
 4. **Notifications, history and privacy:** Web Push, Strava ZIP import, server-side privacy zones and activity sharing.
-5. **Android app:** React Native + Expo on top of `packages/core`. Starts with a performance proof of concept.
+5. **Android app:** React Native + Expo on top of `packages/core` (stack confirmed by the proof of concept in phase 2).
 6. **Multi-source health:** sleep, HRV and daily data from Garmin and Google Health (Fitbit Air), with priority rules, and Health Connect on Android.
 7. **AI assistant:** summaries, weekly report and Coach with Claude Haiku 5.5, with minimised data.

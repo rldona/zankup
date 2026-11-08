@@ -24,6 +24,7 @@ export type Preferences = Json<'/api/settings', 'get'>;
 export type DeviceSession = Json<'/api/auth/devices', 'get'>[number];
 export type ProfileSummary = Json<'/api/profile/summary', 'get'>;
 export type SourceStatus = Json<'/api/sources', 'get'>[number];
+export type SyncRun = Json<'/api/sync/{run_id}', 'get'>;
 export type PasskeyInfo = Json<'/api/auth/passkeys', 'get'>[number];
 
 /** An API error with its HTTP status, so callers can tell "signed out" (401) from other failures. */
@@ -56,6 +57,7 @@ export const queryKeys = {
   profile: ['profile'] as const,
   sources: ['sources'] as const,
   passkeys: ['passkeys'] as const,
+  syncs: ['syncs'] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
   months: (sport?: readonly string[]) => ['activities', 'months', { sport: sport ?? [] }] as const,
   activity: (id: number) => ['activity', id] as const,
@@ -183,5 +185,14 @@ export function passkeysQuery(api: ApiClient) {
     queryKey: queryKeys.passkeys,
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/auth/passkeys', { signal })),
+  };
+}
+
+/** The latest Garmin syncs, newest first (the first one is the one to follow while it runs). */
+export function syncsQuery(api: ApiClient, limit = 10) {
+  return {
+    queryKey: queryKeys.syncs,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/sync', { params: { query: { limit } }, signal })),
   };
 }

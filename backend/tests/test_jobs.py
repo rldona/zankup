@@ -16,7 +16,7 @@ from zankup.db.models import Activity, Job, User
 from zankup.db.session import get_engine
 from zankup.jobs.handlers import default_handlers
 from zankup.jobs.queue import backoff, claim, enqueue, now, requeue_stale
-from zankup.jobs.worker import Worker
+from zankup.jobs.worker import Worker, split
 from zankup.storage import LocalRawStore, raw_key
 
 FIT = (Path(__file__).resolve().parents[2] / "fixtures" / "fit" / "run.fit").read_bytes()
@@ -171,3 +171,35 @@ def test_the_api_answers_while_the_worker_is_busy(sessions: sessionmaker[Session
         release.set()
         worker.stop()
         thread.join(5)
+
+
+def test_a_long_job_keeps_its_lock_fresh(sessions: sessionmaker[Session]) -> None:
+    started, release = threading.Event(), threading.Event()
+
+    def long(_: Session, __: Job) -> None:
+        started.set()
+        release.wait(10)
+
+    with sessions.begin() as session:
+        job_id = enqueue(session, "long", user_id=uid(sessions))
+    worker = Worker(sessions, {"long": long}, poll_interval_s=0.05, heartbeat_s=0.05)
+    thread = worker.start_thread()
+    try:
+        assert started.wait(5)
+        with sessions() as session:
+            first = session.get_one(Job, job_id).locked_at
+        time.sleep(0.3)
+        with sessions() as session:
+            assert session.get_one(Job, job_id).locked_at > first  # type: ignore[operator]
+            assert requeue_stale(session, timedelta(seconds=1)) == 0  # alive, so not stale
+    finally:
+        release.set()
+        worker.stop()
+        thread.join(5)
+
+
+def test_long_jobs_and_imports_get_their_own_workers() -> None:
+    def handler(_: Session, __: Job) -> None: ...
+
+    long, short = split({"sync_garmin": handler, "backup": handler, "ingest_fit": handler})
+    assert sorted(long) == ["backup", "sync_garmin"] and list(short) == ["ingest_fit"]

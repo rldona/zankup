@@ -868,8 +868,25 @@
           "sync"
         ],
         "summary": "Start Sync",
-        "description": "Sync Garmin now. Returns the new run, or the one already queued or running.",
+        "description": "Sync Garmin now (or load its whole history). Returns the new run, or the one already going.",
         "operationId": "startSync",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SyncRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "202": {
             "description": "Successful Response",
@@ -883,6 +900,16 @@
           },
           "409": {
             "description": "Garmin is not configured on this instance"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       },
@@ -3022,6 +3049,31 @@
         },
         "type": "object",
         "title": "SyncProgress"
+      },
+      "SyncRequest": {
+        "properties": {
+          "history": {
+            "type": "boolean",
+            "title": "History",
+            "description": "Load the whole history (from 2000), not just what is new",
+            "default": false
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since",
+            "description": "Or load from this day on"
+          }
+        },
+        "type": "object",
+        "title": "SyncRequest"
       },
       "SyncStatus": {
         "properties": {

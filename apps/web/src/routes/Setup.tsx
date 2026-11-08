@@ -28,10 +28,10 @@ export function Setup() {
   if (step.kind === 'done') {
     card = (
       <Done
-        onContinue={() => {
+        onContinue={(to) => {
           queryClient.setQueryData(queryKeys.me, step.me);
           queryClient.setQueryData(queryKeys.setup, { open: false });
-          void navigate('/', { replace: true });
+          void navigate(to, { replace: true });
         }}
       />
     );
@@ -283,7 +283,17 @@ function Recovery({ codes, onDone }: { codes: string[]; onDone: () => void }) {
   );
 }
 
-function Done({ onContinue }: { onContinue: () => void }) {
+function Done({ onContinue }: { onContinue: (to: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  // OS-226: the whole Garmin history from here, as a background job followed on the Sync screen.
+  const loadHistory = async () => {
+    setBusy(true);
+    try {
+      await api.POST('/api/sync', { body: { history: true } });
+    } finally {
+      onContinue('/sync');
+    }
+  };
   return (
     <>
       <h1>{t('setup.doneTitle')}</h1>
@@ -292,7 +302,10 @@ function Done({ onContinue }: { onContinue: () => void }) {
         <li>{t('setup.next.garmin')}</li>
         <li>{t('setup.next.strava')}</li>
       </ul>
-      <button type="button" className="primary block" onClick={onContinue}>
+      <button type="button" className="primary block" onClick={() => void loadHistory()} disabled={busy}>
+        {t('setup.loadHistory')}
+      </button>
+      <button type="button" className="block" onClick={() => onContinue('/')}>
         {t('setup.goToApp')}
       </button>
     </>

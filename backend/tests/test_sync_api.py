@@ -167,3 +167,18 @@ def test_someone_elses_sync_is_not_found(ctx: Ctx) -> None:
         run_id = run.id
     assert ctx.http.get(f"/api/sync/{run_id}").status_code == 404
     assert ctx.http.get("/api/sync").json() == []
+
+
+def test_the_whole_history_is_a_background_job_that_resumes(ctx: Ctx) -> None:
+    started = ctx.http.post("/api/sync", json={"history": True})
+    assert started.status_code == 202
+    run = started.json()
+    assert run["trigger"] == "initial" and run["status"] == "queued"
+    with ctx.sessions() as db:
+        job = db.scalars(select(Job).where(Job.kind == "sync_garmin")).one()
+        assert job.payload == {"trigger": "initial", "run_id": run["id"], "since": "2000-01-01"}
+    # Hours later it is still the same load: pressing again follows it instead of starting another.
+    with ctx.sessions.begin() as db:
+        db.execute(update(SyncRun).values(started_at=datetime.now(UTC) - timedelta(hours=3)))
+    assert ctx.http.post("/api/sync", json={"history": True}).json()["id"] == run["id"]
+    assert ctx.http.post("/api/sync").json()["id"] == run["id"]

@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { Icon, type IconName } from '../Icon';
 import { t } from '../i18n';
 import { Lockup } from '../Lockup';
+import { useSync } from '../sync';
+import { useOnline } from '../offline';
+import { SyncProgress } from '../SyncProgress';
 import { useServerLanguage, useServerTheme } from '../theme';
 
 const SIDE: { to: string; icon: IconName; label: Parameters<typeof t>[0] }[] = [
@@ -36,6 +40,13 @@ export function Shell() {
   const navigate = useNavigate();
   useServerTheme();
   useServerLanguage();
+  const online = useOnline();
+  const sync = useSync();
+  const [sheet, setSheet] = useState(false);
+  const syncNow = () => {
+    setSheet(true);
+    if (!sync.running) sync.start.mutate(false);
+  };
   const nested = pathname.startsWith('/activities/') || pathname === '/settings';
 
   return (
@@ -53,10 +64,12 @@ export function Shell() {
           ))}
         </nav>
         <div className="grow" />
-        <Link to="/sync" className="syncbtn">
-          <Icon name="sync" />
+        <button type="button" className="syncbtn" onClick={syncNow} aria-busy={sync.running}>
+          <span className={sync.running ? 'spinning' : undefined}>
+            <Icon name="sync" />
+          </span>
           {t('nav.sync')}
-        </Link>
+        </button>
       </aside>
 
       <header className="topbar">
@@ -73,14 +86,45 @@ export function Shell() {
         <Link to="/" className="brand" aria-label="Zankup">
           <Lockup size="1.05rem" />
         </Link>
-        <Link to="/sync" className="iconbtn" aria-label={t('nav.sync')}>
-          <Icon name="sync" />
-        </Link>
+        <button
+          type="button"
+          className="iconbtn"
+          aria-label={t('nav.sync')}
+          onClick={syncNow}
+          aria-busy={sync.running}
+        >
+          <span className={sync.running ? 'spinning' : undefined}>
+            <Icon name="sync" />
+          </span>
+        </button>
       </header>
 
       <main className="main">
+        {!online && (
+          <p className="offline" role="status">
+            {t('offline.notice')}
+          </p>
+        )}
         <Outlet />
       </main>
+
+      {sheet && (sync.latest || sync.start.isError) && (
+        <div className="sheet" role="dialog" aria-label={t('sync.title')}>
+          {sync.start.isError ? (
+            <p role="alert">{sync.start.error.message}</p>
+          ) : (
+            sync.latest && <SyncProgress run={sync.latest} />
+          )}
+          <div className="actions">
+            <Link to="/sync" onClick={() => setSheet(false)}>
+              {t('sync.recent')}
+            </Link>
+            <button type="button" onClick={() => setSheet(false)}>
+              {t('sync.close')}
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav className="tabbar" aria-label={t('nav.main')}>
         {TABS.map((item) => (

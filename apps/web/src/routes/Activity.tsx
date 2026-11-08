@@ -60,6 +60,7 @@ export function Activity() {
       </section>
     );
   }
+  if (activity.data) return <Detail activity={activity.data} />; // kept offline, even if a refetch failed
   if (activity.isError) {
     return (
       <section className="page">
@@ -69,14 +70,11 @@ export function Activity() {
       </section>
     );
   }
-  if (!activity.data) {
-    return (
-      <section className="page">
-        <p className="state">{t('common.loading')}</p>
-      </section>
-    );
-  }
-  return <Detail activity={activity.data} />;
+  return (
+    <section className="page">
+      <p className="state">{t('common.loading')}</p>
+    </section>
+  );
 }
 
 function Detail({ activity }: { activity: ActivityDetail }) {

@@ -17,6 +17,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
+import { forgetOfflineData } from '../offline';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { deviceName } from '../signin/device';
@@ -375,6 +376,7 @@ function Account({ me }: { me: Me }) {
   const signOut = async () => {
     await api.POST('/api/auth/logout');
     queryClient.clear();
+    await forgetOfflineData();
     void navigate('/sign-in', { replace: true });
   };
 

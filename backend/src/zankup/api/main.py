@@ -14,6 +14,7 @@ from zankup.api.activities import router as activities_router
 from zankup.api.sync import router as sync_router
 from zankup.auth.passkeys import router as passkeys_router
 from zankup.auth.routes import router as auth_router
+from zankup.auth.setup import router as setup_router
 from zankup.core.config import Settings, get_settings
 from zankup.core.logging import configure_logging
 from zankup.db.session import database_status, get_engine
@@ -28,6 +29,19 @@ class Health(BaseModel):
     schema_revision: str | None = Field(description="Alembic revision applied to the database")
 
 
+def _announce_setup_code(settings: Settings) -> None:
+    """While the instance has no account, log the setup code for /setup (OS-221). Never fatal."""
+    from sqlalchemy.orm import Session
+
+    from zankup.auth.setup import announce_setup_code
+
+    try:
+        with Session(get_engine()) as db:
+            announce_setup_code(db, settings.jwt_secret.get_secret_value() if settings.jwt_secret else None)
+    except Exception:
+        log.exception("Could not prepare the setup code")
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level, settings.effective_log_format)
@@ -38,6 +52,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "Zankup API starting",
             extra={"version": __version__, "environment": settings.environment, **settings.integrations()},
         )
+        if settings.environment != "test":
+            _announce_setup_code(settings)
         worker = scheduler = None
         if settings.run_worker:
             from zankup.jobs.scheduler import build_scheduler
@@ -63,6 +79,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(auth_router)
     app.include_router(passkeys_router)
+    app.include_router(setup_router)
     app.include_router(activities_router)
     app.include_router(sync_router)
 

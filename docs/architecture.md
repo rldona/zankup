@@ -104,8 +104,8 @@ flowchart TB
 - **Restore** (tested in CI, and against the production bucket into a fresh database and data folder):
 
   ```bash
-  python -m zankup.backup list
-  python -m zankup.backup restore --database-url postgresql://… --data-dir /data [--date YYYY-MM-DD]
+  /app/.venv/bin/python -m zankup.backup list       # on Railway, through railway ssh
+  /app/.venv/bin/python -m zankup.backup restore --database-url postgresql://… --data-dir /data [--date YYYY-MM-DD]
   ```
 
   It drops and recreates every table in the target database, checks the dump against `latest.json` and copies back the FITs that are missing. To restore production: create a new Postgres, restore into it, point the `api` service's `DATABASE_URL` at it and run the restore command in the `api` service for `/data`.
@@ -146,7 +146,7 @@ The application is packaged as a container (Dockerfile) so the provider can be c
 | **Historical computation engine** | Job queue in Postgres and a worker on Railway. Processes history incrementally, with versioned full recomputation. Produces estimates, curves, progress and events | Pending |
 | **REST API** | FastAPI, OpenAPI generated automatically. Used by the PWA and Android | Pending |
 | **Authentication** | One user per instance: sign-in with password + TOTP, a **passkey** (WebAuthn, bound to the instance's domain; it replaces both password and code because the device checks the fingerprint, face or PIN) or a **Google account** (OpenID Connect, only the linked account). The PWA uses an `httpOnly` session cookie (same origin, thanks to the Vercel proxy). Android uses a short access token and a long refresh token. Devices can be revoked | Password + TOTP and passkeys done (OS-110, OS-405 backend); Google pending |
-| **Sign-up and recovery** | One-time initial sign-up protected by a **setup code** (printed in the server logs on first boot). Recovery by email with a single-use link (30 min) that also requires the TOTP code or a recovery code | Pending |
+| **Sign-up and recovery** | One-time initial sign-up at `/setup`, protected by a **setup code** that the server writes to its logs on every start while there is no account: name, e-mail and password (12+ characters, checked against Have I Been Pwned by k-anonymity), TOTP with a QR code, and 8 single-use recovery codes that replace the TOTP code at sign-in. Sign-up closes for good once TOTP is on, and it takes over the owner account so already-synced activities stay. Recovery by email with a single-use link (30 min) that also requires the TOTP code or a recovery code | Sign-up done (OS-221); recovery pending (OS-222) |
 | **Transactional email** | Resend, one account per instance (the test sender delivers to the owner's address, so no custom domain is required): recovery links, security alerts (password changed, new sign-in) and an optional weekly report, in the user's language | Pending |
 | **Google Health connector** | Google OAuth and Google Health API webhooks (Fitbit Air): sleep with stages, HRV, resting HR, SpO₂. Priority rules between sources | Phase 6 |
 | **AI layer** | Minimised context (no coordinates or profile data), per-activity summaries, weekly report (batched) and a Coach with tools over our API | Phase 7 |
@@ -452,7 +452,7 @@ python -m zankup.sync --since 2019-01-01    # or from a given day
 - The range is listed in **windows of 180 days, oldest first**. Each window is downloaded and queued before the next one is listed, with a pause between downloads (`--pause`, 1 s by default; the client also honours `Retry-After` on 429). About 1,800 activities take under an hour.
 - **Imports run while it downloads**, in a thread of the command, so activities appear in the app as it advances. Progress is in the run (`GET /api/sync`): `window` of `windows`, `listed`, `downloaded`.
 - **Safe to interrupt and run again.** An interrupted run is recorded as `error`, and the next one skips everything already downloaded or imported. Only one sync runs at a time, so the 15-minute sync skips its slots while the load holds the lock.
-- **On Railway**, run it in the `api` service (it needs the `/data` volume): `railway ssh` into the service, then `python -m zankup.sync --all`. If the connection drops, the command stops; run it again to carry on.
+- **On Railway**, run it in the `api` service (it needs the `/data` volume) inside a `tmux` session, so closing the terminal does not stop it: `railway link`, `railway ssh --session history`, then `/app/.venv/bin/python -m zankup.sync --all`. The SSH shell does not load the image's `PATH`, so plain `python` is the system one and cannot find the app. `Ctrl+B` then `D` leaves it running; `railway ssh --session history` comes back to it. A button in the app replaces all this (OS-226).
 
 ## Risks
 

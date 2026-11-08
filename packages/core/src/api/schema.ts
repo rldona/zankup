@@ -101,6 +101,86 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/activities': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Activities
+     * @description The feed: newest first.
+     */
+    get: operations['listActivities'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/activities/{activity_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Activity
+     * @description Summary, laps, per-km splits and best efforts. The series themselves are in `/streams`.
+     */
+    get: operations['getActivity'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/activities/{activity_id}/streams': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Activity Streams
+     * @description All the series of an activity. Sent as stored, gzip-compressed, to clients that accept it.
+     */
+    get: operations['getActivityStreams'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/activities/{activity_id}/fit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Activity Fit
+     * @description The original FIT file, exactly as received from the source.
+     */
+    get: operations['getActivityFit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -127,6 +207,192 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** ActivityDetail */
+    ActivityDetail: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string | null;
+      /**
+       * Sport
+       * @description run, ride, strength, walk, row, swim or other
+       */
+      sport: string;
+      /** Sub Sport */
+      sub_sport: string | null;
+      /** Source */
+      source: string;
+      /**
+       * Start Utc
+       * Format: date-time
+       */
+      start_utc: string;
+      /**
+       * Timezone
+       * @description UTC offset when recorded, e.g. "+01:00"
+       */
+      timezone: string | null;
+      /** Duration S */
+      duration_s: number;
+      /** Moving S */
+      moving_s: number | null;
+      /** Distance M */
+      distance_m: number | null;
+      /** Ascent M */
+      ascent_m: number | null;
+      /** Avg Hr */
+      avg_hr: number | null;
+      /** Avg Power */
+      avg_power: number | null;
+      /** Has Gps */
+      has_gps: boolean;
+      /**
+       * Route
+       * @description Simplified route as an encoded polyline (precision 5)
+       */
+      route: string | null;
+      /** Description */
+      description: string | null;
+      /** Descent M */
+      descent_m: number | null;
+      /** Max Hr */
+      max_hr: number | null;
+      /** Normalized Power */
+      normalized_power: number | null;
+      /** Calories */
+      calories: number | null;
+      /** Training Effect */
+      training_effect: number | null;
+      /** Device */
+      device: string | null;
+      /**
+       * Bbox
+       * @description [min_lat, min_lon, max_lat, max_lon]
+       */
+      bbox: number[] | null;
+      /** Has Fit */
+      has_fit: boolean;
+      /**
+       * Imported At
+       * Format: date-time
+       */
+      imported_at: string;
+      /** Laps */
+      laps: components['schemas']['LapOut'][];
+      /** Splits */
+      splits: components['schemas']['SplitOut'][];
+      /** Best Efforts */
+      best_efforts: components['schemas']['BestEffortOut'][];
+      streams: components['schemas']['StreamsInfo'] | null;
+    };
+    /** ActivityPage */
+    ActivityPage: {
+      /** Items */
+      items: components['schemas']['ActivitySummary'][];
+      /**
+       * Next Cursor
+       * @description Pass it as `cursor` for the next page; null at the end
+       */
+      next_cursor: string | null;
+    };
+    /**
+     * ActivityStreams
+     * @description One array per series, all the same length; missing samples are null. Units are SI.
+     */
+    ActivityStreams: {
+      /**
+       * T
+       * @description Seconds from the start
+       */
+      t: number[];
+      /** Lat */
+      lat?: (number | null)[] | null;
+      /** Lon */
+      lon?: (number | null)[] | null;
+      /**
+       * Dist
+       * @description Metres
+       */
+      dist?: (number | null)[] | null;
+      /**
+       * Alt
+       * @description Metres
+       */
+      alt?: (number | null)[] | null;
+      /**
+       * Hr
+       * @description Beats per minute
+       */
+      hr?: (number | null)[] | null;
+      /**
+       * Cad
+       * @description Steps or revolutions per minute
+       */
+      cad?: (number | null)[] | null;
+      /**
+       * Speed
+       * @description m/s
+       */
+      speed?: (number | null)[] | null;
+      /**
+       * Power
+       * @description Watts
+       */
+      power?: (number | null)[] | null;
+      /**
+       * Temp
+       * @description °C
+       */
+      temp?: (number | null)[] | null;
+    };
+    /**
+     * ActivitySummary
+     * @description What a feed card needs.
+     */
+    ActivitySummary: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string | null;
+      /**
+       * Sport
+       * @description run, ride, strength, walk, row, swim or other
+       */
+      sport: string;
+      /** Sub Sport */
+      sub_sport: string | null;
+      /** Source */
+      source: string;
+      /**
+       * Start Utc
+       * Format: date-time
+       */
+      start_utc: string;
+      /**
+       * Timezone
+       * @description UTC offset when recorded, e.g. "+01:00"
+       */
+      timezone: string | null;
+      /** Duration S */
+      duration_s: number;
+      /** Moving S */
+      moving_s: number | null;
+      /** Distance M */
+      distance_m: number | null;
+      /** Ascent M */
+      ascent_m: number | null;
+      /** Avg Hr */
+      avg_hr: number | null;
+      /** Avg Power */
+      avg_power: number | null;
+      /** Has Gps */
+      has_gps: boolean;
+      /**
+       * Route
+       * @description Simplified route as an encoded polyline (precision 5)
+       */
+      route: string | null;
+    };
     /** AppTokens */
     AppTokens: {
       /** Access Token */
@@ -141,6 +407,25 @@ export interface components {
       token_type: 'bearer';
       /** Expires In */
       expires_in: number;
+    };
+    /** BestEffortOut */
+    BestEffortOut: {
+      /**
+       * Distance Key
+       * @description e.g. 1k, 5k, half_marathon
+       */
+      distance_key: string;
+      /** Distance M */
+      distance_m: number;
+      /** Time S */
+      time_s: number;
+      /**
+       * Start S
+       * @description Seconds from the start of the activity
+       */
+      start_s: number;
+      /** Start Distance M */
+      start_distance_m: number;
     };
     /** Challenge */
     Challenge: {
@@ -178,6 +463,30 @@ export interface components {
        * @description Alembic revision applied to the database
        */
       schema_revision: string | null;
+    };
+    /** LapOut */
+    LapOut: {
+      /** Idx */
+      idx: number;
+      /**
+       * Start Utc
+       * Format: date-time
+       */
+      start_utc: string;
+      /** Duration S */
+      duration_s: number;
+      /** Distance M */
+      distance_m: number | null;
+      /** Avg Hr */
+      avg_hr: number | null;
+      /** Max Hr */
+      max_hr: number | null;
+      /** Avg Power */
+      avg_power: number | null;
+      /** Ascent M */
+      ascent_m: number | null;
+      /** Descent M */
+      descent_m: number | null;
     };
     /** LoginRequest */
     LoginRequest: {
@@ -217,6 +526,27 @@ export interface components {
     RefreshRequest: {
       /** Refresh Token */
       refresh_token: string;
+    };
+    /** SplitOut */
+    SplitOut: {
+      /** Distance M */
+      distance_m: number;
+      /** Time S */
+      time_s: number;
+      /** Elevation Change M */
+      elevation_change_m: number | null;
+      /** Avg Hr */
+      avg_hr: number | null;
+    };
+    /** StreamsInfo */
+    StreamsInfo: {
+      /**
+       * Series
+       * @description Series present, always including t
+       */
+      series: string[];
+      /** Sample Count */
+      sample_count: number;
     };
     /** TotpRequest */
     TotpRequest: {
@@ -380,6 +710,161 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Me'];
+        };
+      };
+    };
+  };
+  listActivities: {
+    parameters: {
+      query?: {
+        cursor?: string | null;
+        limit?: number;
+        /** @description Only these sports (repeat to combine) */
+        sport?: string[] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ActivityPage'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ActivityDetail'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getActivityStreams: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Gzip-encoded JSON */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ActivityStreams'];
+        };
+      };
+      /** @description Not modified (If-None-Match) */
+      304: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description No such activity, or it has no series */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getActivityFit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/vnd.ant.fit': string;
+        };
+      };
+      /** @description Not modified (If-None-Match) */
+      304: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description No such activity, or it was not imported from a FIT file */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
         };
       };
     };

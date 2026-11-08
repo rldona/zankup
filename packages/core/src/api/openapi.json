@@ -175,6 +175,231 @@
         }
       }
     },
+    "/api/activities": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "List Activities",
+        "description": "The feed: newest first.",
+        "operationId": "listActivities",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports (repeat to combine)",
+              "title": "Sport"
+            },
+            "description": "Only these sports (repeat to combine)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{activity_id}": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Get Activity",
+        "description": "Summary, laps, per-km splits and best efforts. The series themselves are in `/streams`.",
+        "operationId": "getActivity",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{activity_id}/streams": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Get Activity Streams",
+        "description": "All the series of an activity. Sent as stored, gzip-compressed, to clients that accept it.",
+        "operationId": "getActivityStreams",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gzip-encoded JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityStreams"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified (If-None-Match)"
+          },
+          "404": {
+            "description": "No such activity, or it has no series"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{activity_id}/fit": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Get Activity Fit",
+        "description": "The original FIT file, exactly as received from the source.",
+        "operationId": "getActivityFit",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/vnd.ant.fit": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified (If-None-Match)"
+          },
+          "404": {
+            "description": "No such activity, or it was not imported from a FIT file"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health",
@@ -197,6 +422,696 @@
   },
   "components": {
     "schemas": {
+      "ActivityDetail": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport",
+            "description": "run, ride, strength, walk, row, swim or other"
+          },
+          "sub_sport": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub Sport"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "start_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Utc"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone",
+            "description": "UTC offset when recorded, e.g. \"+01:00\""
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "moving_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moving S"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "ascent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascent M"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          },
+          "avg_power": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Power"
+          },
+          "has_gps": {
+            "type": "boolean",
+            "title": "Has Gps"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route",
+            "description": "Simplified route as an encoded polyline (precision 5)"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "descent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descent M"
+          },
+          "max_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Hr"
+          },
+          "normalized_power": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized Power"
+          },
+          "calories": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calories"
+          },
+          "training_effect": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Training Effect"
+          },
+          "device": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
+          "bbox": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox",
+            "description": "[min_lat, min_lon, max_lat, max_lon]"
+          },
+          "has_fit": {
+            "type": "boolean",
+            "title": "Has Fit"
+          },
+          "imported_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Imported At"
+          },
+          "laps": {
+            "items": {
+              "$ref": "#/components/schemas/LapOut"
+            },
+            "type": "array",
+            "title": "Laps"
+          },
+          "splits": {
+            "items": {
+              "$ref": "#/components/schemas/SplitOut"
+            },
+            "type": "array",
+            "title": "Splits"
+          },
+          "best_efforts": {
+            "items": {
+              "$ref": "#/components/schemas/BestEffortOut"
+            },
+            "type": "array",
+            "title": "Best Efforts"
+          },
+          "streams": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StreamsInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sport",
+          "sub_sport",
+          "source",
+          "start_utc",
+          "timezone",
+          "duration_s",
+          "moving_s",
+          "distance_m",
+          "ascent_m",
+          "avg_hr",
+          "avg_power",
+          "has_gps",
+          "route",
+          "description",
+          "descent_m",
+          "max_hr",
+          "normalized_power",
+          "calories",
+          "training_effect",
+          "device",
+          "bbox",
+          "has_fit",
+          "imported_at",
+          "laps",
+          "splits",
+          "best_efforts",
+          "streams"
+        ],
+        "title": "ActivityDetail"
+      },
+      "ActivityPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivitySummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Pass it as `cursor` for the next page; null at the end"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "ActivityPage"
+      },
+      "ActivityStreams": {
+        "properties": {
+          "t": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "T",
+            "description": "Seconds from the start"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "dist": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dist",
+            "description": "Metres"
+          },
+          "alt": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alt",
+            "description": "Metres"
+          },
+          "hr": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr",
+            "description": "Beats per minute"
+          },
+          "cad": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cad",
+            "description": "Steps or revolutions per minute"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed",
+            "description": "m/s"
+          },
+          "power": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power",
+            "description": "Watts"
+          },
+          "temp": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temp",
+            "description": "°C"
+          }
+        },
+        "type": "object",
+        "required": [
+          "t"
+        ],
+        "title": "ActivityStreams",
+        "description": "One array per series, all the same length; missing samples are null. Units are SI."
+      },
+      "ActivitySummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport",
+            "description": "run, ride, strength, walk, row, swim or other"
+          },
+          "sub_sport": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub Sport"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "start_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Utc"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone",
+            "description": "UTC offset when recorded, e.g. \"+01:00\""
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "moving_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moving S"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "ascent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascent M"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          },
+          "avg_power": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Power"
+          },
+          "has_gps": {
+            "type": "boolean",
+            "title": "Has Gps"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route",
+            "description": "Simplified route as an encoded polyline (precision 5)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sport",
+          "sub_sport",
+          "source",
+          "start_utc",
+          "timezone",
+          "duration_s",
+          "moving_s",
+          "distance_m",
+          "ascent_m",
+          "avg_hr",
+          "avg_power",
+          "has_gps",
+          "route"
+        ],
+        "title": "ActivitySummary",
+        "description": "What a feed card needs."
+      },
       "AppTokens": {
         "properties": {
           "access_token": {
@@ -225,6 +1140,41 @@
           "expires_in"
         ],
         "title": "AppTokens"
+      },
+      "BestEffortOut": {
+        "properties": {
+          "distance_key": {
+            "type": "string",
+            "title": "Distance Key",
+            "description": "e.g. 1k, 5k, half_marathon"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "start_s": {
+            "type": "number",
+            "title": "Start S",
+            "description": "Seconds from the start of the activity"
+          },
+          "start_distance_m": {
+            "type": "number",
+            "title": "Start Distance M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_key",
+          "distance_m",
+          "time_s",
+          "start_s",
+          "start_distance_m"
+        ],
+        "title": "BestEffortOut"
       },
       "Challenge": {
         "properties": {
@@ -302,6 +1252,102 @@
           "schema_revision"
         ],
         "title": "Health"
+      },
+      "LapOut": {
+        "properties": {
+          "idx": {
+            "type": "integer",
+            "title": "Idx"
+          },
+          "start_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Utc"
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          },
+          "max_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Hr"
+          },
+          "avg_power": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Power"
+          },
+          "ascent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascent M"
+          },
+          "descent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descent M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "idx",
+          "start_utc",
+          "duration_s",
+          "distance_m",
+          "avg_hr",
+          "max_hr",
+          "avg_power",
+          "ascent_m",
+          "descent_m"
+        ],
+        "title": "LapOut"
       },
       "LoginRequest": {
         "properties": {
@@ -390,6 +1436,70 @@
           "refresh_token"
         ],
         "title": "RefreshRequest"
+      },
+      "SplitOut": {
+        "properties": {
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "elevation_change_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elevation Change M"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_m",
+          "time_s",
+          "elevation_change_m",
+          "avg_hr"
+        ],
+        "title": "SplitOut"
+      },
+      "StreamsInfo": {
+        "properties": {
+          "series": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Series",
+            "description": "Series present, always including t"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series",
+          "sample_count"
+        ],
+        "title": "StreamsInfo"
       },
       "TotpRequest": {
         "properties": {

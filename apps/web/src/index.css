@@ -47,3 +47,7 @@ body {
 .status-down {
   color: #d64545;
 }
+
+.status-degraded {
+  color: #d9480f;
+}

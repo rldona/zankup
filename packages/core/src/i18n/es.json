@@ -3,6 +3,7 @@
   "app.claim": "Tus datos deportivos, en otro nivel.",
   "api.checking": "Comprobando la API…",
   "api.connected": "API conectada · v{version}",
+  "api.degraded": "API conectada · base de datos no disponible",
   "api.down": "API no disponible",
   "sport.run": "Carrera",
   "sport.ride": "Bicicleta",

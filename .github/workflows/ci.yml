@@ -34,6 +34,11 @@ jobs:
         run: uv run mypy
       - name: Test
         run: uv run pytest -W error
+      - name: OpenAPI document is up to date
+        run: |
+          uv run python -m opensport.api.openapi_export
+          git diff --exit-code -- packages/core/src/api/openapi.json || {
+            echo "::error::Run 'pnpm generate:api' and commit packages/core/src/api/"; exit 1; }
       - name: Docker build
         run: docker build -f backend/Dockerfile -t opensport-api:ci .
 
@@ -54,6 +59,13 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Lint
         run: pnpm lint
+      - name: Type check
+        run: pnpm typecheck
+      - name: API types are up to date
+        run: |
+          pnpm --filter @opensport/core generate:types
+          git diff --exit-code -- packages/core/src/api/schema.ts || {
+            echo "::error::Run 'pnpm generate:api' and commit packages/core/src/api/"; exit 1; }
       - name: Format
         run: pnpm format:check
       - name: Test

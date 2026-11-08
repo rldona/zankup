@@ -12,9 +12,11 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -b"
   },
   "dependencies": {
+    "@opensport/core": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

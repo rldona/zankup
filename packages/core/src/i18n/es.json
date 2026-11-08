@@ -1,0 +1,14 @@
+{
+  "app.name": "OpenSport",
+  "app.claim": "Tus datos deportivos, en otro nivel.",
+  "api.checking": "Comprobando la API…",
+  "api.connected": "API conectada · v{version}",
+  "api.down": "API no disponible",
+  "sport.run": "Carrera",
+  "sport.ride": "Bicicleta",
+  "sport.strength": "Fuerza",
+  "sport.walk": "Caminata",
+  "sport.row": "Remo",
+  "sport.swim": "Natación",
+  "sport.other": "Otro"
+}

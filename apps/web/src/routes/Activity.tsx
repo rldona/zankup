@@ -1,6 +1,6 @@
 import { ApiError, activityQuery, formatDuration } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router';
+import { useParams } from 'react-router';
 
 import { api } from '../api';
 import { locale, t } from '../i18n';
@@ -11,8 +11,7 @@ export function Activity() {
   const activity = useQuery({ ...activityQuery(api, id), enabled: Number.isInteger(id) && id > 0 });
 
   return (
-    <section>
-      <Link to="/">← {t('activity.back')}</Link>
+    <section className="page">
       {activity.isPending && <p className="state">{t('common.loading')}</p>}
       {(!Number.isInteger(id) || (activity.error instanceof ApiError && activity.error.status === 404)) && (
         <p className="state">{t('activity.notFound')}</p>

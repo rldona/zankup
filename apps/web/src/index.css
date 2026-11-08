@@ -66,44 +66,239 @@ button {
   color: var(--run);
 }
 
-/* Signed-in frame (placeholder: the responsive layout is OS-202). */
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
+/* Signed-in frame (OS-202), from the prototype: sidebar and two columns on desktop; top bar and
+   bottom tab bar below 1024 px, with the phone's safe areas. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
 }
 
-.topbar .brand {
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--fg) 22%, transparent);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+svg.i {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  height: 100dvh;
+}
+
+.side {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 12px;
+  gap: 4px;
+}
+
+.side .brand {
   color: var(--fg);
+  text-decoration: none;
+  padding: 4px 10px 18px;
+}
+
+.side nav {
+  display: grid;
+  gap: 4px;
+}
+
+.side nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-weight: 550;
   text-decoration: none;
 }
 
-.topbar nav {
+.side nav a:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.side nav a.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.grow {
   flex: 1;
 }
 
-.topbar nav a {
-  color: var(--muted);
+.syncbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 11px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 650;
   text-decoration: none;
-  font-weight: 600;
 }
 
-.topbar nav a.active {
+.main {
+  overflow: auto;
+  min-width: 0;
+}
+
+.topbar,
+.tabbar {
+  display: none;
+}
+
+.page {
+  max-width: 760px;
+  padding: 20px;
+}
+
+.feedwrap {
+  display: grid;
+  grid-template-columns: 400px minmax(0, 1fr);
+  height: 100%;
+}
+
+.feedcol {
+  border-right: 1px solid var(--line);
+  overflow: auto;
+  padding: 20px;
+}
+
+.detailcol {
+  overflow: auto;
+  min-width: 0;
+}
+
+.pick {
+  padding: 20px;
+}
+
+.list a.on {
+  background: var(--accent-soft);
+  margin: 0 -12px;
+  padding-inline: 12px;
+  border-radius: 10px;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.iconbtn {
+  border: 0;
+  background: var(--surface-2);
   color: var(--fg);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
 }
 
-.who {
-  color: var(--muted);
-  font-size: 0.875rem;
-}
+@media (max-width: 1023px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
 
-.content {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 16px;
+  .side {
+    display: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .topbar .brand {
+    flex: 1;
+    min-width: 0;
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  .tabbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .tabbar a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 4px;
+    text-decoration: none;
+  }
+
+  .tabbar a.on {
+    color: var(--accent);
+  }
+
+  .feedwrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feedcol {
+    border-right: 0;
+    padding: 14px 16px;
+  }
+
+  .detailcol {
+    display: none;
+  }
+
+  .feedwrap.detail .feedcol {
+    display: none;
+  }
+
+  .feedwrap.detail .detailcol {
+    display: block;
+  }
+
+  .page {
+    padding: 14px 16px;
+  }
 }
 
 .list {

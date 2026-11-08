@@ -8,7 +8,6 @@ import { App } from './App';
 import { safeNext } from './next';
 import { routes } from './router';
 
-const HEALTH = { status: 'ok', version: '0.1.0', database: 'ok', schema_revision: 'abc' };
 const ME = { id: 1, email: 'runner@example.com', display_name: null, totp_enabled: true };
 const RUN = {
   id: 7,
@@ -61,9 +60,9 @@ describe('app skeleton', () => {
   });
 
   it('sends visitors without a session to sign-in, keeping where they wanted to go', async () => {
-    mockApi({ '/api/auth/me': signedOut, '/api/health': () => Response.json(HEALTH) });
+    mockApi({ '/api/auth/me': signedOut });
     const router = renderAt('/activities/7');
-    expect(await screen.findByText('API connected · v0.1.0')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(screen.getByText('Your sports data, from start to finish.')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sign-in');
     expect(router.state.location.search).toBe('?next=%2Factivities%2F7');
@@ -122,11 +121,10 @@ describe('app skeleton', () => {
         return new Response(null, { status: 204 });
       },
       '/api/activities': () => Response.json({ items: [], next_cursor: null }),
-      '/api/health': () => Response.json(HEALTH),
     });
     const router = renderAt('/');
     await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
-    expect(await screen.findByText('API connected · v0.1.0')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sign-in');
     expect(calls).toContain('POST /api/auth/logout');
   });

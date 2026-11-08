@@ -2069,11 +2069,68 @@
               "sunset"
             ],
             "title": "Theme"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "es"
+            ],
+            "title": "Language"
+          },
+          "units": {
+            "type": "string",
+            "enum": [
+              "metric",
+              "imperial"
+            ],
+            "title": "Units"
+          },
+          "hr_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Max",
+            "description": "Max heart rate set by the user"
+          },
+          "hr_rest": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Rest",
+            "description": "Resting heart rate set by the user"
+          },
+          "hr_max_estimate": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Max Estimate",
+            "description": "Highest heart rate recorded in an activity: the zones use it until hr_max is set"
           }
         },
         "type": "object",
         "required": [
-          "theme"
+          "theme",
+          "language",
+          "units",
+          "hr_max",
+          "hr_rest",
+          "hr_max_estimate"
         ],
         "title": "Preferences"
       },
@@ -2099,11 +2156,67 @@
               }
             ],
             "title": "Theme"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "en",
+                  "es"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "metric",
+                  "imperial"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "hr_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 240.0,
+                "minimum": 100.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Max"
+          },
+          "hr_rest": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 120.0,
+                "minimum": 25.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Rest"
           }
         },
         "type": "object",
         "title": "PreferencesUpdate",
-        "description": "Only the fields sent are changed."
+        "description": "Only the fields sent are changed. Send null for hr_max or hr_rest to clear them."
       },
       "RefreshRequest": {
         "properties": {

@@ -8,6 +8,7 @@ import { RequireSession } from './routes/RequireSession';
 import { Setup } from './routes/Setup';
 import { Shell } from './routes/Shell';
 import { SignIn } from './routes/SignIn';
+import { Catalogue } from './routes/Catalogue';
 import { Settings } from './routes/Settings';
 import { Soon } from './routes/Soon';
 
@@ -32,6 +33,7 @@ export const routes: RouteObject[] = [
           { path: 'stats', element: <Soon title="nav.stats" body="soon.stats" /> },
           { path: 'sync', element: <Soon title="nav.sync" body="soon.sync" /> },
           { path: 'settings', element: <Settings /> },
+          { path: 'catalogue', element: <Catalogue /> },
           { path: 'profile', element: <Profile /> },
           { path: '*', element: <NotFound /> },
         ],

@@ -16,6 +16,7 @@ export type Me = Json<'/api/auth/me', 'get'>;
 export type ActivityPage = Json<'/api/activities', 'get'>;
 export type ActivitySummary = ActivityPage['items'][number];
 export type MonthTotals = Json<'/api/activities/months', 'get'>[number];
+export type ActivityStreams = Json<'/api/activities/{activity_id}/streams', 'get'>;
 export type ActivityDetail = Json<'/api/activities/{activity_id}', 'get'>;
 export type Health = Json<'/api/health', 'get'>;
 export type SetupStatus = Json<'/api/setup', 'get'>;
@@ -50,6 +51,7 @@ export const queryKeys = {
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
   months: (sport?: readonly string[]) => ['activities', 'months', { sport: sport ?? [] }] as const,
   activity: (id: number) => ['activity', id] as const,
+  streams: (id: number) => ['activity', id, 'streams'] as const,
 };
 
 export function healthQuery(api: ApiClient) {
@@ -122,5 +124,20 @@ export function settingsQuery(api: ApiClient) {
     queryKey: queryKeys.settings,
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/settings', { signal })),
+  };
+}
+
+/** All the series of an activity (sent gzip-compressed; the browser decompresses them). */
+export function streamsQuery(api: ApiClient, id: number) {
+  return {
+    queryKey: queryKeys.streams(id),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities/{activity_id}/streams', {
+          params: { path: { activity_id: id } },
+          signal,
+        }),
+      ),
+    staleTime: Infinity, // a recorded activity's series never change
   };
 }

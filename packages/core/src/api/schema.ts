@@ -829,14 +829,47 @@ export interface components {
        * @enum {string}
        */
       theme: 'system' | 'light' | 'dark' | 'oled' | 'highContrast' | 'forest' | 'ocean' | 'sunset';
+      /**
+       * Language
+       * @enum {string}
+       */
+      language: 'en' | 'es';
+      /**
+       * Units
+       * @enum {string}
+       */
+      units: 'metric' | 'imperial';
+      /**
+       * Hr Max
+       * @description Max heart rate set by the user
+       */
+      hr_max: number | null;
+      /**
+       * Hr Rest
+       * @description Resting heart rate set by the user
+       */
+      hr_rest: number | null;
+      /**
+       * Hr Max Estimate
+       * @description Highest heart rate recorded in an activity: the zones use it until hr_max is set
+       */
+      hr_max_estimate: number | null;
     };
     /**
      * PreferencesUpdate
-     * @description Only the fields sent are changed.
+     * @description Only the fields sent are changed. Send null for hr_max or hr_rest to clear them.
      */
     PreferencesUpdate: {
       /** Theme */
       theme?: ('system' | 'light' | 'dark' | 'oled' | 'highContrast' | 'forest' | 'ocean' | 'sunset') | null;
+      /** Language */
+      language?: ('en' | 'es') | null;
+      /** Units */
+      units?: ('metric' | 'imperial') | null;
+      /** Hr Max */
+      hr_max?: number | null;
+      /** Hr Rest */
+      hr_rest?: number | null;
     };
     /** RefreshRequest */
     RefreshRequest: {

@@ -502,6 +502,290 @@ svg.i {
   margin: 12px 0 24px;
 }
 
+/* Activity detail (OS-205 to OS-208, OS-216), from the prototype. */
+.page.detail {
+  max-width: 980px;
+}
+
+.dhead {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.dhead h1 {
+  font-size: 22px;
+  margin: 0;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.dhead .sp {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.dhead .sp svg.i {
+  width: 24px;
+  height: 24px;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column-reverse;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.kpi dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.kpi dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.ph {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.ph h2 {
+  font-size: 16px;
+  margin: 0;
+  flex: 1;
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.seg button {
+  border: 0;
+  border-radius: 0;
+  padding: 5px 10px;
+  font-size: 13px;
+  background: var(--surface);
+}
+
+.seg button + button {
+  border-left: 1px solid var(--line);
+}
+
+.seg button[aria-pressed='true'] {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend i {
+  display: block;
+  width: 72px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.map {
+  height: 340px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+  margin: 0 0 8px;
+}
+
+.map.fallback {
+  height: auto;
+  padding: 8px;
+}
+
+.map.fallback svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.map.fallback polyline {
+  fill: none;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.map.fallback figcaption {
+  margin: 6px 4px 0;
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  min-height: 24px;
+  margin: 6px 2px 0;
+  font-size: 13px;
+}
+
+.readout.note {
+  margin-top: 6px;
+}
+
+.readout.section b {
+  color: var(--accent);
+}
+
+button.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.panel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.panel th,
+.panel td {
+  text-align: left;
+  padding: 7px 8px 7px 0;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.panel thead th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.panel tr:last-child > * {
+  border-bottom: 0;
+}
+
+.panel .muted {
+  color: var(--muted);
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+.track {
+  width: 40%;
+}
+
+.track i {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--accent);
+  min-width: 2px;
+}
+
+.zbar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: var(--surface-2);
+}
+
+.zbar i {
+  display: block;
+}
+
+.desc {
+  white-space: pre-line;
+  margin: 0;
+}
+
+.origin {
+  margin: 6px 2px 30px;
+}
+
+.spark {
+  width: 100%;
+  height: 30px;
+  display: block;
+}
+
+.spark polyline {
+  fill: none;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+/* MapLibre's controls in the theme's colours. */
+.maplibregl-ctrl-group,
+.maplibregl-ctrl-attrib {
+  background: var(--surface) !important;
+  color: var(--muted);
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--muted);
+}
+
+/* Chart catalogue (OS-215): each block is drawn in its own theme. */
+.cat {
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.catgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.catgrid figure {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
 /* Theme picker (OS-214): each preview is a tiny app drawn with its own theme's variables. */
 .page h2 {
   font-size: 16px;

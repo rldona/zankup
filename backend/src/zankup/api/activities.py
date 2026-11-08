@@ -122,6 +122,17 @@ class BestEffortOut(BaseModel):
     start_distance_m: float
 
 
+class SetOut(BaseModel):
+    """A strength set (OS-225)."""
+
+    start_s: float
+    duration_s: float
+    kind: str = Field(description="active or rest")
+    reps: int | None
+    weight_kg: float | None
+    category: str | None = Field(description="FIT exercise category, e.g. squat; null when unknown")
+
+
 class StreamsInfo(BaseModel):
     series: list[str] = Field(description="Series present, always including t")
     sample_count: int
@@ -141,6 +152,7 @@ class ActivityDetail(ActivitySummary):
     laps: list[LapOut]
     splits: list[SplitOut]
     best_efforts: list[BestEffortOut]
+    sets: list[SetOut] = Field(description="Strength sets, rests included; empty for other activities")
     streams: StreamsInfo | None
 
 
@@ -413,6 +425,7 @@ def get_activity(activity_id: int, db: DbSession, user: CurrentUser) -> Activity
         laps=[LapOut.model_validate(lap, from_attributes=True) for lap in laps],
         splits=[SplitOut.model_validate(split) for split in activity.splits or []],
         best_efforts=[BestEffortOut.model_validate(e, from_attributes=True) for e in efforts],
+        sets=[SetOut.model_validate(s) for s in activity.sets or []],
         streams=StreamsInfo(series=stream.series, sample_count=stream.sample_count) if stream else None,
     )
 

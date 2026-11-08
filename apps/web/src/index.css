@@ -1364,6 +1364,43 @@ a.button.block {
   }
 }
 
+/* Strength (OS-225): sets by exercise and the body map. */
+.exercise h3 {
+  margin: 12px 0 4px;
+}
+
+.bodymap {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.bodymap figure {
+  margin: 0;
+  text-align: center;
+}
+
+.bodymap svg {
+  width: 110px;
+  height: 220px;
+}
+
+.bodymap .body {
+  fill: var(--surface-2);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.bodymap .muscle {
+  fill: var(--line);
+  stroke: var(--surface);
+  stroke-width: 0.6;
+}
+
+.bodymap .muscle.on {
+  fill: var(--strength);
+}
+
 /* Chart catalogue (OS-215): each block is drawn in its own theme. */
 .cat {
   background: var(--surface);

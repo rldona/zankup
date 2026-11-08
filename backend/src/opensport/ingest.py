@@ -15,13 +15,15 @@ from typing import Any
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from opensport.db.models import Activity, Lap, Stream
+import opensport_metrics as metrics
+from opensport.db.models import Activity, BestEffort, Lap, Stream
 from opensport.fit.parser import ParsedActivity, parse_fit
 from opensport.fit.streams import ENCODING, encode_streams, route_polyline
 from opensport.storage import RawStore, raw_key
 
 log = logging.getLogger("opensport.ingest")
 
+BEST_EFFORT_SPORTS = {"run"}  # running distances (400 m … marathon); cycling gets power curves in OS-306
 SPORT_NAMES = {
     "run": "Run",
     "ride": "Ride",
@@ -50,7 +52,8 @@ def _apply(activity: Activity, parsed: ParsedActivity) -> None:
     activity.start_utc = parsed.start_utc
     activity.timezone = parsed.timezone
     activity.duration_s = parsed.duration_s
-    activity.moving_s = parsed.timer_s  # refined with speed-based moving time in OS-107
+    streams = parsed.streams
+    activity.moving_s = metrics.moving_time(streams.t, streams.speed) or parsed.timer_s
     activity.distance_m = parsed.distance_m
     activity.ascent_m = parsed.ascent_m
     activity.descent_m = parsed.descent_m
@@ -64,11 +67,36 @@ def _apply(activity: Activity, parsed: ParsedActivity) -> None:
     activity.has_gps = parsed.has_gps
     activity.bbox = parsed.bbox
     activity.route_simplified = route_polyline(parsed.streams)
+    activity.splits = [
+        {
+            "distance_m": round(split.distance_m, 1),
+            "time_s": round(split.time_s, 1),
+            "elevation_change_m": None
+            if split.elevation_change_m is None
+            else round(split.elevation_change_m, 1),
+            "avg_hr": None if split.avg_hr is None else round(split.avg_hr),
+        }
+        for split in metrics.splits(streams.t, streams.dist, streams.alt, streams.hr)
+    ] or None
 
 
 def _write_children(session: Session, activity: Activity, parsed: ParsedActivity) -> None:
     session.execute(delete(Lap).where(Lap.activity_id == activity.id))
     session.execute(delete(Stream).where(Stream.activity_id == activity.id))
+    session.execute(delete(BestEffort).where(BestEffort.activity_id == activity.id))
+    if parsed.sport in BEST_EFFORT_SPORTS:
+        for effort in metrics.best_efforts(parsed.streams.t, parsed.streams.dist):
+            session.add(
+                BestEffort(
+                    activity_id=activity.id,
+                    distance_key=effort.key,
+                    user_id=activity.user_id,
+                    distance_m=effort.distance_m,
+                    time_s=round(effort.time_s, 1),
+                    start_s=effort.start_s,
+                    start_distance_m=effort.start_distance_m,
+                )
+            )
     for index, lap in enumerate(parsed.laps):
         session.add(
             Lap(

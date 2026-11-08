@@ -8,7 +8,7 @@ import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
-from opensport.db.models import Activity, Lap, Stream, User
+from opensport.db.models import Activity, BestEffort, Lap, Stream, User
 from opensport.fit.streams import decode_polyline, decode_streams, encode_polyline, simplify
 from opensport.ingest import ingest_fit
 from opensport.storage import ImmutableFileError, LocalRawStore
@@ -134,3 +134,39 @@ def test_polyline_matches_googles_reference_example() -> None:
 def test_simplify_keeps_corners_and_drops_straight_points() -> None:
     line = [(0.0, 0.0), (0.0, 0.001), (0.0, 0.002), (0.001, 0.002)]
     assert simplify(line, 1e-6) == [(0.0, 0.0), (0.0, 0.002), (0.001, 0.002)]
+
+
+def test_basic_metrics_match_garmin_connect(session: Session, tmp_path: Path) -> None:
+    garmin = GARMIN["Running"]
+    result = ingest_fit(
+        session,
+        LocalRawStore(tmp_path),
+        user_id=user_id(session),
+        source="garmin",
+        external_id="1",
+        fit=fit("run"),
+    )
+    session.commit()
+    activity = session.get(Activity, result.activity_id)
+    assert activity is not None
+    assert activity.moving_s == pytest.approx(garmin["movingDuration"], abs=2)
+
+    efforts = {e.distance_key: e.time_s for e in session.scalars(select(BestEffort))}
+    assert efforts["1k"] == pytest.approx(garmin["fastestSplit_1000"], abs=0.2)
+    assert efforts["1mile"] == pytest.approx(garmin["fastestSplit_1609"], abs=0.5)  # Garmin uses 1609 m
+    assert efforts["5k"] == pytest.approx(garmin["fastestSplit_5000"], abs=0.2)
+    assert set(efforts) == {"400m", "half_mile", "1k", "1mile", "2mile", "5k"}  # 6 km run: no 10k
+
+    splits = activity.splits or []
+    # 6,022 m: six full kilometres; the last 22 m are below the 50 m minimum for a split
+    assert [round(s["distance_m"]) for s in splits] == [1000] * 6
+    assert sum(s["time_s"] for s in splits) == pytest.approx(activity.duration_s, abs=15)
+    assert all(s["avg_hr"] for s in splits)
+
+
+def test_no_best_efforts_for_strength_or_rides(session: Session, tmp_path: Path) -> None:
+    store, uid = LocalRawStore(tmp_path), user_id(session)
+    ingest_fit(session, store, user_id=uid, source="garmin", external_id="2", fit=fit("strength"))
+    ingest_fit(session, store, user_id=uid, source="garmin", external_id="3", fit=fit("ride-power"))
+    session.commit()
+    assert count(session, BestEffort) == 0

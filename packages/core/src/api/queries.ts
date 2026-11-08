@@ -1,0 +1,89 @@
+/**
+ * Query definitions shared by the PWA and the Android app: a stable key and the function that fetches
+ * it, as plain objects that TanStack Query's `useQuery` / `useInfiniteQuery` take as they are. No
+ * dependency on React here, so they work in both.
+ */
+import type { ApiClient } from './client';
+import type { paths } from './schema';
+
+type Json<P extends keyof paths, M extends 'get' | 'post'> = paths[P][M] extends {
+  responses: { 200: { content: { 'application/json': infer T } } };
+}
+  ? T
+  : never;
+
+export type Me = Json<'/api/auth/me', 'get'>;
+export type ActivityPage = Json<'/api/activities', 'get'>;
+export type ActivitySummary = ActivityPage['items'][number];
+export type ActivityDetail = Json<'/api/activities/{activity_id}', 'get'>;
+export type Health = Json<'/api/health', 'get'>;
+
+/** An API error with its HTTP status, so callers can tell "signed out" (401) from other failures. */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
+  if (result.data !== undefined) return result.data;
+  const detail = (result.error as { detail?: unknown } | undefined)?.detail;
+  throw new ApiError(
+    result.response.status,
+    typeof detail === 'string' ? detail : result.response.statusText,
+  );
+}
+
+/** Keys: every query about the signed-in user's data starts with its scope, so sign-out clears them all. */
+export const queryKeys = {
+  health: ['health'] as const,
+  me: ['me'] as const,
+  activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
+  activity: (id: number) => ['activity', id] as const,
+};
+
+export function healthQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.health,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/health', { signal })),
+  };
+}
+
+/** The signed-in user, or an ApiError with status 401 when there is no session. */
+export function meQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.me,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/auth/me', { signal })),
+  };
+}
+
+/** The feed, newest first, a page at a time (cursor pagination, OS-111). */
+export function activitiesQuery(api: ApiClient, sport?: readonly string[], limit = 30) {
+  return {
+    queryKey: queryKeys.activities(sport),
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam, signal }: { pageParam: string | undefined; signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities', {
+          params: { query: { limit, cursor: pageParam, sport: sport?.length ? [...sport] : undefined } },
+          signal,
+        }),
+      ),
+    getNextPageParam: (last: ActivityPage) => last.next_cursor ?? undefined,
+  };
+}
+
+export function activityQuery(api: ApiClient, id: number) {
+  return {
+    queryKey: queryKeys.activity(id),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities/{activity_id}', { params: { path: { activity_id: id } }, signal }),
+      ),
+  };
+}

@@ -1,30 +1,12 @@
-import { markMaskUrl, message, resolveLocale } from '@zankup/core';
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
+import { RouterProvider, type createBrowserRouter } from 'react-router';
 
-import { useApiHealth } from './useApiHealth';
+type Router = ReturnType<typeof createBrowserRouter>;
 
-// Placeholder until the app skeleton (OS-201). The language follows the browser until Settings exists (OS-223).
-const locale = resolveLocale(navigator.languages);
-const mask = markMaskUrl();
-
-export function App() {
-  const health = useApiHealth();
-  const status =
-    health.state === 'ok'
-      ? message(locale, 'api.connected', { version: health.version })
-      : health.state === 'degraded'
-        ? message(locale, 'api.degraded')
-        : message(locale, health.state === 'down' ? 'api.down' : 'api.checking');
-
+export function App({ queryClient, router }: { queryClient: QueryClient; router: Router }) {
   return (
-    <main className="placeholder" lang={locale}>
-      <h1 className="lockup">
-        <span className="mark" aria-hidden="true" style={{ maskImage: mask, WebkitMaskImage: mask }} />
-        <span className="wordmark">{message(locale, 'app.name')}</span>
-      </h1>
-      <p>{message(locale, 'app.claim')}</p>
-      <p className={`status status-${health.state}`} role="status">
-        {status}
-      </p>
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   );
 }

@@ -265,7 +265,7 @@ There are three kinds of charts, depending on how much they move and how much yo
 
 ### PWA for desktop and mobile (on Vercel)
 
-- **Technology:** TypeScript, React and Vite, with `vite-plugin-pwa` (Workbox) for the service worker and manifest. TanStack Query for data caching, MapLibre GL for maps (vector, smooth on mobile) and i18next for translations. Built to static files and deployed on Vercel.
+- **Technology:** TypeScript, React and Vite, with `vite-plugin-pwa` (Workbox) for the service worker and manifest. React Router for routes (one public route, `/sign-in`; everything else behind a session guard that keeps the requested page in `?next=`), TanStack Query for data caching with the query definitions shared in `packages/core` (plain key + function objects, so the Android app reuses them), MapLibre GL for maps (vector, smooth on mobile) and i18next for translations. Built to static files and deployed on Vercel.
 - **Responsive design:**
   - **Desktop (≥ 1024 px):** sidebar navigation. Feed and detail in two columns (list on the left, activity on the right). Large map with the synced profile underneath, full lap and zone tables, and full-width fitness charts.
   - **Mobile:** bottom tab bar (Feed · Search · Sync · Stats · You). Single-column detail with the map on top, metric cards and touch-friendly charts.

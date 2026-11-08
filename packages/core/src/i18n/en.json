@@ -11,5 +11,19 @@
   "sport.walk": "Walk",
   "sport.row": "Row",
   "sport.swim": "Swim",
-  "sport.other": "Other"
+  "sport.other": "Other",
+  "nav.feed": "Feed",
+  "nav.signOut": "Sign out",
+  "common.loading": "Loading…",
+  "common.error": "Something went wrong. Try again.",
+  "common.retry": "Try again",
+  "signIn.title": "Sign in",
+  "signIn.soon": "The sign-in screen arrives with OS-203. Until then, sign in through the API or the app.",
+  "feed.title": "Activities",
+  "feed.empty": "No activities yet. They appear here after the first Garmin sync.",
+  "feed.more": "Load more",
+  "activity.back": "Back to activities",
+  "activity.notFound": "This activity does not exist or is not yours.",
+  "notFound.title": "Page not found",
+  "notFound.home": "Go to the feed"
 }

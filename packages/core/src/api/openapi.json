@@ -17,7 +17,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
+                "$ref": "#/components/schemas/zankup__auth__routes__LoginRequest"
               }
             }
           },
@@ -168,6 +168,202 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "List Passkeys",
+        "operationId": "listPasskeys",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PasskeyOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listpasskeys"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/register/options": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register Options",
+        "description": "Step 1 of adding a passkey: options for navigator.credentials.create().",
+        "operationId": "passkeyRegisterOptions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Options"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register",
+        "description": "Step 2: verify the new credential and keep its public key.",
+        "operationId": "passkeyRegister",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/{passkey_id}": {
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Delete Passkey",
+        "operationId": "deletePasskey",
+        "parameters": [
+          {
+            "name": "passkey_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Passkey Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/login/options": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login Options",
+        "description": "Step 1 of signing in: options for navigator.credentials.get(). No e-mail needed.",
+        "operationId": "passkeyLoginOptions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Options"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "description": "Step 2: verify the signature and start a session, like password + TOTP would.",
+        "operationId": "passkeyLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/zankup__auth__passkeys__LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Me"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AppTokens"
+                    }
+                  ],
+                  "title": "Response Passkeylogin"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1465,46 +1661,6 @@
         ],
         "title": "LapOut"
       },
-      "LoginRequest": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "maxLength": 320,
-            "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 1024,
-            "title": "Password"
-          },
-          "remember": {
-            "type": "boolean",
-            "title": "Remember",
-            "default": false
-          },
-          "client": {
-            "type": "string",
-            "enum": [
-              "web",
-              "android"
-            ],
-            "title": "Client",
-            "default": "web"
-          },
-          "device_name": {
-            "type": "string",
-            "maxLength": 120,
-            "title": "Device Name",
-            "default": "Browser"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
-        "title": "LoginRequest"
-      },
       "Me": {
         "properties": {
           "id": {
@@ -1540,6 +1696,64 @@
         ],
         "title": "Me"
       },
+      "Options": {
+        "properties": {
+          "options": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "options"
+        ],
+        "title": "Options",
+        "description": "`publicKey` options for navigator.credentials.create() or .get(), as JSON (binary as base64url)."
+      },
+      "PasskeyOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "backed_up": {
+            "type": "boolean",
+            "title": "Backed Up",
+            "description": "Synced by a password manager (Google, iCloud…)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "last_used_at",
+          "backed_up"
+        ],
+        "title": "PasskeyOut"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -1552,6 +1766,27 @@
           "refresh_token"
         ],
         "title": "RefreshRequest"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "credential": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Credential",
+            "description": "The PublicKeyCredential, serialised with toJSON()"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Name",
+            "default": "Passkey"
+          }
+        },
+        "type": "object",
+        "required": [
+          "credential"
+        ],
+        "title": "RegisterRequest"
       },
       "SplitOut": {
         "properties": {
@@ -1836,6 +2071,80 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "zankup__auth__passkeys__LoginRequest": {
+        "properties": {
+          "credential": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Credential"
+          },
+          "remember": {
+            "type": "boolean",
+            "title": "Remember",
+            "default": false
+          },
+          "client": {
+            "type": "string",
+            "enum": [
+              "web",
+              "android"
+            ],
+            "title": "Client",
+            "default": "web"
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Device Name",
+            "default": "Browser"
+          }
+        },
+        "type": "object",
+        "required": [
+          "credential"
+        ],
+        "title": "LoginRequest"
+      },
+      "zankup__auth__routes__LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "title": "Password"
+          },
+          "remember": {
+            "type": "boolean",
+            "title": "Remember",
+            "default": false
+          },
+          "client": {
+            "type": "string",
+            "enum": [
+              "web",
+              "android"
+            ],
+            "title": "Client",
+            "default": "web"
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Device Name",
+            "default": "Browser"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
       }
     }
   }

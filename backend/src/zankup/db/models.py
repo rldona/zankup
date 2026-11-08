@@ -104,6 +104,39 @@ class Device(Timestamps, Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class Passkey(Base):
+    """A WebAuthn credential (OS-405): signs in without password or TOTP, since the device already checks
+    the fingerprint, face or PIN. Bound to the instance's domain (WEBAUTHN_RP_ID)."""
+
+    __tablename__ = "passkeys"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    credential_id: Mapped[bytes] = mapped_column(LargeBinary, unique=True)
+    public_key: Mapped[bytes] = mapped_column(LargeBinary, comment="COSE public key")
+    sign_count: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    transports: Mapped[list[str] | None] = mapped_column(JSONB)
+    aaguid: Mapped[str | None] = mapped_column(
+        String(36), comment="Authenticator model, e.g. Google Password Manager"
+    )
+    backed_up: Mapped[bool] = mapped_column(server_default="false", comment="Synced by a password manager")
+    name: Mapped[str] = mapped_column(String(120))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class WebAuthnChallenge(Base):
+    """A challenge handed to the browser, used once: deleted when the response comes back or expires."""
+
+    __tablename__ = "webauthn_challenges"
+    __table_args__ = (CheckConstraint("purpose IN ('register', 'login')", name="purpose"),)
+
+    challenge: Mapped[bytes] = mapped_column(LargeBinary, primary_key=True)
+    purpose: Mapped[str] = mapped_column(String(10))
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class Activity(Timestamps, Base):
     """One activity, from its original file. Everything here can be recomputed from that file."""
 

@@ -138,14 +138,37 @@ def login_totp(
         raise _rejected(ip_key, account_key)
     user.totp_last_counter = counter
     limiter.success(account_key)
+    return start_session(
+        db,
+        user,
+        response,
+        settings,
+        web=claims.get("client", "web") == "web",
+        remember=bool(claims.get("remember")),
+        device_name=str(claims.get("device") or "Browser"),
+    )
 
+
+def start_session(
+    db: DbSession,
+    user: User,
+    response: Response,
+    settings: AppSettings,
+    *,
+    web: bool,
+    remember: bool,
+    device_name: str,
+) -> Me | AppTokens:
+    """A signed-in device: a session cookie for the browser, or access + refresh tokens for the app.
+
+    Shared by every way of signing in (password + TOTP, passkey and, later, Google).
+    """
     token, digest = new_token()
     now = datetime.now(UTC)
-    web = claims.get("client", "web") == "web"
-    lifetime = (WEB_REMEMBERED if claims.get("remember") else WEB_SESSION) if web else APP_REFRESH
+    lifetime = (WEB_REMEMBERED if remember else WEB_SESSION) if web else APP_REFRESH
     device = Device(
         user_id=user.id,
-        name=str(claims.get("device") or "Browser")[:120],
+        name=device_name[:120] or "Browser",
         platform="web" if web else "android",
         refresh_token_hash=digest,
         last_seen=now,
@@ -157,14 +180,14 @@ def login_totp(
         response.set_cookie(
             SESSION_COOKIE,
             token,
-            max_age=int(lifetime.total_seconds()) if claims.get("remember") else None,
+            max_age=int(lifetime.total_seconds()) if remember else None,
             httponly=True,
             secure=settings.is_production,
             samesite="lax",
             path="/api",
         )
         return _me(user)
-    access = create_access_token(user.id, device.id, secret)
+    access = create_access_token(user.id, device.id, _secret(settings))
     return AppTokens(access_token=access, refresh_token=token, expires_in=15 * 60)
 
 

@@ -145,7 +145,7 @@ The application is packaged as a container (Dockerfile) so the provider can be c
 | **Metrics engine** | See "Advanced metrics" | Partial: exact best efforts |
 | **Historical computation engine** | Job queue in Postgres and a worker on Railway. Processes history incrementally, with versioned full recomputation. Produces estimates, curves, progress and events | Pending |
 | **REST API** | FastAPI, OpenAPI generated automatically. Used by the PWA and Android | Pending |
-| **Authentication** | One user per instance: sign-in with password + TOTP or **Google account** (OpenID Connect, only the linked account). Passkeys (WebAuthn) are in the backlog. The PWA uses an `httpOnly` session cookie (same origin, thanks to the Vercel proxy). Android uses a short access token and a long refresh token. Devices can be revoked | Pending |
+| **Authentication** | One user per instance: sign-in with password + TOTP, a **passkey** (WebAuthn, bound to the instance's domain; it replaces both password and code because the device checks the fingerprint, face or PIN) or a **Google account** (OpenID Connect, only the linked account). The PWA uses an `httpOnly` session cookie (same origin, thanks to the Vercel proxy). Android uses a short access token and a long refresh token. Devices can be revoked | Password + TOTP and passkeys done (OS-110, OS-405 backend); Google pending |
 | **Sign-up and recovery** | One-time initial sign-up protected by a **setup code** (printed in the server logs on first boot). Recovery by email with a single-use link (30 min) that also requires the TOTP code or a recovery code | Pending |
 | **Transactional email** | Resend, one account per instance (the test sender delivers to the owner's address, so no custom domain is required): recovery links, security alerts (password changed, new sign-in) and an optional weekly report, in the user's language | Pending |
 | **Google Health connector** | Google OAuth and Google Health API webhooks (Fitbit Air): sleep with stages, HRV, resting HR, SpO₂. Priority rules between sources | Phase 6 |
@@ -295,7 +295,7 @@ There are three kinds of charts, depending on how much they move and how much yo
   - Notifications with FCM (`expo-notifications`).
   - Health Connect with `react-native-health-connect`.
   - i18next with the shared catalogues and `expo-localization` to detect the device language.
-  - **Sign-in:** native Google (`@react-native-google-signin/google-signin`, Credential Manager) or password + TOTP, against the instance URL entered on first launch. Passkeys (`react-native-passkey`) come with OS-405, from the backlog.
+  - **Sign-in:** native Google (`@react-native-google-signin/google-signin`, Credential Manager) or password + TOTP, against the instance URL entered on first launch. Passkeys (`react-native-passkey`) use the same backend as the PWA (OS-405), once `assetlinks.json` is published on the domain.
   - **Fingerprint unlock:** the refresh token is stored in `expo-secure-store` protected by strong biometrics (`expo-local-authentication`). On many Samsung phones face recognition is weak biometrics and cannot release keys, so the fingerprint is used there.
 - **Themes:** the same tokens as the PWA, from the single source in `packages/core`, plus Android dynamic colour (Material You) through a small module.
 - **The only native-specific piece:** the home-screen widget (with `react-native-android-widget` or an Expo module in Kotlin).
@@ -397,6 +397,8 @@ sync_runs     id · trigger (cron|button) · started_at · finished_at · new_co
 | `POST` | `/api/auth/login` · `/refresh` · `/logout` | Session with access and refresh tokens |
 | `GET/POST` | `/api/auth/setup` | Initial sign-up status and creation of the single account (requires the setup code) |
 | `POST` | `/api/auth/totp/setup` · `/api/auth/totp/verify` · `/api/auth/recovery-codes` | Enable 2FA and generate recovery codes |
+| `POST` | `/api/auth/passkeys/login/options` · `/api/auth/passkeys/login` | Passkey sign-in (public): options for `navigator.credentials.get()`, then the signed response starts a session |
+| `GET/POST/DELETE` | `/api/auth/passkeys` · `/register/options` · `/register` · `/{id}` | List, add and remove passkeys (signed in) |
 | `POST` | `/api/auth/password/forgot` · `/api/auth/password/reset` | Recovery: send the link, then change with token + TOTP or a recovery code |
 | `GET` | `/api/auth/google/start` · `/api/auth/google/callback` | Google sign-in on the web (OIDC with PKCE). Only the linked `sub` gets in |
 | `POST` | `/api/auth/google/mobile` | Google sign-in from the app: receives the ID token from the native SDK and applies the same rule |

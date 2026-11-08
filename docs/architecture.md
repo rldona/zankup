@@ -123,7 +123,7 @@ The application is packaged as a container (Dockerfile) so the provider can be c
 
 | Piece | On Vercel | Notes |
 |---|---|---|
-| **PWA** | Static project (Vite build), connected to the repository | Every PR gets a preview URL. Production on the main domain |
+| **PWA** | Static project (Vite build), connected to the repository | **Only `main` deploys** (`git.deploymentEnabled`): previews cost build minutes, and every PR is already built and tested end to end in CI |
 | **API proxy** | `vercel.json` → `rewrites: [{ "source": "/api/:path*", "destination": "https://<api>.up.railway.app/api/:path*" }]` | The PWA calls `/api/...` on its own origin: **no CORS**, `httpOnly` and `SameSite=Strict` cookies, and it also works on previews |
 | **Variables** | `VITE_VAPID_PUBLIC_KEY` (public) | No secrets on Vercel: they all live on Railway |
 
@@ -246,7 +246,7 @@ There are three kinds of charts, depending on how much they move and how much yo
 
 ### Technology
 
-- **Dynamic charts on the web:** **Apache ECharts**. It renders on canvas with point reduction (LTTB), so it handles long 1 Hz series easily. It comes with hover tooltips, zoom (`dataZoom`), range selection (`brush`), cursor syncing between charts (`connect`) and enter/update animations. One ECharts theme is registered per Zankup theme, generated from the tokens. If a very long series is slow on modest phones, plan B is **uPlot** for the profile only.
+- **Dynamic charts on the web:** **Apache ECharts**, loaded on demand with only the parts used (line, bar, brush, tooltip) and drawn with its SVG renderer over series sampled to 1,000 points. It renders with point reduction (LTTB), so it handles long 1 Hz series easily. It comes with hover tooltips, zoom (`dataZoom`), range selection (`brush`), cursor syncing between charts (`connect`) and enter/update animations. One ECharts theme is registered per Zankup theme, generated from the tokens. If a very long series is slow on modest phones, plan B is **uPlot** for the profile only.
 - **Static charts:** our own SVG components, no library: light, crisp and easy to turn into images. Share cards and notification images are generated on the server.
 - **Mobile app:** **Victory Native XL** (or ECharts for React Native), both drawn with Skia on the GPU, using the token colours. The cursor and gestures run on the UI thread with Reanimated.
 - **Accessibility and performance:** with `prefers-reduced-motion`, passive animations are turned off. Every chart has an accessible summary (and an alternative data table for the main ones). Off-screen charts are not drawn until they appear.
@@ -254,7 +254,7 @@ There are three kinds of charts, depending on how much they move and how much yo
 ## Internationalisation (i18n)
 
 - **Languages:** **English by default** and **Spanish** selectable in Settings → Language. On first launch the app suggests the device language if it is supported, otherwise English. The structure allows more languages to be added later without code changes.
-- **Shared catalogues:** translations live in `packages/core/i18n/{en,es}.json`, used by the PWA and the Android app with **i18next** (`react-i18next`). ICU messages for plurals and variables ("1 activity" / "3 activities"). Keys are in English; `en` is the reference catalogue and CI fails if `es` is missing a key.
+- **Shared catalogues:** translations live in `packages/core/i18n/{en,es}.json`, used by the PWA and the Android app through a small lookup in `packages/core` (`message()`) instead of i18next: it covers what the app uses of ICU, `{variables}` and plurals with `Intl.PluralRules` ("1 activity" / "3 activities"), in about 60 lines. Switching language reloads the app, so every screen and format follows at once. Keys are in English; `en` is the reference catalogue and CI fails if `es` is missing a key.
 - **Locale-aware formatting** with `Intl`: dates, numbers (6.61 km vs 6,61 km), durations, paces and relative times. Units are a separate setting (metric or imperial) and do not depend on the language.
 - **Server-generated text in the user's language:** the language is stored in `settings`, and emails, push notifications, share cards and AI summaries (the prompt asks the model to answer in that language) are produced in it.
 - **Data stays as entered:** activity names, descriptions and gear are never translated.
@@ -265,7 +265,7 @@ There are three kinds of charts, depending on how much they move and how much yo
 
 ### PWA for desktop and mobile (on Vercel)
 
-- **Technology:** TypeScript, React and Vite, with `vite-plugin-pwa` (Workbox) for the service worker and manifest. React Router for routes (one public route, `/sign-in`; everything else behind a session guard that keeps the requested page in `?next=`), TanStack Query for data caching with the query definitions shared in `packages/core` (plain key + function objects, so the Android app reuses them), MapLibre GL for maps (vector, smooth on mobile) and i18next for translations. Built to static files and deployed on Vercel.
+- **Technology:** TypeScript, React and Vite, with `vite-plugin-pwa` (Workbox) for the service worker and manifest. React Router for routes (one public route, `/sign-in`; everything else behind a session guard that keeps the requested page in `?next=`), TanStack Query for data caching with the query definitions shared in `packages/core` (plain key + function objects, so the Android app reuses them), MapLibre GL for maps (vector, smooth on mobile; tiles from OpenFreeMap, free and keyless, drawn with Zankup's own style generated from the theme's tokens in `packages/core`, and an SVG route shape where there is no WebGL) and the shared catalogues for translations. Built to static files and deployed on Vercel.
 - **Responsive design:**
   - **Desktop (≥ 1024 px):** sidebar navigation. Feed and detail in two columns (list on the left, activity on the right). Large map with the synced profile underneath, full lap and zone tables, and full-width fitness charts.
   - **Mobile:** bottom tab bar (Feed · Search · Sync · Stats · You). Single-column detail with the map on top, metric cards and touch-friendly charts.
@@ -279,7 +279,7 @@ There are three kinds of charts, depending on how much they move and how much yo
   - The preference is stored in `localStorage`, to paint without flicker before anything loads, and in the user's settings on the backend, so it follows you across devices and reaches the Android app.
   - Maps and charts change too: light or dark vector style in MapLibre, and series colours taken from the tokens. `theme-color` and `color-scheme` are updated for the browser bar and native controls.
   - Every theme passes a WCAG AA contrast check (text ≥ 4.5:1) in CI.
-- **Offline:** the service worker caches the app. Viewed activities and their 1 Hz streams are stored in IndexedDB, and already-viewed map tiles stay cached.
+- **Offline:** the service worker (generated by `vite-plugin-pwa`) precaches the app and serves it for every page. The feed, viewed activities with their streams, the profile and the preferences are kept in IndexedDB for a week through TanStack Query's persister, and already-viewed map tiles and fonts stay in the service worker's cache. Signing out removes what was kept.
 - **Notifications:** Web Push on desktop (Chrome, Edge, Firefox) and Android. On iOS only if the PWA is installed.
 
 ### Android app (phase 5): React Native + Expo
@@ -452,7 +452,8 @@ python -m zankup.sync --since 2019-01-01    # or from a given day
 - The range is listed in **windows of 180 days, oldest first**. Each window is downloaded and queued before the next one is listed, with a pause between downloads (`--pause`, 1 s by default; the client also honours `Retry-After` on 429). About 1,800 activities take under an hour.
 - **Imports run while it downloads**, in a thread of the command, so activities appear in the app as it advances. Progress is in the run (`GET /api/sync`): `window` of `windows`, `listed`, `downloaded`.
 - **Safe to interrupt and run again.** An interrupted run is recorded as `error`, and the next one skips everything already downloaded or imported. Only one sync runs at a time, so the 15-minute sync skips its slots while the load holds the lock.
-- **On Railway**, run it in the `api` service (it needs the `/data` volume) inside a `tmux` session, so closing the terminal does not stop it: `railway link`, `railway ssh --session history`, then `/app/.venv/bin/python -m zankup.sync --all`. The SSH shell does not load the image's `PATH`, so plain `python` is the system one and cannot find the app. `Ctrl+B` then `D` leaves it running; `railway ssh --session history` comes back to it. A button in the app replaces all this (OS-226).
+- **From the app (OS-226):** Sync → "Load the whole history" (also offered at the end of sign-up) queues the same windowed load as a background job (`POST /api/sync` with `{"history": true}`). Two workers run in the API: one for long jobs (syncs, backups) and one for imports, so activities appear while it downloads; a heartbeat keeps a long job's lock fresh so it is never requeued as stale.
+- **On Railway from a terminal**, run it in the `api` service (it needs the `/data` volume) inside a `tmux` session, so closing the terminal does not stop it: `railway link`, `railway ssh --session history`, then `/app/.venv/bin/python -m zankup.sync --all`. The SSH shell does not load the image's `PATH`, so plain `python` is the system one and cannot find the app. `Ctrl+B` then `D` leaves it running; `railway ssh --session history` comes back to it. A button in the app replaces all this (OS-226).
 
 ## Risks
 

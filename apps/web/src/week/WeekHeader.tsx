@@ -49,7 +49,7 @@ export function WeekHeader() {
                   {day.activities.length > 1 && <b className="more">+{day.activities.length - 1}</b>}
                 </Link>
               ) : (
-                <span className="dot" aria-label={long} />
+                <span className="dot" role="img" aria-label={long} />
               )}
               <span className="dlabel">{state === 'today' ? t('week.today') : label}</span>
             </li>

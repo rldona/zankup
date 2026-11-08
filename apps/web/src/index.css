@@ -915,8 +915,9 @@ select {
   gap: 0 14px;
 }
 
-.grid2 .panel {
-  overflow-x: auto;
+.grid2 .panel th,
+.grid2 .panel td {
+  white-space: normal;
 }
 
 .pairs {

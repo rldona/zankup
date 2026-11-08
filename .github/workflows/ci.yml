@@ -69,7 +69,7 @@ jobs:
   web:
     name: Web (TypeScript)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -96,3 +96,7 @@ jobs:
         run: pnpm test
       - name: Build
         run: pnpm build
+      - name: End-to-end tests (main flows in English and Spanish, accessibility)
+        run: |
+          pnpm --filter @zankup/web exec playwright install --with-deps chromium
+          pnpm --filter @zankup/web e2e

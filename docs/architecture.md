@@ -108,7 +108,7 @@ The application is packaged as a container (Dockerfile) so the provider can be c
 
 | Component | Responsibility | Status |
 |---|---|---|
-| **Sync service** | Key → 24 h token → new activities → ZIP → FIT. Triggered by cron or by the button | ✅ Prototype in `sync/garmin_sync.py` |
+| **Sync service** | Key → 24 h token → new activities → ZIP → FIT. Triggered by cron or by the button | ✅ Prototype in `backend/garmin_sync.py` |
 | **Importer** | Loose FITs, Garmin ZIP and Strava bulk ZIP for history. Deduplicates by start time and device | Pending |
 | **FIT parser** | FIT → session, laps, 1 Hz streams, device and power | ✅ Logic tested |
 | **Metrics engine** | See "Advanced metrics" | Partial: exact best efforts |

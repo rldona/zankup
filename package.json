@@ -1,0 +1,9 @@
+{
+  "name": "opensport",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Sincroniza las actividades de Garmin Connect con OpenSport usando la Personal API oficial.
+"""Sync Garmin Connect activities into OpenSport using the official Personal API.
 
-Flujo:
-  1. Cambia la clave personal (GARMIN_PERSONAL_API_KEY) por un token de acceso de 24 h.
-  2. Pide la lista de actividades posteriores a la última sincronización.
-  3. Descarga el ZIP original de cada actividad nueva y extrae su FIT.
-  4. Guarda el FIT y los metadatos en data/activities/ y actualiza data/state.json.
+Flow:
+  1. Exchange the personal key (GARMIN_PERSONAL_API_KEY) for a 24 h access token.
+  2. List the activities since the last sync.
+  3. Download the original ZIP of each new activity and extract its FIT.
+  4. Store the FIT and its metadata in data/activities/ and update data/state.json.
 
-Uso:
-  python3 sync/garmin_sync.py                  # sincroniza lo nuevo
-  python3 sync/garmin_sync.py --since 2026-10-01
-  python3 sync/garmin_sync.py --list           # solo lista, no descarga
+Usage:
+  python3 backend/garmin_sync.py                  # sync what is new
+  python3 backend/garmin_sync.py --since 2026-10-01
+  python3 backend/garmin_sync.py --list           # list only, no download
 
-Solo usa la biblioteca estándar de Python.
+Standard library only. Seed of the Garmin client (OS-103).
 """
 from __future__ import annotations
 
@@ -42,13 +42,13 @@ LIST_PATH = "/activitylist-service/activities/search/activities"
 DOWNLOAD_PATH = "/download-service/files/activity/{id}"
 USER_AGENT = "OpenSport/0.1 (personal sync)"
 PAGE_SIZE = 50
-PAUSE_S = 1.0  # pausa entre descargas: somos un cliente personal, sin prisas
+PAUSE_S = 1.0  # pause between downloads: a personal client, no rush
 
 
-# ---------- configuración y estado ----------
+# ---------- configuration and state ----------
 
 def load_env() -> None:
-    """Carga variables de un .env en la raíz del proyecto, sin pisar las que ya existan."""
+    """Load variables from a .env at the repository root without overriding existing ones."""
     env = ROOT / ".env"
     if not env.exists():
         return
@@ -92,15 +92,15 @@ def http(method: str, path: str, headers: dict, params: dict | None = None) -> t
         except urllib.error.HTTPError as e:
             if e.code == 429 and attempt < 2:
                 wait = int(e.headers.get("Retry-After", "30"))
-                print(f"  Garmin pide esperar {wait} s (429)…", file=sys.stderr)
+                print(f"  Garmin asks to wait {wait} s (429)…", file=sys.stderr)
                 time.sleep(wait)
                 continue
             body = e.read()[:300].decode("utf-8", "replace")
             raise ApiError(f"{method} {path} → HTTP {e.code}: {body}") from None
-    raise ApiError(f"{method} {path}: demasiados reintentos")
+    raise ApiError(f"{method} {path}: too many retries")
 
 
-# ---------- autenticación ----------
+# ---------- authentication ----------
 
 def jwt_exp(token: str) -> float:
     try:
@@ -108,7 +108,7 @@ def jwt_exp(token: str) -> float:
         payload += "=" * (-len(payload) % 4)
         return float(json.loads(base64.urlsafe_b64decode(payload))["exp"])
     except Exception:
-        return time.time() + 3600  # si no se puede leer, asumimos 1 h
+        return time.time() + 3600  # unreadable: assume 1 h
 
 
 def get_token() -> str:
@@ -118,11 +118,11 @@ def get_token() -> str:
             return cached["token"]
     key = os.environ.get("GARMIN_PERSONAL_API_KEY")
     if not key:
-        sys.exit("Falta GARMIN_PERSONAL_API_KEY: créala en "
-                 "https://connect.garmin.com/app/settings/personalApiToken y ponla en .env")
+        sys.exit("GARMIN_PERSONAL_API_KEY is missing: create it at "
+                 "https://connect.garmin.com/app/settings/personalApiToken and put it in .env")
     body, _ = http("POST", TOKEN_PATH, {"Accept": "*/*", "Authorization": f"ApiKey {key}"})
     token = body.decode().strip()
-    if token.startswith("{"):  # por si algún día devuelven JSON
+    if token.startswith("{"):  # in case it ever comes back as JSON
         token = json.loads(token).get("access_token", token)
     write_private(TOKEN_FILE, json.dumps({"token": token, "exp": jwt_exp(token)}))
     return token
@@ -138,7 +138,7 @@ def list_activities(token: str, since: date) -> list[dict]:
                   "endDate": (date.today() + timedelta(days=1)).isoformat()}
         body, _ = http("GET", LIST_PATH, headers, params)
         page = json.loads(body)
-        if isinstance(page, dict):  # tolerar respuesta envuelta
+        if isinstance(page, dict):  # tolerate a wrapped response
             page = page.get("activityList") or page.get("activities") or []
         out.extend(page)
         if len(page) < PAGE_SIZE:
@@ -154,12 +154,12 @@ def download_fit(token: str, activity_id: int) -> tuple[bytes, str]:
         with zipfile.ZipFile(io.BytesIO(body)) as z:
             names = [n for n in z.namelist() if n.lower().endswith(".fit")] or z.namelist()
             return z.read(names[0]), names[0]
-    if body[8:12] == b".FIT":  # FIT sin comprimir
+    if body[8:12] == b".FIT":  # uncompressed FIT
         return body, f"{activity_id}.fit"
-    raise ApiError(f"Respuesta inesperada al descargar {activity_id}: {body[:60]!r}")
+    raise ApiError(f"Unexpected response downloading {activity_id}: {body[:60]!r}")
 
 
-# ---------- principal ----------
+# ---------- main ----------
 
 def summary(a: dict) -> str:
     t = (a.get("activityType") or {}).get("typeKey", "?")
@@ -171,8 +171,8 @@ def summary(a: dict) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--since", type=date.fromisoformat, help="fecha inicial (AAAA-MM-DD)")
-    ap.add_argument("--list", action="store_true", help="solo listar, sin descargar")
+    ap.add_argument("--since", type=date.fromisoformat, help="start date (YYYY-MM-DD)")
+    ap.add_argument("--list", action="store_true", help="list only, no download")
     args = ap.parse_args()
 
     load_env()
@@ -182,7 +182,7 @@ def main() -> None:
 
     token = get_token()
     acts = list_activities(token, since)
-    print(f"{len(acts)} actividades desde {since}:")
+    print(f"{len(acts)} activities since {since}:")
     for a in acts:
         print("  " + summary(a))
     if args.list:
@@ -204,11 +204,11 @@ def main() -> None:
 
     state["last_sync"] = date.today().isoformat()
     save_state(state)
-    print(f"Listo: {new} actividades nuevas en {ACTIVITIES.relative_to(ROOT)}/")
+    print(f"Done: {new} new activities in {ACTIVITIES.relative_to(ROOT)}/")
 
 
 if __name__ == "__main__":
     try:
         main()
     except ApiError as e:
-        sys.exit(f"Error de la API de Garmin: {e}")
+        sys.exit(f"Garmin API error: {e}")

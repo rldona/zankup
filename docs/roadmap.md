@@ -40,7 +40,7 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 | Ticket | What | Result |
 |---|---|---|
 | OS-D01 | Research data sources (Strava, Garmin, phone, USB, intermediaries) | [findings.md](findings.md) |
-| OS-D02 | Sync prototype with the Garmin Personal API | `sync/garmin_sync.py`, 72 activities downloaded |
+| OS-D02 | Sync prototype with the Garmin Personal API | `backend/garmin_sync.py` (was `sync/`), 72 activities downloaded |
 | OS-D03 | Validate that the API's FIT is the complete original | Byte-for-byte identical to "Export File" |
 | OS-D04 | Architecture (Railway + Vercel + Android) | [architecture.md](architecture.md) |
 | OS-D05 | Desktop and mobile prototypes with real data (full history: 1,819 activities since 2011) | [prototypes/](prototypes/index.html) |

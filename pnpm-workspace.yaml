@@ -2,3 +2,6 @@
 packages:
   - apps/*
   - packages/core
+
+# Supply-chain guard: only install versions published at least two weeks ago (in minutes).
+minimumReleaseAge: 20160

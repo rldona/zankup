@@ -33,7 +33,7 @@ SOURCES = ("garmin", "strava", "file")
 SOURCE_KINDS = ("garmin", "google_health", "strava", "file")
 PLATFORMS = ("web", "android")
 SYNC_TRIGGERS = ("cron", "button", "initial", "import")
-SYNC_STATUSES = ("running", "success", "error")
+SYNC_STATUSES = ("queued", "running", "success", "error")
 JOB_STATUSES = ("queued", "running", "done", "failed")
 
 

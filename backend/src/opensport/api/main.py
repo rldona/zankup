@@ -1,4 +1,4 @@
-"""FastAPI application: health check, sign-in and the activities API."""
+"""FastAPI application: health check, sign-in, activities and sync."""
 
 import logging
 from collections.abc import AsyncIterator
@@ -11,6 +11,7 @@ from sqlalchemy import Engine
 
 from opensport import __version__
 from opensport.api.activities import router as activities_router
+from opensport.api.sync import router as sync_router
 from opensport.auth.routes import router as auth_router
 from opensport.core.config import Settings, get_settings
 from opensport.core.logging import configure_logging
@@ -61,6 +62,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(auth_router)
     app.include_router(activities_router)
+    app.include_router(sync_router)
 
     @app.get("/api/health", operation_id="getHealth")
     def health(engine: Annotated[Engine, Depends(get_engine)]) -> Health:

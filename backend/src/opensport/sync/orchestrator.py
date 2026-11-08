@@ -3,7 +3,8 @@
 One run: take the sync lock, list the activities since the last successful sync (with a day of overlap),
 download the FIT of each one that is not imported yet into the raw store, and queue an `ingest_fit` job
 for it. The worker (OS-115) does the parsing and writing. Progress and the outcome are recorded in a
-`sync_runs` row, which the Sync button polls (OS-112).
+`sync_runs` row, which the Sync button polls (OS-112). The button creates that row up front (status
+`queued`) and passes its id, so the client can poll it before the worker picks the job up.
 
 Incremental and idempotent: activities already imported or already queued are skipped, so a second run
 right after the first does nothing. Only one sync runs at a time per user (a Postgres advisory lock).
@@ -100,16 +101,24 @@ def run_sync(
     user_id: int,
     trigger: str = "cron",
     since: date | None = None,
+    run_id: int | None = None,
     pause_s: float = 1.0,
     sleep: Callable[[float], None] = time.sleep,
 ) -> SyncResult:
-    """Run one sync. Raises SyncAlreadyRunning if another one holds the lock."""
+    """Run one sync, recorded in a new `sync_runs` row or in `run_id` (a queued run).
+
+    Raises SyncAlreadyRunning if another one holds the lock.
+    """
     with sync_lock(sessions, user_id):
         with sessions.begin() as session:
-            run = SyncRun(user_id=user_id, trigger=trigger, status="running", progress={})
-            session.add(run)
-            session.flush()
-            run_id = run.id
+            if run_id is None:
+                run = SyncRun(user_id=user_id, trigger=trigger, status="running", progress={})
+                session.add(run)
+                session.flush()
+                run_id = run.id
+            else:
+                run = session.get_one(SyncRun, run_id)
+                run.status, run.started_at, run.progress, run.error = "running", datetime.now(UTC), {}, None
             start = _start_date(session, user_id, since)
             known = _known_ids(session, user_id)
         log.info("Sync started", extra={"run_id": run_id, "trigger": trigger, "since": start.isoformat()})

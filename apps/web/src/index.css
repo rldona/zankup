@@ -51,3 +51,33 @@ body {
 .status-degraded {
   color: #d9480f;
 }
+
+/* Brand lock-up (docs/brand/README.md, sections 2-4): one-colour mark as a mask over currentColor, so it
+   takes the theme's foreground; wordmark in the brand typeface, never used for interface text. */
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0 auto 0.25em;
+  font-size: 2.5rem;
+  font-weight: 400;
+}
+
+.mark {
+  display: inline-block;
+  flex: none;
+  height: 0.8em;
+  aspect-ratio: 120 / 90;
+  background: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.wordmark {
+  font-family: 'Momo Trust Display', system-ui, sans-serif;
+  letter-spacing: 0;
+}

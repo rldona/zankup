@@ -71,7 +71,7 @@ The brand has no colour of its own beyond the product tokens in `packages/core/s
 | Mark and wordmark on surfaces | `fg` #17191a | `fg` #eceeed | `fg` #f2f2f2 |
 | Mark and wordmark on the accent | `accentFg` #ffffff | `accentFg` #06221a | `accentFg` #001a12 |
 | Accent | #0b8f6a | #20c997 | #38d9a9 |
-| App icons | white mark on #111111 | | |
+| App icons | `accentFg` mark #06221a on the dark-theme accent #20c997, as on the sign-in panel | | |
 
 ## 6. Assets
 
@@ -80,8 +80,8 @@ All in `docs/brand/assets/`:
 | File | Use |
 |---|---|
 | `logo-mark.svg` | The mark, black on transparent, source of truth |
-| `favicon.svg` | 64×64, white mark on #111 with 14 px radius |
-| `icon-192.png`, `icon-512.png` | PWA icons, white mark on #111, rounded square |
+| `favicon.svg` | 64×64, #06221a mark on #20c997 with 14 px radius |
+| `icon-192.png`, `icon-512.png` | PWA icons, #06221a mark on #20c997, rounded square |
 | `icon-maskable-512.png` | Android maskable icon, mark inside the 80 % safe zone |
 | `apple-touch-icon-180.png` | iOS home-screen icon |
 | `manifest.webmanifest` | PWA manifest with name, colours and the icons above |
@@ -101,7 +101,7 @@ Two pieces of work, tracked separately. Do the rename only after the domain and 
 3. Load Momo Trust Display for brand text only, with the system stack as fallback.
 4. Check legibility at 16 px in every theme in `tokens.json` (light, dark, oled, and any high-contrast theme).
 5. Delete or replace `docs/prototypes/assets/` (the traced mountain and its icons) and the prototype's `.mark` mask URL.
-6. Expo: adaptive icon and splash from the same mark, white on #111.
+6. Expo: adaptive icon from the same mark, #06221a on #20c997 (monochrome layer white, Android tints it); splash, white mark on #111.
 
 ### 7.2 Rename the product
 

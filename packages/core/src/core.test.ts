@@ -6,6 +6,8 @@ import {
   formatDistance,
   formatDuration,
   formatHoursMinutes,
+  formatMonth,
+  localStart,
   formatPace,
   formatSpeed,
   message,
@@ -36,6 +38,18 @@ describe('format', () => {
     expect(formatPace(1609.344 / 600, { units: 'imperial' })).toBe('10:00');
     expect(formatPace(0, { units: 'metric' })).toBe('—');
     expect(formatSpeed(8.4, { locale: 'es', units: 'metric' })).toBe('30,2');
+  });
+
+  it('shows activities in the local time where they were recorded', () => {
+    expect(localStart('2026-10-31T23:30:00Z', '+01:00')).toBe('2026-11-01T00:30:00');
+    expect(localStart('2026-10-31T23:30:00Z', '-05:30')).toBe('2026-10-31T18:00:00');
+    expect(localStart('2026-10-31T23:30:00Z', null)).toBe('2026-10-31T23:30:00');
+    expect(localStart('2026-10-31T23:30:00Z', 'Europe/Madrid')).toBe('2026-10-31T23:30:00');
+  });
+
+  it('names months', () => {
+    expect(formatMonth('2026-10', 'en')).toBe('October 2026');
+    expect(formatMonth('2026-10', 'es')).toBe('octubre de 2026');
   });
 });
 

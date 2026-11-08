@@ -17,7 +17,7 @@ from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select, tuple_
+from sqlalchemy import Interval, case, cast, func, literal, select, tuple_
 from sqlalchemy.orm import defer
 
 from zankup.api.routing import protected_router
@@ -67,6 +67,16 @@ class ActivitySummary(BaseModel):
 class ActivityPage(BaseModel):
     items: list[ActivitySummary]
     next_cursor: str | None = Field(description="Pass it as `cursor` for the next page; null at the end")
+
+
+class MonthTotals(BaseModel):
+    """One month of the feed, in the activities' own local time."""
+
+    month: str = Field(description='"YYYY-MM"')
+    count: int
+    distance_m: float
+    moving_s: float = Field(description="Moving time, or the elapsed time when there is none")
+    ascent_m: float
 
 
 class LapOut(BaseModel):
@@ -213,6 +223,38 @@ def list_activities(
         items=[ActivitySummary(**_summary_fields(a)) for a in page],
         next_cursor=encode_cursor(page[-1]) if more else None,
     )
+
+
+@router.get("/months", operation_id="listActivityMonths")
+def list_months(
+    db: DbSession,
+    user: CurrentUser,
+    sport: Annotated[list[str] | None, Query(description="Only these sports (repeat to combine)")] = None,
+) -> list[MonthTotals]:
+    """Totals per month, newest first: the headers of the feed, whole even while it loads by pages."""
+    offset = case(
+        (Activity.timezone.regexp_match(r"^[+-]\d{2}:\d{2}$"), cast(Activity.timezone, Interval)),
+        else_=cast(literal("0"), Interval),
+    )
+    month = func.to_char(func.timezone("UTC", Activity.start_utc) + offset, "YYYY-MM").label("month")
+    query = (
+        select(
+            month,
+            func.count(),
+            func.coalesce(func.sum(Activity.distance_m), 0),
+            func.sum(func.coalesce(Activity.moving_s, Activity.duration_s)),
+            func.coalesce(func.sum(Activity.ascent_m), 0),
+        )
+        .where(Activity.user_id == user.id)
+        .group_by(month)
+        .order_by(month.desc())
+    )
+    if sport:
+        query = query.where(Activity.sport.in_(sport))
+    return [
+        MonthTotals(month=m, count=n, distance_m=d, moving_s=t, ascent_m=a)
+        for m, n, d, t, a in db.execute(query)
+    ]
 
 
 @router.get("/{activity_id}", operation_id="getActivity")

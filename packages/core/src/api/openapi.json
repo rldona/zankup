@@ -559,6 +559,65 @@
         }
       }
     },
+    "/api/activities/months": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "List Months",
+        "description": "Totals per month, newest first: the headers of the feed, whole even while it loads by pages.",
+        "operationId": "listActivityMonths",
+        "parameters": [
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports (repeat to combine)",
+              "title": "Sport"
+            },
+            "description": "Only these sports (repeat to combine)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MonthTotals"
+                  },
+                  "title": "Response Listactivitymonths"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/activities/{activity_id}": {
       "get": {
         "tags": [
@@ -1840,6 +1899,42 @@
           "totp_enabled"
         ],
         "title": "Me"
+      },
+      "MonthTotals": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month",
+            "description": "\"YYYY-MM\""
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S",
+            "description": "Moving time, or the elapsed time when there is none"
+          },
+          "ascent_m": {
+            "type": "number",
+            "title": "Ascent M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "count",
+          "distance_m",
+          "moving_s",
+          "ascent_m"
+        ],
+        "title": "MonthTotals",
+        "description": "One month of the feed, in the activities' own local time."
       },
       "Options": {
         "properties": {

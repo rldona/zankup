@@ -15,6 +15,7 @@ type Json<P extends keyof paths, M extends 'get' | 'post'> = paths[P][M] extends
 export type Me = Json<'/api/auth/me', 'get'>;
 export type ActivityPage = Json<'/api/activities', 'get'>;
 export type ActivitySummary = ActivityPage['items'][number];
+export type MonthTotals = Json<'/api/activities/months', 'get'>[number];
 export type ActivityDetail = Json<'/api/activities/{activity_id}', 'get'>;
 export type Health = Json<'/api/health', 'get'>;
 export type SetupStatus = Json<'/api/setup', 'get'>;
@@ -45,6 +46,7 @@ export const queryKeys = {
   setup: ['setup'] as const,
   me: ['me'] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
+  months: (sport?: readonly string[]) => ['activities', 'months', { sport: sport ?? [] }] as const,
   activity: (id: number) => ['activity', id] as const,
 };
 
@@ -77,6 +79,20 @@ export function activitiesQuery(api: ApiClient, sport?: readonly string[], limit
         }),
       ),
     getNextPageParam: (last: ActivityPage) => last.next_cursor ?? undefined,
+  };
+}
+
+/** Totals per month for the feed's headers (count, distance, time, ascent), newest first. */
+export function monthsQuery(api: ApiClient, sport?: readonly string[]) {
+  return {
+    queryKey: queryKeys.months(sport),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities/months', {
+          params: { query: { sport: sport?.length ? [...sport] : undefined } },
+          signal,
+        }),
+      ),
   };
 }
 

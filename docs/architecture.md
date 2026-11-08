@@ -74,7 +74,7 @@ flowchart TB
 | Piece | On Railway | Notes |
 |---|---|---|
 | **API** | Web service (FastAPI + Uvicorn) | API only: the PWA is on Vercel. HTTPS and domain included |
-| **Scheduled sync** | Railway Cron Job (`*/15 * * * *`) running `python -m opensport.sync` | Can also be triggered by hand with the "Sync" button (`POST /api/sync`) |
+| **Scheduled sync** | A scheduler thread in the API queues a `sync_garmin` job every 15 min (`SYNC_INTERVAL_MINUTES`), one per time slot | Not a Railway Cron Job: it would not see the volume with the FIT files. Also by hand with the "Sync" button (`POST /api/sync`) or `python -m opensport.sync` |
 | **Database** | Managed Postgres | Backups and private-network connection. 1 Hz streams go in compressed `jsonb` or `bytea` columns |
 | **Original FITs** | Persistent volume mounted at `/data/raw` | A few MB per year (about 50–120 KB per activity). Can be copied elsewhere |
 | **Secrets** | Railway environment variables | `GARMIN_PERSONAL_API_KEY`, `JWT_SECRET`, `VAPID_*`, `FCM_*`, `RESEND_API_KEY` |

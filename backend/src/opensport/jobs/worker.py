@@ -114,8 +114,10 @@ def build_worker() -> Worker:
     from opensport.jobs.handlers import default_handlers
     from opensport.storage import get_raw_store
 
+    settings = get_settings()
     sessions = sessionmaker(get_engine(), expire_on_commit=False)
-    return Worker(sessions, default_handlers(get_raw_store(get_settings())))
+    key = settings.garmin_personal_api_key.get_secret_value() if settings.garmin_personal_api_key else None
+    return Worker(sessions, default_handlers(get_raw_store(settings), sessions, key))
 
 
 def main() -> None:
@@ -124,9 +126,19 @@ def main() -> None:
 
     settings = get_settings()
     configure_logging(settings.log_level, settings.effective_log_format)
-    worker = build_worker()
-    signal.signal(signal.SIGTERM, lambda *_: worker.stop())
-    signal.signal(signal.SIGINT, lambda *_: worker.stop())
+    from opensport.jobs.scheduler import build_scheduler
+
+    worker, scheduler = build_worker(), build_scheduler()
+
+    def stop(*_: object) -> None:
+        worker.stop()
+        if scheduler is not None:
+            scheduler.stop()
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    if scheduler is not None:
+        scheduler.start_thread()
     worker.run_forever()
 
 

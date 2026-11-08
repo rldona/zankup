@@ -1,0 +1,55 @@
+# Local development: Postgres and the API with hot reload. The web app runs on the host (`make dev`).
+# Personal data never enters the image: ./data is mounted at /data like Railway's volume.
+name: opensport
+
+services:
+  db:
+    image: postgres:18.4-alpine
+    environment:
+      POSTGRES_USER: opensport
+      POSTGRES_PASSWORD: opensport
+      POSTGRES_DB: opensport
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U opensport -d opensport']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: uvicorn opensport.api.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/backend/src --reload-dir /app/packages/metrics/src
+    # Only the variables the API needs, read from .env by compose (setup tokens stay out of the container).
+    environment:
+      DATABASE_URL: postgresql://opensport:opensport@db:5432/opensport
+      DATA_DIR: /data
+      # Do not write root-owned __pycache__ folders into the mounted source on the host.
+      PYTHONDONTWRITEBYTECODE: '1'
+      GARMIN_PERSONAL_API_KEY: ${GARMIN_PERSONAL_API_KEY:-}
+      JWT_SECRET: ${JWT_SECRET:-local-development-only}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - '127.0.0.1:8000:8000'
+    volumes:
+      - ./backend/src:/app/backend/src
+      - ./packages/metrics/src:/app/packages/metrics/src
+      - ./data:/data
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

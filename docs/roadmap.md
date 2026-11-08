@@ -169,7 +169,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - Map (light or dark style) and charts adapted to each theme.
   - *Done when:* switching themes leaves no hard-coded colour visible and every theme passes WCAG AA contrast in CI.
 - **OS-203 · Sign-in screen** (M) · depends on OS-110 and OS-201
-  - Prototype design: on desktop, a brand panel on the left with the claim "Your sports data: 100% free" and gentle animated waves (Canvas 2D, no library, still with `prefers-reduced-motion`), and the form on the right; on mobile, a single column. Links to "Create your account" (OS-221) and "Forgot it?" (OS-222).
+  - Prototype design: on desktop, a brand panel on the left with the claim "Your sports data, on another level" (pointing at what the metrics and charts can show) and gentle animated waves (Canvas 2D, no library, still with `prefers-reduced-motion`), and the form on the right; on mobile, a single column. Links to "Create your account" (OS-221) and "Forgot it?" (OS-222).
   - Step 1: email and password (show/hide, "remember this device for 30 days"). Step 2: 6-digit TOTP code with auto-advance, pasting the whole code and a link to use a recovery code. "Continue with Google" (OS-220). "Sign in with a passkey" waits for OS-405 (backlog).
   - Clear errors that never reveal whether the email or the password was wrong, rate limiting with increasing delays and the right `autocomplete` values (`username`, `current-password`, `one-time-code`) for password managers.
   - **The sign-in screen shows no user data** (no numbers or routes): it is the only thing visible without a session.

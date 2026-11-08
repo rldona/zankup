@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#111111",
+        "backgroundColor": "#0b8f6a",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"

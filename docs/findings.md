@@ -1,6 +1,6 @@
 # Findings: how to get activity data
 
-Research carried out on 6–7 November 2026 for OpenSport. Reference device: Garmin fēnix 6X Pro (firmware 28.02), with Garmin Connect and a free Strava account.
+Research carried out on 6–7 November 2026 for Zankup. Reference device: Garmin fēnix 6X Pro (firmware 28.02), with Garmin Connect and a free Strava account.
 
 **Conclusion:** the main source will be the **Garmin Connect Personal API**. It is official, free, and returns the original FIT file without anything stripped. It has already been tested with real data ([backend/garmin_sync.py](../backend/garmin_sync.py)). The architecture is described in [architecture.md](architecture.md).
 
@@ -76,13 +76,13 @@ More detail in [strava-export-analysis.md](strava-export-analysis.md).
 ## 6. Other technical details
 
 - **Coordinates in the FIT:** stored as semicircles; degrees = value × 180 / 2³¹.
-- **The watch's HR zones:** not reliable. The run's FIT computes them from a lactate threshold of 86 bpm, so everything falls into Z5. The strength FIT uses % of max HR (185) and is consistent. **OpenSport will compute its own zones.**
+- **The watch's HR zones:** not reliable. The run's FIT computes them from a lactate threshold of 86 bpm, so everything falls into Z5. The strength FIT uses % of max HR (185) and is consistent. **Zankup will compute its own zones.**
 - **Reading FIT in Python:** `fitdecode` works well. Proprietary messages show up as `unknown_N`.
 - **Garmin Connect website:** the internal download uses `gc-api/download-service/files/activity/{id}` with the browser session's tokens. It cannot be reused from a backend.
 
 ## 7. Privacy and security
 
-- **Strava's privacy zones do not protect exported files:** the FIT and the GPX contain the full route, including the start near home. OpenSport must trim those sections when **generating** anything that gets shared, not just hide them on screen.
+- **Strava's privacy zones do not protect exported files:** the FIT and the GPX contain the full route, including the start near home. Zankup must trim those sections when **generating** anything that gets shared, not just hide them on screen.
 - The FIT contains personal data: weight, height, sex and resting HR.
 - The API key lives in `.env` (`600` permissions, outside git). The temporary token is stored in `data/.garmin_token.json` (`600`). `data/` is in `.gitignore`.
 - ⚠️ **The current key was pasted into a conversation**: it should be deleted and a new one generated once testing is over.
@@ -119,7 +119,7 @@ Export from 7 Nov 2026 (`strava/export_95859`, 370 MB, **outside git**):
 - **Only on Strava (12):** strength and Hyrox sessions (e.g. "GRIT") recorded with another app. The importer must bring them in.
 - **Only on Garmin (29):** mostly short ROUVY fragments that never reached Strava.
 
-**How OpenSport uses it:**
+**How Zankup uses it:**
 1. **History before Garmin** (1,627 activities from 2011 to 2025), with their FIT, TCX or GPX (importer OS-406).
 2. **Deduplication** by start time. When they match, Garmin's FIT wins (more complete) and the name, description, gear and photos are kept from Strava.
 3. **Gear with its real mileage** from day one (OS-410).

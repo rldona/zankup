@@ -1,4 +1,4 @@
-# OpenSport React Native proof of concept (OS-501)
+# Zankup React Native proof of concept (OS-501)
 
 Only the activity detail, to decide React Native or Kotlin for the Android app before phase 5:
 MapLibre map with the route, an elevation and heart-rate profile drawn with Skia, a cursor that follows
@@ -20,7 +20,7 @@ cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
-Sign in with an account of that instance (`python -m opensport.admin set-password` and `enable-totp`).
+Sign in with an account of that instance (`python -m zankup.admin set-password` and `enable-totp`).
 The app opens on the latest activity; "All" lists the others.
 
 ## Measure

@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from opensport.core.config import Settings
-from opensport.storage import (
+from zankup.core.config import Settings
+from zankup.storage import (
     ImmutableFileError,
     IntegrityError,
     LocalRawStore,

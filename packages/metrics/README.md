@@ -1,6 +1,6 @@
-# opensport-metrics
+# zankup-metrics
 
-The OpenSport metrics engine as a standalone Python package: pure functions over normalised activity streams and summaries, with no dependency on a database, an API or the network.
+The Zankup metrics engine as a standalone Python package: pure functions over normalised activity streams and summaries, with no dependency on a database, an API or the network.
 
 Planned metrics (see [the roadmap](../../docs/roadmap.md), phase 3): HR, pace and power zones, relative effort (TRIMP), fitness, fatigue and form (CTL/ATL/TSB), grade-adjusted pace (Minetti), best efforts, power and pace curves, FTP and threshold estimates, VO₂max (VDOT), race predictions and calorie estimates.
 

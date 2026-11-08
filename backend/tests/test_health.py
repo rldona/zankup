@@ -1,9 +1,9 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 
-from opensport import __version__
-from opensport.api.main import app
-from opensport.db.session import get_engine
+from zankup import __version__
+from zankup.api.main import app
+from zankup.db.session import get_engine
 
 
 def test_health_reports_the_migrated_database(database: str) -> None:

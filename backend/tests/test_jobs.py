@@ -11,13 +11,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select, update
 from sqlalchemy.orm import Session, sessionmaker
 
-from opensport.api.main import app
-from opensport.db.models import Activity, Job, User
-from opensport.db.session import get_engine
-from opensport.jobs.handlers import default_handlers
-from opensport.jobs.queue import backoff, claim, enqueue, now, requeue_stale
-from opensport.jobs.worker import Worker
-from opensport.storage import LocalRawStore, raw_key
+from zankup.api.main import app
+from zankup.db.models import Activity, Job, User
+from zankup.db.session import get_engine
+from zankup.jobs.handlers import default_handlers
+from zankup.jobs.queue import backoff, claim, enqueue, now, requeue_stale
+from zankup.jobs.worker import Worker
+from zankup.storage import LocalRawStore, raw_key
 
 FIT = (Path(__file__).resolve().parents[2] / "fixtures" / "fit" / "run.fit").read_bytes()
 

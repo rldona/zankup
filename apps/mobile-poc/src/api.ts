@@ -2,10 +2,10 @@
  * Session for the proof of concept: the app sign-in of OS-110 (password, then TOTP), with the access
  * token refreshed on a 401 and the refresh token kept in the Android keystore (expo-secure-store).
  */
-import { createApiClient, type ApiClient } from '@opensport/core';
+import { createApiClient, type ApiClient } from '@zankup/core';
 import * as SecureStore from 'expo-secure-store';
 
-const KEY = 'opensport.session';
+const KEY = 'zankup.session';
 
 export type Session = { baseUrl: string; accessToken: string; refreshToken: string };
 
@@ -24,7 +24,7 @@ export class SignInError extends Error {}
 export async function signIn(baseUrl: string, email: string, password: string, code: string): Promise<Session> {
   const api = createApiClient(baseUrl);
   const step1 = await api.POST('/api/auth/login', {
-    body: { email, password, client: 'android', device_name: 'OpenSport PoC', remember: false },
+    body: { email, password, client: 'android', device_name: 'Zankup PoC', remember: false },
   });
   if (!step1.data) throw new SignInError(detail(step1.error) ?? 'Sign-in failed');
   const step2 = await api.POST('/api/auth/login/totp', { body: { challenge: step1.data.challenge, code } });

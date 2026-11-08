@@ -1,9 +1,9 @@
 {
-  "name": "@opensport/mobile-poc",
+  "name": "@zankup/mobile-poc",
   "main": "index.ts",
   "dependencies": {
     "@maplibre/maplibre-react-native": "11.5.0",
-    "@opensport/core": "workspace:*",
+    "@zankup/core": "workspace:*",
     "@shopify/react-native-skia": "2.14.0",
     "expo": "~58.0.19",
     "expo-secure-store": "~58.0.2",

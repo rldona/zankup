@@ -1,4 +1,4 @@
-# @opensport/core
+# @zankup/core
 
 Shared TypeScript for the PWA (`apps/web`) and, later, the Android app. It holds logic, not visual components.
 
@@ -23,7 +23,7 @@ pnpm generate:api
 ## Scripts
 
 ```bash
-pnpm --filter @opensport/core test        # vitest
-pnpm --filter @opensport/core typecheck   # tsc
-pnpm --filter @opensport/core lint        # eslint
+pnpm --filter @zankup/core test        # vitest
+pnpm --filter @zankup/core typecheck   # tsc
+pnpm --filter @zankup/core lint        # eslint
 ```

@@ -22,14 +22,14 @@ jobs:
       postgres:
         image: postgres:18.4-alpine
         env:
-          POSTGRES_USER: opensport
-          POSTGRES_PASSWORD: opensport
-          POSTGRES_DB: opensport
+          POSTGRES_USER: zankup
+          POSTGRES_PASSWORD: zankup
+          POSTGRES_DB: zankup
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U opensport" --health-interval 2s --health-timeout 3s --health-retries 20
+          --health-cmd "pg_isready -U zankup" --health-interval 2s --health-timeout 3s --health-retries 20
     env:
-      DATABASE_URL: postgresql://opensport:opensport@127.0.0.1:5432/opensport
+      DATABASE_URL: postgresql://zankup:zankup@127.0.0.1:5432/zankup
       REQUIRE_DB: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -60,11 +60,11 @@ jobs:
         run: uv run python tools/check_fixtures.py
       - name: OpenAPI document is up to date
         run: |
-          uv run python -m opensport.api.openapi_export
+          uv run python -m zankup.api.openapi_export
           git diff --exit-code -- packages/core/src/api/openapi.json || {
             echo "::error::Run 'pnpm generate:api' and commit packages/core/src/api/"; exit 1; }
       - name: Docker build
-        run: docker build -f backend/Dockerfile -t opensport-api:ci .
+        run: docker build -f backend/Dockerfile -t zankup-api:ci .
 
   web:
     name: Web (TypeScript)
@@ -87,7 +87,7 @@ jobs:
         run: pnpm typecheck
       - name: API types are up to date
         run: |
-          pnpm --filter @opensport/core generate:types
+          pnpm --filter @zankup/core generate:types
           git diff --exit-code -- packages/core/src/api/schema.ts || {
             echo "::error::Run 'pnpm generate:api' and commit packages/core/src/api/"; exit 1; }
       - name: Format

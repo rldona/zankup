@@ -1,4 +1,4 @@
-/** Sports OpenSport groups activities into. Garmin and Strava types are mapped onto these on import. */
+/** Sports Zankup groups activities into. Garmin and Strava types are mapped onto these on import. */
 export const SPORTS = ['run', 'ride', 'strength', 'walk', 'row', 'swim', 'other'] as const;
 export type Sport = (typeof SPORTS)[number];
 

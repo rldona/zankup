@@ -17,7 +17,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
 
-from opensport.core.config import Settings
+from zankup.core.config import Settings
 
 ALEMBIC_INI = Path(__file__).resolve().parents[1] / "alembic.ini"
 
@@ -33,7 +33,7 @@ def throwaway_database() -> Iterator[str]:
     """Create a new, empty database and drop it afterwards. Yields its SQLAlchemy URL."""
     server = make_url(Settings(_env_file=None).sqlalchemy_url)  # type: ignore[call-arg]
     admin = create_engine(server, isolation_level="AUTOCOMMIT")
-    name = f"opensport_test_{uuid.uuid4().hex[:12]}"
+    name = f"zankup_test_{uuid.uuid4().hex[:12]}"
     try:
         with admin.connect() as conn:
             conn.execute(text(f'CREATE DATABASE "{name}"'))

@@ -50,11 +50,11 @@ Files: `Carrera_de_noche.fit` (Export Original) and `Carrera_de_noche.gpx` (Expo
 
 - On the website, the start and the end show as **"Hidden"** because of the privacy zone, but **both exports contain the full route**, including the starting point.
 - The FIT includes personal profile data (weight, height).
-- For OpenSport: treat these files as sensitive data, implement our own privacy zones for anything shared, and never upload them to public repositories.
+- For Zankup: treat these files as sensitive data, implement our own privacy zones for anything shared, and never upload them to public repositories.
 
-## Conclusions for OpenSport
+## Conclusions for Zankup
 
 1. **Use the FIT as the main source**: it reproduces every metric Strava shows for free, and it also has laps, zones and Training Effect.
 2. **Use the GPX as a fallback** for other sources, processing it to get believable distance and elevation.
-3. **Compute HR zones with OpenSport's own settings**: the watch has an unrealistic lactate threshold of 86 bpm, which is why the FIT puts all the time in zone 5.
+3. **Compute HR zones with Zankup's own settings**: the watch has an unrealistic lactate threshold of 86 bpm, which is why the FIT puts all the time in zone 5.
 4. `fitdecode` works well for reading FIT in Python (coordinates come as semicircles: degrees = value × 180 / 2³¹).

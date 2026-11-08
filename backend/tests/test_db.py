@@ -8,8 +8,8 @@ from sqlalchemy import create_engine, func, inspect, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from opensport.db import Activity, Base, Lap, Stream, User, UserSettings
 from tests.conftest import alembic_config
+from zankup.db import Activity, Base, Lap, Stream, User, UserSettings
 
 TABLES = {"users", "settings", "devices", "activities", "laps", "streams", "sync_runs"}
 

@@ -12,13 +12,13 @@ from pydantic import SecretStr
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from opensport.alerts import RESEND_URL, email_sender, notify_sync_outcome, sync_alert
-from opensport.core.config import Settings
-from opensport.db.models import SyncRun, User
-from opensport.storage import LocalRawStore
-from opensport.sync.garmin import BASE_URL, LIST_PATH, GarminClient, MemoryTokenCache
-from opensport.sync.orchestrator import run_sync
 from tests.test_sync import garmin_api  # noqa: F401 - fixture serving the scrubbed Garmin page and FITs
+from zankup.alerts import RESEND_URL, email_sender, notify_sync_outcome, sync_alert
+from zankup.core.config import Settings
+from zankup.db.models import SyncRun, User
+from zankup.storage import LocalRawStore
+from zankup.sync.garmin import BASE_URL, LIST_PATH, GarminClient, MemoryTokenCache
+from zankup.sync.orchestrator import run_sync
 
 
 @pytest.fixture
@@ -123,7 +123,7 @@ def test_resend_request() -> None:
     request = route.calls[0].request
     assert request.headers["Authorization"] == "Bearer re_test"
     assert json.loads(request.content) == {
-        "from": "OpenSport <onboarding@resend.dev>",
+        "from": "Zankup <onboarding@resend.dev>",
         "to": ["me@example.com"],
         "subject": "Subject",
         "text": "Body",

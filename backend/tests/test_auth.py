@@ -12,14 +12,14 @@ from pydantic import SecretStr
 from sqlalchemy import create_engine, update
 from sqlalchemy.orm import Session, sessionmaker
 
-from opensport.admin import AdminError, enable_totp, set_password
-from opensport.api.main import create_app
-from opensport.api.routing import PUBLIC_PATHS
-from opensport.auth import rate_limit
-from opensport.auth.security import AuthConfigError, decrypt_totp_secret, encrypt_totp_secret
-from opensport.core.config import Settings, get_settings
-from opensport.db.models import Device, User
-from opensport.db.session import get_engine, get_session
+from zankup.admin import AdminError, enable_totp, set_password
+from zankup.api.main import create_app
+from zankup.api.routing import PUBLIC_PATHS
+from zankup.auth import rate_limit
+from zankup.auth.security import AuthConfigError, decrypt_totp_secret, encrypt_totp_secret
+from zankup.core.config import Settings, get_settings
+from zankup.db.models import Device, User
+from zankup.db.session import get_engine, get_session
 
 PASSWORD = "correct horse battery staple"
 SETTINGS = Settings(_env_file=None, environment="test", jwt_secret=SecretStr("test-secret"), run_worker=False)  # type: ignore[call-arg]
@@ -30,7 +30,7 @@ def ctx(
     database: str, monkeypatch: pytest.MonkeyPatch
 ) -> Iterator[tuple[TestClient, sessionmaker[Session], str]]:
     monkeypatch.setattr(rate_limit, "limiter", rate_limit.LoginLimiter())
-    monkeypatch.setattr("opensport.auth.routes.limiter", rate_limit.limiter)
+    monkeypatch.setattr("zankup.auth.routes.limiter", rate_limit.limiter)
     engine = create_engine(database)
     sessions = sessionmaker(engine, expire_on_commit=False)
 
@@ -93,7 +93,7 @@ def test_browser_session_flow(ctx: tuple[TestClient, sessionmaker[Session], str]
     client, _, secret = ctx
     me = sign_in(client, secret)
     assert me["email"] == "runner@example.com" and me["totp_enabled"] is True
-    assert client.cookies.get("opensport_session")
+    assert client.cookies.get("zankup_session")
     assert client.get("/api/auth/me").status_code == 200
     assert client.post("/api/auth/logout").status_code == 204
     assert client.get("/api/auth/me").status_code == 401

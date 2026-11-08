@@ -8,10 +8,10 @@ import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
-from opensport.db.models import Activity, BestEffort, Lap, Stream, User
-from opensport.fit.streams import decode_polyline, decode_streams, encode_polyline, simplify
-from opensport.ingest import ingest_fit
-from opensport.storage import ImmutableFileError, LocalRawStore
+from zankup.db.models import Activity, BestEffort, Lap, Stream, User
+from zankup.fit.streams import decode_polyline, decode_streams, encode_polyline, simplify
+from zankup.ingest import ingest_fit
+from zankup.storage import ImmutableFileError, LocalRawStore
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 GARMIN = {a["activityName"]: a for a in json.loads((FIXTURES / "garmin" / "activity-list.json").read_text())}

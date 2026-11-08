@@ -441,7 +441,7 @@ function Laps({ activity, format, pace }: { activity: ActivityDetail; format: Fo
       <div className="ph">
         <h2>{t('activity.laps')}</h2>
       </div>
-      <div className="scroll">
+      <div className="scroll" tabIndex={0} role="region" aria-label={t('activity.laps')}>
         <table className="num">
           <thead>
             <tr>

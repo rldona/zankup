@@ -347,7 +347,7 @@ function ResultsTable({
   format: ReturnType<typeof formatters>;
 }) {
   return (
-    <div className="panel scroll">
+    <div className="panel scroll" tabIndex={0} role="region" aria-label={t('nav.search')}>
       <table className="num rtable">
         <thead>
           <tr>

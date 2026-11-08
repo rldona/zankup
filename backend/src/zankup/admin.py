@@ -1,4 +1,5 @@
-"""Account administration from the server's shell, until the sign-up screens exist (OS-221, OS-222).
+"""Account administration from the server's shell, for emergencies: the account is created at /setup
+(OS-221) and recovered by e-mail (OS-222). On Railway, through `railway ssh`, use /app/.venv/bin/python.
 
     python -m zankup.admin set-password      # asks for the password twice
     python -m zankup.admin enable-totp       # shows the key for the authenticator app, asks for a code

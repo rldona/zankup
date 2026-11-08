@@ -95,7 +95,9 @@ def test_button_sync_end_to_end(ctx: Ctx, garmin_api: respx.Router) -> None:  # 
     drain(ctx.worker)  # the sync, then the three imports it queued
     done = ctx.http.get(f"/api/sync/{run['id']}").json()
     assert done["status"] == "success" and done["new_count"] == 3 and done["finished_at"]
-    assert done["progress"] == {"since": done["progress"]["since"], "listed": 3, "new": 3, "downloaded": 3}
+    progress = done["progress"]
+    assert (progress["listed"], progress["new"], progress["downloaded"]) == (3, 3, 3)
+    assert progress["window"] == progress["windows"] == 1
     assert done["pending_imports"] == 0
     assert len(ctx.http.get("/api/activities").json()["items"]) == 3
 

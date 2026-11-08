@@ -614,6 +614,16 @@ export interface components {
        * @description Original files downloaded so far
        */
       downloaded?: number | null;
+      /**
+       * Window
+       * @description Date window being listed (long loads go window by window)
+       */
+      window?: number | null;
+      /**
+       * Windows
+       * @description How many date windows the run covers
+       */
+      windows?: number | null;
     };
     /** SyncStatus */
     SyncStatus: {

@@ -1,5 +1,5 @@
 # Common tasks. Everything also works with the underlying commands (see README).
-.PHONY: help setup dev api db stop test lint format check generate-api migrate migration sync
+.PHONY: help setup dev api db stop test lint format check generate-api migrate migration sync history
 
 help: ## List the tasks
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  make %-13s %s\n", $$1, $$2}'
@@ -54,3 +54,6 @@ migration: db ## Create a migration from model changes: make migration m="add ge
 
 sync: migrate ## Sync new Garmin activities into the local database (since=YYYY-MM-DD to go further back)
 	uv run python -m opensport.sync $(if $(since),--since $(since),)
+
+history: migrate ## Load the whole Garmin Connect history into the local database (safe to re-run)
+	uv run python -m opensport.sync --all

@@ -1,0 +1,4 @@
+# TypeScript workspaces. backend/ and packages/metrics/ are Python projects managed with uv.
+packages:
+  - apps/*
+  - packages/core

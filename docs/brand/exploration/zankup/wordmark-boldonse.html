@@ -1,0 +1,32 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>Zankup · Boldonse</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Boldonse&display=swap">
+<style>
+body{margin:0;font:14px system-ui;background:#f4f5f3;color:#111;padding:24px;display:grid;gap:14px}
+.b{font-family:Boldonse,sans-serif;font-size:52px;line-height:1;letter-spacing:.02em}
+.card{background:#fff;border-radius:16px;padding:20px;display:flex;align-items:center;gap:18px}
+.card svg{width:64px;height:48px;color:#111;flex:none}
+.row{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.dark{background:#111;color:#fff}.dark svg{color:#fff}
+.green{background:#0b8f6a;color:#fff}.green svg{color:#fff}
+small{font:12px system-ui;color:#666;margin-left:auto}
+.sizes{display:flex;gap:24px;align-items:baseline}.sizes span{font-family:Boldonse}
+</style>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="z4" viewBox="0 0 120 90"><path d="M100 76 H24 L96 28 H44" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><polygon points="20,28 40,14 40,42" fill="currentColor" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/></symbol>
+  <symbol id="r2" viewBox="0 0 120 90"><g stroke="currentColor" stroke-width="16" stroke-linecap="round" fill="none"><path d="M22 76 H62"/><path d="M40 51 H80"/><path d="M58 26 H98"/></g></symbol>
+  <symbol id="r3" viewBox="0 0 120 90"><path d="M98 76 H24 L96 30 H44 V12" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="r1" viewBox="0 0 120 90"><path d="M88 74 H26 L94 30 H40" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="100" cy="74" r="10" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="34" cy="30" r="12" fill="currentColor"/></symbol>
+</defs></svg>
+<div class="card"><span class="b">ZANKUP</span><small>mayúsculas</small></div>
+<div class="card"><span class="b">Zankup</span><small>capitalizada</small></div>
+<div class="card"><span class="b">zankup</span><small>minúsculas</small></div>
+<div class="row">
+  <div class="card"><svg><use href="#z4"/></svg><span class="b">ZANKUP</span></div>
+  <div class="card dark"><svg><use href="#z4"/></svg><span class="b">ZANKUP</span></div>
+  <div class="card"><svg><use href="#r2"/></svg><span class="b">ZANKUP</span></div>
+  <div class="card green"><svg><use href="#r3"/></svg><span class="b">ZANKUP</span></div>
+  <div class="card"><svg><use href="#r1"/></svg><span class="b">Zankup</span></div>
+  <div class="card dark"><svg><use href="#r2"/></svg><span class="b">zankup</span></div>
+</div>
+<div class="card sizes"><span style="font-size:14px">ZANKUP</span><span style="font-size:18px">ZANKUP</span><span style="font-size:24px">ZANKUP</span><span style="font-size:32px">ZANKUP</span><small>14 · 18 · 24 · 32 px</small></div>
+</html>

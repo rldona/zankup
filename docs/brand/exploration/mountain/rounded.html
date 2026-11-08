@@ -1,0 +1,33 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><title>OpenSport · redondeado</title>
+<style>
+body{margin:0;font:14px system-ui;background:#f4f5f3;color:#111;padding:24px}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.opt{background:#fff;border-radius:16px;padding:18px;display:grid;gap:14px;justify-items:center}
+.opt h2{margin:0;font-size:14px;text-align:center}.big{width:180px;height:135px}
+.pair{display:flex;gap:10px}.ico{width:64px;height:64px;border-radius:16px;display:grid;place-items:center}.ico svg{width:44px;height:44px}
+.dark{background:#111;color:#fff}.light{background:#fff;color:#111;border:3px solid #111}.green{background:#0b8f6a;color:#fff}
+.word{display:flex;align-items:center;gap:8px;font-weight:750;font-size:20px}.word svg{width:36px;height:28px}
+</style>
+<div class="row" id="row"></div>
+<script>
+// misma geometría que la S1; el redondeo se consigue con un trazo del mismo color y uniones redondas
+const PEAKS = '<polygon points="10,80 30,49 50,80"/><polygon points="70,80 90,49 110,80"/><polygon points="26,80 60,15 94,80"/>';
+const TRAIL = 'M47 86 L64 66 L50 57 L58 49';
+const ARROW = '65.7,33.8 51.9,44.7 65.1,51.3';
+const V = [
+  ['Antes · S1 (aristas vivas)', 0, false, 6],
+  ['R1 · Redondeo suave', 6, false, 6],
+  ['R2 · Muy redondeado', 11, false, 6],
+  ['R3 · Redondeado + flecha suave', 9, true, 6.5],
+];
+let n = 0;
+const svgFor = ([_, r, softArrow, tw]) => { n++; const id = 'm' + n;
+  const peaks = r ? PEAKS.replaceAll('<polygon', `<polygon stroke="currentColor" stroke-width="${r}" stroke-linejoin="round"`) : PEAKS.replace('points="10,80 30,49 50,80"', 'points="8,82 30,48 52,82"').replace('points="70,80 90,49 110,80"', 'points="68,82 90,48 112,82"').replace('points="26,80 60,15 94,80"', 'points="24,82 60,12 96,82"');
+  return `<svg viewBox="0 0 120 90"><defs><mask id="${id}"><rect width="120" height="90" fill="#fff"/>
+    <path d="${TRAIL}" fill="none" stroke="#000" stroke-width="${tw}" stroke-linecap="round" stroke-linejoin="round"/>
+    <polygon points="${ARROW}" fill="#000" ${softArrow ? 'stroke="#000" stroke-width="3" stroke-linejoin="round"' : ''}/></mask></defs>
+    <g mask="url(#${id})" fill="currentColor">${peaks}</g></svg>`; };
+document.getElementById('row').innerHTML = V.map(v => `<div class="opt"><h2>${v[0]}</h2>${svgFor(v).replace('<svg', '<svg class="big"')}
+  <div class="pair"><div class="ico dark">${svgFor(v)}</div><div class="ico light">${svgFor(v)}</div><div class="ico green">${svgFor(v)}</div></div>
+  <div class="word">${svgFor(v)}OpenSport</div></div>`).join('');
+</script>

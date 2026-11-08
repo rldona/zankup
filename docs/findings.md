@@ -2,7 +2,7 @@
 
 Research carried out on 6–7 November 2026 for OpenSport. Reference device: Garmin fēnix 6X Pro (firmware 28.02), with Garmin Connect and a free Strava account.
 
-**Conclusion:** the main source will be the **Garmin Connect Personal API**. It is official, free, and returns the original FIT file without anything stripped. It has already been tested with real data ([sync/garmin_sync.py](../sync/garmin_sync.py)). The architecture is described in [architecture.md](architecture.md).
+**Conclusion:** the main source will be the **Garmin Connect Personal API**. It is official, free, and returns the original FIT file without anything stripped. It has already been tested with real data ([backend/garmin_sync.py](../backend/garmin_sync.py)). The architecture is described in [architecture.md](architecture.md).
 
 ---
 

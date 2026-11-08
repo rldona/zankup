@@ -11,6 +11,7 @@ from sqlalchemy import select
 
 from zankup.auth.deps import SESSION_COOKIE, AppSettings, CurrentDevice, CurrentUser, DbSession
 from zankup.auth.rate_limit import limiter
+from zankup.auth.recovery import looks_like_recovery_code, use_recovery_code
 from zankup.auth.security import (
     create_access_token,
     create_challenge,
@@ -46,7 +47,7 @@ class Challenge(BaseModel):
 
 class TotpRequest(BaseModel):
     challenge: str
-    code: str = Field(min_length=6, max_length=8)
+    code: str = Field(min_length=6, max_length=16, description="6-digit code, or a recovery code")
 
 
 class Me(BaseModel):
@@ -131,12 +132,16 @@ def login_totp(
         raise _rejected(ip_key)
     account_key = f"account:{user.email}"
     _check_limit(ip_key, account_key)
-    counter = verify_totp(
-        decrypt_totp_secret(user.totp_secret_enc, secret), body.code, user.totp_last_counter
-    )
-    if counter is None:
-        raise _rejected(ip_key, account_key)
-    user.totp_last_counter = counter
+    if looks_like_recovery_code(body.code):
+        if not use_recovery_code(db, user, body.code):  # each one works once
+            raise _rejected(ip_key, account_key)
+    else:
+        counter = verify_totp(
+            decrypt_totp_secret(user.totp_secret_enc, secret), body.code, user.totp_last_counter
+        )
+        if counter is None:
+            raise _rejected(ip_key, account_key)
+        user.totp_last_counter = counter
     limiter.success(account_key)
     return start_session(
         db,

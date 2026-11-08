@@ -26,6 +26,8 @@ make dev     # Postgres + API in Docker, then the web app
 
 The API reloads when you edit `backend/src` or `packages/metrics/src`. To sync real activities, put your own Garmin Personal API key in `.env` (see the comments in [`.env.example`](.env.example)); everything else is optional.
 
+The first time you open the app it goes to **/setup** to create the instance's only account: the setup code it asks for is in the API's logs (`docker compose logs api`, or Railway → Deployments → Logs).
+
 Other tasks: `make test`, `make lint`, `make format`, `make check` (what CI runs), `make generate-api` (after changing an endpoint) and `make stop`. `make help` lists them all.
 
 ## Documentation

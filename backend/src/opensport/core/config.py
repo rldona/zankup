@@ -42,6 +42,15 @@ class Settings(BaseSettings):
         return self.log_format or ("json" if self.is_production else "console")
 
     @property
+    def sqlalchemy_url(self) -> str:
+        """DATABASE_URL with the psycopg 3 driver (Railway and compose give a plain postgresql:// URL)."""
+        url = self.database_url
+        for prefix in ("postgresql://", "postgres://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix) :]
+        return url
+
+    @property
     def raw_dir(self) -> Path:
         """Immutable store of the original FIT files (OS-104)."""
         return self.data_dir / "raw"

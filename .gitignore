@@ -1,7 +1,7 @@
 .env
 data/
 __pycache__/
-docs/prototipos/data.js
+docs/prototypes/data.js
 strava/
 
 # Datos personales de ejemplo (recorridos reales, perfil del reloj): solo en local

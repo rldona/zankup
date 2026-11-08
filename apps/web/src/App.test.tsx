@@ -118,8 +118,8 @@ describe('app skeleton', () => {
     const router = renderAt('/');
     const months = await screen.findAllByRole('heading', { level: 2 });
     expect(months.map((h) => h.textContent)).toEqual([
-      'November 20263 act. · 21 km · 2 h 3 min',
-      'October 20269 act. · 98 km · 8 h 20 min',
+      'November 20263 activities · 21 km · 2 h 3 min',
+      'October 20269 activities · 98 km · 8 h 20 min',
     ]);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Activities · 12 since 2026');
     const run = screen.getByRole('link', { name: /Morning run/ });
@@ -259,8 +259,8 @@ describe('app skeleton', () => {
       },
       '/api/activities': () => Response.json({ items: [], next_cursor: null }),
     });
-    const router = renderAt('/profile');
-    expect(await screen.findByText('runner@example.com')).toBeInTheDocument();
+    const router = renderAt('/profile?tab=account');
+    expect(await screen.findByText('runner@example.com', { selector: 'b' })).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sign-in');

@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useSyncExternalStore } from 'react';
 
 import { api } from './api';
+import { chosenLanguage, switchLanguage } from './i18n';
 
 /**
  * Themes (OS-214). The CSS variables of every theme and the script that applies the saved one are
@@ -127,4 +128,20 @@ export function useServerTheme(): void {
   useEffect(() => {
     if (isThemeChoice(theme) && theme !== read()) applyTheme(theme);
   }, [theme]);
+}
+
+/**
+ * Signed in: the language saved in the account wins over this browser's copy (a choice made on
+ * another device), and a choice made here before the account had one is sent to it.
+ */
+export function useServerLanguage(): void {
+  const settings = useQuery(settingsQuery(api));
+  const loaded = settings.isSuccess;
+  const server = settings.data?.language ?? null;
+  useEffect(() => {
+    if (!loaded) return;
+    const local = chosenLanguage();
+    if (server && server !== local) switchLanguage(server);
+    else if (!server && local) void api.PATCH('/api/settings', { body: { language: local } });
+  }, [loaded, server]);
 }

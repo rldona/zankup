@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
@@ -55,6 +55,32 @@ class Me(BaseModel):
     email: str
     display_name: str | None
     totp_enabled: bool
+    location: str | None = None
+    birth_date: date | None = None
+    sex: Literal["female", "male", "other"] | None = None
+    weight_kg: float | None = None
+    height_cm: int | None = None
+
+
+class ProfileUpdate(BaseModel):
+    """Only the fields sent are changed; null clears one (except the name, which cannot be empty)."""
+
+    display_name: str | None = Field(None, min_length=1, max_length=120)
+    location: str | None = Field(None, max_length=120)
+    birth_date: date | None = None
+    sex: Literal["female", "male", "other"] | None = None
+    weight_kg: float | None = Field(None, ge=20, le=300)
+    height_cm: int | None = Field(None, ge=100, le=250)
+
+
+class DeviceOut(BaseModel):
+    id: int
+    name: str
+    platform: str
+    created_at: datetime
+    last_seen: datetime | None
+    expires_at: datetime | None
+    current: bool = Field(description="The session making this request")
 
 
 class AppTokens(BaseModel):
@@ -96,6 +122,11 @@ def _me(user: User) -> Me:
         email=user.email,
         display_name=user.display_name,
         totp_enabled=user.totp_enabled_at is not None,
+        location=user.location,
+        birth_date=user.birth_date,
+        sex=user.sex,
+        weight_kg=user.weight_kg,
+        height_cm=user.height_cm,
     )
 
 
@@ -221,3 +252,51 @@ def logout(device: CurrentDevice, response: Response, db: DbSession) -> None:
 @router.get("/me", operation_id="getMe")
 def me(user: CurrentUser) -> Me:
     return _me(user)
+
+
+@router.patch("/me", operation_id="updateMe")
+def update_me(body: ProfileUpdate, user: CurrentUser, db: DbSession) -> Me:
+    """Edit the profile (OS-218): name, location, date of birth, sex, weight and height."""
+    for name in body.model_fields_set:
+        value = getattr(body, name)
+        if name == "display_name":
+            if value is not None:
+                user.display_name = value.strip()
+            continue
+        if name == "birth_date" and value is not None and not date(1900, 1, 1) <= value <= date.today():
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That date of birth is not possible")
+        setattr(user, name, value.strip() or None if isinstance(value, str) else value)
+    db.commit()
+    return _me(user)
+
+
+@router.get("/devices", operation_id="listDevices")
+def list_devices(device: CurrentDevice, db: DbSession) -> list[DeviceOut]:
+    """Open sessions: every browser and app signed in, the current one marked."""
+    rows = db.scalars(
+        select(Device).where(Device.user_id == device.user_id).order_by(Device.last_seen.desc().nulls_last())
+    )
+    return [
+        DeviceOut(
+            id=d.id,
+            name=d.name,
+            platform=d.platform,
+            created_at=d.created_at,
+            last_seen=d.last_seen,
+            expires_at=d.expires_at,
+            current=d.id == device.id,
+        )
+        for d in rows
+    ]
+
+
+@router.delete("/devices/{device_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="deleteDevice")
+def delete_device(device_id: int, device: CurrentDevice, db: DbSession) -> None:
+    """Sign a session out from elsewhere. Signing out this one is POST /logout."""
+    target = db.scalar(select(Device).where(Device.id == device_id, Device.user_id == device.user_id))
+    if target is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Session not found")
+    if target.id == device.id:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This is the current session: sign out instead")
+    db.delete(target)
+    db.commit()

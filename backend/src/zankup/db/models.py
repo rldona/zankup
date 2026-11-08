@@ -5,12 +5,13 @@ has a single user: it keeps a hosted, multi-user version possible without a data
 Enumerated values are plain text with CHECK constraints, which are simpler to evolve than Postgres enums.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -49,6 +50,7 @@ class User(Timestamps, Base):
     """The owner of the instance. Sign-in methods arrive with authentication (OS-110)."""
 
     __tablename__ = "users"
+    __table_args__ = (CheckConstraint("sex IN ('female', 'male', 'other')", name="sex"),)
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     email: Mapped[str] = mapped_column(String(320), unique=True)
@@ -61,6 +63,12 @@ class User(Timestamps, Base):
     totp_last_counter: Mapped[int | None] = mapped_column(
         BigInteger, comment="Last accepted step: no replays"
     )
+    # Profile (OS-218): optional, used by the metrics engine (age, weight) and shown on the profile.
+    location: Mapped[str | None] = mapped_column(String(120))
+    birth_date: Mapped[date | None] = mapped_column(Date)
+    sex: Mapped[str | None] = mapped_column(String(10))
+    weight_kg: Mapped[float | None] = mapped_column(Float)
+    height_cm: Mapped[int | None] = mapped_column(SmallInteger)
 
 
 class UserSettings(Timestamps, Base):
@@ -73,7 +81,9 @@ class UserSettings(Timestamps, Base):
     )
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    language: Mapped[str] = mapped_column(String(5), server_default="en")
+    language: Mapped[str | None] = mapped_column(
+        String(5), comment="Null until the user picks one: the browser's language is used"
+    )
     units: Mapped[str] = mapped_column(String(10), server_default="metric")
     theme: Mapped[str] = mapped_column(String(20), server_default="system")
     hr_max: Mapped[int | None] = mapped_column(SmallInteger)

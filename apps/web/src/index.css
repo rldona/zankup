@@ -767,6 +767,192 @@ button.link {
   color: var(--muted);
 }
 
+/* Settings and profile (OS-212, OS-218). */
+.page h3 {
+  font-size: 14px;
+  margin: 14px 0 4px;
+}
+
+input,
+select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 7px 10px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 16px;
+  margin: 10px 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rows {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 14px;
+}
+
+.rows li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.rows li > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.badge.streak {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}
+
+.ok {
+  color: var(--accent);
+  margin: 0 0 4px;
+}
+
+.warn {
+  color: var(--run);
+  margin: 0 0 4px;
+}
+
+.phead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.phead h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.phead .note {
+  margin: 2px 0 6px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+  font-size: 22px;
+  flex: none;
+}
+
+.page.profile {
+  max-width: 980px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  margin: 6px 0 14px;
+  scrollbar-width: none;
+}
+
+.tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  padding: 8px 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tabs button[aria-selected='true'] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 0 14px;
+}
+
+.grid2 .panel {
+  overflow-x: auto;
+}
+
+.pairs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.pairs dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pairs dd {
+  margin: 0;
+  font-weight: 650;
+}
+
+.cell-sport {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell-sport .sp {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.cell-sport .sp svg.i {
+  width: 15px;
+  height: 15px;
+}
+
 /* Chart catalogue (OS-215): each block is drawn in its own theme. */
 .cat {
   background: var(--surface);

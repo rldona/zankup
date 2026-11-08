@@ -29,7 +29,7 @@ Units = Literal["metric", "imperial"]
 
 class Preferences(BaseModel):
     theme: Theme
-    language: Language
+    language: Language | None = Field(description="Null until picked: clients use the device's language")
     units: Units
     hr_max: int | None = Field(description="Max heart rate set by the user")
     hr_rest: int | None = Field(description="Resting heart rate set by the user")
@@ -39,7 +39,7 @@ class Preferences(BaseModel):
 
 
 class PreferencesUpdate(BaseModel):
-    """Only the fields sent are changed. Send null for hr_max or hr_rest to clear them."""
+    """Only the fields sent are changed. Null clears the language, hr_max or hr_rest."""
 
     theme: Theme | None = None
     language: Language | None = None
@@ -51,7 +51,7 @@ class PreferencesUpdate(BaseModel):
 def _settings(db: Session, user: User) -> UserSettings:
     row = db.get(UserSettings, user.id)
     if row is None:
-        row = UserSettings(user_id=user.id, theme="system", language="en", units="metric")
+        row = UserSettings(user_id=user.id, theme="system", units="metric")
         db.add(row)
         db.flush()
     return row
@@ -62,7 +62,7 @@ def _out(db: Session, row: UserSettings) -> Preferences:
     estimate = db.scalar(select(func.max(Activity.max_hr)).where(Activity.user_id == row.user_id))
     return Preferences(
         theme=cast(Theme, theme),
-        language=cast(Language, row.language),
+        language=cast(Language, row.language) if row.language in get_args(Language) else None,
         units=cast(Units, row.units),
         hr_max=row.hr_max,
         hr_rest=row.hr_rest,
@@ -79,10 +79,10 @@ def get_preferences(db: DbSession, user: CurrentUser) -> Preferences:
 def update_preferences(body: PreferencesUpdate, db: DbSession, user: CurrentUser) -> Preferences:
     row = _settings(db, user)
     sent = body.model_fields_set
-    for name in ("theme", "language", "units"):
+    for name in ("theme", "units"):
         if name in sent and getattr(body, name) is not None:
             setattr(row, name, getattr(body, name))
-    for name in ("hr_max", "hr_rest"):
+    for name in ("language", "hr_max", "hr_rest"):
         if name in sent:
             setattr(row, name, getattr(body, name))
     db.commit()

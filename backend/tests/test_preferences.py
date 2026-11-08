@@ -57,7 +57,7 @@ def test_the_theme_starts_as_system_and_is_kept(http: tuple[TestClient, sessionm
     client, sessions, user_id = http
     defaults = {
         "theme": "system",
-        "language": "en",
+        "language": None,
         "units": "metric",
         "hr_max": None,
         "hr_rest": None,

@@ -75,7 +75,7 @@ def test_activity_lifecycle(database: str) -> None:
         session.commit()
 
         settings = session.get(UserSettings, user.id)
-        assert settings is not None and settings.language == "en" and settings.units == "metric"
+        assert settings is not None and settings.language is None and settings.units == "metric"
         assert activity.imported_at is not None and activity.has_gps is False
 
         # Deleting the user removes everything they own.

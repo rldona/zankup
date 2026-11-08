@@ -4,6 +4,103 @@
  */
 
 export interface paths {
+  '/api/auth/login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Login
+     * @description Step 1: e-mail and password. Returns a challenge to complete with a TOTP code.
+     */
+    post: operations['login'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/login/totp': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Login Totp
+     * @description Step 2: the 6-digit code. Starts a browser session (cookie) or returns tokens for the app.
+     */
+    post: operations['loginTotp'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/refresh': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Refresh
+     * @description App only: exchange a refresh token for a new access token and a new refresh token (rotation).
+     */
+    post: operations['refreshTokens'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/logout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Logout
+     * @description End this session: the device row is deleted, so its cookie or refresh token stops working.
+     */
+    post: operations['logout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Me */
+    get: operations['getMe'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -30,6 +127,37 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** AppTokens */
+    AppTokens: {
+      /** Access Token */
+      access_token: string;
+      /** Refresh Token */
+      refresh_token: string;
+      /**
+       * Token Type
+       * @default bearer
+       * @constant
+       */
+      token_type: 'bearer';
+      /** Expires In */
+      expires_in: number;
+    };
+    /** Challenge */
+    Challenge: {
+      /**
+       * Mfa Required
+       * @default true
+       * @constant
+       */
+      mfa_required: true;
+      /** Challenge */
+      challenge: string;
+    };
+    /** HTTPValidationError */
+    HTTPValidationError: {
+      /** Detail */
+      detail?: components['schemas']['ValidationError'][];
+    };
     /** Health */
     Health: {
       /**
@@ -51,6 +179,65 @@ export interface components {
        */
       schema_revision: string | null;
     };
+    /** LoginRequest */
+    LoginRequest: {
+      /** Email */
+      email: string;
+      /** Password */
+      password: string;
+      /**
+       * Remember
+       * @default false
+       */
+      remember: boolean;
+      /**
+       * Client
+       * @default web
+       * @enum {string}
+       */
+      client: 'web' | 'android';
+      /**
+       * Device Name
+       * @default Browser
+       */
+      device_name: string;
+    };
+    /** Me */
+    Me: {
+      /** Id */
+      id: number;
+      /** Email */
+      email: string;
+      /** Display Name */
+      display_name: string | null;
+      /** Totp Enabled */
+      totp_enabled: boolean;
+    };
+    /** RefreshRequest */
+    RefreshRequest: {
+      /** Refresh Token */
+      refresh_token: string;
+    };
+    /** TotpRequest */
+    TotpRequest: {
+      /** Challenge */
+      challenge: string;
+      /** Code */
+      code: string;
+    };
+    /** ValidationError */
+    ValidationError: {
+      /** Location */
+      loc: (string | number)[];
+      /** Message */
+      msg: string;
+      /** Error Type */
+      type: string;
+      /** Input */
+      input?: unknown;
+      /** Context */
+      ctx?: Record<string, never>;
+    };
   };
   responses: never;
   parameters: never;
@@ -60,6 +247,143 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  login: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LoginRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Challenge'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  loginTotp: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TotpRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Me'] | components['schemas']['AppTokens'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  refreshTokens: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RefreshRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AppTokens'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  logout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Me'];
+        };
+      };
+    };
+  };
   getHealth: {
     parameters: {
       query?: never;

@@ -281,7 +281,7 @@ describe('app skeleton', () => {
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Activities');
 
     await userEvent.click(within(tabbar).getByRole('link', { name: 'Search' }));
-    expect(await screen.findByText('Advanced search arrives with OS-219.')).toBeInTheDocument();
+    expect(await screen.findByRole('searchbox', { name: 'Search' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/search');
   });
 

@@ -456,6 +456,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/activities/search': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Search Activities
+     * @description Advanced search (OS-219): any combination of filters, sorted, with totals of all the matches.
+     */
+    get: operations['searchActivities'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/activities/months': {
     parameters: {
       query?: never;
@@ -1270,6 +1290,29 @@ export interface components {
        * @default
        */
       code: string;
+    };
+    /** SearchPage */
+    SearchPage: {
+      /** Items */
+      items: components['schemas']['ActivitySummary'][];
+      /** @description Of every activity that matches, not just this page */
+      totals: components['schemas']['SearchTotals'];
+      /**
+       * Next Offset
+       * @description Pass it as `offset` for the next page; null at the end
+       */
+      next_offset: number | null;
+    };
+    /** SearchTotals */
+    SearchTotals: {
+      /** Count */
+      count: number;
+      /** Distance M */
+      distance_m: number;
+      /** Moving S */
+      moving_s: number;
+      /** Ascent M */
+      ascent_m: number;
     };
     /** SetupDone */
     SetupDone: {
@@ -2229,6 +2272,64 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ActivityPage'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  searchActivities: {
+    parameters: {
+      query?: {
+        /** @description Words in the name or description */
+        q?: string | null;
+        /** @description Only these sports (repeat to combine) */
+        sport?: string[] | null;
+        /** @description From this moment (inclusive) */
+        from?: string | null;
+        /** @description Until this moment (exclusive) */
+        to?: string | null;
+        /** @description Metres */
+        min_distance?: number | null;
+        max_distance?: number | null;
+        /** @description Moving seconds */
+        min_duration?: number | null;
+        max_duration?: number | null;
+        /** @description Metres */
+        min_ascent?: number | null;
+        min_hr?: number | null;
+        max_hr?: number | null;
+        with_record?: boolean;
+        with_description?: boolean;
+        with_gps?: boolean;
+        /** @description garmin, strava… */
+        source?: string[] | null;
+        /** @description date, distance, duration, elevation or speed */
+        sort?: string;
+        order?: string;
+        offset?: number;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SearchPage'];
         };
       };
       /** @description Validation Error */

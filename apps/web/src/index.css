@@ -1219,6 +1219,151 @@ a.button.block {
   background: var(--accent);
 }
 
+/* Advanced search (OS-219). */
+.page.search {
+  max-width: 1180px;
+}
+
+.searchbox {
+  width: 100%;
+  font-size: 16px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sortby {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.chips.wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.chip.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}
+
+.searchgrid {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.filters {
+  display: grid;
+  gap: 8px;
+}
+
+.filters h3 {
+  margin: 8px 0 0;
+}
+
+.range {
+  display: flex;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.range legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.range input {
+  width: 100%;
+  min-width: 0;
+}
+
+.checks {
+  display: grid;
+  gap: 6px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.rtable td.nm a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.rtable .sp {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+}
+
+.rtable .sp svg.i {
+  width: 14px;
+  height: 14px;
+}
+
+.page.search .only-mobile {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .searchgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page.search .only-mobile {
+    display: block;
+  }
+
+  .filters {
+    display: none;
+  }
+
+  .filters.open {
+    display: grid;
+    position: fixed;
+    inset: auto 0 0 0;
+    max-height: 85dvh;
+    overflow: auto;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    border-radius: 16px 16px 0 0;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    z-index: 30;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .rtable .wide {
+    display: none;
+  }
+}
+
 /* Chart catalogue (OS-215): each block is drawn in its own theme. */
 .cat {
   background: var(--surface);

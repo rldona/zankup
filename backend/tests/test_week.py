@@ -9,16 +9,16 @@ TODAY = date(2026, 11, 5)  # a Thursday
 
 
 def add(
-    ctx: Ctx,
+    context: Ctx,
     external_id: str,
     start: datetime,
     sport: str = "run",
     timezone: str | None = "+01:00",
     distance: float = 10000,
-) -> int:  # noqa: F811
-    with ctx.sessions.begin() as db:
+) -> int:
+    with context.sessions.begin() as db:
         activity = Activity(
-            user_id=ctx.user_id,
+            user_id=context.user_id,
             source="garmin",
             external_id=external_id,
             sport=sport,
@@ -43,7 +43,7 @@ def test_this_week(ctx: Ctx) -> None:  # noqa: F811
     add(ctx, "late", datetime(2026, 11, 1, 23, 30, tzinfo=UTC))
     add(ctx, "last-week", monday - timedelta(days=3))
     week = ctx.http.get("/api/week", params={"today": TODAY.isoformat()}).json()
-    assert [d["date"] for d in week["days"]][0] == "2026-11-02" and len(week["days"]) == 7
+    assert week["days"][0]["date"] == "2026-11-02" and len(week["days"]) == 7
     assert [a["name"] for a in week["days"][0]["activities"]] == ["late", "mon"]
     assert week["days"][2]["activities"][0]["sport"] == "ride"
     assert week["days"][6]["activities"] == []  # Sunday, still to come

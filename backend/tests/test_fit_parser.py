@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from opensport.fit.parser import FitParseError, normalise_sport, parse_fit
+from zankup.fit.parser import FitParseError, normalise_sport, parse_fit
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 GARMIN = {a["activityName"]: a for a in json.loads((FIXTURES / "garmin" / "activity-list.json").read_text())}

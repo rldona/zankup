@@ -2,7 +2,7 @@
  * The activity detail, the only screen of the proof of concept: map, numbers, and the profile with
  * the synced cursor and section selection.
  */
-import { formatDuration, formatPace, type ApiClient, type ApiPaths } from '@opensport/core';
+import { formatDuration, formatPace, type ApiClient, type ApiPaths } from '@zankup/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';

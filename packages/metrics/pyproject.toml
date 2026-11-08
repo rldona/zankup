@@ -1,5 +1,5 @@
 [project]
-name = "opensport-metrics"
+name = "zankup-metrics"
 version = "0.1.0"
 description = "Open, documented training metrics for activity data: zones, load, fitness, curves and estimates"
 readme = "README.md"
@@ -13,4 +13,4 @@ requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/opensport_metrics"]
+packages = ["src/zankup_metrics"]

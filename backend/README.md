@@ -11,13 +11,13 @@ uv run ruff check              # lint
 uv run ruff format             # format
 uv run mypy                    # strict type checking
 uv run pre-commit install      # run ruff and mypy on every commit
-uv run uvicorn opensport.api.main:app --reload   # API on http://127.0.0.1:8000/api/health
+uv run uvicorn zankup.api.main:app --reload   # API on http://127.0.0.1:8000/api/health
 ```
 
 Layout:
 
 ```
-src/opensport/      the `opensport` package
+src/zankup/      the `zankup` package
   api/main.py       FastAPI app: GET /api/health (with database status)
   core/             settings (pydantic-settings) and structured logging
   db/               models, sessions and Alembic migrations

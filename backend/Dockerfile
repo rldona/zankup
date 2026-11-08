@@ -38,4 +38,4 @@ RUN uv sync --frozen --no-dev
 
 # Runs as root: Railway mounts volumes owned by root, and /data holds the original FIT files.
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn opensport.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]
+CMD ["sh", "-c", "uvicorn zankup.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]

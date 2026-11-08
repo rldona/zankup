@@ -1,26 +1,28 @@
-# OpenSport
+# Zankup
 
-**Your sports data, on another level.**
+**Your sports data, from start to finish.**
 
-OpenSport is an open source, self-hosted alternative to Strava for your own training data. It syncs your Garmin activities automatically through the official Garmin Connect Personal API, keeps the original FIT files, imports your full Strava history and computes the advanced metrics that other platforms keep behind a subscription: relative effort, fitness and form, best-effort curves, FTP and threshold estimates, race predictions and more.
+Zankup is an open source, self-hosted alternative to Strava for your own training data. It syncs your Garmin activities automatically through the official Garmin Connect Personal API, keeps the original FIT files, imports your full Strava history and computes the advanced metrics that other platforms keep behind a subscription: relative effort, fitness and form, best-effort curves, FTP and threshold estimates, race predictions and more.
 
 Each person runs their own instance with their own keys. There is no central service and nobody else's health data lives on our servers.
 
-> **Status:** planning is done and phase 0 (foundations) has started. There is nothing to install yet. See the [roadmap](docs/roadmap.md).
+> **Status:** milestone 1 is done: Garmin sync every 15 minutes, the full history load, the activities and sync API, sign-in with password and TOTP, alerts and daily backups. Phase 2 (the PWA) is next. See the [roadmap](docs/roadmap.md).
+>
+> Coming from a local database made before the rename? See [moving a local database](docs/brand/README.md#moving-a-local-database).
 
 ## Getting started (local development)
 
 You need **Git**, **Docker** (with Compose), **[uv](https://docs.astral.sh/uv/getting-started/installation/)**, **Node.js 22+** (it brings corepack, which provides the pinned pnpm) and **make**.
 
 ```bash
-git clone https://github.com/rldona/OpenSport.git && cd OpenSport
+git clone https://github.com/rldona/zankup.git && cd Zankup
 make setup   # uv sync, pnpm install, creates .env from .env.example and the data/ folder
 make dev     # Postgres + API in Docker, then the web app
 ```
 
 - Web app: http://localhost:5173 (shows "API connected" when everything is up)
 - API: http://localhost:8000/api/health · interactive docs at http://localhost:8000/api/docs
-- Postgres: `postgresql://opensport:opensport@127.0.0.1:5432/opensport`
+- Postgres: `postgresql://zankup:zankup@127.0.0.1:5432/zankup`
 
 The API reloads when you edit `backend/src` or `packages/metrics/src`. To sync real activities, put your own Garmin Personal API key in `.env` (see the comments in [`.env.example`](.env.example)); everything else is optional.
 
@@ -44,7 +46,7 @@ backend/            Python · FastAPI API, sync and computation engine (Railway)
 apps/web/           PWA · React + Vite (Vercel)
 apps/mobile/        Android app · React Native + Expo (phase 5)
 packages/core/      Shared TypeScript: API client, hooks, formatting, design tokens, i18n
-packages/metrics/   Python · opensport-metrics: pure metric algorithms (MIT)
+packages/metrics/   Python · zankup-metrics: pure metric algorithms (MIT)
 tools/              Development scripts
 docs/               Documentation and prototypes
 ```
@@ -58,4 +60,4 @@ Activity files contain real routes (including where you start and finish) and pe
 - `packages/metrics/` is released under the [MIT licence](packages/metrics/LICENSE), so anyone can reuse the metrics engine.
 - Everything else is released under the [GNU Affero General Public License v3.0](LICENSE): you can run, modify and share it, and if you offer a modified version as a service, its source must be available to its users.
 
-Copyright © 2026 Raúl López and OpenSport contributors.
+Copyright © 2026 Raúl López and Zankup contributors.

@@ -12,17 +12,17 @@ from pydantic import SecretStr
 from sqlalchemy import create_engine, select, text, update
 from sqlalchemy.orm import Session, sessionmaker
 
-from opensport.api.main import create_app
-from opensport.auth.deps import SESSION_COOKIE
-from opensport.auth.security import new_token
-from opensport.core.config import Settings, get_settings
-from opensport.db.models import Activity, Device, Job, SyncRun, User
-from opensport.db.session import get_engine, get_session
-from opensport.jobs.handlers import default_handlers
-from opensport.jobs.worker import Worker
-from opensport.storage import LocalRawStore
-from opensport.sync.orchestrator import LOCK_NAMESPACE
 from tests.test_sync import garmin_api  # noqa: F401 - fixture serving the scrubbed Garmin page and FITs
+from zankup.api.main import create_app
+from zankup.auth.deps import SESSION_COOKIE
+from zankup.auth.security import new_token
+from zankup.core.config import Settings, get_settings
+from zankup.db.models import Activity, Device, Job, SyncRun, User
+from zankup.db.session import get_engine, get_session
+from zankup.jobs.handlers import default_handlers
+from zankup.jobs.worker import Worker
+from zankup.storage import LocalRawStore
+from zankup.sync.orchestrator import LOCK_NAMESPACE
 
 SETTINGS = Settings(  # type: ignore[call-arg]
     _env_file=None,
@@ -138,7 +138,7 @@ def test_waits_for_a_sync_already_running(ctx: Ctx, garmin_api: respx.Router) ->
 
 
 def test_a_failed_sync_is_reported_and_not_retried(ctx: Ctx, garmin_api: respx.Router) -> None:  # noqa: F811
-    from opensport.sync.garmin import BASE_URL, LIST_PATH
+    from zankup.sync.garmin import BASE_URL, LIST_PATH
 
     garmin_api.get(BASE_URL + LIST_PATH).respond(400, json={"message": "bad request"})
     run = ctx.http.post("/api/sync").json()

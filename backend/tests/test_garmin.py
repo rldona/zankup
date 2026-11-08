@@ -14,8 +14,8 @@ import respx
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from opensport.db.models import User
-from opensport.sync.garmin import (
+from zankup.db.models import User
+from zankup.sync.garmin import (
     BASE_URL,
     DOWNLOAD_PATH,
     LIST_PATH,
@@ -27,7 +27,7 @@ from opensport.sync.garmin import (
     GarminError,
     MemoryTokenCache,
 )
-from opensport.sync.tokens import DbTokenCache, FileTokenCache
+from zankup.sync.tokens import DbTokenCache, FileTokenCache
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 NOW = datetime(2020, 1, 12, 8, 0, tzinfo=UTC)

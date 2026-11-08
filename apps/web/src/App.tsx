@@ -1,4 +1,4 @@
-import { markMaskUrl, message, resolveLocale } from '@opensport/core';
+import { markMaskUrl, message, resolveLocale } from '@zankup/core';
 
 import { useApiHealth } from './useApiHealth';
 

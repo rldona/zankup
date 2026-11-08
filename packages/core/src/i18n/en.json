@@ -1,6 +1,6 @@
 {
-  "app.name": "OpenSport",
-  "app.claim": "Your sports data, on another level.",
+  "app.name": "Zankup",
+  "app.claim": "Your sports data, from start to finish.",
   "api.checking": "Checking API…",
   "api.connected": "API connected · v{version}",
   "api.degraded": "API connected · database unavailable",

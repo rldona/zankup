@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenSport Architecture</title>
+<title>Zankup Architecture</title>
 <style>
 :root{--bg:#f6f6f3;--card:#fff;--fg:#1c1c1a;--muted:#6a6a64;--line:#dedcd5;--band:#efeee9;--edge:#8a8a82;--cloud:#f1ecfb;--cloud-line:#9b7fd4;
   --ok:#2f9e44;--ok-bg:#ebf7ee;--wip:#e8890c;--wip-bg:#fff4e3;--todo:#9a9a92;--todo-bg:#fbfbf9;--ext:#5c6bc0;--ext-bg:#eef0fb;--accent:#e8590c}
@@ -42,7 +42,7 @@ a{color:var(--accent)}
 </head>
 <body>
 <main>
-<h1>OpenSport architecture</h1>
+<h1>Zankup architecture</h1>
 <p class="lead">A personal, Strava-like platform. A backend on Railway syncs Garmin activities on its own, keeps the original FIT files and computes its own advanced metrics. Two clients use it: first a PWA for desktop and mobile, hosted on Vercel, and later an Android app. English by default, Spanish available.</p>
 
 <div class="legend">
@@ -53,7 +53,7 @@ a{color:var(--accent)}
   <span><i style="border-color:var(--cloud-line);background:var(--cloud)"></i>Railway</span>
   <span><i style="border-color:var(--fg);background:var(--band)"></i>Vercel</span>
 </div>
-<div class="diagram"><svg id="map" viewBox="0 0 1110 925" role="img" aria-label="OpenSport architecture diagram"></svg></div>
+<div class="diagram"><svg id="map" viewBox="0 0 1110 925" role="img" aria-label="Zankup architecture diagram"></svg></div>
 
 <h2>How a sync works</h2>
 <div class="cards">
@@ -100,7 +100,7 @@ a{color:var(--accent)}
 
 <h2>Phases</h2>
 <div class="cards">
-  <div class="card"><h3>1 · Backend on Railway</h3><p><code>opensport</code> package, Postgres, volume, auth, activities API and cron.</p></div>
+  <div class="card"><h3>1 · Backend on Railway</h3><p><code>zankup</code> package, Postgres, volume, auth, activities API and cron.</p></div>
   <div class="card"><h3>2 · PWA on Vercel</h3><p>Desktop and mobile: home, detail, search, Sync button, themes, English and Spanish, installable and offline.</p></div>
   <div class="card"><h3>3 · Metrics</h3><p>Zones, TRIMP, fitness, GAP, records, power, routes, heatmap, estimates.</p></div>
   <div class="card"><h3>4 · Notifications and history</h3><p>Web Push, Strava ZIP import, privacy zones and sharing.</p></div>

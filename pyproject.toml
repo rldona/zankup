@@ -1,10 +1,10 @@
 # uv workspace root for the Python projects: backend/ (AGPL-3.0) and packages/metrics/ (MIT).
 [project]
-name = "opensport-workspace"
+name = "zankup-workspace"
 version = "0.0.0"
 requires-python = ">=3.12"
 # The workspace members, so a plain `uv sync` installs both into the shared .venv.
-dependencies = ["opensport", "opensport-metrics"]
+dependencies = ["zankup", "zankup-metrics"]
 
 [dependency-groups]
 dev = [
@@ -26,8 +26,8 @@ exclude-newer = "2026-10-25T00:00:00Z"
 members = ["backend", "packages/metrics"]
 
 [tool.uv.sources]
-opensport = { workspace = true }
-opensport-metrics = { workspace = true }
+zankup = { workspace = true }
+zankup-metrics = { workspace = true }
 
 [tool.ruff]
 line-length = 110
@@ -38,7 +38,7 @@ extend-exclude = ["docs", "tools/build_proto_data.py", "apps", "node_modules"]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["opensport", "opensport_metrics", "anonymise_fit", "anonymise_track", "check_fixtures", "scrub_garmin_list"]
+known-first-party = ["zankup", "zankup_metrics", "anonymise_fit", "anonymise_track", "check_fixtures", "scrub_garmin_list"]
 
 [tool.mypy]
 python_version = "3.12"

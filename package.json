@@ -1,5 +1,5 @@
 {
-  "name": "opensport",
+  "name": "zankup",
   "private": true,
   "license": "AGPL-3.0-only",
   "packageManager": "pnpm@10.34.7",
@@ -7,12 +7,12 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @opensport/web dev",
+    "dev": "pnpm --filter @zankup/web dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "format:check": "pnpm -r format:check",
     "typecheck": "pnpm -r typecheck",
-    "generate:api": "uv run python -m opensport.api.openapi_export && pnpm --filter @opensport/core generate:types"
+    "generate:api": "uv run python -m zankup.api.openapi_export && pnpm --filter @zankup/core generate:types"
   }
 }

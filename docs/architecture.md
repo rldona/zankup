@@ -1,4 +1,4 @@
-# OpenSport architecture (v1)
+# Zankup architecture (v1)
 
 A **personal, open source and self-hosted**, Strava-like platform: it syncs Garmin activities automatically, keeps the original FIT files and shows them with a map, laps and **its own advanced metrics** (what Strava charges for in Premium). There are two clients: first a **PWA for desktop and mobile, hosted on Vercel**, and later a **native Android app**. Both use the same backend, which runs on Railway.
 
@@ -12,13 +12,13 @@ Visual map: [architecture.html](architecture.html) · Why this architecture: [fi
 4. **Always available.** The backend runs in the cloud (Railway): it syncs on its own and sends notifications even when the PC is off.
 5. **Private by default.** A single user per instance, everything behind authentication, no public profiles. Privacy zones apply to anything shared.
 6. **Only official channels for automation:** the Garmin Personal API. Manual files (Strava ZIP, loose FITs) come in through an importer.
-7. **Our own metrics.** Zones, load, fitness and records are computed with OpenSport's settings, not the watch's.
+7. **Our own metrics.** Zones, load, fitness and records are computed with Zankup's settings, not the watch's.
 8. **English by default, Spanish available.** Every user-facing text goes through i18n from day one (see [Internationalisation](#internationalisation-i18n)).
 9. **Open source and self-hosted.** Each person deploys their own instance with their own keys (see [Product model](#product-model)).
 
 ## Product model
 
-- **Self-hosted, bring your own keys.** There is no central OpenSport service. Each person deploys an instance (Railway + Vercel, or `docker compose` on their own server) and configures their own Garmin Personal API key, Google OAuth client, Resend account, Google Health client and, optionally, Anthropic key. This keeps every instance within the Personal API's personal-use terms and keeps health data with its owner. Setup guide: `docs/self-hosting.md` (OS-224).
+- **Self-hosted, bring your own keys.** There is no central Zankup service. Each person deploys an instance (Railway + Vercel, or `docker compose` on their own server) and configures their own Garmin Personal API key, Google OAuth client, Resend account, Google Health client and, optionally, Anthropic key. This keeps every instance within the Personal API's personal-use terms and keeps health data with its owner. Setup guide: `docs/self-hosting.md` (OS-224).
 - **Optional integrations degrade gracefully:** without an Anthropic key the AI features are hidden; without a Google client there is no Google sign-in or Google Health; the core (Garmin sync, metrics, PWA) only needs the Garmin key.
 - **Licences:** `packages/metrics` is MIT (a reusable metrics library); the backend, the PWA and the app are AGPL-3.0.
 - **No payments.** Every user-owned table has `user_id` and every query filters by it, so a hosted multi-user version stays possible without a migration, but nothing else (billing, plans, quotas) is built.
@@ -74,7 +74,7 @@ flowchart TB
 | Piece | On Railway | Notes |
 |---|---|---|
 | **API** | Web service (FastAPI + Uvicorn) | API only: the PWA is on Vercel. HTTPS and domain included |
-| **Scheduled sync** | A scheduler thread in the API queues a `sync_garmin` job every 15 min (`SYNC_INTERVAL_MINUTES`), one per time slot | Not a Railway Cron Job: it would not see the volume with the FIT files. Also by hand with the "Sync" button (`POST /api/sync`) or `python -m opensport.sync` |
+| **Scheduled sync** | A scheduler thread in the API queues a `sync_garmin` job every 15 min (`SYNC_INTERVAL_MINUTES`), one per time slot | Not a Railway Cron Job: it would not see the volume with the FIT files. Also by hand with the "Sync" button (`POST /api/sync`) or `python -m zankup.sync` |
 | **Database** | Managed Postgres | Private-network connection. 1 Hz streams go in compressed `jsonb` or `bytea` columns |
 | **Backups** | Bucket `backups` (S3-compatible, Amsterdam) in the same project | Daily `pg_dump` + the original FITs, see "Backups and alerts" below |
 | **Original FITs** | Persistent volume mounted at `/data/raw` | A few MB per year (about 50–120 KB per activity). Can be copied elsewhere |
@@ -83,20 +83,20 @@ flowchart TB
 **How the `api` service is configured (production):**
 - **Deploys** from `main` through a GitHub deployment trigger with "wait for CI": a commit deploys only after its checks pass. The Railway GitHub app needs access to the repository for that trigger.
 - **Build:** `backend/Dockerfile` (path set on the service). **Pre-deploy:** `alembic -c backend/alembic.ini upgrade head`, so a failing migration stops the deploy and the running version stays up. **Health check:** `/api/health`, which also reports the database and the applied migration (`schema_revision`).
-- **Background jobs** (OS-115) run in a worker thread inside the API process, on a `jobs` table claimed with `FOR UPDATE SKIP LOCKED`. Not a separate service because a Railway volume attaches to one service only, and the worker needs the original FIT files on `/data`. `RUN_WORKER=false` turns it off; `python -m opensport.jobs.worker` runs it on its own (self-hosting on one machine, or a future setup with object storage).
+- **Background jobs** (OS-115) run in a worker thread inside the API process, on a `jobs` table claimed with `FOR UPDATE SKIP LOCKED`. Not a separate service because a Railway volume attaches to one service only, and the worker needs the original FIT files on `/data`. `RUN_WORKER=false` turns it off; `python -m zankup.jobs.worker` runs it on its own (self-hosting on one machine, or a future setup with object storage).
 - **Railway treats `railway.json` (config as code) as deprecated** and does not apply every field from it: the pre-deploy command in the file was ignored until it was set on the service itself through the API. The service settings are the source of truth; `railway.json` stays only as documentation of them and must be kept in sync by hand. The self-hosting kit (OS-224) will set these settings by script.
 
 ### Backups and alerts (OS-114)
 
 - **Logs:** JSON lines on stdout (`LOG_FORMAT=json` in production), searchable in Railway's log view: every sync, job, import and failure carries its IDs as fields.
 - **Sync alert:** an e-mail through Resend at the **third failed sync in a row**, and another when it works again. A long outage is one e-mail, not one every 15 minutes. `ALERT_EMAIL` sets the recipient; without `RESEND_API_KEY` alerts are only logged.
-- **Daily backup** (a `backup` job queued by the scheduler for `BACKUP_HOUR_UTC`, 03:00 by default): `pg_dump --format=custom` of the whole database to `db/opensport-YYYY-MM-DD.dump` (the last 30 are kept), the original FITs to `raw/` (immutable, so each is uploaded once and kept for good) and `latest.json` with the newest dump and its SHA-256. A backup that fails three times e-mails the owner. Nothing else needs backing up: streams and metrics are in the database or recomputed from the FITs.
+- **Daily backup** (a `backup` job queued by the scheduler for `BACKUP_HOUR_UTC`, 03:00 by default): `pg_dump --format=custom` of the whole database to `db/zankup-YYYY-MM-DD.dump` (the last 30 are kept), the original FITs to `raw/` (immutable, so each is uploaded once and kept for good) and `latest.json` with the newest dump and its SHA-256. A backup that fails three times e-mails the owner. Nothing else needs backing up: streams and metrics are in the database or recomputed from the FITs.
 - **Where:** a Railway bucket in the same project, whose credentials reach the `api` service as variable references (`BACKUP_S3_*` = `${{backups.*}}`). It is a different storage system from the volumes, though the same provider: for copies outside Railway, point `BACKUP_S3_*` at Cloudflare R2 or Backblaze B2. Railway's own volume snapshots need the Pro plan and are not used.
 - **Restore** (tested in CI, and against the production bucket into a fresh database and data folder):
 
   ```bash
-  python -m opensport.backup list
-  python -m opensport.backup restore --database-url postgresql://… --data-dir /data [--date YYYY-MM-DD]
+  python -m zankup.backup list
+  python -m zankup.backup restore --database-url postgresql://… --data-dir /data [--date YYYY-MM-DD]
   ```
 
   It drops and recreates every table in the target database, checks the dump against `latest.json` and copies back the FITs that are missing. To restore production: create a new Postgres, restore into it, point the `api` service's `DATABASE_URL` at it and run the restore command in the `api` service for `/data`.
@@ -151,7 +151,7 @@ The application is packaged as a container (Dockerfile) so the provider can be c
 
 | Metric | Computation | Data source |
 |---|---|---|
-| **HR and pace zones** | Time in zones using the max/resting HR or threshold configured in OpenSport (not the watch's) | 1 Hz HR and speed |
+| **HR and pace zones** | Time in zones using the max/resting HR or threshold configured in Zankup (not the watch's) | 1 Hz HR and speed |
 | **Relative effort** | Banister TRIMP (or Edwards by zones) per activity | 1 Hz HR and resting/max HR |
 | **Fitness and freshness** | Fitness (CTL, 42-day exponential average), Fatigue (ATL, 7-day) and Form (TSB = CTL − ATL) from daily effort | Relative effort |
 | **Grade-adjusted pace (GAP)** | Pace corrected for gradient (Minetti model) | Barometric altitude and distance |
@@ -167,7 +167,7 @@ They are computed when each activity is imported. Daily metrics (fitness and fre
 
 ## Historical computation engine ("cooking" the data)
 
-Like Strava, OpenSport computes nothing heavy when you open a screen. A **background engine processes the whole history** and prepares the tables of metrics, estimates and progress. Screens only read precomputed results, so they open instantly even with thousands of activities.
+Like Strava, Zankup computes nothing heavy when you open a screen. A **background engine processes the whole history** and prepares the tables of metrics, estimates and progress. Screens only read precomputed results, so they open instantly even with thousands of activities.
 
 ### What it produces
 
@@ -237,7 +237,7 @@ There are three kinds of charts, depending on how much they move and how much yo
 
 ### Technology
 
-- **Dynamic charts on the web:** **Apache ECharts**. It renders on canvas with point reduction (LTTB), so it handles long 1 Hz series easily. It comes with hover tooltips, zoom (`dataZoom`), range selection (`brush`), cursor syncing between charts (`connect`) and enter/update animations. One ECharts theme is registered per OpenSport theme, generated from the tokens. If a very long series is slow on modest phones, plan B is **uPlot** for the profile only.
+- **Dynamic charts on the web:** **Apache ECharts**. It renders on canvas with point reduction (LTTB), so it handles long 1 Hz series easily. It comes with hover tooltips, zoom (`dataZoom`), range selection (`brush`), cursor syncing between charts (`connect`) and enter/update animations. One ECharts theme is registered per Zankup theme, generated from the tokens. If a very long series is slow on modest phones, plan B is **uPlot** for the profile only.
 - **Static charts:** our own SVG components, no library: light, crisp and easy to turn into images. Share cards and notification images are generated on the server.
 - **Mobile app:** **Victory Native XL** (or ECharts for React Native), both drawn with Skia on the GPU, using the token colours. The cursor and gestures run on the UI thread with Reanimated.
 - **Accessibility and performance:** with `prefers-reduced-motion`, passive animations are turned off. Every chart has an accessible summary (and an alternative data table for the main ones). Off-screen charts are not drawn until they appear.
@@ -319,7 +319,7 @@ The proof of concept is the activity detail with real data from the API, signed 
 
 ```
 backend/            Python · FastAPI · computation engine (Railway) · AGPL-3.0
-packages/metrics/   Python · opensport-metrics: pure metric algorithms (TRIMP, CTL/ATL/TSB, GAP, curves,
+packages/metrics/   Python · zankup-metrics: pure metric algorithms (TRIMP, CTL/ATL/TSB, GAP, curves,
                     estimates…) with no database or network dependency · MIT
 apps/web/           PWA · React + Vite (Vercel)
 apps/mobile/        App · React Native + Expo (EAS)
@@ -434,14 +434,14 @@ sequenceDiagram
 The scheduled sync only goes back 30 days on its first run. The rest of the Garmin Connect history is a deliberate, one-off load:
 
 ```bash
-python -m opensport.sync --all                 # everything (locally: make history)
-python -m opensport.sync --since 2019-01-01    # or from a given day
+python -m zankup.sync --all                 # everything (locally: make history)
+python -m zankup.sync --since 2019-01-01    # or from a given day
 ```
 
 - The range is listed in **windows of 180 days, oldest first**. Each window is downloaded and queued before the next one is listed, with a pause between downloads (`--pause`, 1 s by default; the client also honours `Retry-After` on 429). About 1,800 activities take under an hour.
 - **Imports run while it downloads**, in a thread of the command, so activities appear in the app as it advances. Progress is in the run (`GET /api/sync`): `window` of `windows`, `listed`, `downloaded`.
 - **Safe to interrupt and run again.** An interrupted run is recorded as `error`, and the next one skips everything already downloaded or imported. Only one sync runs at a time, so the 15-minute sync skips its slots while the load holds the lock.
-- **On Railway**, run it in the `api` service (it needs the `/data` volume): `railway ssh` into the service, then `python -m opensport.sync --all`. If the connection drops, the command stops; run it again to carry on.
+- **On Railway**, run it in the `api` service (it needs the `/data` volume): `railway ssh` into the service, then `python -m zankup.sync --all`. If the connection drops, the command stops; run it again to carry on.
 
 ## Risks
 
@@ -467,7 +467,7 @@ python -m opensport.sync --since 2019-01-01    # or from a given day
 
 Details with tickets, dependencies and definitions of done: [roadmap.md](roadmap.md). Phase 0 (foundations: repository, CI, Railway and Vercel) comes before all of them.
 
-1. **Backend on Railway:** `opensport` package (sync, parser, basic metrics), Postgres, volume, authentication, activities API and cron.
+1. **Backend on Railway:** `zankup` package (sync, parser, basic metrics), Postgres, volume, authentication, activities API and cron.
 2. **PWA on Vercel:** starts with the React Native proof of concept, then desktop and mobile, home, detail based on the prototype, search, Sync button with progress, themes, English and Spanish, installable and offline, and the self-hosting kit.
 3. **Advanced metrics:** own zones, relative effort, fitness and freshness, GAP, records, power curve, matched routes, heatmap.
 4. **Notifications, history and privacy:** Web Push, Strava ZIP import, server-side privacy zones and activity sharing.

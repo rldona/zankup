@@ -1,4 +1,4 @@
-import { createApiClient } from '@opensport/core';
+import { createApiClient } from '@zankup/core';
 import { useEffect, useState } from 'react';
 
 export type ApiHealth =

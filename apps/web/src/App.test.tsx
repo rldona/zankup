@@ -21,8 +21,8 @@ describe('App', () => {
       Response.json({ status: 'ok', version: '0.1.0', database: 'ok', schema_revision: 'e8ad166a220b' }),
     );
     render(<App />);
-    expect(screen.getByRole('heading', { name: 'OpenSport' })).toBeInTheDocument();
-    expect(screen.getByText('Your sports data, on another level.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Zankup' })).toBeInTheDocument();
+    expect(screen.getByText('Your sports data, from start to finish.')).toBeInTheDocument();
   });
 
   it('shows the API version when /api/health answers', async () => {

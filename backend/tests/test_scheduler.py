@@ -9,12 +9,12 @@ import respx
 from sqlalchemy import create_engine, func, select, update
 from sqlalchemy.orm import Session, sessionmaker
 
-from opensport.db.models import Activity, Job, SyncRun
-from opensport.jobs.handlers import default_handlers
-from opensport.jobs.scheduler import Scheduler
-from opensport.jobs.worker import Worker
-from opensport.storage import LocalRawStore
 from tests.test_sync import garmin_api  # noqa: F401 - fixture serving the scrubbed Garmin page and FITs
+from zankup.db.models import Activity, Job, SyncRun
+from zankup.jobs.handlers import default_handlers
+from zankup.jobs.scheduler import Scheduler
+from zankup.jobs.worker import Worker
+from zankup.storage import LocalRawStore
 
 T0 = datetime(2020, 1, 11, 10, 0, tzinfo=UTC)
 
@@ -101,7 +101,7 @@ def test_one_backup_a_day_at_the_backup_hour(sessions: sessionmaker[Session]) ->
 
 
 def test_a_backup_that_keeps_failing_sends_an_email(sessions: sessionmaker[Session], tmp_path: Path) -> None:
-    from opensport.core.config import Settings
+    from zankup.core.config import Settings
 
     settings = Settings(  # type: ignore[call-arg]
         _env_file=None, backup_dir=tmp_path / "backups", data_dir=tmp_path, pg_dump_command="false"
@@ -117,6 +117,6 @@ def test_a_backup_that_keeps_failing_sends_an_email(sessions: sessionmaker[Sessi
             session.execute(update(Job).values(run_after=T0))
         assert worker.run_once()
         assert len(sent) == (1 if attempt == 2 else 0)  # only on the last attempt
-    assert sent == ["OpenSport: the daily backup failed"]
+    assert sent == ["Zankup: the daily backup failed"]
     with sessions() as session:
         assert session.scalars(select(Job.status)).one() == "failed"

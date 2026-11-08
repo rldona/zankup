@@ -13,12 +13,12 @@ import respx
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from opensport.db.models import Activity, Job, Source, SyncRun
-from opensport.jobs.handlers import default_handlers
-from opensport.jobs.worker import Worker
-from opensport.storage import LocalRawStore
-from opensport.sync import orchestrator
-from opensport.sync.garmin import (
+from zankup.db.models import Activity, Job, Source, SyncRun
+from zankup.jobs.handlers import default_handlers
+from zankup.jobs.worker import Worker
+from zankup.storage import LocalRawStore
+from zankup.sync import orchestrator
+from zankup.sync.garmin import (
     BASE_URL,
     DOWNLOAD_PATH,
     LIST_PATH,
@@ -26,8 +26,8 @@ from opensport.sync.garmin import (
     GarminClient,
     MemoryTokenCache,
 )
-from opensport.sync.orchestrator import LOCK_NAMESPACE, SyncAlreadyRunning, history_windows, run_sync
-from opensport.users import ensure_owner
+from zankup.sync.orchestrator import LOCK_NAMESPACE, SyncAlreadyRunning, history_windows, run_sync
+from zankup.users import ensure_owner
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 PAGE = json.loads((FIXTURES / "garmin" / "activity-list.json").read_text())
@@ -215,8 +215,8 @@ def test_cli_loads_history_and_imports(
 ) -> None:
     from pydantic import SecretStr
 
-    from opensport.core.config import Settings
-    from opensport.sync import __main__ as cli
+    from zankup.core.config import Settings
+    from zankup.sync import __main__ as cli
 
     settings = Settings(  # type: ignore[call-arg]
         _env_file=None,

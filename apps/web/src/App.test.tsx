@@ -27,7 +27,8 @@ describe('App', () => {
     const fetchMock = mockFetch(Response.json({ status: 'ok', version: '0.1.0' }));
     render(<App />);
     expect(await screen.findByText('API connected · v0.1.0')).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith('/api/health', expect.anything());
+    const request = fetchMock.mock.calls[0]?.[0] as Request;
+    expect(new URL(request.url).pathname).toBe('/api/health');
   });
 
   it('says the API is unreachable when the request fails', async () => {

@@ -1,6 +1,6 @@
 import pytest
 
-import opensport_metrics as m
+import zankup_metrics as m
 
 
 def steady(speed: float, seconds: int, every: int = 1) -> tuple[list[float], list[float | None]]:

@@ -7,7 +7,7 @@
 # Prints a summary; raw numbers in measure-<date>.log. Drag uses `input swipe` across the chart, whose
 # position the app logs ("PERF chart …").
 set -euo pipefail
-PKG=dev.opensport.poc
+PKG=dev.zankup.poc
 RUNS=${1:-10}
 LOG="measure-$(date +%Y%m%d-%H%M%S).log"
 density=$(adb shell wm density | awk '{print $NF}' | tail -1)

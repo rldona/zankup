@@ -1,5 +1,5 @@
 {
-  "name": "@opensport/web",
+  "name": "@zankup/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -16,7 +16,7 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@opensport/core": "workspace:*",
+    "@zankup/core": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

@@ -2,7 +2,7 @@
  * Streams → what the detail screen draws: plain typed arrays, so the gesture worklets on the UI thread
  * can read them without crossing to JS.
  */
-import type { ApiPaths } from '@opensport/core';
+import type { ApiPaths } from '@zankup/core';
 
 export type Streams =
   ApiPaths['/api/activities/{activity_id}/streams']['get']['responses'][200]['content']['application/json'];

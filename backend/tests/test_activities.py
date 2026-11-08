@@ -12,16 +12,16 @@ from pydantic import SecretStr
 from sqlalchemy import create_engine, update
 from sqlalchemy.orm import Session, sessionmaker
 
-from opensport.api.activities import get_store
-from opensport.api.main import create_app
-from opensport.auth.deps import SESSION_COOKIE
-from opensport.auth.security import new_token
-from opensport.core.config import Settings, get_settings
-from opensport.db.models import Activity, Device, Stream, User
-from opensport.db.session import get_engine, get_session
-from opensport.fit.streams import decode_streams
-from opensport.ingest import ingest_fit
-from opensport.storage import LocalRawStore
+from zankup.api.activities import get_store
+from zankup.api.main import create_app
+from zankup.auth.deps import SESSION_COOKIE
+from zankup.auth.security import new_token
+from zankup.core.config import Settings, get_settings
+from zankup.db.models import Activity, Device, Stream, User
+from zankup.db.session import get_engine, get_session
+from zankup.fit.streams import decode_streams
+from zankup.ingest import ingest_fit
+from zankup.storage import LocalRawStore
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 GARMIN = {a["activityName"]: a for a in json.loads((FIXTURES / "garmin" / "activity-list.json").read_text())}
@@ -174,7 +174,7 @@ def test_fit_is_the_original_file(ctx: Ctx) -> None:
     response = ctx.http.get(url)
     assert response.status_code == 200 and response.content == fit("run")
     assert response.headers["Content-Type"] == "application/vnd.ant.fit"
-    assert 'filename="opensport-' in response.headers["Content-Disposition"]
+    assert 'filename="zankup-' in response.headers["Content-Disposition"]
     assert ctx.http.get(url, headers={"If-None-Match": response.headers["ETag"]}).status_code == 304
 
 

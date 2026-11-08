@@ -1,4 +1,4 @@
-# OpenSport roadmap
+# Zankup roadmap
 
 Development plan by phases, with small tickets and deliverables that are usable from the end of each phase.
 
@@ -9,13 +9,13 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 | Phase | Goal | Usable deliverable | Milestone |
 |---|---|---|---|
 | **0 · Foundations** | Repository, CI and environments ready | Empty deployment on Railway and Vercel | — |
-| **1 · Backend on Railway** | Sync and store activities in the cloud | API with your activities, synced automatically every 15 min | **M1: "my data lives in OpenSport"** |
-| **2 · PWA MVP** | See activities on desktop and mobile | Installable PWA with feed, detail with map, search and Sync button, in English and Spanish | **M2: "I use OpenSport instead of Strava to see my activities"** |
+| **1 · Backend on Railway** | Sync and store activities in the cloud | API with your activities, synced automatically every 15 min | **M1: "my data lives in Zankup"** |
+| **2 · PWA MVP** | See activities on desktop and mobile | Installable PWA with feed, detail with map, search and Sync button, in English and Spanish | **M2: "I use Zankup instead of Strava to see my activities"** |
 | **3 · Advanced metrics** | The "Premium" metrics, built by us | Complete stats screen | **M3: "I know how fit I am"** |
-| **4 · Notifications, history and privacy** | Notifications, the full history and safe sharing | Push, Strava ZIP import, privacy zones | **M4: "OpenSport replaces Strava"** |
+| **4 · Notifications, history and privacy** | Notifications, the full history and safe sharing | Push, Strava ZIP import, privacy zones | **M4: "Zankup replaces Strava"** |
 | **5 · Android app (React Native)** | Expo app on the shared code, background sync and FCM (stack confirmed by the OS-501 proof of concept at the start of phase 2) | App on the Play Store (internal testing) | **M5: Android app** |
 | **6 · Multi-source health** | Sleep, HRV and daily data from Garmin and Google Health (Fitbit Air), without duplicates | Health dashboard | **M6: "I see my recovery, wherever it comes from"** |
-| **7 · AI assistant** | Summaries, analysis and natural-language questions with a small LLM (Claude Haiku 5.5) | Per-activity summary, weekly report and "Coach" chat | **M7: "I ask OpenSport how I'm doing"** |
+| **7 · AI assistant** | Summaries, analysis and natural-language questions with a small LLM (Claude Haiku 5.5) | Per-activity summary, weekly report and "Coach" chat | **M7: "I ask Zankup how I'm doing"** |
 
 **Size estimate:** S ≈ half a day · M ≈ 1–2 days · L ≈ 3–5 days. Rough totals: M1 ≈ 20–25 working days (phases 0 and 1), M2 ≈ another 30–35.
 
@@ -25,7 +25,7 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 - **Open source and self-hosted.** Each person deploys their own instance (Railway + Vercel, or Docker on their own server) and uses **their own keys**: Garmin Personal API, Google OAuth, Google Health and, optionally, Anthropic. That keeps every instance within the Garmin Personal API's personal-use terms, and nobody else's health data lives on our servers.
 - **Licences:** `packages/metrics` (the metrics engine) under **MIT**, so anyone can reuse it; everything else under **AGPL-3.0**, so hosted forks stay open.
 - **No payments for now.** Nothing in the design should close the door to a hosted version later: every table carries `user_id` from the start, even though each deployment has a single user.
-- **Brand decided, not applied yet.** The product will be called **Zankup**; the name, mark and wordmark are in the [brand guide](brand/README.md). OpenSport stays in the code until the rename (guide, section 7); the mark and icons are #116 and the domain is OS-D06. Instances run on their `*.vercel.app` and `*.up.railway.app` URLs.
+- **Brand decided, not applied yet.** The product will be called **Zankup**; the name, mark and wordmark are in the [brand guide](brand/README.md). Zankup stays in the code until the rename (guide, section 7); the mark and icons are #116 and the domain is OS-D06. Instances run on their `*.vercel.app` and `*.up.railway.app` URLs.
 
 **Working rules:**
 - One ticket = one branch = one small PR with tests.
@@ -100,9 +100,9 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
 
 **Goal:** activities sync on their own and are stored, parsed and served by the API.
 
-- **OS-101 · `opensport` package and configuration** (S) · depends on OS-002
-  - Structure `opensport/{api,sync,fit,db,core}`. Configuration with `pydantic-settings` and structured logging.
-  - The metric algorithms live in **`packages/metrics`** (Python package `opensport-metrics`, MIT): pure functions over normalised streams and summaries, with no dependency on the database, the API or the network, so other projects can use them. The backend imports it.
+- **OS-101 · `zankup` package and configuration** (S) · depends on OS-002
+  - Structure `zankup/{api,sync,fit,db,core}`. Configuration with `pydantic-settings` and structured logging.
+  - The metric algorithms live in **`packages/metrics`** (Python package `zankup-metrics`, MIT): pure functions over normalised streams and summaries, with no dependency on the database, the API or the network, so other projects can use them. The backend imports it.
 - **OS-102 · Database schema and migrations** (M) · depends on OS-101
   - SQLAlchemy + Alembic. Tables `activities`, `laps`, `streams`, `sync_runs`, `settings`, `users` and `devices` (model in [architecture.md](architecture.md)).
   - Every user-owned table has a `user_id` column and every query filters by it, even with a single user per instance. It costs almost nothing now and avoids a painful migration if a hosted version ever exists.
@@ -121,7 +121,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - Smoothed pace and speed, per-km splits and best efforts (400 m … marathon), validated against the Strava numbers in [findings.md](findings.md). GPS speed spikes are filtered out before computing records.
 - **OS-108 · Sync orchestrator** (M) · depends on OS-103, OS-106 and OS-115
   - `sync_run` with status and progress, incremental since the last sync, and a lock so two never run at once.
-  - *Done when:* `python -m opensport.sync` imports what is new and a second run does nothing.
+  - *Done when:* `python -m zankup.sync` imports what is new and a second run does nothing.
 - **OS-109 · Cron on Railway** (S) · depends on OS-108
   - Every 15 min. Done as a scheduler thread next to the worker (a Railway Cron Job cannot reach the API's volume), queuing one sync job per time slot.
   - *Done when:* a new activity from the watch shows up in the database with no intervention.
@@ -145,7 +145,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
 
 ## Phase 2 · PWA MVP → **M2**
 
-**Goal:** use OpenSport every day on desktop and mobile.
+**Goal:** use Zankup every day on desktop and mobile.
 
 - **OS-501 · React Native performance proof of concept** (M) · depends on OS-008 and OS-111
   - **Runs first in this phase**, right after M1, so the React Native vs Kotlin decision is made before the PWA and `packages/core` take shape. The rest of the Android app stays in phase 5.
@@ -169,7 +169,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - Map (light or dark style) and charts adapted to each theme.
   - *Done when:* switching themes leaves no hard-coded colour visible and every theme passes WCAG AA contrast in CI.
 - **OS-203 · Sign-in screen** (M) · depends on OS-110 and OS-201
-  - Prototype design: on desktop, a brand panel on the left with the claim "Your sports data, on another level" (pointing at what the metrics and charts can show) and gentle animated waves (Canvas 2D, no library, still with `prefers-reduced-motion`), and the form on the right; on mobile, a single column. Links to "Create your account" (OS-221) and "Forgot it?" (OS-222).
+  - Prototype design: on desktop, a brand panel on the left with the claim "Your sports data, from start to finish." and, as a second line, "Sync with Garmin, import your Strava history and follow your form without depending on anyone" and gentle animated waves (Canvas 2D, no library, still with `prefers-reduced-motion`), and the form on the right; on mobile, a single column. Links to "Create your account" (OS-221) and "Forgot it?" (OS-222).
   - Step 1: email and password (show/hide, "remember this device for 30 days"). Step 2: 6-digit TOTP code with auto-advance, pasting the whole code and a link to use a recovery code. "Continue with Google" (OS-220). "Sign in with a passkey" waits for OS-405 (backlog).
   - Clear errors that never reveal whether the email or the password was wrong, rate limiting with increasing delays and the right `autocomplete` values (`username`, `current-password`, `one-time-code`) for password managers.
   - **The sign-in screen shows no user data** (no numbers or routes): it is the only thing visible without a session.
@@ -185,7 +185,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
   - "Forgot it?" → email → the same message whether or not the account exists → single-use link that expires in 30 minutes → new password **plus the TOTP code or a recovery code** (someone with access only to your email cannot get in) → all other sessions are closed and a notification email is sent.
   - Random 32-byte token stored only as a hash, rate limiting per IP and per account, and resend at most every 60 s.
   - Transactional email with **Resend** (the free tier is enough), each instance with its own Resend account. Without a custom domain, Resend's test sender only delivers to the account owner's address, which is exactly the single user of the instance; a verified domain (SPF and DKIM) is optional. Emails in the user's language.
-  - Plan B if everything is lost: the server command `opensport reset-password`.
+  - Plan B if everything is lost: the server command `zankup reset-password`.
 - **OS-220 · Sign-in with a Google account** (M) · depends on OS-110 and OS-203
   - "Continue with Google" with OpenID Connect (authorization code flow with PKCE and `state`/`nonce`), requesting only `openid email profile`. The backend validates the ID token (issuer, audience, expiry, `email_verified`) and compares it with the linked Google `sub`: **only your account can get in**, even though other people have Google accounts.
   - Linked and unlinked from Profile → Account and sources → Sign-in methods. Unlinking requires another active method (password with 2FA or passkey).
@@ -213,7 +213,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
 - **OS-206 · Route map** (M) · depends on OS-205
   - MapLibre with our own style. Colour by pace, HR, power or altitude. Start and finish. Fallback without WebGL.
 - **OS-215 · Chart foundation** (M) · depends on OS-214
-  - ECharts with a theme generated from the tokens of each OpenSport theme. Our own SVG components for static charts (route thumbnail, sparklines, zone bar). Animations that respect `prefers-reduced-motion`, lazy loading off-screen and accessible summaries.
+  - ECharts with a theme generated from the tokens of each Zankup theme. Our own SVG components for static charts (route thumbnail, sparklines, zone bar). Animations that respect `prefers-reduced-motion`, lazy loading off-screen and accessible summaries.
   - *Done when:* there is a component catalogue with an example of each kind (static, passive and active) in every theme.
 - **OS-207 · Profile and charts synced with the map** (M) · depends on OS-206 and OS-215
 - **OS-216 · Select a section on the profile** (S) · depends on OS-207
@@ -336,7 +336,7 @@ The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.ver
 - **OS-414 · Activity replay** (S) · depends on OS-207
   - Animated 2D playback of the route on the map with the cursor moving along the profile and the charts, at 10×–100× speed, with pause and seeking. Respects `prefers-reduced-motion`.
 
-**M4 is done when** your whole history is in OpenSport, notifications reach you and you can share an activity without revealing where you live.
+**M4 is done when** your whole history is in Zankup, notifications reach you and you can share an activity without revealing where you live.
 
 ## Phase 5 · Android app (React Native + Expo) → **M5**
 
@@ -401,7 +401,7 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
 
 ## Phase 7 · AI assistant → **M7**
 
-**Goal:** OpenSport explains your data in natural language, with a small and cheap LLM via API, without sending more data than necessary.
+**Goal:** Zankup explains your data in natural language, with a small and cheap LLM via API, without sending more data than necessary.
 
 It can start as soon as M3 is done (it needs the metrics), in parallel with phases 4 to 6.
 

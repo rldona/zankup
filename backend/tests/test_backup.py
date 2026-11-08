@@ -18,17 +18,17 @@ from pydantic import SecretStr
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from opensport.api.activities import get_store
-from opensport.api.main import create_app
-from opensport.auth.deps import SESSION_COOKIE
-from opensport.auth.security import new_token
-from opensport.backup import MANIFEST, BackupError, LocalObjectStore, dump_key, restore, run_backup
-from opensport.core.config import Settings, get_settings
-from opensport.db.models import Activity, Device, User
-from opensport.db.session import get_engine, get_session
-from opensport.ingest import ingest_fit
-from opensport.storage import LocalRawStore
 from tests.conftest import throwaway_database
+from zankup.api.activities import get_store
+from zankup.api.main import create_app
+from zankup.auth.deps import SESSION_COOKIE
+from zankup.auth.security import new_token
+from zankup.backup import MANIFEST, BackupError, LocalObjectStore, dump_key, restore, run_backup
+from zankup.core.config import Settings, get_settings
+from zankup.db.models import Activity, Device, User
+from zankup.db.session import get_engine, get_session
+from zankup.ingest import ingest_fit
+from zankup.storage import LocalRawStore
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 DAY = date(2026, 11, 8)
@@ -86,7 +86,7 @@ def test_backup_contents_and_incremental_files(source: tuple[str, Settings, str]
     url, settings, _ = source
     destination = LocalObjectStore(tmp_path / "backups")
     first = run_backup(settings, destination, database_url=url, today=DAY)
-    assert first.dump_key == "db/opensport-2026-11-08.dump" and first.dump_bytes > 10_000
+    assert first.dump_key == "db/zankup-2026-11-08.dump" and first.dump_bytes > 10_000
     assert (first.raw_uploaded, first.raw_total) == (3, 3)
     keys = destination.sizes("")
     assert sum(k.startswith("raw/") and k.endswith(".fit") for k in keys) == 3
@@ -159,3 +159,14 @@ def test_a_corrupted_dump_is_refused(source: tuple[str, Settings, str], tmp_path
         restore(settings, destination, database_url=url, data_dir=tmp_path / "restored")
     with pytest.raises(BackupError, match="no backup"):
         restore(settings, destination, database_url=url, data_dir=tmp_path / "x", day=date(2020, 1, 1))
+
+
+def test_retention_reads_the_date_whatever_the_prefix(
+    source: tuple[str, Settings, str], tmp_path: Path
+) -> None:
+    url, settings, _ = source
+    destination = LocalObjectStore(tmp_path / "backups")
+    destination.put_bytes("db/earlier-name-2026-11-01.dump", b"old")  # made before the rename
+    destination.put_bytes("db/earlier-name-2026-11-07.dump", b"recent")
+    run_backup(settings.model_copy(update={"backup_keep_days": 3}), destination, database_url=url, today=DAY)
+    assert sorted(destination.sizes("db/")) == ["db/earlier-name-2026-11-07.dump", dump_key(DAY)]

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download Garmin activities into data/activities/ with the OpenSport Garmin client.
+"""Download Garmin activities into data/activities/ with the Zankup Garmin client.
 
 A local tool, without a database: it keeps the original FIT and the list metadata of each activity as
 files (used by tools/build_proto_data.py and to create fixtures). The real sync, into Postgres, is the
@@ -21,9 +21,9 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
-from opensport.core.config import Settings
-from opensport.sync.garmin import GarminClient, GarminError
-from opensport.sync.tokens import FileTokenCache
+from zankup.core.config import Settings
+from zankup.sync.garmin import GarminClient, GarminError
+from zankup.sync.tokens import FileTokenCache
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"

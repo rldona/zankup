@@ -1,8 +1,8 @@
 /**
- * OpenSport React Native proof of concept (OS-501): sign in, then the detail of the latest activity.
+ * Zankup React Native proof of concept (OS-501): sign in, then the detail of the latest activity.
  * "All" opens a plain list to pick another one. Not the Android app: that is phase 5.
  */
-import { createApiClient, type ApiClient, type ApiPaths } from '@opensport/core';
+import { createApiClient, type ApiClient, type ApiPaths } from '@zankup/core';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -95,7 +95,7 @@ function SignIn({ dark, onSignedIn }: { dark: boolean; onSignedIn: (s: Session) 
     setError(null);
     try {
       const health = await createApiClient(url).GET('/api/health');
-      if (!health.data) throw new Error(`No OpenSport API at ${url}`);
+      if (!health.data) throw new Error(`No Zankup API at ${url}`);
       onSignedIn(await signIn(url, email.trim(), password, code.trim()));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -106,7 +106,7 @@ function SignIn({ dark, onSignedIn }: { dark: boolean; onSignedIn: (s: Session) 
 
   return (
     <View style={styles.signIn}>
-      <Text style={[styles.heading, { color: text }]}>OpenSport</Text>
+      <Text style={[styles.heading, { color: text }]}>Zankup</Text>
       <TextInput style={field} value={url} onChangeText={setUrl} autoCapitalize="none" placeholder="Server URL" />
       <TextInput
         style={field}

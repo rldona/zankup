@@ -115,6 +115,22 @@ Two pieces of work, tracked separately. Do the rename only after the domain and 
 8. GitHub: rename the repository and the organisation last, after the domain, and update the clone URL in `README.md`. GitHub redirects the old URL.
 9. Done when `grep -ri opensport` only hits git history, the kept Python module path and this guide's "why it changed" paragraph.
 
+**Status (8 November 2026):** done for the code, the documentation and the packages. The Python module was renamed too (`opensport` → `zankup`, `opensport_metrics` → `zankup_metrics`), so `grep -ri opensport` only hits git history, this folder and the prototypes in `docs/prototypes/`, which still have the owner's local edits. The ticket prefix `OS-` stays: it names the issues, not the product. Changing the signing contexts and the session cookie ended every session and made existing TOTP secrets unreadable; production had no TOTP enrolled yet. Pending: the domain (steps 7) and the repository rename (step 8).
+
+#### Moving a local database
+
+The Compose project, database, user and password are now `zankup`, so `docker compose` starts a new, empty volume. To bring the old local data across:
+
+```bash
+docker start opensport-db-1
+docker exec opensport-db-1 pg_dump -U opensport -d opensport --format=custom --no-owner --no-privileges > local.dump
+docker stop opensport-db-1
+make db
+docker exec -i zankup-db-1 pg_restore -U zankup -d zankup --no-owner --no-privileges < local.dump
+```
+
+The old volume (`opensport_pgdata`) can be removed with `docker volume rm opensport_pgdata` once the new one has the data. Enrol TOTP again with `python -m zankup.admin enable-totp`.
+
 ## 8. Exploration
 
 The decision trail is in `exploration/`: `mountain/` holds the first logo round (mountain and switchback trail, candidate N1), `zankup/` holds the Z rounds, the fusion with the start ring, and the wordmark comparisons. Each `comparison-*.png` is a rendered sheet; the matching `.html` regenerates it in a browser. The working page with every naming check (domains via registry RDAP, PyPI, npm, GitHub, app stores) lives outside the repo.

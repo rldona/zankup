@@ -3,8 +3,8 @@ import logging
 
 import pytest
 
-from opensport.core.config import Settings
-from opensport.core.logging import ConsoleFormatter, JsonFormatter
+from zankup.core.config import Settings
+from zankup.core.logging import ConsoleFormatter, JsonFormatter
 
 
 def test_settings_read_environment(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -37,19 +37,17 @@ def test_development_defaults_to_console_logs() -> None:
 
 
 def _record(**extra: object) -> logging.LogRecord:
-    record = logging.makeLogRecord(
-        {"name": "opensport.sync", "levelname": "INFO", "levelno": 20, "msg": "done"}
-    )
+    record = logging.makeLogRecord({"name": "zankup.sync", "levelname": "INFO", "levelno": 20, "msg": "done"})
     record.__dict__.update(extra)
     return record
 
 
 def test_json_logs_carry_extra_fields() -> None:
     entry = json.loads(JsonFormatter().format(_record(new=3, duration_ms=812)))
-    assert entry["level"] == "info" and entry["logger"] == "opensport.sync" and entry["message"] == "done"
+    assert entry["level"] == "info" and entry["logger"] == "zankup.sync" and entry["message"] == "done"
     assert entry["new"] == 3 and entry["duration_ms"] == 812
 
 
 def test_console_logs_are_readable() -> None:
     line = ConsoleFormatter().format(_record(new=3))
-    assert "INFO" in line and "opensport.sync: done" in line and "new=3" in line
+    assert "INFO" in line and "zankup.sync: done" in line and "new=3" in line

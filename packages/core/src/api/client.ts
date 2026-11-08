@@ -6,7 +6,7 @@ export type ApiPaths = paths;
 export type ApiClient = Client<paths>;
 
 /**
- * Typed client for the OpenSport API, generated from the backend's OpenAPI document.
+ * Typed client for the Zankup API, generated from the backend's OpenAPI document.
  * Without a base URL it uses the page's origin: the Vite proxy in development and the Vercel rewrite in
  * production. The Android app passes the instance URL it was configured with.
  */

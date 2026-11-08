@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "OpenSport PoC",
-    "slug": "opensport-poc",
+    "name": "Zankup PoC",
+    "slug": "zankup-poc",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "dev.opensport.poc",
+      "package": "dev.zankup.poc",
       "usesCleartextTraffic": true
     },
     "plugins": [

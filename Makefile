@@ -53,7 +53,7 @@ migration: db ## Create a migration from model changes: make migration m="add ge
 	uv run alembic -c backend/alembic.ini revision --autogenerate -m "$(m)"
 
 sync: migrate ## Sync new Garmin activities into the local database (since=YYYY-MM-DD to go further back)
-	uv run python -m opensport.sync $(if $(since),--since $(since),)
+	uv run python -m zankup.sync $(if $(since),--since $(since),)
 
 history: migrate ## Load the whole Garmin Connect history into the local database (safe to re-run)
-	uv run python -m opensport.sync --all
+	uv run python -m zankup.sync --all

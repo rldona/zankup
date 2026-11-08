@@ -9,6 +9,7 @@ import { Setup } from './routes/Setup';
 import { Shell } from './routes/Shell';
 import { SignIn } from './routes/SignIn';
 import { Catalogue } from './routes/Catalogue';
+import { ForgotPassword, ResetPassword } from './routes/Recover';
 import { Settings } from './routes/Settings';
 import { Soon } from './routes/Soon';
 import { Sync } from './routes/Sync';
@@ -17,6 +18,8 @@ import { Sync } from './routes/Sync';
 export const routes: RouteObject[] = [
   { path: '/sign-in', element: <SignIn /> },
   { path: '/setup', element: <Setup /> },
+  { path: '/forgot', element: <ForgotPassword /> },
+  { path: '/reset-password', element: <ResetPassword /> },
   {
     element: <RequireSession />,
     children: [

@@ -63,6 +63,9 @@ class User(Timestamps, Base):
     totp_last_counter: Mapped[int | None] = mapped_column(
         BigInteger, comment="Last accepted step: no replays"
     )
+    google_sub: Mapped[str | None] = mapped_column(
+        String(255), unique=True, comment="Linked Google account (OS-220): only this one can sign in"
+    )
     # Profile (OS-218): optional, used by the metrics engine (age, weight) and shown on the profile.
     location: Mapped[str | None] = mapped_column(String(120))
     birth_date: Mapped[date | None] = mapped_column(Date)
@@ -138,6 +141,19 @@ class RecoveryCode(Base):
     code_hash: Mapped[str] = mapped_column(String(64), unique=True)
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PasswordReset(Base):
+    """A password recovery link (OS-222): single use, 30 minutes. Only the token's SHA-256 is kept."""
+
+    __tablename__ = "password_resets"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Passkey(Base):

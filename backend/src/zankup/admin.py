@@ -1,7 +1,7 @@
 """Account administration from the server's shell, for emergencies: the account is created at /setup
 (OS-221) and recovered by e-mail (OS-222). On Railway, through `railway ssh`, use /app/.venv/bin/python.
 
-    python -m zankup.admin set-password      # asks for the password twice
+    python -m zankup.admin set-password      # asks for the password twice (alias: reset-password)
     python -m zankup.admin enable-totp       # shows the key for the authenticator app, asks for a code
     python -m zankup.admin sessions          # lists signed-in devices
     python -m zankup.admin sign-out-all      # ends every session
@@ -57,7 +57,9 @@ def enable_totp(user: User, secret: str, code: str, jwt_secret: str | None) -> N
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m zankup.admin", description=__doc__.splitlines()[0])
-    parser.add_argument("command", choices=["set-password", "enable-totp", "sessions", "sign-out-all"])
+    parser.add_argument(
+        "command", choices=["set-password", "reset-password", "enable-totp", "sessions", "sign-out-all"]
+    )
     parser.add_argument("--email", help="change the owner account's e-mail")
     args = parser.parse_args(argv)
     settings = get_settings()
@@ -69,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
             user = ensure_owner(session, settings.owner_email)
             if args.email:
                 user.email = args.email.strip().lower()
-            if args.command == "set-password":
+            if args.command in ("set-password", "reset-password"):
                 password = getpass.getpass("New password: ")
                 if password != getpass.getpass("Repeat it: "):
                     raise AdminError("The passwords do not match")

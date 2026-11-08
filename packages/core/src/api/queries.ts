@@ -58,6 +58,7 @@ export const queryKeys = {
   sources: ['sources'] as const,
   passkeys: ['passkeys'] as const,
   syncs: ['syncs'] as const,
+  providers: ['providers'] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
   months: (sport?: readonly string[]) => ['activities', 'months', { sport: sport ?? [] }] as const,
   activity: (id: number) => ['activity', id] as const,
@@ -194,5 +195,15 @@ export function syncsQuery(api: ApiClient, limit = 10) {
     queryKey: queryKeys.syncs,
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/sync', { params: { query: { limit } }, signal })),
+  };
+}
+
+/** Extra sign-in methods this instance offers (Google), for the sign-in screen. Public. */
+export function providersQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.providers,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/auth/google/providers', { signal })),
+    staleTime: Infinity,
   };
 }

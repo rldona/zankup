@@ -189,3 +189,26 @@ def test_missing_original_is_a_server_error(ctx: Ctx) -> None:
 def test_without_a_session_nothing_is_shown(ctx: Ctx) -> None:
     ctx.http.cookies.clear()
     assert ctx.http.get("/api/activities").status_code == 401
+
+
+def test_months_add_up_every_activity_in_its_local_month(ctx: Ctx) -> None:
+    with ctx.sessions.begin() as db:
+        # 23:30 UTC on 31 October is already November in Madrid (+01:00)
+        db.execute(
+            update(Activity)
+            .where(Activity.id == ctx.ids["run"])
+            .values(start_utc=datetime(2026, 10, 31, 23, 30, tzinfo=UTC), timezone="+01:00")
+        )
+        db.execute(
+            update(Activity)
+            .where(Activity.id != ctx.ids["run"])
+            .values(start_utc=datetime(2026, 10, 10, 8, tzinfo=UTC), timezone=None)
+        )
+    months = ctx.http.get("/api/activities/months").json()
+    assert [(m["month"], m["count"]) for m in months] == [("2026-11", 1), ("2026-10", 2)]
+    with ctx.sessions() as db:
+        run = db.get_one(Activity, ctx.ids["run"])
+        assert months[0]["distance_m"] == pytest.approx(run.distance_m)
+        assert months[0]["moving_s"] == pytest.approx(run.moving_s or run.duration_s)
+    only_runs = ctx.http.get("/api/activities/months", params={"sport": "run"}).json()
+    assert [m["month"] for m in only_runs] == ["2026-11"]

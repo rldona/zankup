@@ -70,3 +70,25 @@ export function formatActivityDate(isoLocal: string, locale: Locale): string {
   });
   return `${day} · ${time}`;
 }
+
+/**
+ * The activity's start in the local time where it was recorded, as "YYYY-MM-DDTHH:MM:SS" (no offset),
+ * from its UTC start and the offset stored with it ("+01:00"). Without an offset, UTC is used. The same
+ * rule as the API's month totals, so a card and its month header always agree.
+ */
+export function localStart(startUtc: string, timezone: string | null | undefined): string {
+  const match = /^([+-])(\d{2}):(\d{2})$/.exec(timezone ?? '');
+  const offset = match ? (match[1] === '-' ? -1 : 1) * (Number(match[2]) * 60 + Number(match[3])) : 0;
+  const local = new Date(new Date(startUtc).getTime() + offset * 60_000);
+  return local.toISOString().slice(0, 19);
+}
+
+/** "2026-10" → "October 2026" (en) or "octubre de 2026" (es). */
+export function formatMonth(month: string, locale: Locale): string {
+  const [year, index] = month.split('-').map(Number);
+  return new Date(Date.UTC(year ?? 1970, (index ?? 1) - 1, 1)).toLocaleDateString(locale, {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}

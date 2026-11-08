@@ -236,6 +236,10 @@ The production domain (OS-D06) is done: `zankup.com` → Vercel (`www` redirects
 - **OS-225 · Strength training detail** (M) · depends on OS-105 and OS-205
   - The parser reads Garmin's set data from the FIT (exercise, reps, weight, duration and rest per set). The detail shows sets grouped by exercise, total volume (reps × weight) and a front/back body map with the muscle groups worked, as in the prototype's strength screen.
   - *Done when:* the anonymised strength fixture shows the same sets, reps and weights as Garmin Connect.
+- **OS-226 · Import the full Garmin history from the app** (M) · depends on OS-113, OS-112 and OS-221
+  - Today the history load (OS-113) needs the Railway CLI, SSH and a terminal: fine for the owner, not for anyone else. A button in the last step of sign-up ("All set") and on the Sync screen starts it as a background job, and the app shows its progress (window X of Y, downloaded, still to import). Closing the tab does not stop it; running it again resumes.
+  - Backend: `POST /api/sync` accepts `{"history": true}` (or a start date) and queues the same windowed load. Two worker changes: a long load must not block the imports it queues (a second worker thread, or imports interleaved between downloads), and a job that is alive must not be taken for stale after 15 minutes (heartbeat on `locked_at`).
+  - *Done when:* a new instance with only a Garmin key gets its whole history by pressing one button, with progress visible and no terminal.
 - **OS-224 · Self-hosting kit** (M) · depends on OS-005, OS-006 and OS-009
   - A production `docker compose` (API, worker, Postgres, volume and the built PWA behind one origin) for your own server, and a **"Deploy on Railway" template** plus Vercel instructions for the cloud path.
   - `docs/self-hosting.md`, step by step and in English: getting your own Garmin Personal API key, creating the Google OAuth client (OS-220), Resend, and later the Google Health client (OS-603) and the optional Anthropic key (OS-701). Every variable in `.env.example` is explained there.

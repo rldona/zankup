@@ -292,6 +292,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/activities/months': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Months
+     * @description Totals per month, newest first: the headers of the feed, whole even while it loads by pages.
+     */
+    get: operations['listActivityMonths'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/activities/{activity_id}': {
     parameters: {
       query?: never;
@@ -732,6 +752,28 @@ export interface components {
       display_name: string | null;
       /** Totp Enabled */
       totp_enabled: boolean;
+    };
+    /**
+     * MonthTotals
+     * @description One month of the feed, in the activities' own local time.
+     */
+    MonthTotals: {
+      /**
+       * Month
+       * @description "YYYY-MM"
+       */
+      month: string;
+      /** Count */
+      count: number;
+      /** Distance M */
+      distance_m: number;
+      /**
+       * Moving S
+       * @description Moving time, or the elapsed time when there is none
+       */
+      moving_s: number;
+      /** Ascent M */
+      ascent_m: number;
     };
     /**
      * Options
@@ -1391,6 +1433,38 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ActivityPage'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listActivityMonths: {
+    parameters: {
+      query?: {
+        /** @description Only these sports (repeat to combine) */
+        sport?: string[] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MonthTotals'][];
         };
       };
       /** @description Validation Error */

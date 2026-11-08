@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -85,6 +85,57 @@ describe('app skeleton', () => {
     expect(await screen.findByText('Older ride')).toBeInTheDocument();
     expect(calls).toContain('GET /api/activities?limit=30&cursor=abc');
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+  });
+
+  it('groups the feed by month with whole-month totals and filters by sport', async () => {
+    const calls = mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/activities/months': (url) =>
+        Response.json(
+          url.searchParams.get('sport') === 'ride'
+            ? [{ month: '2026-10', count: 1, distance_m: 40000, moving_s: 5400, ascent_m: 300 }]
+            : [
+                { month: '2026-11', count: 3, distance_m: 21400, moving_s: 7380, ascent_m: 120 },
+                { month: '2026-10', count: 9, distance_m: 98000, moving_s: 30000, ascent_m: 900 },
+              ],
+        ),
+      '/api/activities': (url) =>
+        Response.json({
+          items:
+            url.searchParams.get('sport') === 'ride'
+              ? [{ ...RUN, id: 5, name: 'Long ride', sport: 'ride', start_utc: '2026-10-12T07:00:00Z' }]
+              : [
+                  RUN,
+                  // 23:30 UTC on 31 October is November in its own time zone (+01:00)
+                  { ...RUN, id: 6, name: 'Late run', start_utc: '2026-10-31T23:30:00Z' },
+                  { ...RUN, id: 5, name: 'Long ride', sport: 'ride', start_utc: '2026-10-12T07:00:00Z' },
+                ],
+          next_cursor: null,
+        }),
+    });
+    const router = renderAt('/');
+    const months = await screen.findAllByRole('heading', { level: 2 });
+    expect(months.map((h) => h.textContent)).toEqual([
+      'November 20263 act. · 21 km · 2 h 3 min',
+      'October 20269 act. · 98 km · 8 h 20 min',
+    ]);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Activities · 12 since 2026');
+    const run = screen.getByRole('link', { name: /Morning run/ });
+    expect(run).toHaveTextContent('6.00 km');
+    expect(run).toHaveTextContent('4:52 /km'); // 6 km in 29:10 moving
+    expect(screen.getByRole('link', { name: /Long ride/ })).toHaveTextContent('km/h');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ride' }));
+    await waitFor(() => expect(screen.queryByText('Morning run')).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Ride' })).toHaveAttribute('aria-pressed', 'true');
+    expect(router.state.location.search).toBe('?sport=ride');
+    expect(calls).toContain('GET /api/activities?limit=30&sport=ride');
+    expect(calls).toContain('GET /api/activities/months?sport=ride');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Activities · 12 since 2026');
+    expect(screen.getByRole('link', { name: /Long ride/ })).toHaveAttribute(
+      'href',
+      '/activities/5?sport=ride',
+    );
   });
 
   it('opens an activity from the feed', async () => {

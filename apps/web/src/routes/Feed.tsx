@@ -1,47 +1,118 @@
-import { activitiesQuery, formatDuration, SPORTS, type ActivitySummary, type Sport } from '@zankup/core';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { NavLink, Outlet, useMatch } from 'react-router';
+import {
+  activitiesQuery,
+  formatActivityDate,
+  formatDistance,
+  formatDuration,
+  formatHoursMinutes,
+  formatMonth,
+  formatPace,
+  formatSpeed,
+  localStart,
+  monthsQuery,
+  routeThumbnail,
+  SPORTS,
+  usesPace,
+  type ActivitySummary,
+  type MessageKey,
+  type MonthTotals,
+  type Sport,
+} from '@zankup/core';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { Fragment, useEffect, useRef, type CSSProperties, type RefObject } from 'react';
+import { Link, NavLink, Outlet, useMatch, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { locale, t } from '../i18n';
+import { SportGlyph, SportIcon } from '../SportIcon';
+
+const UNITS = { locale, units: 'metric' } as const; // the units setting arrives with OS-212
+const CHIPS = SPORTS.filter((s) => s !== 'other');
 
 /**
- * Feed and detail side by side on desktop (list 400 px, detail beside it); on mobile, one or the
- * other depending on the route. The cards, chips and months are OS-204.
+ * The feed (OS-204): sport chips, cards with the route, grouped by month with each month's totals, and
+ * more pages as you scroll. Beside the detail on desktop (list 400 px); on mobile, one or the other.
+ * The chosen sport lives in the URL (`?sport=run`), so going back to the feed keeps it.
  */
 export function Feed() {
   const detail = useMatch('/activities/:id') !== null;
-  const feed = useInfiniteQuery(activitiesQuery(api));
+  const [params, setParams] = useSearchParams();
+  const chosen = params.get('sport');
+  const sport = (CHIPS as readonly string[]).includes(chosen ?? '') ? (chosen as Sport) : null;
+  const filter = sport ? [sport] : undefined;
+
+  const feed = useInfiniteQuery(activitiesQuery(api, filter));
+  const months = useQuery(monthsQuery(api, filter));
+  const allMonths = useQuery({ ...monthsQuery(api), enabled: sport !== null });
   const items = feed.data?.pages.flatMap((page) => page.items) ?? [];
+  const totals = new Map(months.data?.map((m) => [m.month, m]));
+
+  const column = useRef<HTMLElement>(null);
+  const sentinel = useMoreOnScroll(column, () => {
+    if (feed.hasNextPage && !feed.isFetchingNextPage) void feed.fetchNextPage();
+  });
+
+  const pick = (next: Sport | null) => {
+    setParams(next ? { sport: next } : {}, { replace: true });
+    column.current?.scrollTo?.({ top: 0 });
+  };
+  const search = params.toString() ? `?${params}` : '';
+
+  const cards = items.map((activity, i) => {
+    const start = localStart(activity.start_utc, activity.timezone);
+    return { activity, start, month: start.slice(0, 7), index: i };
+  });
 
   return (
     <div className={`feedwrap${detail ? ' detail' : ''}`}>
-      <section className="feedcol">
-        <h1>{t('feed.title')}</h1>
+      <section className="feedcol" ref={column}>
+        <h1>
+          {t('feed.title')} <Since months={sport ? allMonths.data : months.data} />
+        </h1>
+        <div className="chips" role="group" aria-label={t('feed.sports')}>
+          <button type="button" className="chip" aria-pressed={sport === null} onClick={() => pick(null)}>
+            {t('feed.all')}
+          </button>
+          {CHIPS.map((s) => (
+            <button key={s} type="button" className="chip" aria-pressed={sport === s} onClick={() => pick(s)}>
+              <SportGlyph sport={s} />
+              {t(`sport.${s}`)}
+            </button>
+          ))}
+        </div>
+        <p className="note">
+          {t('feed.searchHint')} <Link to="/search">{t('feed.searchLink')} ›</Link>
+        </p>
+
         {feed.isPending && <p className="state">{t('common.loading')}</p>}
         {feed.isError && (
           <p className="state" role="alert">
             {t('common.error')}
           </p>
         )}
-        {feed.isSuccess && items.length === 0 && <p className="state">{t('feed.empty')}</p>}
-        <ul className="list">
-          {items.map((activity) => (
-            <li key={activity.id}>
-              <NavLink
-                to={`/activities/${activity.id}`}
-                className={({ isActive }) => (isActive ? 'on' : undefined)}
-              >
-                <strong>{activity.name ?? sportName(activity)}</strong>
-                <span>{summary(activity)}</span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+        {feed.isSuccess && items.length === 0 && (
+          <p className="state">{sport ? t('feed.emptySport') : t('feed.empty')}</p>
+        )}
+
+        {cards.map(({ activity, start, month, index }) => (
+          <Fragment key={activity.id}>
+            {month !== cards[index - 1]?.month && <MonthHeader month={month} totals={totals.get(month)} />}
+            <Card activity={activity} start={start} search={search} />
+          </Fragment>
+        ))}
+
+        <div ref={sentinel} />
         {feed.hasNextPage && (
-          <button type="button" onClick={() => void feed.fetchNextPage()} disabled={feed.isFetchingNextPage}>
+          <button
+            type="button"
+            className="more"
+            onClick={() => void feed.fetchNextPage()}
+            disabled={feed.isFetchingNextPage}
+          >
             {feed.isFetchingNextPage ? t('common.loading') : t('feed.more')}
           </button>
+        )}
+        {feed.isSuccess && !feed.hasNextPage && items.length > 0 && (
+          <p className="state end">{t('feed.end')}</p>
         )}
       </section>
       <section className="detailcol">
@@ -56,21 +127,115 @@ export function PickActivity() {
   return <p className="state pick">{t('feed.pick')}</p>;
 }
 
-function sportName(activity: ActivitySummary): string {
-  const sport: Sport = (SPORTS as readonly string[]).includes(activity.sport)
-    ? (activity.sport as Sport)
-    : 'other';
-  return t(`sport.${sport}`);
+/**
+ * Calls `onMore` when the end of the list comes within 600 px of the scrolling column. Where there is
+ * no IntersectionObserver (old browsers, tests), the "Load more" button is still there.
+ */
+function useMoreOnScroll(root: RefObject<HTMLElement | null>, onMore: () => void) {
+  const sentinel = useRef<HTMLDivElement>(null);
+  const latest = useRef(onMore);
+  useEffect(() => {
+    latest.current = onMore;
+  });
+  useEffect(() => {
+    const target = sentinel.current;
+    if (!target || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) latest.current();
+      },
+      { root: root.current, rootMargin: '0px 0px 600px 0px' },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [root]);
+  return sentinel;
 }
 
-function summary(activity: ActivitySummary): string {
-  const date = new Date(activity.start_utc).toLocaleDateString(locale, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-  const distance = activity.distance_m ? `${(activity.distance_m / 1000).toFixed(2)} km` : null;
-  return [date, distance, formatDuration(activity.moving_s ?? activity.duration_s)]
-    .filter(Boolean)
-    .join(' · ');
+function Since({ months }: { months: MonthTotals[] | undefined }) {
+  const oldest = months?.at(-1);
+  if (!months || !oldest) return null;
+  const count = months.reduce((sum, m) => sum + m.count, 0);
+  return (
+    <span className="since">
+      · {t('feed.since', { count: count.toLocaleString(locale), year: oldest.month.slice(0, 4) })}
+    </span>
+  );
+}
+
+function MonthHeader({ month, totals }: { month: string; totals: MonthTotals | undefined }) {
+  return (
+    <h2 className="mhead">
+      <b>{formatMonth(month, locale)}</b>
+      {totals && (
+        <span className="num">
+          {t('feed.monthTotals', {
+            count: totals.count,
+            distance: Math.round(totals.distance_m / 1000).toLocaleString(locale),
+            time: formatHoursMinutes(totals.moving_s),
+          })}
+        </span>
+      )}
+    </h2>
+  );
+}
+
+function asSport(value: string): Sport {
+  return (SPORTS as readonly string[]).includes(value) ? (value as Sport) : 'other';
+}
+
+function Card({ activity, start, search }: { activity: ActivitySummary; start: string; search: string }) {
+  const sport = asSport(activity.sport);
+  const route = routeThumbnail(activity.route);
+  const style = { '--sport': `var(--${sport})` } as CSSProperties;
+  return (
+    <NavLink
+      to={{ pathname: `/activities/${activity.id}`, search }}
+      className={({ isActive }) => `card${isActive ? ' on' : ''}`}
+      style={style}
+    >
+      <div className="chead">
+        <SportIcon sport={sport} />
+        <div className="ctext">
+          <div className="ctitle">{activity.name ?? t(`sport.${sport}`)}</div>
+          <div className="csub">{formatActivityDate(start, locale)}</div>
+        </div>
+      </div>
+      <div className="cbody">
+        <dl className="cstats num">
+          {stats(activity, sport).map(([label, value]) => (
+            <div key={label}>
+              <dd>{value}</dd>
+              <dt>{t(label)}</dt>
+            </div>
+          ))}
+        </dl>
+        {route ? (
+          <svg className="thumb" viewBox="0 0 88 64" aria-hidden="true">
+            <polyline points={route} />
+          </svg>
+        ) : null}
+      </div>
+    </NavLink>
+  );
+}
+
+type Stat = [label: MessageKey, value: string];
+
+/** Three figures per card: distance, time and pace (or speed); time and heart rate when there is no distance. */
+function stats(a: ActivitySummary, sport: Sport): Stat[] {
+  const time = a.moving_s ?? a.duration_s;
+  const hr: Stat | null = a.avg_hr ? ['feed.stat.hr', `${a.avg_hr} bpm`] : null;
+  if (!a.distance_m) {
+    const ascent: Stat | null = a.ascent_m ? ['feed.stat.ascent', `${Math.round(a.ascent_m)} m`] : null;
+    return [['feed.stat.time', formatDuration(time)], hr, ascent].filter((s): s is Stat => s !== null);
+  }
+  const speed = time > 0 ? a.distance_m / time : 0;
+  return [
+    ['feed.stat.distance', `${formatDistance(a.distance_m, UNITS)} km`],
+    ['feed.stat.time', formatDuration(time)],
+    usesPace(sport)
+      ? ['feed.stat.pace', `${formatPace(speed, UNITS)} /km`]
+      : ['feed.stat.speed', `${formatSpeed(speed, UNITS)} km/h`],
+  ];
 }

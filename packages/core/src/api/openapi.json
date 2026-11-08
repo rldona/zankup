@@ -371,6 +371,111 @@
         }
       }
     },
+    "/api/setup": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Setup Status",
+        "operationId": "getSetupStatus",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/setup/account": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Setup Account",
+        "description": "Step 1: setup code, name, e-mail and password. Returns the TOTP key for step 2.",
+        "operationId": "setupAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpSetup"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/setup/totp": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Setup Totp",
+        "description": "Step 2: a code from the app turns two-step verification on, closes sign-up and signs in.",
+        "operationId": "setupTotp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpConfirm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupDone"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/activities": {
       "get": {
         "tags": [
@@ -734,6 +839,46 @@
   },
   "components": {
     "schemas": {
+      "AccountRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 40,
+            "title": "Code",
+            "description": "The setup code from the server logs"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 1024,
+            "title": "Password"
+          },
+          "accept": {
+            "type": "boolean",
+            "title": "Accept",
+            "description": "Accepts how the data is handled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "display_name",
+          "email",
+          "password",
+          "accept"
+        ],
+        "title": "AccountRequest"
+      },
       "ActivityDetail": {
         "properties": {
           "id": {
@@ -1788,6 +1933,39 @@
         ],
         "title": "RegisterRequest"
       },
+      "SetupDone": {
+        "properties": {
+          "me": {
+            "$ref": "#/components/schemas/Me"
+          },
+          "recovery_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recovery Codes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "me",
+          "recovery_codes"
+        ],
+        "title": "SetupDone"
+      },
+      "SetupStatus": {
+        "properties": {
+          "open": {
+            "type": "boolean",
+            "title": "Open"
+          }
+        },
+        "type": "object",
+        "required": [
+          "open"
+        ],
+        "title": "SetupStatus"
+      },
       "SplitOut": {
         "properties": {
           "distance_m": {
@@ -2012,11 +2190,11 @@
         ],
         "title": "SyncStatus"
       },
-      "TotpRequest": {
+      "TotpConfirm": {
         "properties": {
-          "challenge": {
+          "setup_token": {
             "type": "string",
-            "title": "Challenge"
+            "title": "Setup Token"
           },
           "code": {
             "type": "string",
@@ -2027,10 +2205,62 @@
         },
         "type": "object",
         "required": [
+          "setup_token",
+          "code"
+        ],
+        "title": "TotpConfirm"
+      },
+      "TotpRequest": {
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "title": "Challenge"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 6,
+            "title": "Code",
+            "description": "6-digit code, or a recovery code"
+          }
+        },
+        "type": "object",
+        "required": [
           "challenge",
           "code"
         ],
         "title": "TotpRequest"
+      },
+      "TotpSetup": {
+        "properties": {
+          "setup_token": {
+            "type": "string",
+            "title": "Setup Token"
+          },
+          "secret": {
+            "type": "string",
+            "title": "Secret",
+            "description": "Key to type into the authenticator app"
+          },
+          "uri": {
+            "type": "string",
+            "title": "Uri",
+            "description": "otpauth:// link with the same key"
+          },
+          "qr_svg": {
+            "type": "string",
+            "title": "Qr Svg",
+            "description": "The link as a QR code (SVG)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "setup_token",
+          "secret",
+          "uri",
+          "qr_svg"
+        ],
+        "title": "TotpSetup"
       },
       "ValidationError": {
         "properties": {

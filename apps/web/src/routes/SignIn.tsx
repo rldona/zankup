@@ -1,6 +1,6 @@
-import { meQuery, queryKeys, type Me } from '@zankup/core';
+import { meQuery, queryKeys, setupStatusQuery, type Me } from '@zankup/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent, type KeyboardEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
@@ -8,6 +8,7 @@ import { t } from '../i18n';
 import { Lockup } from '../Lockup';
 import { safeNext } from '../next';
 import { deviceName } from '../signin/device';
+import { CodeForm, ErrorBox } from '../signin/CodeForm';
 import { Waves } from '../signin/Waves';
 import { assertionJson, passkeysSupported, requestOptions } from '../signin/webauthn';
 
@@ -21,7 +22,11 @@ export function SignIn() {
   const me = useQuery({ ...meQuery(api), retry: false });
   const [step, setStep] = useState<Step>({ kind: 'password' });
 
+  const setup = useQuery({ ...setupStatusQuery(api), retry: false });
+
   if (me.data) return <Navigate to={safeNext(params.get('next'))} replace />;
+  // A brand-new instance has nobody to sign in yet: straight to creating the account.
+  if (setup.data?.open) return <Navigate to="/setup" replace />;
 
   const signedIn = (user: Me) => {
     queryClient.setQueryData(queryKeys.me, user);
@@ -220,103 +225,28 @@ function CodeStep({
   onExpired: () => void;
   onSignedIn: (user: Me) => void;
 }) {
-  const [digits, setDigits] = useState<string[]>(() => Array(6).fill(''));
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const boxes = useRef<(HTMLInputElement | null)[]>([]);
-  const submitted = useRef('');
-
-  useEffect(() => boxes.current[0]?.focus(), []);
-
-  const verify = async (code: string) => {
-    if (code.length < 6) return setError(t('signIn.error.incomplete'));
-    if (submitted.current === code) return; // auto-submit fires once per complete code
-    submitted.current = code;
-    setError('');
-    setBusy(true);
+  const verify = async (code: string): Promise<string | null> => {
     try {
       const { data, response } = await api.POST('/api/auth/login/totp', { body: { challenge, code } });
-      if (data && 'email' in data) return onSignedIn(data);
-      if (response.status === 401 && isExpired(challenge)) return onExpired();
-      setError(errorFor(response));
-      setDigits(Array(6).fill(''));
-      submitted.current = '';
-      boxes.current[0]?.focus();
+      if (data && 'email' in data) {
+        onSignedIn(data);
+        return null;
+      }
+      if (response.status === 401 && isExpired(challenge)) {
+        onExpired();
+        return null;
+      }
+      return errorFor(response);
     } catch {
-      setError(errorFor(undefined));
-      submitted.current = '';
-    } finally {
-      setBusy(false);
+      return errorFor(undefined);
     }
-  };
-
-  const update = (next: string[]) => {
-    setDigits(next);
-    if (next.every(Boolean)) void verify(next.join(''));
-  };
-
-  /** Fills from box i: one digit when typed, several when autofilled or typed faster than focus moves. */
-  const fill = (i: number, typed: string) => {
-    const next = [...digits];
-    if (!typed) next[i] = '';
-    typed.split('').forEach((digit, k) => {
-      if (i + k < 6) next[i + k] = digit;
-    });
-    update(next);
-    if (typed) boxes.current[Math.min(i + typed.length, 5)]?.focus();
-  };
-
-  const onInput = (i: number, value: string) => {
-    const typed = value.replace(/\D/g, '');
-    // A box holding one digit gets a second keystroke appended: keep the new one.
-    fill(i, typed.length === 2 && digits[i] ? typed.slice(-1) : typed.slice(0, 6 - i));
-  };
-
-  const onKeyDown = (i: number, event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Backspace' && !digits[i]) boxes.current[i - 1]?.focus();
-  };
-
-  const onPaste = (event: ClipboardEvent<HTMLInputElement>) => {
-    const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (!pasted) return;
-    event.preventDefault();
-    fill(pasted.length === 6 ? 0 : digits.findIndex((d) => !d), pasted);
   };
 
   return (
     <>
       <h1>{t('signIn.codeTitle')}</h1>
       <div className="sub">{t('signIn.codeSub')}</div>
-      <ErrorBox message={error} />
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void verify(digits.join(''));
-        }}
-        noValidate
-      >
-        <div className="otp">
-          {digits.map((digit, i) => (
-            <input
-              key={i}
-              ref={(el) => {
-                boxes.current[i] = el;
-              }}
-              inputMode="numeric"
-              autoComplete={i === 0 ? 'one-time-code' : 'off'}
-              maxLength={6}
-              aria-label={t('signIn.digit', { n: i + 1 })}
-              value={digit}
-              onChange={(e) => onInput(i, e.target.value)}
-              onKeyDown={(e) => onKeyDown(i, e)}
-              onPaste={onPaste}
-            />
-          ))}
-        </div>
-        <button className="primary block" type="submit" disabled={busy}>
-          {busy ? <span className="spin" aria-label={t('common.loading')} /> : t('signIn.verify')}
-        </button>
-      </form>
+      <CodeForm submitLabel={t('signIn.verify')} onCode={verify} />
       <div className="lrow">
         <button type="button" className="link" onClick={onBack}>
           {t('signIn.back')}
@@ -335,12 +265,4 @@ function isExpired(challenge: string): boolean {
   } catch {
     return false;
   }
-}
-
-function ErrorBox({ message }: { message: string }) {
-  return (
-    <div className={`lerr${message ? ' show' : ''}`} role="alert">
-      {message}
-    </div>
-  );
 }

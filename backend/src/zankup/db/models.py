@@ -104,6 +104,32 @@ class Device(Timestamps, Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class SetupCode(Base):
+    """The one-time code that allows creating the instance's account (OS-221). It exists only while
+    sign-up is open, is written to the server logs on every start, and is deleted when sign-up ends."""
+
+    __tablename__ = "setup_codes"
+
+    id: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    code_enc: Mapped[str] = mapped_column(
+        Text, comment="Encrypted with JWT_SECRET, to show it again in the logs"
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class RecoveryCode(Base):
+    """A single-use code that replaces the TOTP code when the phone is lost (OS-221, OS-222)."""
+
+    __tablename__ = "recovery_codes"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    code_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Passkey(Base):
     """A WebAuthn credential (OS-405): signs in without password or TOTP, since the device already checks
     the fingerprint, face or PIN. Bound to the instance's domain (WEBAUTHN_RP_ID)."""

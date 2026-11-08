@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from tests.conftest import alembic_config
 from zankup.db import Activity, Base, Lap, Stream, User, UserSettings
+from zankup.db.manual import include_object
 
 TABLES = {"users", "settings", "devices", "activities", "laps", "streams", "sync_runs"}
 
@@ -27,7 +28,10 @@ def test_migrations_round_trip(empty_database: str) -> None:
 def test_models_match_migrations(database: str) -> None:
     engine = create_engine(database)
     with engine.connect() as conn:
-        diff = compare_metadata(MigrationContext.configure(conn, opts={"compare_type": True}), Base.metadata)
+        diff = compare_metadata(
+            MigrationContext.configure(conn, opts={"compare_type": True, "include_object": include_object}),
+            Base.metadata,
+        )
     engine.dispose()
     assert diff == [], "Models changed without a migration: run `make migration m='…'`"
 

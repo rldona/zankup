@@ -7,6 +7,7 @@ from sqlalchemy import engine_from_config, pool
 
 from zankup.core.config import get_settings
 from zankup.db import Base
+from zankup.db.manual import include_object
 
 config = context.config
 if config.config_file_name is not None:
@@ -15,14 +16,6 @@ if config.config_file_name is not None:
 url = config.attributes.get("sqlalchemy_url") or get_settings().sqlalchemy_url
 config.set_main_option("sqlalchemy.url", url.replace("%", "%%"))
 target_metadata = Base.metadata
-
-
-# Objects created by hand in migrations, with no model counterpart: autogenerate must leave them alone.
-MANUAL = {"ix_activities_search"}
-
-
-def include_object(obj: object, name: str | None, type_: str, reflected: bool, compare_to: object) -> bool:
-    return not (type_ == "index" and name in MANUAL)
 
 
 def run_migrations_offline() -> None:

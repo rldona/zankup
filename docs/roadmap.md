@@ -13,13 +13,19 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 | **2 · PWA MVP** | See activities on desktop and mobile | Installable PWA with feed, detail with map, search and Sync button, in English and Spanish | **M2: "I use OpenSport instead of Strava to see my activities"** |
 | **3 · Advanced metrics** | The "Premium" metrics, built by us | Complete stats screen | **M3: "I know how fit I am"** |
 | **4 · Notifications, history and privacy** | Notifications, the full history and safe sharing | Push, Strava ZIP import, privacy zones | **M4: "OpenSport replaces Strava"** |
-| **5 · Android app (React Native)** | Expo app on the shared code, background sync and FCM | App on the Play Store (internal testing) | **M5: Android app** |
+| **5 · Android app (React Native)** | Expo app on the shared code, background sync and FCM (stack confirmed by the OS-501 proof of concept at the start of phase 2) | App on the Play Store (internal testing) | **M5: Android app** |
 | **6 · Multi-source health** | Sleep, HRV and daily data from Garmin and Google Health (Fitbit Air), without duplicates | Health dashboard | **M6: "I see my recovery, wherever it comes from"** |
 | **7 · AI assistant** | Summaries, analysis and natural-language questions with a small LLM (Claude Haiku 5.5) | Per-activity summary, weekly report and "Coach" chat | **M7: "I ask OpenSport how I'm doing"** |
 
 **Size estimate:** S ≈ half a day · M ≈ 1–2 days · L ≈ 3–5 days. Rough totals: M1 ≈ 20–25 working days (phases 0 and 1), M2 ≈ another 30–35.
 
 **Tracking:** every ticket is a GitHub issue with `phase-N`, `size-S/M/L` and `type` labels and a milestone per phase; dependencies are linked in each issue. This file remains the plan; the issues are the work.
+
+**Product model:**
+- **Open source and self-hosted.** Each person deploys their own instance (Railway + Vercel, or Docker on their own server) and uses **their own keys**: Garmin Personal API, Google OAuth, Google Health and, optionally, Anthropic. That keeps every instance within the Garmin Personal API's personal-use terms, and nobody else's health data lives on our servers.
+- **Licences:** `packages/metrics` (the metrics engine) under **MIT**, so anyone can reuse it; everything else under **AGPL-3.0**, so hosted forks stay open.
+- **No payments for now.** Nothing in the design should close the door to a hosted version later: every table carries `user_id` from the start, even though each deployment has a single user.
+- **Brand on hold.** OpenSport is the working name; logo (#116) and domain (OS-D06) are in the backlog. Instances run on their `*.vercel.app` and `*.up.railway.app` URLs.
 
 **Working rules:**
 - One ticket = one branch = one small PR with tests.
@@ -45,22 +51,21 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 
 These are owner decisions, tracked as issues with the `decision` label.
 
-- **OS-D06 · Choose the production domain** (S)
-  - Needed by passkeys (the relying party ID must stay stable; changing it invalidates them), Resend (SPF/DKIM), Google OAuth redirect URLs and Vercel.
-  - *Done when:* the domain is registered and pointed at Vercel.
-- **OS-D07 · Choose the licence and repository visibility** (S)
-  - Open source (MIT or AGPL-3.0, in line with "Your sports data: 100% free") or private. AGPL keeps hosted forks open; MIT is the most permissive.
-  - *Done when:* `LICENSE` is in the repository and the visibility is set.
-- **OS-D08 · Create the service accounts** (S)
-  - Railway, Vercel, Resend, Google Cloud, Anthropic and Sentry. Expected cost at the start: about $5–10/month.
+- **OS-D07 · Choose the licence and repository visibility** (S) · **decided**
+  - MIT for `packages/metrics`, AGPL-3.0 for the rest of the repository, public repository (see "Product model" above). Applied in OS-001.
+  - *Done when:* `LICENSE` (AGPL-3.0) is at the root, `packages/metrics/LICENSE` (MIT) is in place and the repository is public.
+- **OS-D08 · Create the service accounts for your own instance** (S)
+  - Railway, Vercel, Resend, Google Cloud, Anthropic (optional) and Sentry. Expected cost at the start: about $5–10/month. The same list becomes the self-hosting guide (OS-224).
   - *Done when:* every account exists and its keys are stored only in Railway's variables and the local `.env`.
+
+The production domain (OS-D06) moved to the [backlog](#backlog): a stable `*.vercel.app` URL is enough for now.
 
 ## Phase 0 · Foundations
 
 **Goal:** any change reaches production with a `git push`.
 
 - **OS-001 · Repository and structure** (S)
-  - pnpm-workspaces monorepo: `backend/`, `apps/web/`, `apps/mobile/` (empty until phase 5), `packages/core/`, `docs/` and `tools/`. `README`, licence (OS-D07) and `.gitignore` (including `.env`, `data/`, `strava/`, `docs/prototypes/data.js` and the sample files with personal data).
+  - pnpm-workspaces monorepo: `backend/`, `apps/web/`, `apps/mobile/` (empty until phase 5), `packages/core/`, `packages/metrics/`, `docs/` and `tools/`. `README`, licences (OS-D07: AGPL-3.0 at the root, MIT in `packages/metrics/`) and `.gitignore` (including `.env`, `data/`, `strava/`, `docs/prototypes/data.js` and the sample files with personal data).
   - Migrate what already exists: `sync/garmin_sync.py` → `backend/` (as the seed of OS-103), `tools/build_proto_data.py` stays in `tools/`, prototypes stay in `docs/prototypes/`. Translate code comments and messages to English.
   - *Done when:* the structure is in place, nothing personal or secret is tracked, and the existing scripts still run from their new location.
 - **OS-002 · Backend tooling** (S) · depends on OS-001
@@ -96,9 +101,11 @@ These are owner decisions, tracked as issues with the `decision` label.
 **Goal:** activities sync on their own and are stored, parsed and served by the API.
 
 - **OS-101 · `opensport` package and configuration** (S) · depends on OS-002
-  - Structure `opensport/{api,sync,fit,metrics,db,core}`. Configuration with `pydantic-settings` and structured logging.
+  - Structure `opensport/{api,sync,fit,db,core}`. Configuration with `pydantic-settings` and structured logging.
+  - The metric algorithms live in **`packages/metrics`** (Python package `opensport-metrics`, MIT): pure functions over normalised streams and summaries, with no dependency on the database, the API or the network, so other projects can use them. The backend imports it.
 - **OS-102 · Database schema and migrations** (M) · depends on OS-101
   - SQLAlchemy + Alembic. Tables `activities`, `laps`, `streams`, `sync_runs`, `settings`, `users` and `devices` (model in [architecture.md](architecture.md)).
+  - Every user-owned table has a `user_id` column and every query filters by it, even with a single user per instance. It costs almost nothing now and avoids a painful migration if a hosted version ever exists.
   - *Done when:* `alembic upgrade head` creates the schema locally and on Railway.
 - **OS-103 · Garmin Personal API client** (M) · depends on OS-101 and OS-010
   - Turn `garmin_sync.py` into a module: cached token (in the database, not a file), paginated list, ZIP download and FIT extraction, retries on 429.
@@ -119,7 +126,7 @@ These are owner decisions, tracked as issues with the `decision` label.
   - Cron Job every 15 min.
   - *Done when:* a new activity from the watch shows up in the database with no intervention.
 - **OS-110 · Authentication** (L) · depends on OS-102
-  - One user. Sign-in with password + TOTP (passkeys in OS-405). `httpOnly` session cookie for the web and access + refresh tokens for Android. Rate limiting.
+  - One user per instance. Sign-in with password + TOTP (passkeys are in the backlog, OS-405). `httpOnly` session cookie for the web and access + refresh tokens for Android. Rate limiting.
   - *Done when:* every route except `/health` and `/auth/*` returns 401 without a session.
 - **OS-111 · Activities API** (M) · depends on OS-107 and OS-110
   - `GET /api/activities` (cursor pagination), `GET /api/activities/{id}`, `/streams` (gzip) and `/fit`. OpenAPI published.
@@ -140,6 +147,11 @@ These are owner decisions, tracked as issues with the `decision` label.
 
 **Goal:** use OpenSport every day on desktop and mobile.
 
+- **OS-501 · React Native performance proof of concept** (M) · depends on OS-008 and OS-111
+  - **Runs first in this phase**, right after M1, so the React Native vs Kotlin decision is made before the PWA and `packages/core` take shape. The rest of the Android app stays in phase 5.
+  - In 2–3 days, only the activity detail in Expo: MapLibre map, profile drawn with Skia, cursor synced with Reanimated and section selection, with real data from the API.
+  - *Done when:* on a mid-range phone cold start is under 1.5 s, dragging runs at 60 fps and memory is reasonable, and the decision (React Native or Kotlin) is written down in `docs/architecture.md`. If Kotlin wins, `packages/core` keeps only what the PWA needs and phase 5 is re-planned.
+
 - **OS-201 · App skeleton** (M) · depends on OS-003 and OS-006
   - Router, TanStack Query, API client generated from OpenAPI and the design-token structure (full themes in OS-214).
 - **OS-223 · Internationalisation (English and Spanish)** (M) · depends on OS-201 and OS-008
@@ -158,7 +170,7 @@ These are owner decisions, tracked as issues with the `decision` label.
   - *Done when:* switching themes leaves no hard-coded colour visible and every theme passes WCAG AA contrast in CI.
 - **OS-203 · Sign-in screen** (M) · depends on OS-110 and OS-201
   - Prototype design: on desktop, a brand panel on the left with the claim "Your sports data: 100% free" and gentle animated waves (Canvas 2D, no library, still with `prefers-reduced-motion`), and the form on the right; on mobile, a single column. Links to "Create your account" (OS-221) and "Forgot it?" (OS-222).
-  - Step 1: email and password (show/hide, "remember this device for 30 days"). Step 2: 6-digit TOTP code with auto-advance, pasting the whole code and a link to use a recovery code. "Continue with Google" (OS-220) and "Sign in with a passkey" (enabled by OS-405).
+  - Step 1: email and password (show/hide, "remember this device for 30 days"). Step 2: 6-digit TOTP code with auto-advance, pasting the whole code and a link to use a recovery code. "Continue with Google" (OS-220). "Sign in with a passkey" waits for OS-405 (backlog).
   - Clear errors that never reveal whether the email or the password was wrong, rate limiting with increasing delays and the right `autocomplete` values (`username`, `current-password`, `one-time-code`) for password managers.
   - **The sign-in screen shows no user data** (no numbers or routes): it is the only thing visible without a session.
   - Every route redirects to sign-in without a session. "Sign out" is in Settings and in the profile.
@@ -172,13 +184,14 @@ These are owner decisions, tracked as issues with the `decision` label.
 - **OS-222 · Password recovery** (M) · depends on OS-221
   - "Forgot it?" → email → the same message whether or not the account exists → single-use link that expires in 30 minutes → new password **plus the TOTP code or a recovery code** (someone with access only to your email cannot get in) → all other sessions are closed and a notification email is sent.
   - Random 32-byte token stored only as a hash, rate limiting per IP and per account, and resend at most every 60 s.
-  - Transactional email with **Resend** (the free tier is enough), on a verified custom domain (SPF and DKIM). Emails in the user's language.
+  - Transactional email with **Resend** (the free tier is enough), each instance with its own Resend account. Without a custom domain, Resend's test sender only delivers to the account owner's address, which is exactly the single user of the instance; a verified domain (SPF and DKIM) is optional. Emails in the user's language.
   - Plan B if everything is lost: the server command `opensport reset-password`.
 - **OS-220 · Sign-in with a Google account** (M) · depends on OS-110 and OS-203
   - "Continue with Google" with OpenID Connect (authorization code flow with PKCE and `state`/`nonce`), requesting only `openid email profile`. The backend validates the ID token (issuer, audience, expiry, `email_verified`) and compares it with the linked Google `sub`: **only your account can get in**, even though other people have Google accounts.
   - Linked and unlinked from Profile → Account and sources → Sign-in methods. Unlinking requires another active method (password with 2FA or passkey).
   - Signing in with Google does not ask for the TOTP code: it counts as strong verification because Google already applies its own two-step verification.
   - Same Google Cloud project as the Google Health API (OS-603), but with its own OAuth client and no health scopes.
+  - Self-hosted: each instance creates its own OAuth client in Google Cloud, with its `*.vercel.app` URL as the redirect (steps in OS-224).
   - *Note:* Google requires fixed redirect URLs. It works in production and locally, but not on Vercel previews (changing URLs), where you sign in with a password.
   - *Done when:* signing in with your Google account works and any other account gets a generic rejection.
 - **OS-204 · Feed** (M) · depends on OS-111 and OS-202
@@ -216,12 +229,17 @@ These are owner decisions, tracked as issues with the `decision` label.
   - Language, units, max/resting HR, Garmin key status and expiry, devices with an open session.
 - **OS-213 · Quality** (M) · depends on OS-204…OS-209
   - End-to-end tests (Playwright) of the main flows in both languages, Lighthouse on mobile (≥ 90 for performance and PWA) and basic accessibility.
+- **OS-224 · Self-hosting kit** (M) · depends on OS-005, OS-006 and OS-009
+  - A production `docker compose` (API, worker, Postgres, volume and the built PWA behind one origin) for your own server, and a **"Deploy on Railway" template** plus Vercel instructions for the cloud path.
+  - `docs/self-hosting.md`, step by step and in English: getting your own Garmin Personal API key, creating the Google OAuth client (OS-220), Resend, Sentry, and later the Google Health client (OS-603) and the optional Anthropic key (OS-701). Every variable in `.env.example` is explained there.
+  - Updates: how to upgrade an instance (migrations run on start) and how to back it up and restore it (OS-114).
+  - *Done when:* someone other than you deploys a working instance from the guide alone, without help, in under an hour.
 
-**M2 is done when** you open the installed PWA on your phone, see today's activity with its map, everything you have already viewed works without coverage, and the whole app can be switched between English and Spanish.
+**M2 is done when** you open the installed PWA on your phone, see today's activity with its map, everything you have already viewed works without coverage, the whole app can be switched between English and Spanish, and another person can deploy their own instance with the self-hosting guide.
 
 ## Phase 3 · Advanced metrics → **M3**
 
-**Goal:** the "Premium" metrics, computed with your settings. The **historical computation engine** "cooks" the whole history in the background: estimates, curves, progress and events (see [architecture.md](architecture.md#historical-computation-engine-cooking-the-data)).
+**Goal:** the "Premium" metrics, computed with your settings and free for everyone. The algorithms are implemented in `packages/metrics` (MIT), tested against reference values and documented one by one (formula, inputs and limits), so the package is useful on its own. The **historical computation engine** "cooks" the whole history in the background: estimates, curves, progress and events (see [architecture.md](architecture.md#historical-computation-engine-cooking-the-data)).
 
 - **OS-313 · Incremental computation engine** (L) · depends on OS-115 and OS-107
   - Importing an activity chains its metrics, the affected days, the curves, the estimates and the progress, recomputing only what depends on it. Computed tables carry `metrics_version`.
@@ -280,9 +298,6 @@ These are owner decisions, tracked as issues with the `decision` label.
   - Notification 14 days before and a warning in settings.
 - **OS-404 · FIT and ZIP importer** (M) · depends on OS-106
   - Upload of loose FITs and Garmin ZIPs. Deduplication by start time and device.
-- **OS-405 · Passkeys (WebAuthn)** (M) · depends on OS-110
-  - Passkey registration and sign-in on the PWA (verified with the device's fingerprint or face recognition), synced by the password manager (Google or iCloud). Managed in Profile → Sign-in methods.
-  - The relying party ID is OpenSport's production domain, which must be stable: that way **the same passkey later works in the Android app** (OS-503), linked through `/.well-known/assetlinks.json`.
 - **OS-406 · Strava ZIP import** (M) · depends on OS-404
   - Tested with the real export: 1,816 activities (2011–2026), 1,635 FIT, 127 TCX and 53 GPX files, compressed or not. Reads `activities.csv` (104 columns, UTC times) and decompresses files on the fly. Strava's TCX files have whitespace before the XML declaration, which has to be stripped.
   - Deduplicates against Garmin by start time (±2 min): Garmin's FIT wins, and the name, description, gear, photos and weather are kept from Strava. Also imports what exists only on Strava (for example, strength sessions recorded with another app).
@@ -304,20 +319,20 @@ These are owner decisions, tracked as issues with the `decision` label.
 
 **Goal:** a better mobile experience (background, reliable notifications, Health Connect, widget) reusing `packages/core`.
 
-- **OS-501 · Performance proof of concept** (M) · depends on OS-008 and OS-111
-  - In 2–3 days, only the activity detail in Expo: MapLibre map, profile drawn with Skia, cursor synced with Reanimated and section selection, with real data.
-  - *Done when:* on a mid-range phone cold start is under 1.5 s, dragging runs at 60 fps and memory is reasonable. If not: decide whether to switch to Kotlin before going further.
+The performance proof of concept (OS-501) runs at the start of phase 2. This phase assumes React Native won; if Kotlin did, it is re-planned.
+
 - **OS-502 · Expo project in the monorepo** (M) · depends on OS-501
   - `apps/mobile` with Expo Router, the new architecture and Hermes. EAS Build and EAS Update. CI with lint, tests and build. Theme generated from the `packages/core` tokens (OS-214), plus Android dynamic colour. i18n with the shared catalogues and `expo-localization`.
-- **OS-503 · Authentication in the app** (L) · depends on OS-502, OS-110, OS-220 and OS-405
-  - **First sign-in**, with three options:
+- **OS-503 · Authentication in the app** (L) · depends on OS-502, OS-110 and OS-220
+  - **First sign-in**, with two options now and a third when OS-405 leaves the backlog:
     - **Native Google** with `@react-native-google-signin/google-signin` (Android Credential Manager: one-tap account sheet). The app sends the ID token to `POST /api/auth/google/mobile` and the backend applies the same linked-account-only rule.
     - **Password + TOTP.**
-    - **Passkey** with `react-native-passkey`: the same one as the PWA, thanks to the `assetlinks.json` published on the domain.
+    - *Later:* **passkey** with `react-native-passkey`, the same one as the PWA, thanks to the `assetlinks.json` published on the instance's URL.
   - **Day to day with the fingerprint:** the refresh token is stored in `expo-secure-store` with `requireAuthentication`, bound to Android's secure keystore and released only after biometric verification (`expo-local-authentication`). Opening the app means touching the sensor.
   - **Strong biometrics by default** (class 3). On many Samsung phones face recognition is weak (class 1/2) and cannot release keys, so the fingerprint is used there. A setting allows weak biometrics only as an app lock.
-  - If the enrolled fingerprints change, there are several failures or the token expires, Google, password or passkey is required again.
+  - If the enrolled fingerprints change, there are several failures or the token expires, Google or the password is required again.
   - Setup: an Android OAuth client in Google Cloud with the package name and the SHA-1 fingerprints of the EAS and Play Store certificates.
+  - Self-hosted: on first launch the app asks for the instance URL (your `*.vercel.app` or your own server), so one published app works with any instance.
   - *Done when:* on your S26 you sign in the first time with Google and afterwards open the app with just your fingerprint, and an unlinked Google account is rejected.
 - **OS-504 · Feed, "Your week" header and detail** (L) · depends on OS-503
   - Parity with the PWA using the `packages/core` hooks. FlashList, native MapLibre and Skia charts.
@@ -344,6 +359,7 @@ These are owner decisions, tracked as issues with the `decision` label.
 - **OS-602 · Garmin: sleep, HRV and daily data from the Personal API** (M) · depends on OS-601 and OS-103
 - **OS-603 · Google Health API connector (Fitbit Air)** (L) · depends on OS-601
   - Google OAuth 2.0 with minimal read-only scopes (sleep, HR, HRV, SpO₂, activity). Tokens encrypted in the database. Incremental sync.
+  - Self-hosted: each instance uses its own OAuth client, added to the self-hosting guide (OS-224).
   - *Note:* a Google OAuth app in "Testing" mode issues refresh tokens that expire after 7 days. It has to be checked whether that is acceptable for personal use (re-authorising every week) or whether Google's verification for health scopes is needed.
 - **OS-604 · Google Health webhooks** (M) · depends on OS-603
   - Endpoint on Railway that receives new-data notifications, with signature verification. The cron remains as a fallback.
@@ -367,7 +383,7 @@ These are owner decisions, tracked as issues with the `decision` label.
 It can start as soon as M3 is done (it needs the metrics), in parallel with phases 4 to 6.
 
 - **OS-701 · LLM client in the backend** (S) · depends on OS-101
-  - Official `anthropic` SDK with `claude-haiku-5-5`. Key in the Railway variables. Retries and typed errors. Token and cost logging per call in the `llm_calls` table.
+  - Official `anthropic` SDK with `claude-haiku-5-5`. Each instance brings its own key in the Railway variables; **without a key, every AI feature is hidden** and the rest of the app works the same. Retries and typed errors. Token and cost logging per call in the `llm_calls` table.
 - **OS-702 · Data minimisation** (M) · depends on OS-701
   - A layer that builds the LLM context **without coordinates or profile data**: only aggregated numbers (distance, times, zones, TRIMP, fitness, records, sleep). With tests that guarantee no latitude or longitude ever leaves.
 - **OS-703 · Automatic summary of each activity** (M) · depends on OS-702 and OS-304
@@ -387,24 +403,41 @@ It can start as soon as M3 is done (it needs the metrics), in parallel with phas
 
 ---
 
+## Backlog
+
+Not planned in any phase. Each one comes back when its reason to wait goes away.
+
+- **OS-D06 · Choose the production domain** (S)
+  - Waits until there is a reason for a brand or a hosted version. Each instance uses its `*.vercel.app` URL meanwhile.
+  - Would be needed by: passkeys shared with the Android app under a single domain, a custom sender in Resend and nicer Google OAuth URLs.
+- **OS-405 · Passkeys (WebAuthn)** (M) · depends on OS-110
+  - Passkey registration and sign-in on the PWA (verified with the device's fingerprint or face recognition), synced by the password manager (Google or iCloud). Managed in Profile → Sign-in methods.
+  - The relying party ID is the instance's URL, which must stay stable (changing it invalidates every passkey). A stable `*.vercel.app` subdomain works, and `/.well-known/assetlinks.json` would let **the same passkey work in the Android app** (OS-503).
+  - Waits because Google sign-in and the fingerprint in the app already cover convenient access.
+- **Brand: name and logo** (#116)
+  - OpenSport is the working name; the current mountain mark stays.
+
 ## Recommended starting order
 
-1. **OS-D06 → OS-D08** (owner decisions), **OS-007** (rotate the key), then **OS-001**, **OS-002/OS-003**, **OS-008 → OS-010** and **OS-004 → OS-006** (foundations).
+1. **OS-D07 → OS-D08** (owner decisions), **OS-007** (rotate the key), then **OS-001**, **OS-002/OS-003**, **OS-008 → OS-010** and **OS-004 → OS-006** (foundations).
 2. **OS-101 → OS-109**: the critical path for M1, testable without a UI.
-3. **OS-110 → OS-112**, in parallel with **OS-201 → OS-202** and **OS-223** (web and i18n from the start).
-4. The rest of phase 2 in number order.
+3. **OS-501**: the React Native proof of concept, as soon as M1 serves real data.
+4. **OS-110 → OS-112**, in parallel with **OS-201 → OS-202** and **OS-223** (web and i18n from the start).
+5. The rest of phase 2 in number order, ending with **OS-224** (self-hosting kit).
 
 ## External dependencies and risks by phase
 
 | Phase | Risk | Mitigation |
 |---|---|---|
+| All | The Garmin Personal API is for personal use only | Self-hosting with each person's own key: no shared key, no central service |
 | 1 | Unpublished Personal API limits | Incremental sync, pauses and retries on 429. Measure in production |
 | 1 | The key expires (1 year at most) | OS-403 and the date visible in settings (OS-212) |
 | 2 | Vercel proxy limits | Poll progress every 2 s and paginate. Plan B: an `api.` subdomain |
 | 2 | WebGL not available | Leaflet fallback, already tested in the prototype |
 | 2 | Untranslated texts creeping in | Lint rule against hard-coded strings and a CI check for missing `es` keys (OS-223) |
+| 2 | React Native performance on the activity detail | Proof of concept OS-501 with measurable criteria, before the PWA and the rest of the app |
+| 2 | Self-hosting too hard for other people | Railway template, Docker Compose and a guide tested by someone else (OS-224) |
 | 4 | Web Push on iOS only with the PWA installed | Document it. The phase 5 app is Android, but with Expo it could ship on iOS later |
-| 5 | React Native performance on the activity detail | Proof of concept OS-501 with measurable criteria before building the rest |
 | 5 | Play Store policy and health data | Internal testing and a sensitive data declaration |
 | 6 | 7-day Google OAuth tokens in "Testing" mode and health scope verification | Test it first in OS-603. If not viable: Health Connect from Android (OS-607) |
 | 6 | Duplicated or contradictory data between Garmin and the Fitbit Air | Configurable priority rules (OS-605) and the source always visible |

@@ -1,5 +1,5 @@
 # Common tasks. Everything also works with the underlying commands (see README).
-.PHONY: help setup dev api db stop test lint format check generate-api migrate migration
+.PHONY: help setup dev api db stop test lint format check generate-api migrate migration sync
 
 help: ## List the tasks
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  make %-13s %s\n", $$1, $$2}'
@@ -51,3 +51,6 @@ migrate: db ## Apply database migrations to the local Postgres
 migration: db ## Create a migration from model changes: make migration m="add gear table"
 	uv run alembic -c backend/alembic.ini upgrade head
 	uv run alembic -c backend/alembic.ini revision --autogenerate -m "$(m)"
+
+sync: migrate ## Sync new Garmin activities into the local database (since=YYYY-MM-DD to go further back)
+	uv run python -m opensport.sync $(if $(since),--since $(since),)

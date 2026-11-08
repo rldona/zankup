@@ -17,6 +17,7 @@ from opensport.db.models import Activity, Job, Source, SyncRun
 from opensport.jobs.handlers import default_handlers
 from opensport.jobs.worker import Worker
 from opensport.storage import LocalRawStore
+from opensport.sync import orchestrator
 from opensport.sync.garmin import (
     BASE_URL,
     DOWNLOAD_PATH,
@@ -25,7 +26,7 @@ from opensport.sync.garmin import (
     GarminClient,
     MemoryTokenCache,
 )
-from opensport.sync.orchestrator import LOCK_NAMESPACE, SyncAlreadyRunning, run_sync
+from opensport.sync.orchestrator import LOCK_NAMESPACE, SyncAlreadyRunning, history_windows, run_sync
 from opensport.users import ensure_owner
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
@@ -134,3 +135,99 @@ def test_owner_is_created_once(sessions: sessionmaker[Session]) -> None:
         first = ensure_owner(session, "owner@example.com").id
     with sessions.begin() as session:
         assert ensure_owner(session, "other@example.com").id == first
+
+
+def test_history_windows_cover_the_range_without_overlap() -> None:
+    windows = history_windows(date(2020, 1, 1), date(2020, 1, 10), days=4)
+    assert windows == [
+        (date(2020, 1, 1), date(2020, 1, 4)),
+        (date(2020, 1, 5), date(2020, 1, 8)),
+        (date(2020, 1, 9), date(2020, 1, 10)),
+    ]
+    assert history_windows(date(2020, 1, 1), date(2020, 1, 1)) == [(date(2020, 1, 1), date(2020, 1, 1))]
+
+
+def by_dates(request: httpx.Request) -> httpx.Response:
+    """The list endpoint, filtering the fixture page by startDate and endDate like the real API."""
+    first, last = (date.fromisoformat(request.url.params[k]) for k in ("startDate", "endDate"))
+    page = [a for a in PAGE if first <= date.fromisoformat(a["startTimeGMT"][:10]) <= last]
+    return httpx.Response(200, json=page[int(request.url.params["start"]) :][:50])
+
+
+def test_history_load_goes_window_by_window_oldest_first(
+    sessions: sessionmaker[Session],
+    garmin_api: respx.Router,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(orchestrator, "WINDOW_DAYS", 365)
+    listing = garmin_api.get(BASE_URL + LIST_PATH).mock(side_effect=by_dates)
+    user_id, store, garmin = setup(sessions, tmp_path)
+    pauses: list[float] = []
+    result = run_sync(
+        sessions,
+        store,
+        garmin,
+        user_id=user_id,
+        trigger="initial",
+        since=date(2019, 1, 11),
+        sleep=pauses.append,
+    )
+    assert (result.listed, result.queued) == (3, 3) and pauses == [1.0, 1.0]  # between downloads only
+    first_call = listing.calls[0].request.url.params
+    assert (first_call["startDate"], first_call["endDate"]) == ("2019-01-11", "2020-01-10")
+    with sessions() as session:
+        jobs = session.scalars(select(Job).order_by(Job.id)).all()
+        run = session.get_one(SyncRun, result.run_id)
+    queued = [job.payload["external_id"] for job in jobs]
+    assert queued[0] == "9000000003" and set(queued[1:]) == {"9000000001", "9000000002"}  # older window first
+    assert run.progress["window"] == run.progress["windows"] == listing.call_count
+
+
+def test_an_interrupted_load_is_recorded_and_resumes(
+    sessions: sessionmaker[Session], garmin_api: respx.Router, tmp_path: Path
+) -> None:
+    user_id, store, garmin = setup(sessions, tmp_path)
+    downloads = 0
+
+    def interrupt_after_one(_: float) -> None:
+        nonlocal downloads
+        downloads += 1
+        raise KeyboardInterrupt  # Ctrl+C during the pause after the first download
+
+    with pytest.raises(KeyboardInterrupt):
+        run_sync(sessions, store, garmin, user_id=user_id, since=date(2020, 1, 1), sleep=interrupt_after_one)
+    with sessions() as session:
+        run = session.scalars(select(SyncRun)).one()
+        assert run.status == "error" and run.error == "KeyboardInterrupt"
+    assert count(sessions, Job) == 1
+
+    again = run_sync(sessions, store, garmin, user_id=user_id, since=date(2020, 1, 1), sleep=lambda _: None)
+    assert (again.queued, again.skipped) == (2, 1) and count(sessions, Job) == 3
+
+
+def test_cli_loads_history_and_imports(
+    sessions: sessionmaker[Session],
+    garmin_api: respx.Router,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from pydantic import SecretStr
+
+    from opensport.core.config import Settings
+    from opensport.sync import __main__ as cli
+
+    settings = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        garmin_personal_api_key=SecretStr("key"),
+        data_dir=tmp_path,
+        owner_email="o@example.com",
+    )
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    monkeypatch.setattr(cli, "get_engine", lambda: sessions.kw["bind"])
+    assert cli.main(["--all", "--pause", "0"]) == 0
+    assert "queued 3 new" in capsys.readouterr().out
+    assert count(sessions, Activity) == 3
+    with sessions() as session:
+        assert session.scalars(select(SyncRun.trigger)).one() == "initial"

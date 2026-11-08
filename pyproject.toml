@@ -1,0 +1,49 @@
+# uv workspace root for the Python projects: backend/ (AGPL-3.0) and packages/metrics/ (MIT).
+[project]
+name = "opensport-workspace"
+version = "0.0.0"
+requires-python = ">=3.12"
+# The workspace members, so a plain `uv sync` installs both into the shared .venv.
+dependencies = ["opensport", "opensport-metrics"]
+
+[dependency-groups]
+dev = [
+  "httpx2>=0.1",
+  "mypy>=1.15",
+  "pre-commit>=4.2",
+  "pytest>=8.3",
+  "ruff>=0.11",
+]
+
+[tool.uv]
+package = false
+# Supply-chain guard: only resolve releases at least two weeks old. Move the date forward when upgrading.
+exclude-newer = "2026-10-25T00:00:00Z"
+
+[tool.uv.workspace]
+members = ["backend", "packages/metrics"]
+
+[tool.uv.sources]
+opensport = { workspace = true }
+opensport-metrics = { workspace = true }
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["docs", "tools", "apps", "node_modules"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["opensport", "opensport_metrics"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["backend/src", "packages/metrics/src"]
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests", "packages/metrics/tests"]
+addopts = "-q --import-mode=importlib"

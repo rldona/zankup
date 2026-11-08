@@ -3,12 +3,20 @@
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "backend/Dockerfile",
-    "watchPatterns": ["backend/**", "packages/metrics/**", "pyproject.toml", "uv.lock"]
+    "watchPatterns": [
+      "backend/**",
+      "packages/metrics/**",
+      "pyproject.toml",
+      "uv.lock"
+    ]
   },
   "deploy": {
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 5
+    "restartPolicyMaxRetries": 5,
+    "preDeployCommand": [
+      "alembic -c backend/alembic.ini upgrade head"
+    ]
   }
 }

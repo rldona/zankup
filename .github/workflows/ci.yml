@@ -18,6 +18,19 @@ jobs:
     name: Backend (Python)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18.4-alpine
+        env:
+          POSTGRES_USER: opensport
+          POSTGRES_PASSWORD: opensport
+          POSTGRES_DB: opensport
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U opensport" --health-interval 2s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://opensport:opensport@127.0.0.1:5432/opensport
+      REQUIRE_DB: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
@@ -32,6 +45,10 @@ jobs:
         run: uv run ruff format --check
       - name: Type check
         run: uv run mypy
+      - name: Migrations apply and match the models
+        run: |
+          uv run alembic -c backend/alembic.ini upgrade head
+          uv run alembic -c backend/alembic.ini check
       - name: Test
         run: uv run pytest -W error
       - name: Fixtures contain no personal data

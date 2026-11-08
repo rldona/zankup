@@ -88,5 +88,21 @@
   "setup.error.short": "The password must have at least 12 characters.",
   "setup.error.expired": "That took too long. Start again with the setup code.",
   "signIn.firstTime": "First time?",
-  "signIn.createAccount": "Create your account"
+  "signIn.createAccount": "Create your account",
+  "nav.search": "Search",
+  "nav.stats": "Stats",
+  "nav.profile": "Profile",
+  "nav.settings": "Settings",
+  "nav.sync": "Sync",
+  "nav.you": "You",
+  "nav.back": "Back",
+  "nav.main": "Main",
+  "feed.pick": "Pick an activity to see its details.",
+  "soon.title": "Coming soon",
+  "soon.search": "Advanced search arrives with OS-219.",
+  "soon.stats": "Stats arrive with phase 3 and OS-217.",
+  "soon.settings": "Settings arrive with OS-212 (language, units, theme).",
+  "soon.sync": "The sync button with progress arrives with OS-209. Garmin already syncs every 15 minutes.",
+  "profile.title": "Profile",
+  "profile.more": "The full profile arrives with OS-218."
 }

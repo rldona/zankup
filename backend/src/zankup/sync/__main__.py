@@ -86,7 +86,10 @@ def main(argv: list[str] | None = None) -> int:
         if worker and thread:
             worker.stop()
             thread.join()
-    print(f"Listed {result.listed}, queued {result.queued} new, skipped {result.skipped} already known")
+    print(
+        f"Listed {result.listed}, queued {result.queued} new, skipped {result.skipped} already known"
+        + (f", {result.no_fit} without a FIT file (manual or GPX/TCX uploads)" if result.no_fit else "")
+    )
 
     if worker:
         processed = 0

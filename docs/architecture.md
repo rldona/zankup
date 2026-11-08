@@ -22,7 +22,16 @@ Visual map: [architecture.html](architecture.html) · Why this architecture: [fi
 - **Optional integrations degrade gracefully:** without an Anthropic key the AI features are hidden; without a Google client there is no Google sign-in or Google Health; the core (Garmin sync, metrics, PWA) only needs the Garmin key.
 - **Licences:** `packages/metrics` is MIT (a reusable metrics library); the backend, the PWA and the app are AGPL-3.0.
 - **No payments.** Every user-owned table has `user_id` and every query filters by it, so a hosted multi-user version stays possible without a migration, but nothing else (billing, plans, quotas) is built.
-- **URLs:** instances run on `*.vercel.app` (PWA and proxy) and `*.up.railway.app` (API). A custom domain is optional and in the backlog.
+- **URLs:** the reference instance is **zankup.com** (PWA and `/api` proxy, Vercel; `www` redirects to it) and **api.zankup.com** (the API on Railway, used directly by the Android app). A self-hosted instance works on its `*.vercel.app` and `*.up.railway.app` URLs, or on its own domain with the same three records.
+
+  | Record | Name | Value | For |
+  |---|---|---|---|
+  | A | `@` | Vercel's IPs (the project's domain settings show them) | the PWA |
+  | CNAME | `www` | the project's `vercel-dns` target | redirect to the apex |
+  | CNAME | `api` | the service's `*.up.railway.app` target | the API |
+  | TXT | `_railway-verify.api` | the token Railway shows | proves ownership to Railway |
+
+  Remove the registrar's parking records: a leftover `A @ Parked` sends part of the visits to the registrar's page. Passkeys are bound to this domain (OS-405), so it must not change once they are in use.
 
 ## Diagram
 

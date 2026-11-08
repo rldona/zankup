@@ -354,8 +354,8 @@ sync_runs     id · trigger (cron|button) · started_at · finished_at · new_co
 | `GET` | `/api/auth/google/start` · `/api/auth/google/callback` | Google sign-in on the web (OIDC with PKCE). Only the linked `sub` gets in |
 | `POST` | `/api/auth/google/mobile` | Google sign-in from the app: receives the ID token from the native SDK and applies the same rule |
 | `POST/DELETE` | `/api/auth/google/link` | Link or unlink the Google account (requires another active method) |
-| `POST` | `/api/sync` | Starts a sync and returns `sync_run_id` |
-| `GET` | `/api/sync/{id}` | Status and progress (the PWA polls it every 2 s through the Vercel proxy) |
+| `POST` | `/api/sync` | Starts a sync and returns the run (`queued`), or the one already queued or running |
+| `GET` | `/api/sync` · `/api/sync/{id}` | Latest runs · status and progress of one (the PWA polls it every 2 s through the Vercel proxy) |
 | `GET` | `/api/activities?sport=&cursor=` | Paginated feed (home) |
 | `GET` | `/api/activities/search?q=&sports=&from=&to=&dist_min=&dist_max=&dur_min=&dur_max=&asc_min=&hr_min=&hr_max=&gear=&has=pr,desc,gps&source=&sort=&cursor=` | Advanced search, with Postgres full-text search |
 | `GET` | `/api/activities/{id}` | Summary, laps, records, zones and effort |
@@ -390,6 +390,20 @@ sequenceDiagram
   B-->>P: notification "New activity: 6.6 km run · 1 km record"
   P->>B: GET /api/activities (and local cache)
 ```
+
+### Loading the full history (OS-113)
+
+The scheduled sync only goes back 30 days on its first run. The rest of the Garmin Connect history is a deliberate, one-off load:
+
+```bash
+python -m opensport.sync --all                 # everything (locally: make history)
+python -m opensport.sync --since 2019-01-01    # or from a given day
+```
+
+- The range is listed in **windows of 180 days, oldest first**. Each window is downloaded and queued before the next one is listed, with a pause between downloads (`--pause`, 1 s by default; the client also honours `Retry-After` on 429). About 1,800 activities take under an hour.
+- **Imports run while it downloads**, in a thread of the command, so activities appear in the app as it advances. Progress is in the run (`GET /api/sync`): `window` of `windows`, `listed`, `downloaded`.
+- **Safe to interrupt and run again.** An interrupted run is recorded as `error`, and the next one skips everything already downloaded or imported. Only one sync runs at a time, so the 15-minute sync skips its slots while the load holds the lock.
+- **On Railway**, run it in the `api` service (it needs the `/data` volume): `railway ssh` into the service, then `python -m opensport.sync --all`. If the connection drops, the command stops; run it again to carry on.
 
 ## Risks
 

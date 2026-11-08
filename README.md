@@ -8,6 +8,24 @@ Each person runs their own instance with their own keys. There is no central ser
 
 > **Status:** planning is done and phase 0 (foundations) has started. There is nothing to install yet. See the [roadmap](docs/roadmap.md).
 
+## Getting started (local development)
+
+You need **Git**, **Docker** (with Compose), **[uv](https://docs.astral.sh/uv/getting-started/installation/)**, **Node.js 22+** (it brings corepack, which provides the pinned pnpm) and **make**.
+
+```bash
+git clone https://github.com/rldona/OpenSport.git && cd OpenSport
+make setup   # uv sync, pnpm install, creates .env from .env.example and the data/ folder
+make dev     # Postgres + API in Docker, then the web app
+```
+
+- Web app: http://localhost:5173 (shows "API connected" when everything is up)
+- API: http://localhost:8000/api/health · interactive docs at http://localhost:8000/api/docs
+- Postgres: `postgresql://opensport:opensport@127.0.0.1:5432/opensport`
+
+The API reloads when you edit `backend/src` or `packages/metrics/src`. To sync real activities, put your own Garmin Personal API key in `.env` (see the comments in [`.env.example`](.env.example)); everything else is optional.
+
+Other tasks: `make test`, `make lint`, `make format`, `make check` (what CI runs), `make generate-api` (after changing an endpoint) and `make stop`. `make help` lists them all.
+
 ## Documentation
 
 | Document | What it covers |

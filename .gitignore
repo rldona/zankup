@@ -3,3 +3,9 @@ data/
 __pycache__/
 docs/prototipos/data.js
 strava/
+
+# Datos personales de ejemplo (recorridos reales, perfil del reloj): solo en local
+docs/Carrera_de_noche.fit
+docs/Carrera_de_noche.gpx
+docs/mapa-carrera-de-noche.html
+docs/garmin-24966749792/

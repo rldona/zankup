@@ -11,6 +11,12 @@ Zankup is the product name that replaces the working name OpenSport. This docume
   - `Zankup` is the default: app header, prose, documentation, store listings, emails.
   - `ZANKUP` for large, high-impact uses: sign-in panel, splash screen, social images.
   - `zankup` for identifiers: domain, package names, GitHub organisation, footer.
+### Claim
+
+- Spanish: **Tus datos deportivos, de principio a fin.** English: **Your sports data, from start to finish.**
+- It says what the product does (your whole history, the original files, on your own server) and it is what the mark draws: a start ring, the route, the return. It replaces "Your sports data, on another level" / "Tus datos deportivos, en otro nivel", which promised metrics; that promise can stay as the second line of the sign-in panel ("Sync with Garmin, import your Strava history and follow your form without depending on anyone").
+- Where it goes: the README tagline, the PWA manifest `description`, the sign-in panel headline (OS-203), store listings and social images. Always sentence case with the final full stop; never in capitals.
+
 - Why it changed: an established app called "OpenSports" (leagues and pick-up games) already exists in the same store category, and every real-word candidate (Umbral, Senda, Cota, Mirador, Cumbre) had its domains taken. Zankup had `.com`, `.app`, `.dev`, `.io`, `.run` and `.fit` unregistered, and the exact name free on PyPI, npm and GitHub, when checked on 8 November 2026.
 
 ## 2. Mark
@@ -99,9 +105,9 @@ Two pieces of work, tracked separately. Do the rename only after the domain and 
 
 ### 7.2 Rename the product
 
-1. UI strings in the `en` and `es` catalogues in `packages/core`: product name, sign-in claim and titles, the recovery-codes file name, every "OpenSport" in copy. Apply the case rules from section 1.
-2. PWA `manifest.webmanifest` (`name`, `short_name`, `description`) and `<title>`.
-3. `README.md`, `docs/architecture.md`, `docs/roadmap.md` (the "Brand on hold" note), `docs/findings.md` and this folder's references.
+1. UI strings in the `en` and `es` catalogues in `packages/core`: product name, the sign-in claim (new wording from section 1) and titles, the recovery-codes file name, every "OpenSport" in copy. Apply the case rules from section 1.
+2. PWA `manifest.webmanifest` (`name`, `short_name`, `description` with the new claim) and `<title>`.
+3. `README.md` (title and tagline), `docs/architecture.md`, `docs/roadmap.md` (the brand note and the OS-203 claim), `docs/findings.md` and this folder's references.
 4. Python: distribution `opensport-metrics` → `zankup-metrics` in `packages/metrics/pyproject.toml`; the root `pyproject.toml` project name; the `opensport` import package only if cheap and safe, otherwise keep the module path and say so in the PR.
 5. Node: package names in `apps/*/package.json` and `packages/*/package.json`, and `pnpm-workspace.yaml` if it lists them.
 6. Docker Compose service names and the Postgres database, user and password defaults in `compose.yaml` and `.env.example`, with a note for existing local databases.

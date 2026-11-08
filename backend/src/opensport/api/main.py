@@ -1,6 +1,7 @@
 """FastAPI application. Only the health check exists until the activities API (OS-111)."""
 
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 from opensport import __version__
 
@@ -9,7 +10,12 @@ app = FastAPI(
 )
 
 
-@app.get("/api/health")
-def health() -> dict[str, str]:
+class Health(BaseModel):
+    status: str
+    version: str
+
+
+@app.get("/api/health", operation_id="getHealth")
+def health() -> Health:
     """Liveness check used by Railway and by the PWA through the Vercel proxy."""
-    return {"status": "ok", "version": __version__}
+    return Health(status="ok", version=__version__)

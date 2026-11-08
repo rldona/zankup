@@ -11,6 +11,8 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "format:check": "pnpm -r format:check"
+    "format:check": "pnpm -r format:check",
+    "typecheck": "pnpm -r typecheck",
+    "generate:api": "uv run python -m opensport.api.openapi_export && pnpm --filter @opensport/core generate:types"
   }
 }

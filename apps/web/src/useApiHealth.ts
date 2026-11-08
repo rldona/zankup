@@ -1,6 +1,9 @@
+import { createApiClient } from '@opensport/core';
 import { useEffect, useState } from 'react';
 
 export type ApiHealth = { state: 'checking' } | { state: 'ok'; version: string } | { state: 'down' };
+
+const api = createApiClient();
 
 /** Calls GET /api/health: the Vite proxy in development, the Vercel rewrite to Railway in production. */
 export function useApiHealth(): ApiHealth {
@@ -8,11 +11,10 @@ export function useApiHealth(): ApiHealth {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/health', { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const body = (await response.json()) as { status?: string; version?: string };
-        setHealth(body.status === 'ok' ? { state: 'ok', version: body.version ?? '?' } : { state: 'down' });
+    api
+      .GET('/api/health', { signal: controller.signal })
+      .then(({ data }) => {
+        setHealth(data?.status === 'ok' ? { state: 'ok', version: data.version } : { state: 'down' });
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {

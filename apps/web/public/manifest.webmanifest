@@ -4,7 +4,7 @@
   "description": "Your sports data, from start to finish.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#111111",
+  "background_color": "#0b8f6a",
   "theme_color": "#111111",
   "icons": [
     {

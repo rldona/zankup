@@ -26,6 +26,8 @@ export type ProfileSummary = Json<'/api/profile/summary', 'get'>;
 export type SourceStatus = Json<'/api/sources', 'get'>[number];
 export type SyncRun = Json<'/api/sync/{run_id}', 'get'>;
 export type Week = Json<'/api/week', 'get'>;
+export type SearchParams = NonNullable<paths['/api/activities/search']['get']['parameters']['query']>;
+export type SearchPage = Json<'/api/activities/search', 'get'>;
 export type PasskeyInfo = Json<'/api/auth/passkeys', 'get'>[number];
 
 /** An API error with its HTTP status, so callers can tell "signed out" (401) from other failures. */
@@ -60,6 +62,7 @@ export const queryKeys = {
   passkeys: ['passkeys'] as const,
   syncs: ['syncs'] as const,
   providers: ['providers'] as const,
+  search: (params: object) => ['activities', 'search', params] as const,
   week: (today: string) => ['activities', 'week', today] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
   months: (sport?: readonly string[]) => ['activities', 'months', { sport: sport ?? [] }] as const,
@@ -216,5 +219,21 @@ export function weekQuery(api: ApiClient, today: string) {
     queryKey: queryKeys.week(today),
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/week', { params: { query: { today } }, signal })),
+  };
+}
+
+/** Advanced search (OS-219), a page at a time: any combination of filters, sorted, with totals. */
+export function searchQuery(api: ApiClient, params: SearchParams, limit = 50) {
+  return {
+    queryKey: queryKeys.search(params),
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }: { pageParam: number; signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities/search', {
+          params: { query: { ...params, offset: pageParam, limit } },
+          signal,
+        }),
+      ),
+    getNextPageParam: (last: SearchPage) => last.next_offset ?? undefined,
   };
 }

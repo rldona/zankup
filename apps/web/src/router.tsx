@@ -10,8 +10,8 @@ import { Shell } from './routes/Shell';
 import { SignIn } from './routes/SignIn';
 import { Catalogue } from './routes/Catalogue';
 import { ForgotPassword, ResetPassword } from './routes/Recover';
+import { Search } from './routes/Search';
 import { Settings } from './routes/Settings';
-import { Soon } from './routes/Soon';
 import { Stats } from './routes/Stats';
 import { Sync } from './routes/Sync';
 
@@ -34,7 +34,7 @@ export const routes: RouteObject[] = [
               { path: 'activities/:id', element: <Activity /> },
             ],
           },
-          { path: 'search', element: <Soon title="nav.search" body="soon.search" /> },
+          { path: 'search', element: <Search /> },
           { path: 'stats', element: <Stats /> },
           { path: 'sync', element: <Sync /> },
           { path: 'settings', element: <Settings /> },

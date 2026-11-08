@@ -900,6 +900,340 @@
         }
       }
     },
+    "/api/activities/search": {
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Search Activities",
+        "description": "Advanced search (OS-219): any combination of filters, sorted, with totals of all the matches.",
+        "operationId": "searchActivities",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Words in the name or description",
+              "title": "Q"
+            },
+            "description": "Words in the name or description"
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports (repeat to combine)",
+              "title": "Sport"
+            },
+            "description": "Only these sports (repeat to combine)"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "From this moment (inclusive)",
+              "title": "From"
+            },
+            "description": "From this moment (inclusive)"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Until this moment (exclusive)",
+              "title": "To"
+            },
+            "description": "Until this moment (exclusive)"
+          },
+          {
+            "name": "min_distance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Metres",
+              "title": "Min Distance"
+            },
+            "description": "Metres"
+          },
+          {
+            "name": "max_distance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Distance"
+            }
+          },
+          {
+            "name": "min_duration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Moving seconds",
+              "title": "Min Duration"
+            },
+            "description": "Moving seconds"
+          },
+          {
+            "name": "max_duration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Duration"
+            }
+          },
+          {
+            "name": "min_ascent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Metres",
+              "title": "Min Ascent"
+            },
+            "description": "Metres"
+          },
+          {
+            "name": "min_hr",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Hr"
+            }
+          },
+          {
+            "name": "max_hr",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Hr"
+            }
+          },
+          {
+            "name": "with_record",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Record"
+            }
+          },
+          {
+            "name": "with_description",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Description"
+            }
+          },
+          {
+            "name": "with_gps",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Gps"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "garmin, strava…",
+              "title": "Source"
+            },
+            "description": "garmin, strava…"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "date, distance, duration, elevation or speed",
+              "default": "date",
+              "title": "Sort"
+            },
+            "description": "date, distance, duration, elevation or speed"
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(asc|desc)$",
+              "default": "desc",
+              "title": "Order"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/activities/months": {
       "get": {
         "tags": [
@@ -3185,6 +3519,68 @@
           "password"
         ],
         "title": "ResetRequest"
+      },
+      "SearchPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivitySummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/SearchTotals",
+            "description": "Of every activity that matches, not just this page"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Offset",
+            "description": "Pass it as `offset` for the next page; null at the end"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "totals",
+          "next_offset"
+        ],
+        "title": "SearchPage"
+      },
+      "SearchTotals": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "ascent_m": {
+            "type": "number",
+            "title": "Ascent M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "distance_m",
+          "moving_s",
+          "ascent_m"
+        ],
+        "title": "SearchTotals"
       },
       "SetupDone": {
         "properties": {

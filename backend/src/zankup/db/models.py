@@ -198,6 +198,9 @@ class Activity(Timestamps, Base):
         CheckConstraint(_in("source", SOURCES), name="source"),
         Index("ix_activities_user_start", "user_id", "start_utc"),
         Index("ix_activities_user_sport_start", "user_id", "sport", "start_utc"),
+        Index("ix_activities_user_distance", "user_id", "distance_m"),
+        # Full-text search (OS-219) uses ix_activities_search, an expression index created in its
+        # migration: see zankup_search_text there.
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)

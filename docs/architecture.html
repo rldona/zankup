@@ -67,7 +67,7 @@ a{color:var(--accent)}
 <div class="tw"><table>
   <thead><tr><th>Component</th><th>What it does</th><th>Status</th></tr></thead>
   <tbody>
-    <tr><td>Sync service</td><td>Token, incremental list and download of the original FIT from the Garmin Personal API. Triggered by the cron or the button</td><td><span class="tag t-ok">Works</span> <code>sync/garmin_sync.py</code></td></tr>
+    <tr><td>Sync service</td><td>Token, incremental list and download of the original FIT from the Garmin Personal API. Triggered by the cron or the button</td><td><span class="tag t-ok">Works</span> <code>backend/garmin_sync.py</code></td></tr>
     <tr><td>Importer</td><td>Loose FITs, Garmin ZIPs and the Strava bulk ZIP (history). Deduplicates</td><td><span class="tag t-wip">Prototype</span> 1,819 activities loaded</td></tr>
     <tr><td>FIT parser</td><td>FIT → session, laps, 1 Hz streams, power and device (<code>fitdecode</code>)</td><td><span class="tag t-wip">Prototype</span></td></tr>
     <tr><td>Metrics engine</td><td>The "Premium" metrics: see below</td><td><span class="tag t-wip">Prototype</span> exact best efforts</td></tr>
@@ -123,7 +123,7 @@ const N = {
 
   env:   {x:40,  y:190, w:170, t:'Environment variables',  s:'Garmin key · JWT · VAPID', st:'ok'},
   cron:  {x:240, y:190, w:170, t:'Cron Railway',           s:'every 15 min',                st:'todo'},
-  sync:  {x:440, y:190, w:200, t:'Sync service',           s:'sync/garmin_sync.py',        st:'ok'},
+  sync:  {x:440, y:190, w:200, t:'Sync service',           s:'backend/garmin_sync.py',        st:'ok'},
   imp:   {x:780, y:190, w:200, t:'Importer',               s:'FIT · ZIP · deduplication',    st:'todo'},
 
   raw:   {x:500, y:310, w:280, t:'Volume /data/raw',       s:'immutable original FITs',  st:'ok'},

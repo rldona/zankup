@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { Icon, type IconName } from '../Icon';
 import { t } from '../i18n';
 import { Lockup } from '../Lockup';
+import { useServerTheme } from '../theme';
 
 const SIDE: { to: string; icon: IconName; label: Parameters<typeof t>[0] }[] = [
   { to: '/', icon: 'feed', label: 'feed.title' },
@@ -33,6 +34,7 @@ const classFor =
 export function Shell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  useServerTheme();
   const nested = pathname.startsWith('/activities/') || pathname === '/settings';
 
   return (

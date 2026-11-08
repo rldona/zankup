@@ -876,6 +876,66 @@
         }
       }
     },
+    "/api/settings": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get Preferences",
+        "operationId": "getSettings",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Preferences"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Update Preferences",
+        "operationId": "updateSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Preferences"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health",
@@ -1993,6 +2053,57 @@
           "backed_up"
         ],
         "title": "PasskeyOut"
+      },
+      "Preferences": {
+        "properties": {
+          "theme": {
+            "type": "string",
+            "enum": [
+              "system",
+              "light",
+              "dark",
+              "oled",
+              "highContrast",
+              "forest",
+              "ocean",
+              "sunset"
+            ],
+            "title": "Theme"
+          }
+        },
+        "type": "object",
+        "required": [
+          "theme"
+        ],
+        "title": "Preferences"
+      },
+      "PreferencesUpdate": {
+        "properties": {
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "system",
+                  "light",
+                  "dark",
+                  "oled",
+                  "highContrast",
+                  "forest",
+                  "ocean",
+                  "sunset"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Theme"
+          }
+        },
+        "type": "object",
+        "title": "PreferencesUpdate",
+        "description": "Only the fields sent are changed."
       },
       "RefreshRequest": {
         "properties": {

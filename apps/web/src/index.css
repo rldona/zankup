@@ -502,6 +502,123 @@ svg.i {
   margin: 12px 0 24px;
 }
 
+/* Theme picker (OS-214): each preview is a tiny app drawn with its own theme's variables. */
+.page h2 {
+  font-size: 16px;
+  margin: 18px 0 4px;
+}
+
+.themes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 12px 0 20px;
+}
+
+.theme {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.theme[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.theme .tname {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.theme .note {
+  margin: -4px 0 0;
+  font-size: 12px;
+}
+
+.tprev {
+  position: relative;
+  display: block;
+  height: 68px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.tprev .tbar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 22%;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+.tprev .tcard {
+  position: absolute;
+  left: 30%;
+  right: 8%;
+  top: 12px;
+  height: 40px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px;
+}
+
+.tprev .tcard b {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--fg);
+  opacity: 0.75;
+  width: 70%;
+}
+
+.tprev .tcard b + b {
+  background: var(--muted);
+  width: 45%;
+  opacity: 0.6;
+}
+
+.tprev .tdot {
+  position: absolute;
+  right: 12%;
+  bottom: 20px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* "System": half light, half dark, drawn from those two themes. */
+.tprev:not([data-theme]) {
+  background: linear-gradient(135deg, var(--light-bg) 50%, var(--dark-bg) 50%);
+}
+
+.tprev:not([data-theme]) > i {
+  display: none;
+}
+
+/* High contrast: thicker borders where the prototype has them. */
+[data-theme='highContrast'] .card,
+[data-theme='highContrast'] .theme {
+  border-width: 2px;
+}
+
+@media (prefers-contrast: more) {
+  :root:not([data-theme]) .card,
+  :root:not([data-theme]) .theme {
+    border-width: 2px;
+  }
+}
+
 /* Brand lock-up (docs/brand/README.md, sections 2-4): one-colour mark as a mask over currentColor, so it
    takes the theme's foreground; wordmark in the brand typeface, never used for interface text. */
 .lockup {
@@ -833,7 +950,7 @@ button:disabled {
   width: 200px;
   margin: 0 auto 12px;
   padding: 8px;
-  background: #fff;
+  background: #fff; /* a QR code needs white around it in every theme */
   border-radius: 12px;
 }
 

@@ -45,7 +45,7 @@ export function PasswordField({ label, ...props }: TextInputProps & { label: str
           hitSlop={12}
           onPress={() => setShow((v) => !v)}
         >
-          <Icon name="eye" color={show ? c.accent : c.muted} size={22} />
+          <Icon name={show ? 'visibility_off' : 'visibility'} color={show ? c.accent : c.muted} size={22} />
         </Pressable>
       </View>
     </View>

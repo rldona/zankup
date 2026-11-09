@@ -32,6 +32,7 @@ import { RouteMap } from '../../src/detail/RouteMap';
 import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../../src/detail/Sections';
 import { Strength } from '../../src/detail/Strength';
 import { EditActivity, metaLine, Photos, Replay, SaveSegment } from '../../src/detail/Tools';
+import { SportIcon } from '../../src/Icon';
 import { buildTrack, sectionStats, type SectionStats } from '../../src/detail/track';
 import { locale, t } from '../../src/i18n';
 import { streamsQuery } from '../../src/offline';
@@ -192,15 +193,18 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         </View>
       )}
       <View style={ui.page}>
-        <View>
-          <Text style={{ color: c.fg, fontSize: 22, fontWeight: '700' }}>
-            {a.name ?? t(`sport.${sport}`)}
-          </Text>
-          <Muted>
-            {formatActivityDate(localStart(a.start_utc, a.timezone), locale)}
-            {a.device ? ` · ${a.device}` : ''}
-          </Muted>
-          {meta ? <Muted>{meta}</Muted> : null}
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+          <SportIcon sport={sport} size={44} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: c.fg, fontSize: 22, fontWeight: '700' }}>
+              {a.name ?? t(`sport.${sport}`)}
+            </Text>
+            <Muted>
+              {formatActivityDate(localStart(a.start_utc, a.timezone), locale)}
+              {a.device ? ` · ${a.device}` : ''}
+            </Muted>
+            {meta ? <Muted>{meta}</Muted> : null}
+          </View>
         </View>
         {track?.hasGps && metrics.length > 1 && (
           <View style={{ gap: 6 }}>

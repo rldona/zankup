@@ -101,6 +101,12 @@ svg.i {
   stroke-linejoin: round;
 }
 
+/* Material Symbols are filled shapes, not strokes. */
+svg.i.m {
+  fill: currentColor;
+  stroke: none;
+}
+
 .app {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);

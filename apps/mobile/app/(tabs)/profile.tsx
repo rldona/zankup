@@ -34,19 +34,19 @@ export default function ProfileScreen() {
       {editing && <EditProfile me={me.data} onDone={() => setEditing(false)} />}
       <Card style={{ paddingVertical: 0, gap: 0 }}>
         <MenuRow
-          icon={<Icon name="health" color={c.fg} />}
+          icon={<Icon name="monitor_heart" color={c.fg} />}
           label={t('nav.health')}
           onPress={() => router.push('/health')}
         />
         {ai.data?.available && (
           <MenuRow
-            icon={<Icon name="coach" color={c.fg} />}
+            icon={<Icon name="chat" color={c.fg} />}
             label={t('nav.coach')}
             onPress={() => router.push('/coach')}
           />
         )}
         <MenuRow
-          icon={<Icon name="gear" color={c.fg} />}
+          icon={<Icon name="footprint" color={c.fg} />}
           label={t('gear.title')}
           onPress={() => router.push('/gear')}
         />

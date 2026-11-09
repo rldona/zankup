@@ -80,7 +80,18 @@ test('no serious accessibility problems on the main screens', async ({ page }, i
   };
   await scan('sign-in');
   await signIn(page, lang(info.project.name));
-  for (const path of ['/', '/activities/7', '/search', '/stats', '/profile', '/settings', '/sync']) {
+  for (const path of [
+    '/',
+    '/activities/7',
+    '/search',
+    '/stats',
+    '/stats/calendar',
+    '/routes',
+    '/segments',
+    '/profile',
+    '/settings',
+    '/sync',
+  ]) {
     await page.goto(path);
     await page.waitForLoadState('networkidle');
     await scan(path);

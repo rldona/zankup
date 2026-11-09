@@ -1,4 +1,5 @@
 import {
+  estimatesQuery,
   formatHoursMinutes,
   formatters,
   meQuery,
@@ -24,6 +25,7 @@ import { usePrefs } from '../prefs';
 import { deviceName } from '../signin/device';
 import { attestationJson, creationOptions, passkeysSupported } from '../signin/webauthn';
 import { SportIcon } from '../SportIcon';
+import { EstimatesPanel, GoalsPanel } from '../stats/panels';
 
 const TABS = ['summary', 'goals', 'estimates', 'gear', 'account'] as const;
 type Tab = (typeof TABS)[number];
@@ -70,8 +72,8 @@ export function Profile() {
       </div>
       <div role="tabpanel">
         {tab === 'summary' && <Summary me={me.data} summary={summary.data} />}
-        {tab === 'goals' && <p className="state">{t('profile.goalsSoon')}</p>}
-        {tab === 'estimates' && <p className="state">{t('profile.estimatesSoon')}</p>}
+        {tab === 'goals' && <GoalsPanel editable />}
+        {tab === 'estimates' && <ProfileEstimates />}
         {tab === 'gear' && <p className="state">{t('profile.gearSoon')}</p>}
         {tab === 'account' && <Account me={me.data} />}
       </div>
@@ -534,4 +536,10 @@ function Passkeys() {
       )}
     </>
   );
+}
+
+function ProfileEstimates() {
+  const estimates = useQuery(estimatesQuery(api));
+  if (!estimates.data) return <p className="state">{t('common.loading')}</p>;
+  return <EstimatesPanel estimates={estimates.data} />;
 }

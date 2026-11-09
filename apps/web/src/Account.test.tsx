@@ -144,6 +144,7 @@ describe('settings and profile', () => {
       'PATCH /api/auth/me': async (_url, request) =>
         Response.json({ ...ME, ...((await request.json()) as object) }),
       '/api/settings': () => Response.json(SETTINGS),
+      '/api/goals': () => Response.json([]),
       '/api/profile/summary': () =>
         Response.json({
           year: 2026,
@@ -189,7 +190,8 @@ describe('settings and profile', () => {
     expect(patch?.body).toMatchObject({ location: 'Valencia', sex: 'male', weight_kg: 72.5, height_cm: 178 });
 
     await userEvent.click(screen.getByRole('tab', { name: 'Goals' }));
-    expect(screen.getByText(/OS-318/)).toBeInTheDocument();
+    expect(await screen.findByText('No goals yet.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add goal' })).toBeInTheDocument();
   });
 
   it('lists and removes passkeys in the account tab', async () => {

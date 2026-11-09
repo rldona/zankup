@@ -357,3 +357,150 @@ class Job(Base):
     locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+# --- Metrics engine (phase 3) ------------------------------------------------------------------------
+
+
+class ActivityMetrics(Base):
+    """What the engine computes per activity (OS-313): effort, zones, curves, GAP, calories, route."""
+
+    __tablename__ = "activity_metrics"
+    __table_args__ = (Index("ix_activity_metrics_user_route", "user_id", "route_group"),)
+
+    activity_id: Mapped[int] = mapped_column(
+        ForeignKey("activities.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = _user_fk()
+    metrics_version: Mapped[int] = mapped_column(SmallInteger)
+    trimp: Mapped[float | None] = mapped_column(Float, comment="Banister TRIMP (relative effort)")
+    hr_zones: Mapped[list[float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Seconds per HR zone"
+    )
+    power_zones: Mapped[list[float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Seconds per power zone"
+    )
+    gap_distance_m: Mapped[float | None] = mapped_column(Float, comment="Grade-adjusted distance")
+    calories: Mapped[float | None] = mapped_column(Float, comment="Estimated kcal (the device's wins)")
+    efficiency: Mapped[float | None] = mapped_column(Float, comment="Speed (m/min) per bpm")
+    decoupling: Mapped[float | None] = mapped_column(Float, comment="Pa:HR drift, %")
+    power_curve: Mapped[dict[str, float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Best watts per duration (s)"
+    )
+    speed_curve: Mapped[dict[str, float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Best m/s per duration (s)"
+    )
+    hr_curve: Mapped[dict[str, float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Best average HR per duration (s)"
+    )
+    route_group: Mapped[int | None] = mapped_column(
+        BigInteger, comment="Matched routes (OS-309): the first activity of the group"
+    )
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class DailyLoad(Base):
+    """Fitness, fatigue and form per day (OS-303), from the activities' TRIMP."""
+
+    __tablename__ = "daily_load"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    load: Mapped[float] = mapped_column(Float)
+    ctl: Mapped[float] = mapped_column(Float)
+    atl: Mapped[float] = mapped_column(Float)
+    tsb: Mapped[float] = mapped_column(Float)
+
+
+class EstimateRow(Base):
+    """A performance estimate on a day (OS-316): value, method and the activities it comes from."""
+
+    __tablename__ = "estimates"
+    __table_args__ = (UniqueConstraint("user_id", "kind", "day"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    kind: Mapped[str] = mapped_column(String(30), comment="ftp, critical_speed, lthr, hr_max, vdot, race_5k…")
+    day: Mapped[date] = mapped_column(Date)
+    value: Mapped[float] = mapped_column(Float)
+    method: Mapped[str] = mapped_column(String(120))  # a key such as ftp_20min or riegel:10
+    source_activity_ids: Mapped[list[int]] = mapped_column(JSONB, server_default="[]")
+    metrics_version: Mapped[int] = mapped_column(SmallInteger)
+
+
+class Event(Base):
+    """Something the engine noticed (OS-319): a record, an estimate going up, a risky load ramp."""
+
+    __tablename__ = "events"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    kind: Mapped[str] = mapped_column(String(30), comment="record, estimate_up, ramp")
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    dedupe_key: Mapped[str] = mapped_column(String(200), unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Goal(Base):
+    """A volume goal (OS-318): so much distance, time or activities per week, month or year."""
+
+    __tablename__ = "goals"
+    __table_args__ = (
+        CheckConstraint("period IN ('week', 'month', 'year')", name="period"),
+        CheckConstraint("metric IN ('distance', 'time', 'count')", name="metric"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    period: Mapped[str] = mapped_column(String(10))
+    metric: Mapped[str] = mapped_column(String(10))
+    sport: Mapped[str | None] = mapped_column(String(20))
+    target: Mapped[float] = mapped_column(Float, comment="Metres, seconds or a count")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Segment(Base):
+    """A stretch saved from an activity (OS-325), found in every activity that goes through it."""
+
+    __tablename__ = "segments"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    name: Mapped[str] = mapped_column(String(120))
+    track: Mapped[str] = mapped_column(Text, comment="Encoded polyline (precision 6)")
+    distance_m: Mapped[float] = mapped_column(Float)
+    ascent_m: Mapped[float | None] = mapped_column(Float)
+    source_activity_id: Mapped[int | None] = mapped_column(ForeignKey("activities.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class SegmentEffort(Base):
+    __tablename__ = "segment_efforts"
+    __table_args__ = (UniqueConstraint("segment_id", "activity_id"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    segment_id: Mapped[int] = mapped_column(ForeignKey("segments.id", ondelete="CASCADE"), index=True)
+    activity_id: Mapped[int] = mapped_column(ForeignKey("activities.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = _user_fk()
+    start_s: Mapped[float] = mapped_column(Float)
+    elapsed_s: Mapped[float] = mapped_column(Float)
+    avg_hr: Mapped[int | None] = mapped_column(SmallInteger)
+    avg_power: Mapped[int | None] = mapped_column(SmallInteger)
+
+
+class EngineRun(Base):
+    """A full recomputation (OS-314), so the app can show its progress."""
+
+    __tablename__ = "engine_runs"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    status: Mapped[str] = mapped_column(String(10), server_default="running")
+    reason: Mapped[str] = mapped_column(String(60))
+    total: Mapped[int] = mapped_column(Integer, server_default="0")
+    done: Mapped[int] = mapped_column(Integer, server_default="0")
+    metrics_version: Mapped[int] = mapped_column(SmallInteger)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error: Mapped[str | None] = mapped_column(Text)

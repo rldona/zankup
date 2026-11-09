@@ -1,5 +1,7 @@
 import {
   devicesQuery,
+  engineQuery,
+  estimatesQuery,
   settingsQuery,
   sourcesQuery,
   THEME_CHOICES,
@@ -36,6 +38,7 @@ export function Settings() {
       <Appearance />
       <LanguageAndUnits />
       <HeartRate />
+      <Zones />
       <Garmin />
       <Sessions />
     </section>
@@ -268,6 +271,100 @@ function Sessions() {
           </li>
         ))}
       </ul>
+    </>
+  );
+}
+
+/** Zone model, threshold HR and FTP (OS-301): changing them recomputes everything in the background. */
+function Zones() {
+  const settings = useQuery(settingsQuery(api));
+  const estimates = useQuery(estimatesQuery(api));
+  const engine = useQuery({
+    ...engineQuery(api),
+    refetchInterval: (q) => (q.state.data?.running ? 3000 : false),
+  });
+  const save = useSaveSettings();
+  const queryClient = useQueryClient();
+  const recompute = useMutation({
+    mutationFn: async () => {
+      await api.POST('/api/engine/recompute');
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: engineQuery(api).queryKey }),
+  });
+  if (!settings.data) return null;
+  const estimate = (kind: string) => estimates.data?.find((e) => e.kind === kind)?.value;
+  const lthr = estimate('lthr');
+  const ftp = estimate('ftp');
+  const number = (v: string) => (v.trim() ? Number(v) : null);
+  return (
+    <>
+      <h2>{t('settings.zones')}</h2>
+      <p className="note">{t('settings.recomputeNote')}</p>
+      <div className="fields">
+        <label className="field">
+          <b>{t('settings.zoneModel')}</b>
+          <select
+            value={settings.data.zone_model}
+            onChange={(e) => save.mutate({ zone_model: e.target.value as 'max' | 'reserve' | 'lthr' })}
+          >
+            <option value="max">{t('settings.zone.max')}</option>
+            <option value="reserve">{t('settings.zone.reserve')}</option>
+            <option value="lthr">{t('settings.zone.lthr')}</option>
+          </select>
+        </label>
+        <label className="field">
+          <b>{t('settings.lthr')}</b>
+          <input
+            key={`lthr-${settings.data.lthr}`}
+            type="number"
+            inputMode="numeric"
+            min={80}
+            max={220}
+            defaultValue={settings.data.lthr ?? ''}
+            placeholder={lthr ? String(Math.round(lthr)) : ''}
+            onBlur={(e) => {
+              const v = number(e.target.value);
+              if (v !== settings.data.lthr) save.mutate({ lthr: v });
+            }}
+          />
+          {lthr && (
+            <small className="note">{t('settings.estimated', { value: `${Math.round(lthr)} bpm` })}</small>
+          )}
+        </label>
+        <label className="field">
+          <b>{t('settings.ftp')}</b>
+          <input
+            key={`ftp-${settings.data.ftp}`}
+            type="number"
+            inputMode="numeric"
+            min={30}
+            max={600}
+            defaultValue={settings.data.ftp ?? ''}
+            placeholder={ftp ? String(Math.round(ftp)) : ''}
+            onBlur={(e) => {
+              const v = number(e.target.value);
+              if (v !== settings.data.ftp) save.mutate({ ftp: v });
+            }}
+          />
+          {ftp && (
+            <small className="note">{t('settings.estimated', { value: `${Math.round(ftp)} W` })}</small>
+          )}
+        </label>
+      </div>
+      <div className="actions">
+        <button
+          type="button"
+          onClick={() => recompute.mutate()}
+          disabled={recompute.isPending || engine.data?.running}
+        >
+          {t('settings.recompute')}
+        </button>
+        {engine.data?.running && (
+          <span className="note" role="status">
+            {t('stats.recomputing', { done: engine.data.done, total: engine.data.total })}
+          </span>
+        )}
+      </div>
     </>
   );
 }

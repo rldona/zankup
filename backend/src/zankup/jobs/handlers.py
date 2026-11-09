@@ -131,7 +131,16 @@ def default_handlers(
     alert: Sender | None = None,
     settings: Settings | None = None,
 ) -> dict[str, Handler]:
-    handlers = {"ingest_fit": ingest_stored_fit(store)}
+    from zankup.engine import run as engine
+
+    handlers: dict[str, Handler] = {
+        "ingest_fit": ingest_stored_fit(store),
+        "metrics_activity": engine.metrics_activity,
+        "metrics_user": engine.metrics_user,
+        "segment_search": engine.segment_search,
+    }
+    if sessions is not None:
+        handlers["metrics_full"] = engine.metrics_full(sessions)
     if sessions is not None and garmin_api_key:
         handlers["sync_garmin"] = sync_garmin(sessions, store, garmin_api_key, alert)
     if settings is not None:

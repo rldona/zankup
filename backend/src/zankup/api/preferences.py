@@ -24,6 +24,7 @@ Theme = Literal["system", "light", "dark", "oled", "highContrast", "forest", "oc
 
 
 Language = Literal["en", "es"]
+HrModel = Literal["max", "reserve", "lthr"]
 Units = Literal["metric", "imperial"]
 
 
@@ -36,6 +37,9 @@ class Preferences(BaseModel):
     hr_max_estimate: int | None = Field(
         description="Highest heart rate recorded in an activity: the zones use it until hr_max is set"
     )
+    zone_model: HrModel = Field(description="HR zones: share of max HR, of HR reserve, or of LTHR")
+    lthr: int | None = Field(description="Lactate threshold HR set by the user (else the estimate)")
+    ftp: int | None = Field(description="FTP set by the user (else the estimate)")
 
 
 class PreferencesUpdate(BaseModel):
@@ -46,6 +50,9 @@ class PreferencesUpdate(BaseModel):
     units: Units | None = None
     hr_max: int | None = Field(None, ge=100, le=240)
     hr_rest: int | None = Field(None, ge=25, le=120)
+    zone_model: HrModel | None = None
+    lthr: int | None = Field(None, ge=80, le=220)
+    ftp: int | None = Field(None, ge=30, le=600)
 
 
 def _settings(db: Session, user: User) -> UserSettings:
@@ -67,6 +74,9 @@ def _out(db: Session, row: UserSettings) -> Preferences:
         hr_max=row.hr_max,
         hr_rest=row.hr_rest,
         hr_max_estimate=estimate,
+        zone_model=cast(HrModel, (row.zone_model or {}).get("hr", "max")),
+        lthr=row.lthr,
+        ftp=row.ftp,
     )
 
 
@@ -82,8 +92,15 @@ def update_preferences(body: PreferencesUpdate, db: DbSession, user: CurrentUser
     for name in ("theme", "units"):
         if name in sent and getattr(body, name) is not None:
             setattr(row, name, getattr(body, name))
-    for name in ("language", "hr_max", "hr_rest"):
+    before = (row.hr_max, row.hr_rest, row.lthr, row.ftp, (row.zone_model or {}).get("hr"))
+    for name in ("language", "hr_max", "hr_rest", "lthr", "ftp"):
         if name in sent:
             setattr(row, name, getattr(body, name))
+    if "zone_model" in sent and body.zone_model is not None:
+        row.zone_model = {**(row.zone_model or {}), "hr": body.zone_model}
+    if before != (row.hr_max, row.hr_rest, row.lthr, row.ftp, (row.zone_model or {}).get("hr")):
+        from zankup.engine.run import queue_full
+
+        queue_full(db, user.id, "heart rate or zone settings changed")  # OS-301, OS-314
     db.commit()
     return _out(db, row)

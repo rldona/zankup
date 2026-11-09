@@ -13,8 +13,13 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type CSSProperties, type FormEvent } from 'react';
 
+import { Link } from 'react-router';
+
 import { api } from '../api';
 import { chosenLanguage, locale, switchLanguage, t } from '../i18n';
+import { Notifications } from '../settings/Notifications';
+import { PrivacyZones } from '../settings/Privacy';
+import { ExportData } from './Library';
 import { useSaveSettings } from '../settings';
 import { useSetTheme, useThemeChoice } from '../theme';
 
@@ -30,7 +35,11 @@ const NOTES: Partial<Record<ThemeChoice, MessageKey>> = {
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 
-/** Settings (OS-212 and OS-214): appearance, language and units, heart rate, Garmin and sessions. */
+/**
+ * Settings (OS-212, OS-214): appearance, language and units, heart rate and zones, notifications
+ * (OS-401), privacy zones (OS-407), your data (import, gear, export: OS-404, OS-410, OS-411), Garmin
+ * and sessions.
+ */
 export function Settings() {
   return (
     <section className="page">
@@ -39,6 +48,9 @@ export function Settings() {
       <LanguageAndUnits />
       <HeartRate />
       <Zones />
+      <Notifications />
+      <PrivacyZones />
+      <YourData />
       <Garmin />
       <Sessions />
     </section>
@@ -207,6 +219,29 @@ function HeartRateForm({
         )}
       </div>
     </form>
+  );
+}
+
+function YourData() {
+  return (
+    <>
+      <h2>{t('data.title')}</h2>
+      <ul className="rows links">
+        <li>
+          <span>
+            <Link to="/settings/import">{t('import.title')}</Link>
+            <small className="note">{t('data.importNote')}</small>
+          </span>
+        </li>
+        <li>
+          <span>
+            <Link to="/gear">{t('gear.title')}</Link>
+            <small className="note">{t('data.gearNote')}</small>
+          </span>
+        </li>
+      </ul>
+      <ExportData />
+    </>
   );
 }
 

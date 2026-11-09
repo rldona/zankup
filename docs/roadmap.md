@@ -256,9 +256,9 @@ metrics engine (phase 3), gear, and importing and exporting (phase 4).
 
 ## Phase 3 · Advanced metrics → **M3**
 
-**Status (9 Nov 2026):** done except OS-323, which compares with the Relative Effort and calories of
-a Strava export and so waits for the Strava import (OS-406, phase 4). Built in one branch: metrics
-in `packages/metrics` 0.2.0, the engine in `backend/src/zankup/engine`, the stats API and screens.
+**Status (9 Nov 2026):** done. Built in one branch: metrics in `packages/metrics` 0.2.0, the engine in
+`backend/src/zankup/engine`, the stats API and screens. OS-323, which needed the Strava import, was
+finished with phase 4: Stats → "How these metrics compare".
 
 **Goal:** the "Premium" metrics, computed with your settings and free for everyone. The algorithms are implemented in `packages/metrics` (MIT), tested against reference values and documented one by one (formula, inputs and limits), so the package is useful on its own. The **historical computation engine** "cooks" the whole history in the background: estimates, curves, progress and events (see [architecture.md](architecture.md#historical-computation-engine-cooking-the-data)).
 
@@ -325,6 +325,12 @@ in `packages/metrics` 0.2.0, the engine in `backend/src/zankup/engine`, the stat
 ## Phase 4 · Notifications, history and privacy → **M4**
 
 **Goal:** not missing anything from Strava.
+
+**Status (9 Nov 2026):** done in one branch, OS-401 to OS-404 and OS-406 to OS-414 (OS-405, passkeys,
+was done in phase 1; its Android link waits for phase 5). Checked on the real Strava export (1,816
+activities, 15 years): every file reads, Garmin's activities are merged instead of duplicated, and gear,
+photos, weather and the privacy zone come across. The TCX/GPX distance and elevation were calibrated
+against 87 FIT files (distance median 0.995, elevation gain 0.95).
 
 - **OS-401 · Web notifications** (M) · depends on OS-210 and OS-108
   - VAPID keys, per-device subscription and alerts for new activity, record and sync error, in the user's language.

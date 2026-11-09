@@ -10,19 +10,23 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Any
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 import zankup_metrics as metrics
-from zankup.db.models import Activity, BestEffort, Lap, Stream
-from zankup.fit.parser import ParsedActivity, parse_fit
+from zankup.db.models import Activity, BestEffort, Gear, Lap, Stream
+from zankup.fit.files import parse_file
+from zankup.fit.parser import ParsedActivity
 from zankup.fit.streams import ENCODING, encode_streams, route_polyline
 from zankup.storage import RawStore, raw_key
 
 log = logging.getLogger("zankup.ingest")
 
+SAME_START = timedelta(minutes=2)  # two recordings starting this close are the same activity
+ADOPTABLE = ("strava", "file")  # a Garmin FIT replaces the file of an activity imported from these
 BEST_EFFORT_SPORTS = {"run"}  # running distances (400 m … marathon); cycling gets power curves in OS-306
 SPORT_NAMES = {
     "run": "Run",
@@ -39,6 +43,7 @@ class IngestResult:
     activity_id: int
     created: bool
     reprocessed: bool = False
+    merged: bool = False  # the file replaced that of an activity imported from Strava or a file
 
 
 def _name(parsed: ParsedActivity, meta: dict[str, Any] | None) -> str:
@@ -47,8 +52,9 @@ def _name(parsed: ParsedActivity, meta: dict[str, Any] | None) -> str:
 
 
 def _apply(activity: Activity, parsed: ParsedActivity) -> None:
-    activity.sport = parsed.sport
-    activity.sub_sport = parsed.sub_sport
+    if "sport" not in (activity.edited_fields or []):
+        activity.sport = parsed.sport
+        activity.sub_sport = parsed.sub_sport
     activity.start_utc = parsed.start_utc
     activity.timezone = parsed.timezone
     activity.duration_s = parsed.duration_s
@@ -95,7 +101,7 @@ def _write_children(session: Session, activity: Activity, parsed: ParsedActivity
     session.execute(delete(Lap).where(Lap.activity_id == activity.id))
     session.execute(delete(Stream).where(Stream.activity_id == activity.id))
     session.execute(delete(BestEffort).where(BestEffort.activity_id == activity.id))
-    if parsed.sport in BEST_EFFORT_SPORTS:
+    if activity.sport in BEST_EFFORT_SPORTS and not parsed.distance_from_gps:
         for effort in metrics.best_efforts(parsed.streams.t, parsed.streams.dist):
             session.add(
                 BestEffort(
@@ -138,6 +144,34 @@ def _write_children(session: Session, activity: Activity, parsed: ParsedActivity
         )
 
 
+def same_start(
+    session: Session, user_id: int, parsed: ParsedActivity, sources: tuple[str, ...]
+) -> Activity | None:
+    """An activity of `sources` that started within two minutes of this one."""
+    return session.scalars(
+        select(Activity)
+        .where(
+            Activity.user_id == user_id,
+            Activity.source.in_(sources),
+            Activity.start_utc.between(parsed.start_utc - SAME_START, parsed.start_utc + SAME_START),
+        )
+        .limit(1)
+    ).first()
+
+
+def default_gear(session: Session, user_id: int, sport: str) -> int | None:
+    """The gear that new activities of this sport get (OS-410), if any."""
+    rows = session.scalars(
+        select(Gear).where(Gear.user_id == user_id, Gear.retired_at.is_(None)).order_by(Gear.id.desc())
+    )
+    return next((g.id for g in rows if sport in (g.sports or [])), None)
+
+
+def stored_format(activity: Activity) -> str:
+    path = activity.fit_path or ""
+    return path.rsplit(".", 1)[-1] if path.endswith((".tcx", ".gpx")) else "fit"
+
+
 def ingest_fit(
     session: Session,
     store: RawStore,
@@ -150,6 +184,39 @@ def ingest_fit(
     reprocess: bool = False,
 ) -> IngestResult:
     """Store and import one FIT activity. The caller commits the session."""
+    return ingest_file(
+        session,
+        store,
+        user_id=user_id,
+        source=source,
+        external_id=external_id,
+        data=fit,
+        fmt="fit",
+        meta=meta,
+        reprocess=reprocess,
+    )
+
+
+def ingest_file(
+    session: Session,
+    store: RawStore,
+    *,
+    user_id: int,
+    source: str,
+    external_id: str,
+    data: bytes,
+    fmt: str = "fit",
+    meta: dict[str, Any] | None = None,
+    reprocess: bool = False,
+    parsed: ParsedActivity | None = None,
+    name: str | None = None,
+) -> IngestResult:
+    """Store and import one activity file (FIT, TCX or GPX, uncompressed). The caller commits.
+
+    A Garmin activity that matches one already imported from Strava or a file (same start, within two
+    minutes) takes that activity over: its file is replaced by Garmin's and what the import added (name,
+    description, gear, photos, weather) stays.
+    """
     existing = session.scalar(
         select(Activity).where(
             Activity.user_id == user_id, Activity.source == source, Activity.external_id == external_id
@@ -158,14 +225,26 @@ def ingest_fit(
     if existing is not None and not reprocess:
         return IngestResult(existing.id, created=False)
 
-    key = raw_key(user_id, source, external_id)
-    stored = store.put(key, fit)
-    parsed = parse_fit(store.get(key, stored.sha256) if existing is not None else fit)
+    merged = False
+    if existing is None:
+        parsed = parsed or parse_file(data, fmt)
+        if source == "garmin":
+            adopted = same_start(session, user_id, parsed, ADOPTABLE)
+            if adopted is not None:
+                adopted.raw_meta = {**(adopted.raw_meta or {}), "replaced": adopted.source}
+                adopted.source, adopted.external_id = source, external_id
+                existing, merged = adopted, True
+
+    key = raw_key(user_id, source, external_id, fmt)
+    stored = store.put(key, data)
+    if parsed is None or (existing is not None and not merged):
+        parsed = parse_file(store.get(key, stored.sha256), fmt)
 
     activity = existing or Activity(user_id=user_id, source=source, external_id=external_id)
     _apply(activity, parsed)
     if existing is None:
-        activity.name = _name(parsed, meta)
+        activity.name = name or _name(parsed, meta)
+        activity.gear_id = default_gear(session, user_id, activity.sport)
     activity.fit_path = stored.key
     activity.fit_sha256 = stored.sha256
     if meta is not None:
@@ -174,7 +253,7 @@ def ingest_fit(
     session.flush()
     _write_children(session, activity, parsed)
     log.info(
-        "Activity imported" if existing is None else "Activity reprocessed",
+        "Activity imported" if existing is None else "Activity merged" if merged else "Activity reprocessed",
         extra={
             "activity_id": activity.id,
             "source": source,
@@ -185,4 +264,9 @@ def ingest_fit(
     from zankup.engine.run import queue_activity
 
     queue_activity(session, user_id, activity.id)  # the engine takes it from here (OS-313)
-    return IngestResult(activity.id, created=existing is None, reprocessed=existing is not None)
+    return IngestResult(
+        activity.id,
+        created=existing is None,
+        reprocessed=existing is not None and not merged,
+        merged=merged,
+    )

@@ -1,5 +1,6 @@
 """The signed-in user's preferences (`/api/settings`): theme (OS-214), language (OS-223), units and the
-heart-rate settings the zones and effort are computed with (OS-212).
+heart-rate settings the zones and effort are computed with (OS-212), the privacy zones (OS-407) and
+which push notifications to send (OS-402).
 
 Each client keeps its own copy (the PWA in localStorage, so the theme is applied before painting) and
 this is the copy that follows the user to other browsers and to the Android app.
@@ -16,6 +17,8 @@ from sqlalchemy.orm import Session
 from zankup.api.routing import protected_router
 from zankup.auth.deps import CurrentUser, DbSession
 from zankup.db.models import Activity, User, UserSettings
+from zankup.notify import preferences
+from zankup.privacy import clean_zones
 
 router = protected_router(prefix="/api/settings", tags=["settings"])
 
@@ -26,6 +29,25 @@ Theme = Literal["system", "light", "dark", "oled", "highContrast", "forest", "oc
 Language = Literal["en", "es"]
 HrModel = Literal["max", "reserve", "lthr"]
 Units = Literal["metric", "imperial"]
+
+
+class PrivacyZone(BaseModel):
+    id: str = Field(max_length=40)
+    name: str = Field(default="", max_length=120)
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+    radius_m: float = Field(ge=100, le=5000)
+
+
+class Notifications(BaseModel):
+    activity: bool = True
+    record: bool = True
+    sync_error: bool = True
+    garmin_key: bool = True
+    estimate: bool = False
+    import_: bool = Field(default=True, alias="import")
+
+    model_config = {"populate_by_name": True}
 
 
 class Preferences(BaseModel):
@@ -40,6 +62,8 @@ class Preferences(BaseModel):
     zone_model: HrModel = Field(description="HR zones: share of max HR, of HR reserve, or of LTHR")
     lthr: int | None = Field(description="Lactate threshold HR set by the user (else the estimate)")
     ftp: int | None = Field(description="FTP set by the user (else the estimate)")
+    privacy_zones: list[PrivacyZone] = Field(description="Hidden from anything shared")
+    notifications: Notifications
 
 
 class PreferencesUpdate(BaseModel):
@@ -53,6 +77,8 @@ class PreferencesUpdate(BaseModel):
     zone_model: HrModel | None = None
     lthr: int | None = Field(None, ge=80, le=220)
     ftp: int | None = Field(None, ge=30, le=600)
+    privacy_zones: list[PrivacyZone] | None = Field(None, max_length=20)
+    notifications: Notifications | None = None
 
 
 def _settings(db: Session, user: User) -> UserSettings:
@@ -77,6 +103,8 @@ def _out(db: Session, row: UserSettings) -> Preferences:
         zone_model=cast(HrModel, (row.zone_model or {}).get("hr", "max")),
         lthr=row.lthr,
         ftp=row.ftp,
+        privacy_zones=[PrivacyZone(**z) for z in clean_zones(row.privacy_zones or [])],
+        notifications=Notifications.model_validate(preferences(db, row.user_id)),
     )
 
 
@@ -96,6 +124,10 @@ def update_preferences(body: PreferencesUpdate, db: DbSession, user: CurrentUser
     for name in ("language", "hr_max", "hr_rest", "lthr", "ftp"):
         if name in sent:
             setattr(row, name, getattr(body, name))
+    if "privacy_zones" in sent and body.privacy_zones is not None:
+        row.privacy_zones = clean_zones([z.model_dump() for z in body.privacy_zones]) or None
+    if "notifications" in sent and body.notifications is not None:
+        row.notifications = body.notifications.model_dump(by_alias=True)
     if "zone_model" in sent and body.zone_model is not None:
         row.zone_model = {**(row.zone_model or {}), "hr": body.zone_model}
     if before != (row.hr_max, row.hr_rest, row.lthr, row.ftp, (row.zone_model or {}).get("hr")):

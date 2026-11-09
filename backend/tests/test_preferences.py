@@ -65,6 +65,15 @@ def test_the_theme_starts_as_system_and_is_kept(http: tuple[TestClient, sessionm
         "zone_model": "max",
         "lthr": None,
         "ftp": None,
+        "privacy_zones": [],
+        "notifications": {
+            "activity": True,
+            "record": True,
+            "sync_error": True,
+            "garmin_key": True,
+            "estimate": False,
+            "import": True,
+        },
     }
     assert client.get("/api/settings").json() == defaults
     assert client.patch("/api/settings", json={"theme": "oled"}).json()["theme"] == "oled"

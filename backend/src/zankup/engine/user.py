@@ -166,6 +166,15 @@ def update_estimates(db: Session, user_id: int, today: date) -> dict[str, Estima
             )
         )
         if kind in RISING and previous and value >= previous * 1.02:
+            from zankup.notify import notify
+
+            notify(
+                db,
+                user_id,
+                "estimate",
+                {"kind": kind, "value": value},
+                key=f"estimate:{user_id}:{kind}:{today}",
+            )
             _event(
                 db,
                 user_id,

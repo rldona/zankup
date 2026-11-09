@@ -91,6 +91,10 @@ test('no serious accessibility problems on the main screens', async ({ page }, i
     '/profile',
     '/settings',
     '/sync',
+    '/settings/import',
+    '/gear',
+    '/review/month/2026-11',
+    '/s/demo',
   ]) {
     await page.goto(path);
     await page.waitForLoadState('networkidle');

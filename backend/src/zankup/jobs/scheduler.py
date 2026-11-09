@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import delete
 from sqlalchemy.orm import Session, sessionmaker
@@ -23,6 +23,7 @@ from zankup.users import ensure_owner
 log = logging.getLogger("zankup.jobs")
 
 KEEP_FINISHED = timedelta(days=14)
+GARMIN_KEY_WARNING = timedelta(days=14)
 TICK_S = 30.0
 
 
@@ -34,10 +35,12 @@ class Scheduler:
         interval: timedelta | None,
         owner_email: str,
         backup_hour: int | None = None,
+        garmin_key_expires_on: date | None = None,
         tick_s: float = TICK_S,
     ) -> None:
         self.sessions, self.interval, self.owner_email, self.tick_s = sessions, interval, owner_email, tick_s
         self.backup_hour = backup_hour
+        self.garmin_key_expires_on = garmin_key_expires_on
         self.stop_event = threading.Event()
 
     def slot(self, when: datetime) -> int:
@@ -58,6 +61,15 @@ class Scheduler:
             max_attempts=3,
         )
 
+    def warn_garmin_key(self, session: Session, user_id: int, when: datetime) -> None:
+        """A notification 14 days before the Garmin Personal API key expires (OS-403), once per key."""
+        expires = self.garmin_key_expires_on
+        if expires is None or not timedelta(0) <= expires - when.date() <= GARMIN_KEY_WARNING:
+            return
+        from zankup.notify import notify
+
+        notify(session, user_id, "garmin_key", {"date": expires.isoformat()}, key=f"garmin_key:{expires}")
+
     def tick(self, when: datetime | None = None) -> int | None:
         """Queue this slot's sync and today's backup if they are not queued yet, and prune old finished
         jobs. Returns the id of the sync job queued, if any."""
@@ -75,6 +87,7 @@ class Scheduler:
                     max_attempts=2,  # the next slot is a retry anyway
                 )
             backup_id = self.queue_backup(session, user_id, when)
+            self.warn_garmin_key(session, user_id, when)
             pruned = session.execute(
                 delete(Job).where(Job.status.in_(("done", "failed")), Job.finished_at < when - KEEP_FINISHED)
             ).rowcount  # type: ignore[attr-defined]
@@ -120,4 +133,5 @@ def build_scheduler() -> Scheduler | None:
         interval=timedelta(minutes=settings.sync_interval_minutes) if syncs else None,
         owner_email=settings.owner_email,
         backup_hour=settings.backup_hour_utc if backups else None,
+        garmin_key_expires_on=settings.garmin_key_expires_on if syncs else None,
     )

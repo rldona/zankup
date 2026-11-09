@@ -817,6 +817,390 @@
         }
       }
     },
+    "/api/activities/{activity_id}": {
+      "patch": {
+        "tags": [
+          "library"
+        ],
+        "summary": "Edit Activity",
+        "description": "Change the name, description, sport or gear. Only the fields sent change.",
+        "operationId": "editActivity",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityEdit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EditedActivity"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "activities"
+        ],
+        "summary": "Get Activity",
+        "description": "Summary, laps, per-km splits and best efforts. The series themselves are in `/streams`.",
+        "operationId": "getActivity",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gear": {
+      "get": {
+        "tags": [
+          "library"
+        ],
+        "summary": "List Gear",
+        "operationId": "listGear",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GearOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listgear"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "library"
+        ],
+        "summary": "Create Gear",
+        "operationId": "createGear",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GearIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GearOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gear/{gear_id}": {
+      "patch": {
+        "tags": [
+          "library"
+        ],
+        "summary": "Update Gear",
+        "operationId": "updateGear",
+        "parameters": [
+          {
+            "name": "gear_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Gear Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GearUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GearOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "library"
+        ],
+        "summary": "Delete Gear",
+        "description": "Delete gear. Its activities keep everything else and simply have no gear.",
+        "operationId": "deleteGear",
+        "parameters": [
+          {
+            "name": "gear_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Gear Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{activity_id}/photos": {
+      "post": {
+        "tags": [
+          "library"
+        ],
+        "summary": "Add Photo",
+        "description": "Add a photo (the image itself as the body). It is stored without its metadata.",
+        "operationId": "addPhoto",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "image/*": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/photos/{photo_id}": {
+      "get": {
+        "tags": [
+          "library"
+        ],
+        "summary": "Get Photo",
+        "operationId": "getPhoto",
+        "parameters": [
+          {
+            "name": "photo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Photo Id"
+            }
+          },
+          {
+            "name": "thumb",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Thumb"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "library"
+        ],
+        "summary": "Delete Photo",
+        "operationId": "deletePhoto",
+        "parameters": [
+          {
+            "name": "photo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Photo Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/activities": {
       "get": {
         "tags": [
@@ -1293,49 +1677,6 @@
         }
       }
     },
-    "/api/activities/{activity_id}": {
-      "get": {
-        "tags": [
-          "activities"
-        ],
-        "summary": "Get Activity",
-        "description": "Summary, laps, per-km splits and best efforts. The series themselves are in `/streams`.",
-        "operationId": "getActivity",
-        "parameters": [
-          {
-            "name": "activity_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Activity Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ActivityDetail"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/activities/{activity_id}/streams": {
       "get": {
         "tags": [
@@ -1428,6 +1769,864 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{activity_id}/shared": {
+      "get": {
+        "tags": [
+          "sharing"
+        ],
+        "summary": "Preview",
+        "description": "What a share link (or share image) of this activity shows, privacy zones applied.",
+        "operationId": "previewSharedActivity",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          },
+          {
+            "name": "show_map",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Show Map"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedActivity"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{activity_id}/shares": {
+      "post": {
+        "tags": [
+          "sharing"
+        ],
+        "summary": "Create Share",
+        "operationId": "createShare",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sharing"
+        ],
+        "summary": "List Shares",
+        "operationId": "listShares",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShareOut"
+                  },
+                  "title": "Response Listshares"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{share_id}": {
+      "delete": {
+        "tags": [
+          "sharing"
+        ],
+        "summary": "Revoke Share",
+        "operationId": "revokeShare",
+        "parameters": [
+          {
+            "name": "share_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Share Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/shares/{token}": {
+      "get": {
+        "tags": [
+          "sharing"
+        ],
+        "summary": "Shared",
+        "description": "A shared activity, for anyone with the link.",
+        "operationId": "getSharedActivity",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedActivity"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/shares/{token}/photos/{photo_id}": {
+      "get": {
+        "tags": [
+          "sharing"
+        ],
+        "summary": "Shared Photo",
+        "operationId": "getSharedPhoto",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          },
+          {
+            "name": "photo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Photo Id"
+            }
+          },
+          {
+            "name": "thumb",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Thumb"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports": {
+      "get": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "List Imports",
+        "operationId": "listImports",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ImportOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listimports"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Create Import",
+        "description": "Start an upload: a FIT, TCX or GPX file, a ZIP of them, a Garmin export or a Strava export.",
+        "operationId": "createImport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewImport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{import_id}/finish": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Finish Import",
+        "description": "Every part is uploaded: queue the import.",
+        "operationId": "finishImport",
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{import_id}": {
+      "get": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Get Import",
+        "operationId": "getImport",
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Delete Import",
+        "description": "Cancel an upload, or remove a finished import from the list (its activities stay).",
+        "operationId": "deleteImport",
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/exports": {
+      "get": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "List Exports",
+        "operationId": "listExports",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExportOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listexports"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Create Export",
+        "description": "Prepare a ZIP with all your data: the original files, photos and everything else as JSON.",
+        "operationId": "createExport",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/direct/uploads/{import_id}/{index}": {
+      "put": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Upload Part",
+        "description": "One part of an upload, authorised by the token `createImport` returned.",
+        "operationId": "uploadPart",
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Import Id"
+            }
+          },
+          {
+            "name": "index",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Index"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/direct/exports/{export_id}": {
+      "get": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Download Export",
+        "operationId": "downloadExport",
+        "parameters": [
+          {
+            "name": "export_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Export Id"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/key": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Push Key",
+        "operationId": "getPushKey",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushKey"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/subscriptions": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Subscriptions",
+        "operationId": "listPushSubscriptions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubscriptionOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listpushsubscriptions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Subscribe",
+        "operationId": "subscribePush",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/unsubscribe": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Unsubscribe",
+        "operationId": "unsubscribePush",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Unsubscribe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/test": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Test",
+        "description": "Send a test notification to every subscribed browser, now.",
+        "operationId": "testPush",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/review": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Review",
+        "description": "A month or a year in review.",
+        "operationId": "getReview",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "month",
+                "year"
+              ],
+              "type": "string",
+              "default": "month",
+              "title": "Period"
+            }
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "YYYY-MM for a month, YYYY for a year",
+              "default": "",
+              "title": "Value"
+            },
+            "description": "YYYY-MM for a month, YYYY for a year"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Review"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/strava-comparison": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Strava Comparison",
+        "description": "Our effort, calories and grade-adjusted distance against what Strava computed (OS-323).",
+        "operationId": "getStravaComparison",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comparison"
                 }
               }
             }
@@ -3140,6 +4339,23 @@
             "title": "Route",
             "description": "Simplified route as an encoded polyline (precision 5)"
           },
+          "photo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo",
+            "description": "First photo, for the card's thumbnail"
+          },
+          "photos": {
+            "type": "integer",
+            "title": "Photos",
+            "default": 0
+          },
           "description": {
             "anyOf": [
               {
@@ -3150,6 +4366,64 @@
               }
             ],
             "title": "Description"
+          },
+          "gear": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GearRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "photo_list": {
+            "items": {
+              "$ref": "#/components/schemas/PhotoRef"
+            },
+            "type": "array",
+            "title": "Photo List"
+          },
+          "weather": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Weather"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "edited_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Edited Fields",
+            "description": "Edited by the user: imports and reprocessing keep them"
+          },
+          "original_format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Format",
+            "description": "fit, tcx or gpx; null without an original file"
+          },
+          "strava_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strava Id"
           },
           "descent_m": {
             "anyOf": [
@@ -3329,6 +4603,12 @@
           "has_gps",
           "route",
           "description",
+          "gear",
+          "photo_list",
+          "weather",
+          "edited_fields",
+          "original_format",
+          "strava_id",
           "descent_m",
           "max_hr",
           "normalized_power",
@@ -3348,6 +4628,68 @@
           "streams"
         ],
         "title": "ActivityDetail"
+      },
+      "ActivityEdit": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "sport": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "run",
+                  "ride",
+                  "strength",
+                  "walk",
+                  "row",
+                  "swim",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sport"
+          },
+          "gear_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gear Id",
+            "description": "0 removes the gear"
+          }
+        },
+        "type": "object",
+        "title": "ActivityEdit"
       },
       "ActivityMetricsOut": {
         "properties": {
@@ -3876,6 +5218,23 @@
             ],
             "title": "Route",
             "description": "Simplified route as an encoded polyline (precision 5)"
+          },
+          "photo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo",
+            "description": "First photo, for the card's thumbnail"
+          },
+          "photos": {
+            "type": "integer",
+            "title": "Photos",
+            "default": 0
           }
         },
         "type": "object",
@@ -4101,6 +5460,56 @@
         ],
         "title": "Challenge"
       },
+      "Comparison": {
+        "properties": {
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricComparison"
+            },
+            "type": "array",
+            "title": "Metrics"
+          },
+          "effort_scale": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EffortScale"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "metrics",
+          "effort_scale"
+        ],
+        "title": "Comparison"
+      },
+      "ComparisonPoint": {
+        "properties": {
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "ours": {
+            "type": "number",
+            "title": "Ours"
+          },
+          "strava": {
+            "type": "number",
+            "title": "Strava"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activity_id",
+          "ours",
+          "strava"
+        ],
+        "title": "ComparisonPoint"
+      },
       "Curve": {
         "properties": {
           "duration_s": {
@@ -4262,6 +5671,68 @@
         ],
         "title": "DeviceOut"
       },
+      "EditedActivity": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "gear_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gear Id"
+          },
+          "edited_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Edited Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "sport",
+          "gear_id",
+          "edited_fields"
+        ],
+        "title": "EditedActivity"
+      },
       "EfficiencyPoint": {
         "properties": {
           "day": {
@@ -4298,6 +5769,40 @@
           "decoupling"
         ],
         "title": "EfficiencyPoint"
+      },
+      "EffortScale": {
+        "properties": {
+          "coefficients": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Coefficients",
+            "description": "Effort points per minute in each HR zone (Z1-Z5)"
+          },
+          "r2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R2"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "coefficients",
+          "r2",
+          "count"
+        ],
+        "title": "EffortScale"
       },
       "EngineStatus": {
         "properties": {
@@ -4445,6 +5950,94 @@
         ],
         "title": "EventOut"
       },
+      "ExportOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "queued, running, done or error"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "download_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Download Url",
+            "description": "Valid for an hour, when the export is done"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "size",
+          "error",
+          "created_at",
+          "finished_at",
+          "expires_at",
+          "download_url"
+        ],
+        "title": "ExportOut"
+      },
       "FitnessDay": {
         "properties": {
           "day": {
@@ -4495,6 +6088,358 @@
           "email"
         ],
         "title": "ForgotRequest"
+      },
+      "GearIn": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "shoe",
+              "bike",
+              "other"
+            ],
+            "title": "Kind",
+            "default": "shoe"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "sports": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "run",
+                "ride",
+                "strength",
+                "walk",
+                "row",
+                "swim",
+                "other"
+              ]
+            },
+            "type": "array",
+            "title": "Sports",
+            "default": []
+          },
+          "initial_m": {
+            "type": "number",
+            "maximum": 100000000.0,
+            "minimum": 0.0,
+            "title": "Initial M",
+            "default": 0
+          },
+          "limit_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "GearIn"
+      },
+      "GearOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "sports": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sports"
+          },
+          "initial_m": {
+            "type": "number",
+            "title": "Initial M"
+          },
+          "limit_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit M"
+          },
+          "retired": {
+            "type": "boolean",
+            "title": "Retired"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M",
+            "description": "Activities plus initial_m"
+          },
+          "activities": {
+            "type": "integer",
+            "title": "Activities"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "first_used": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Used"
+          },
+          "last_used": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used"
+          },
+          "over_limit": {
+            "type": "boolean",
+            "title": "Over Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "brand",
+          "model",
+          "sports",
+          "initial_m",
+          "limit_m",
+          "retired",
+          "distance_m",
+          "activities",
+          "moving_s",
+          "first_used",
+          "last_used",
+          "over_limit"
+        ],
+        "title": "GearOut"
+      },
+      "GearRef": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ],
+        "title": "GearRef"
+      },
+      "GearUpdate": {
+        "properties": {
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "shoe",
+                  "bike",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "sports": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "run",
+                    "ride",
+                    "strength",
+                    "walk",
+                    "row",
+                    "swim",
+                    "other"
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sports"
+          },
+          "initial_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initial M"
+          },
+          "limit_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit M"
+          },
+          "retired": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retired"
+          }
+        },
+        "type": "object",
+        "title": "GearUpdate"
       },
       "GoalCreate": {
         "properties": {
@@ -4679,6 +6624,166 @@
           "routes"
         ],
         "title": "Heatmap"
+      },
+      "ImportCreate": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Filename"
+          },
+          "size": {
+            "type": "integer",
+            "maximum": 4294967296.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "size"
+        ],
+        "title": "ImportCreate"
+      },
+      "ImportOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "uploading, queued, running, done or error"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "received": {
+            "type": "integer",
+            "title": "Received"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "processed": {
+            "type": "integer",
+            "title": "Processed"
+          },
+          "created": {
+            "type": "integer",
+            "title": "Created"
+          },
+          "merged": {
+            "type": "integer",
+            "title": "Merged"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "photos": {
+            "type": "integer",
+            "title": "Photos"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ImportProblem"
+            },
+            "type": "array",
+            "title": "Errors"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "filename",
+          "size",
+          "received",
+          "total",
+          "processed",
+          "created",
+          "merged",
+          "skipped",
+          "failed",
+          "photos",
+          "errors",
+          "error",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "ImportOut"
+      },
+      "ImportProblem": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "title": "File"
+          },
+          "error": {
+            "type": "string",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "error"
+        ],
+        "title": "ImportProblem"
       },
       "LapOut": {
         "properties": {
@@ -4877,6 +6982,86 @@
         ],
         "title": "Me"
       },
+      "MetricComparison": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "enum": [
+              "effort",
+              "calories",
+              "grade_adjusted_distance"
+            ],
+            "title": "Metric"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "r2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R2",
+            "description": "Coefficient of determination of ours against Strava's"
+          },
+          "mae": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mae",
+            "description": "Mean absolute error, in the metric's unit"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio",
+            "description": "Mean of ours over mean of Strava's"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonPoint"
+            },
+            "type": "array",
+            "title": "Points",
+            "description": "Up to 1000, for a scatter chart"
+          },
+          "largest": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonPoint"
+            },
+            "type": "array",
+            "title": "Largest",
+            "description": "The ten that differ the most"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metric",
+          "count",
+          "r2",
+          "mae",
+          "ratio",
+          "points",
+          "largest"
+        ],
+        "title": "MetricComparison"
+      },
       "MonthTotals": {
         "properties": {
           "month": {
@@ -4912,6 +7097,58 @@
         ],
         "title": "MonthTotals",
         "description": "One month of the feed, in the activities' own local time."
+      },
+      "NewImport": {
+        "properties": {
+          "import": {
+            "$ref": "#/components/schemas/ImportOut"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/UploadTarget"
+          }
+        },
+        "type": "object",
+        "required": [
+          "import",
+          "upload"
+        ],
+        "title": "NewImport"
+      },
+      "Notifications": {
+        "properties": {
+          "activity": {
+            "type": "boolean",
+            "title": "Activity",
+            "default": true
+          },
+          "record": {
+            "type": "boolean",
+            "title": "Record",
+            "default": true
+          },
+          "sync_error": {
+            "type": "boolean",
+            "title": "Sync Error",
+            "default": true
+          },
+          "garmin_key": {
+            "type": "boolean",
+            "title": "Garmin Key",
+            "default": true
+          },
+          "estimate": {
+            "type": "boolean",
+            "title": "Estimate",
+            "default": false
+          },
+          "import": {
+            "type": "boolean",
+            "title": "Import",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "Notifications"
       },
       "Options": {
         "properties": {
@@ -4970,6 +7207,86 @@
           "backed_up"
         ],
         "title": "PasskeyOut"
+      },
+      "PhotoOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "caption": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caption"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "activity_id",
+          "width",
+          "height",
+          "caption",
+          "source"
+        ],
+        "title": "PhotoOut"
+      },
+      "PhotoRef": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "caption": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caption"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "width",
+          "height",
+          "caption"
+        ],
+        "title": "PhotoRef"
       },
       "Preferences": {
         "properties": {
@@ -5080,6 +7397,17 @@
             ],
             "title": "Ftp",
             "description": "FTP set by the user (else the estimate)"
+          },
+          "privacy_zones": {
+            "items": {
+              "$ref": "#/components/schemas/PrivacyZone"
+            },
+            "type": "array",
+            "title": "Privacy Zones",
+            "description": "Hidden from anything shared"
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/Notifications"
           }
         },
         "type": "object",
@@ -5092,7 +7420,9 @@
           "hr_max_estimate",
           "zone_model",
           "lthr",
-          "ftp"
+          "ftp",
+          "privacy_zones",
+          "notifications"
         ],
         "title": "Preferences"
       },
@@ -5216,11 +7546,114 @@
               }
             ],
             "title": "Ftp"
+          },
+          "privacy_zones": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PrivacyZone"
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Privacy Zones"
+          },
+          "notifications": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Notifications"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
         "title": "PreferencesUpdate",
         "description": "Only the fields sent are changed. Null clears the language, hr_max or hr_rest."
+      },
+      "PrivacyZone": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 40,
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Name",
+            "default": ""
+          },
+          "lat": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat"
+          },
+          "lon": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon"
+          },
+          "radius_m": {
+            "type": "number",
+            "maximum": 5000.0,
+            "minimum": 100.0,
+            "title": "Radius M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "lat",
+          "lon",
+          "radius_m"
+        ],
+        "title": "PrivacyZone"
+      },
+      "ProfilePoint": {
+        "properties": {
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "altitude_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Altitude M"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_m",
+          "altitude_m",
+          "speed"
+        ],
+        "title": "ProfilePoint"
       },
       "ProfileSummary": {
         "properties": {
@@ -5392,6 +7825,20 @@
           "google"
         ],
         "title": "Providers"
+      },
+      "PushKey": {
+        "properties": {
+          "public_key": {
+            "type": "string",
+            "title": "Public Key",
+            "description": "VAPID application server key (base64url)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_key"
+        ],
+        "title": "PushKey"
       },
       "RecentRecord": {
         "properties": {
@@ -5592,6 +8039,308 @@
           "password"
         ],
         "title": "ResetRequest"
+      },
+      "Review": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "month",
+              "year"
+            ],
+            "title": "Period"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End",
+            "description": "Exclusive"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/Totals"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/Totals",
+            "description": "The month or year before"
+          },
+          "by_sport": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Totals"
+            },
+            "type": "object",
+            "title": "By Sport"
+          },
+          "active_days": {
+            "type": "integer",
+            "title": "Active Days"
+          },
+          "longest_streak": {
+            "type": "integer",
+            "title": "Longest Streak",
+            "description": "Most consecutive days with an activity"
+          },
+          "longest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewActivity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hardest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewActivity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hilliest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewActivity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewRecord"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "gear": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewGear"
+            },
+            "type": "array",
+            "title": "Gear"
+          },
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewBucket"
+            },
+            "type": "array",
+            "title": "Buckets",
+            "description": "Per day for a month, per month for a year"
+          },
+          "photos": {
+            "type": "integer",
+            "title": "Photos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period",
+          "start",
+          "end",
+          "totals",
+          "previous",
+          "by_sport",
+          "active_days",
+          "longest_streak",
+          "longest",
+          "hardest",
+          "hilliest",
+          "records",
+          "gear",
+          "buckets",
+          "photos"
+        ],
+        "title": "Review"
+      },
+      "ReviewActivity": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "ascent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascent M"
+          },
+          "load": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Load"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sport",
+          "day",
+          "distance_m",
+          "moving_s",
+          "ascent_m",
+          "load"
+        ],
+        "title": "ReviewActivity"
+      },
+      "ReviewBucket": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "distance_m",
+          "moving_s",
+          "count"
+        ],
+        "title": "ReviewBucket"
+      },
+      "ReviewGear": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "distance_m",
+          "count"
+        ],
+        "title": "ReviewGear"
+      },
+      "ReviewRecord": {
+        "properties": {
+          "distance_key": {
+            "type": "string",
+            "title": "Distance Key"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "previous_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous S",
+            "description": "The record it beat, if any"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_key",
+          "time_s",
+          "activity_id",
+          "day",
+          "previous_s"
+        ],
+        "title": "ReviewRecord"
       },
       "RouteActivity": {
         "properties": {
@@ -6213,6 +8962,342 @@
         ],
         "title": "SetupStatus"
       },
+      "ShareCreate": {
+        "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 365.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days",
+            "description": "Null: valid until revoked",
+            "default": 7
+          },
+          "show_map": {
+            "type": "boolean",
+            "title": "Show Map",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "ShareCreate"
+      },
+      "ShareOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path",
+            "description": "Only when created: /s/<token>. The token is not kept."
+          },
+          "show_map": {
+            "type": "boolean",
+            "title": "Show Map"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "views": {
+            "type": "integer",
+            "title": "Views"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "activity_id",
+          "path",
+          "show_map",
+          "expires_at",
+          "created_at",
+          "views"
+        ],
+        "title": "ShareOut"
+      },
+      "SharedActivity": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "sub_sport": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub Sport"
+          },
+          "day": {
+            "type": "string",
+            "title": "Day",
+            "description": "Local date (YYYY-MM-DD); the time of day is not shared"
+          },
+          "athlete": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Athlete"
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "moving_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moving S"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "ascent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascent M"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          },
+          "avg_power": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Power"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ],
+                    "type": "array",
+                    "maxItems": 2,
+                    "minItems": 2
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route",
+            "description": "Stretches of [lat, lon] outside the privacy zones; null without a map"
+          },
+          "profile": {
+            "items": {
+              "$ref": "#/components/schemas/ProfilePoint"
+            },
+            "type": "array",
+            "title": "Profile"
+          },
+          "splits": {
+            "items": {
+              "$ref": "#/components/schemas/SharedSplit"
+            },
+            "type": "array",
+            "title": "Splits"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/SharedPhoto"
+            },
+            "type": "array",
+            "title": "Photos"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "sport",
+          "sub_sport",
+          "day",
+          "athlete",
+          "duration_s",
+          "moving_s",
+          "distance_m",
+          "ascent_m",
+          "avg_hr",
+          "avg_power",
+          "route",
+          "profile",
+          "splits",
+          "photos"
+        ],
+        "title": "SharedActivity"
+      },
+      "SharedPhoto": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "caption": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caption"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "width",
+          "height",
+          "caption"
+        ],
+        "title": "SharedPhoto"
+      },
+      "SharedSplit": {
+        "properties": {
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "elevation_change_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elevation Change M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_m",
+          "time_s",
+          "elevation_change_m"
+        ],
+        "title": "SharedSplit"
+      },
       "Source": {
         "properties": {
           "id": {
@@ -6425,6 +9510,82 @@
           "sample_count"
         ],
         "title": "StreamsInfo"
+      },
+      "SubscriptionIn": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 2000,
+            "pattern": "^https://",
+            "title": "Endpoint"
+          },
+          "keys": {
+            "$ref": "#/components/schemas/SubscriptionKeys"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint",
+          "keys"
+        ],
+        "title": "SubscriptionIn"
+      },
+      "SubscriptionKeys": {
+        "properties": {
+          "p256dh": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "P256Dh"
+          },
+          "auth": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Auth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "p256dh",
+          "auth"
+        ],
+        "title": "SubscriptionKeys"
+      },
+      "SubscriptionOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "SubscriptionOut"
       },
       "Summary": {
         "properties": {
@@ -6648,6 +9809,19 @@
         ],
         "title": "SyncStatus"
       },
+      "TestResult": {
+        "properties": {
+          "sent": {
+            "type": "integer",
+            "title": "Sent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sent"
+        ],
+        "title": "TestResult"
+      },
       "Totals": {
         "properties": {
           "count": {
@@ -6752,6 +9926,44 @@
         ],
         "title": "TotpSetup"
       },
+      "Unsubscribe": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Endpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "Unsubscribe"
+      },
+      "UploadTarget": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "PUT each part to <url>/<index>?token=<token>"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "part_size": {
+            "type": "integer",
+            "title": "Part Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "token",
+          "part_size"
+        ],
+        "title": "UploadTarget"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -6791,6 +10003,79 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Weather": {
+        "properties": {
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "apparent_temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apparent Temperature"
+          },
+          "humidity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Humidity"
+          },
+          "wind_speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Speed"
+          },
+          "wind_direction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Direction"
+          }
+        },
+        "type": "object",
+        "title": "Weather",
+        "description": "As Strava recorded it (OS-406)."
       },
       "Week": {
         "properties": {

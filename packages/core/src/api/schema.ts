@@ -436,6 +436,107 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/activities/{activity_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Activity
+     * @description Summary, laps, per-km splits and best efforts. The series themselves are in `/streams`.
+     */
+    get: operations['getActivity'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Edit Activity
+     * @description Change the name, description, sport or gear. Only the fields sent change.
+     */
+    patch: operations['editActivity'];
+    trace?: never;
+  };
+  '/api/gear': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Gear */
+    get: operations['listGear'];
+    put?: never;
+    /** Create Gear */
+    post: operations['createGear'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/gear/{gear_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete Gear
+     * @description Delete gear. Its activities keep everything else and simply have no gear.
+     */
+    delete: operations['deleteGear'];
+    options?: never;
+    head?: never;
+    /** Update Gear */
+    patch: operations['updateGear'];
+    trace?: never;
+  };
+  '/api/activities/{activity_id}/photos': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Add Photo
+     * @description Add a photo (the image itself as the body). It is stored without its metadata.
+     */
+    post: operations['addPhoto'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/photos/{photo_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Photo */
+    get: operations['getPhoto'];
+    put?: never;
+    post?: never;
+    /** Delete Photo */
+    delete: operations['deletePhoto'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/activities': {
     parameters: {
       query?: never;
@@ -496,26 +597,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/activities/{activity_id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Get Activity
-     * @description Summary, laps, per-km splits and best efforts. The series themselves are in `/streams`.
-     */
-    get: operations['getActivity'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/api/activities/{activity_id}/streams': {
     parameters: {
       query?: never;
@@ -548,6 +629,330 @@ export interface paths {
      * @description The original FIT file, exactly as received from the source.
      */
     get: operations['getActivityFit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/activities/{activity_id}/shared': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Preview
+     * @description What a share link (or share image) of this activity shows, privacy zones applied.
+     */
+    get: operations['previewSharedActivity'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/activities/{activity_id}/shares': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Shares */
+    get: operations['listShares'];
+    put?: never;
+    /** Create Share */
+    post: operations['createShare'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/shares/{share_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Revoke Share */
+    delete: operations['revokeShare'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/public/shares/{token}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Shared
+     * @description A shared activity, for anyone with the link.
+     */
+    get: operations['getSharedActivity'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/public/shares/{token}/photos/{photo_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Shared Photo */
+    get: operations['getSharedPhoto'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/imports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Imports */
+    get: operations['listImports'];
+    put?: never;
+    /**
+     * Create Import
+     * @description Start an upload: a FIT, TCX or GPX file, a ZIP of them, a Garmin export or a Strava export.
+     */
+    post: operations['createImport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/imports/{import_id}/finish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Finish Import
+     * @description Every part is uploaded: queue the import.
+     */
+    post: operations['finishImport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/imports/{import_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Import */
+    get: operations['getImport'];
+    put?: never;
+    post?: never;
+    /**
+     * Delete Import
+     * @description Cancel an upload, or remove a finished import from the list (its activities stay).
+     */
+    delete: operations['deleteImport'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/exports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Exports */
+    get: operations['listExports'];
+    put?: never;
+    /**
+     * Create Export
+     * @description Prepare a ZIP with all your data: the original files, photos and everything else as JSON.
+     */
+    post: operations['createExport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/direct/uploads/{import_id}/{index}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Upload Part
+     * @description One part of an upload, authorised by the token `createImport` returned.
+     */
+    put: operations['uploadPart'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/direct/exports/{export_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download Export */
+    get: operations['downloadExport'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/notifications/key': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Push Key */
+    get: operations['getPushKey'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/notifications/subscriptions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Subscriptions */
+    get: operations['listPushSubscriptions'];
+    put?: never;
+    /** Subscribe */
+    post: operations['subscribePush'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/notifications/unsubscribe': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Unsubscribe */
+    post: operations['unsubscribePush'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/notifications/test': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Test
+     * @description Send a test notification to every subscribed browser, now.
+     */
+    post: operations['testPush'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/review': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Review
+     * @description A month or a year in review.
+     */
+    get: operations['getReview'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/strava-comparison': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Strava Comparison
+     * @description Our effort, calories and grade-adjusted distance against what Strava computed (OS-323).
+     */
+    get: operations['getStravaComparison'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1156,8 +1561,34 @@ export interface components {
        * @description Simplified route as an encoded polyline (precision 5)
        */
       route: string | null;
+      /**
+       * Photo
+       * @description First photo, for the card's thumbnail
+       */
+      photo?: number | null;
+      /**
+       * Photos
+       * @default 0
+       */
+      photos: number;
       /** Description */
       description: string | null;
+      gear: components['schemas']['GearRef'] | null;
+      /** Photo List */
+      photo_list: components['schemas']['PhotoRef'][];
+      weather: components['schemas']['Weather'] | null;
+      /**
+       * Edited Fields
+       * @description Edited by the user: imports and reprocessing keep them
+       */
+      edited_fields: string[];
+      /**
+       * Original Format
+       * @description fit, tcx or gpx; null without an original file
+       */
+      original_format: string | null;
+      /** Strava Id */
+      strava_id: string | null;
       /** Descent M */
       descent_m: number | null;
       /** Max Hr */
@@ -1203,6 +1634,20 @@ export interface components {
        */
       segments: components['schemas']['SegmentPass'][];
       streams: components['schemas']['StreamsInfo'] | null;
+    };
+    /** ActivityEdit */
+    ActivityEdit: {
+      /** Name */
+      name?: string | null;
+      /** Description */
+      description?: string | null;
+      /** Sport */
+      sport?: ('run' | 'ride' | 'strength' | 'walk' | 'row' | 'swim' | 'other') | null;
+      /**
+       * Gear Id
+       * @description 0 removes the gear
+       */
+      gear_id?: number | null;
     };
     /**
      * ActivityMetricsOut
@@ -1359,6 +1804,16 @@ export interface components {
        * @description Simplified route as an encoded polyline (precision 5)
        */
       route: string | null;
+      /**
+       * Photo
+       * @description First photo, for the card's thumbnail
+       */
+      photo?: number | null;
+      /**
+       * Photos
+       * @default 0
+       */
+      photos: number;
     };
     /** AppTokens */
     AppTokens: {
@@ -1445,6 +1900,21 @@ export interface components {
       /** Challenge */
       challenge: string;
     };
+    /** Comparison */
+    Comparison: {
+      /** Metrics */
+      metrics: components['schemas']['MetricComparison'][];
+      effort_scale: components['schemas']['EffortScale'] | null;
+    };
+    /** ComparisonPoint */
+    ComparisonPoint: {
+      /** Activity Id */
+      activity_id: number;
+      /** Ours */
+      ours: number;
+      /** Strava */
+      strava: number;
+    };
     /** Curve */
     Curve: {
       /** Duration S */
@@ -1511,6 +1981,21 @@ export interface components {
        */
       current: boolean;
     };
+    /** EditedActivity */
+    EditedActivity: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string | null;
+      /** Description */
+      description: string | null;
+      /** Sport */
+      sport: string;
+      /** Gear Id */
+      gear_id: number | null;
+      /** Edited Fields */
+      edited_fields: string[];
+    };
     /** EfficiencyPoint */
     EfficiencyPoint: {
       /**
@@ -1527,6 +2012,18 @@ export interface components {
       efficiency: number;
       /** Decoupling */
       decoupling: number | null;
+    };
+    /** EffortScale */
+    EffortScale: {
+      /**
+       * Coefficients
+       * @description Effort points per minute in each HR zone (Z1-Z5)
+       */
+      coefficients: number[];
+      /** R2 */
+      r2: number | null;
+      /** Count */
+      count: number;
     };
     /** EngineStatus */
     EngineStatus: {
@@ -1595,6 +2092,34 @@ export interface components {
        */
       created_at: string;
     };
+    /** ExportOut */
+    ExportOut: {
+      /** Id */
+      id: number;
+      /**
+       * Status
+       * @description queued, running, done or error
+       */
+      status: string;
+      /** Size */
+      size: number | null;
+      /** Error */
+      error: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Finished At */
+      finished_at: string | null;
+      /** Expires At */
+      expires_at: string | null;
+      /**
+       * Download Url
+       * @description Valid for an hour, when the export is done
+       */
+      download_url: string | null;
+    };
     /** FitnessDay */
     FitnessDay: {
       /**
@@ -1624,6 +2149,97 @@ export interface components {
     ForgotRequest: {
       /** Email */
       email: string;
+    };
+    /** GearIn */
+    GearIn: {
+      /**
+       * Kind
+       * @default shoe
+       * @enum {string}
+       */
+      kind: 'shoe' | 'bike' | 'other';
+      /** Name */
+      name: string;
+      /** Brand */
+      brand?: string | null;
+      /** Model */
+      model?: string | null;
+      /**
+       * Sports
+       * @default []
+       */
+      sports: ('run' | 'ride' | 'strength' | 'walk' | 'row' | 'swim' | 'other')[];
+      /**
+       * Initial M
+       * @default 0
+       */
+      initial_m: number;
+      /** Limit M */
+      limit_m?: number | null;
+    };
+    /** GearOut */
+    GearOut: {
+      /** Id */
+      id: number;
+      /** Kind */
+      kind: string;
+      /** Name */
+      name: string;
+      /** Brand */
+      brand: string | null;
+      /** Model */
+      model: string | null;
+      /** Sports */
+      sports: string[];
+      /** Initial M */
+      initial_m: number;
+      /** Limit M */
+      limit_m: number | null;
+      /** Retired */
+      retired: boolean;
+      /**
+       * Distance M
+       * @description Activities plus initial_m
+       */
+      distance_m: number;
+      /** Activities */
+      activities: number;
+      /** Moving S */
+      moving_s: number;
+      /** First Used */
+      first_used: string | null;
+      /** Last Used */
+      last_used: string | null;
+      /** Over Limit */
+      over_limit: boolean;
+    };
+    /** GearRef */
+    GearRef: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /** Kind */
+      kind: string;
+    };
+    /** GearUpdate */
+    GearUpdate: {
+      /** Kind */
+      kind?: ('shoe' | 'bike' | 'other') | null;
+      /** Name */
+      name?: string | null;
+      /** Brand */
+      brand?: string | null;
+      /** Model */
+      model?: string | null;
+      /** Sports */
+      sports?: ('run' | 'ride' | 'strength' | 'walk' | 'row' | 'swim' | 'other')[] | null;
+      /** Initial M */
+      initial_m?: number | null;
+      /** Limit M */
+      limit_m?: number | null;
+      /** Retired */
+      retired?: boolean | null;
     };
     /** GoalCreate */
     GoalCreate: {
@@ -1709,6 +2325,63 @@ export interface components {
        */
       routes: string[];
     };
+    /** ImportCreate */
+    ImportCreate: {
+      /** Filename */
+      filename: string;
+      /** Size */
+      size: number;
+    };
+    /** ImportOut */
+    ImportOut: {
+      /** Id */
+      id: number;
+      /** Kind */
+      kind: string | null;
+      /**
+       * Status
+       * @description uploading, queued, running, done or error
+       */
+      status: string;
+      /** Filename */
+      filename: string;
+      /** Size */
+      size: number;
+      /** Received */
+      received: number;
+      /** Total */
+      total: number;
+      /** Processed */
+      processed: number;
+      /** Created */
+      created: number;
+      /** Merged */
+      merged: number;
+      /** Skipped */
+      skipped: number;
+      /** Failed */
+      failed: number;
+      /** Photos */
+      photos: number;
+      /** Errors */
+      errors: components['schemas']['ImportProblem'][];
+      /** Error */
+      error: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Finished At */
+      finished_at: string | null;
+    };
+    /** ImportProblem */
+    ImportProblem: {
+      /** File */
+      file: string;
+      /** Error */
+      error: string;
+    };
     /** LapOut */
     LapOut: {
       /** Idx */
@@ -1759,6 +2432,41 @@ export interface components {
       /** Height Cm */
       height_cm?: number | null;
     };
+    /** MetricComparison */
+    MetricComparison: {
+      /**
+       * Metric
+       * @enum {string}
+       */
+      metric: 'effort' | 'calories' | 'grade_adjusted_distance';
+      /** Count */
+      count: number;
+      /**
+       * R2
+       * @description Coefficient of determination of ours against Strava's
+       */
+      r2: number | null;
+      /**
+       * Mae
+       * @description Mean absolute error, in the metric's unit
+       */
+      mae: number | null;
+      /**
+       * Ratio
+       * @description Mean of ours over mean of Strava's
+       */
+      ratio: number | null;
+      /**
+       * Points
+       * @description Up to 1000, for a scatter chart
+       */
+      points: components['schemas']['ComparisonPoint'][];
+      /**
+       * Largest
+       * @description The ten that differ the most
+       */
+      largest: components['schemas']['ComparisonPoint'][];
+    };
     /**
      * MonthTotals
      * @description One month of the feed, in the activities' own local time.
@@ -1780,6 +2488,44 @@ export interface components {
       moving_s: number;
       /** Ascent M */
       ascent_m: number;
+    };
+    /** NewImport */
+    NewImport: {
+      import: components['schemas']['ImportOut'];
+      upload: components['schemas']['UploadTarget'];
+    };
+    /** Notifications */
+    Notifications: {
+      /**
+       * Activity
+       * @default true
+       */
+      activity: boolean;
+      /**
+       * Record
+       * @default true
+       */
+      record: boolean;
+      /**
+       * Sync Error
+       * @default true
+       */
+      sync_error: boolean;
+      /**
+       * Garmin Key
+       * @default true
+       */
+      garmin_key: boolean;
+      /**
+       * Estimate
+       * @default false
+       */
+      estimate: boolean;
+      /**
+       * Import
+       * @default true
+       */
+      import: boolean;
     };
     /**
      * Options
@@ -1809,6 +2555,32 @@ export interface components {
        * @description Synced by a password manager (Google, iCloud…)
        */
       backed_up: boolean;
+    };
+    /** PhotoOut */
+    PhotoOut: {
+      /** Id */
+      id: number;
+      /** Activity Id */
+      activity_id: number;
+      /** Width */
+      width: number;
+      /** Height */
+      height: number;
+      /** Caption */
+      caption: string | null;
+      /** Source */
+      source: string;
+    };
+    /** PhotoRef */
+    PhotoRef: {
+      /** Id */
+      id: number;
+      /** Width */
+      width: number;
+      /** Height */
+      height: number;
+      /** Caption */
+      caption: string | null;
     };
     /** Preferences */
     Preferences: {
@@ -1858,6 +2630,12 @@ export interface components {
        * @description FTP set by the user (else the estimate)
        */
       ftp: number | null;
+      /**
+       * Privacy Zones
+       * @description Hidden from anything shared
+       */
+      privacy_zones: components['schemas']['PrivacyZone'][];
+      notifications: components['schemas']['Notifications'];
     };
     /**
      * PreferencesUpdate
@@ -1880,6 +2658,34 @@ export interface components {
       lthr?: number | null;
       /** Ftp */
       ftp?: number | null;
+      /** Privacy Zones */
+      privacy_zones?: components['schemas']['PrivacyZone'][] | null;
+      notifications?: components['schemas']['Notifications'] | null;
+    };
+    /** PrivacyZone */
+    PrivacyZone: {
+      /** Id */
+      id: string;
+      /**
+       * Name
+       * @default
+       */
+      name: string;
+      /** Lat */
+      lat: number;
+      /** Lon */
+      lon: number;
+      /** Radius M */
+      radius_m: number;
+    };
+    /** ProfilePoint */
+    ProfilePoint: {
+      /** Distance M */
+      distance_m: number;
+      /** Altitude M */
+      altitude_m: number | null;
+      /** Speed */
+      speed: number | null;
     };
     /** ProfileSummary */
     ProfileSummary: {
@@ -1935,6 +2741,14 @@ export interface components {
     Providers: {
       /** Google */
       google: boolean;
+    };
+    /** PushKey */
+    PushKey: {
+      /**
+       * Public Key
+       * @description VAPID application server key (base64url)
+       */
+      public_key: string;
     };
     /** RecentRecord */
     RecentRecord: {
@@ -2033,6 +2847,121 @@ export interface components {
        * @default
        */
       code: string;
+    };
+    /** Review */
+    Review: {
+      /**
+       * Period
+       * @enum {string}
+       */
+      period: 'month' | 'year';
+      /**
+       * Start
+       * Format: date
+       */
+      start: string;
+      /**
+       * End
+       * Format: date
+       * @description Exclusive
+       */
+      end: string;
+      totals: components['schemas']['Totals'];
+      /** @description The month or year before */
+      previous: components['schemas']['Totals'];
+      /** By Sport */
+      by_sport: {
+        [key: string]: components['schemas']['Totals'];
+      };
+      /** Active Days */
+      active_days: number;
+      /**
+       * Longest Streak
+       * @description Most consecutive days with an activity
+       */
+      longest_streak: number;
+      longest: components['schemas']['ReviewActivity'] | null;
+      hardest: components['schemas']['ReviewActivity'] | null;
+      hilliest: components['schemas']['ReviewActivity'] | null;
+      /** Records */
+      records: components['schemas']['ReviewRecord'][];
+      /** Gear */
+      gear: components['schemas']['ReviewGear'][];
+      /**
+       * Buckets
+       * @description Per day for a month, per month for a year
+       */
+      buckets: components['schemas']['ReviewBucket'][];
+      /** Photos */
+      photos: number;
+    };
+    /** ReviewActivity */
+    ReviewActivity: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string | null;
+      /** Sport */
+      sport: string;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Distance M */
+      distance_m: number | null;
+      /** Moving S */
+      moving_s: number;
+      /** Ascent M */
+      ascent_m: number | null;
+      /** Load */
+      load: number | null;
+    };
+    /** ReviewBucket */
+    ReviewBucket: {
+      /**
+       * Start
+       * Format: date
+       */
+      start: string;
+      /** Distance M */
+      distance_m: number;
+      /** Moving S */
+      moving_s: number;
+      /** Count */
+      count: number;
+    };
+    /** ReviewGear */
+    ReviewGear: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /** Kind */
+      kind: string;
+      /** Distance M */
+      distance_m: number;
+      /** Count */
+      count: number;
+    };
+    /** ReviewRecord */
+    ReviewRecord: {
+      /** Distance Key */
+      distance_key: string;
+      /** Time S */
+      time_s: number;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /**
+       * Previous S
+       * @description The record it beat, if any
+       */
+      previous_s: number | null;
     };
     /** RouteActivity */
     RouteActivity: {
@@ -2261,6 +3190,104 @@ export interface components {
       /** Open */
       open: boolean;
     };
+    /** ShareCreate */
+    ShareCreate: {
+      /**
+       * Days
+       * @description Null: valid until revoked
+       * @default 7
+       */
+      days: number | null;
+      /**
+       * Show Map
+       * @default true
+       */
+      show_map: boolean;
+    };
+    /** ShareOut */
+    ShareOut: {
+      /** Id */
+      id: number;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Path
+       * @description Only when created: /s/<token>. The token is not kept.
+       */
+      path: string | null;
+      /** Show Map */
+      show_map: boolean;
+      /** Expires At */
+      expires_at: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Views */
+      views: number;
+    };
+    /** SharedActivity */
+    SharedActivity: {
+      /** Name */
+      name: string | null;
+      /** Sport */
+      sport: string;
+      /** Sub Sport */
+      sub_sport: string | null;
+      /**
+       * Day
+       * @description Local date (YYYY-MM-DD); the time of day is not shared
+       */
+      day: string;
+      /** Athlete */
+      athlete: string | null;
+      /** Duration S */
+      duration_s: number;
+      /** Moving S */
+      moving_s: number | null;
+      /** Distance M */
+      distance_m: number | null;
+      /** Ascent M */
+      ascent_m: number | null;
+      /** Avg Hr */
+      avg_hr: number | null;
+      /** Avg Power */
+      avg_power: number | null;
+      /**
+       * Route
+       * @description Stretches of [lat, lon] outside the privacy zones; null without a map
+       */
+      route: [number, number][][] | null;
+      /** Profile */
+      profile: components['schemas']['ProfilePoint'][];
+      /** Splits */
+      splits: components['schemas']['SharedSplit'][];
+      /** Photos */
+      photos: components['schemas']['SharedPhoto'][];
+      /** Expires At */
+      expires_at?: string | null;
+    };
+    /** SharedPhoto */
+    SharedPhoto: {
+      /** Id */
+      id: number;
+      /** Width */
+      width: number;
+      /** Height */
+      height: number;
+      /** Caption */
+      caption: string | null;
+    };
+    /** SharedSplit */
+    SharedSplit: {
+      /** Distance M */
+      distance_m: number;
+      /** Time S */
+      time_s: number;
+      /** Elevation Change M */
+      elevation_change_m: number | null;
+    };
     /** Source */
     Source: {
       /** Id */
@@ -2343,6 +3370,28 @@ export interface components {
       series: string[];
       /** Sample Count */
       sample_count: number;
+    };
+    /** SubscriptionIn */
+    SubscriptionIn: {
+      /** Endpoint */
+      endpoint: string;
+      keys: components['schemas']['SubscriptionKeys'];
+      /** Name */
+      name?: string | null;
+    };
+    /** SubscriptionKeys */
+    SubscriptionKeys: {
+      /** P256Dh */
+      p256dh: string;
+      /** Auth */
+      auth: string;
+    };
+    /** SubscriptionOut */
+    SubscriptionOut: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string | null;
     };
     /** Summary */
     Summary: {
@@ -2441,6 +3490,11 @@ export interface components {
       /** Error */
       error: string | null;
     };
+    /** TestResult */
+    TestResult: {
+      /** Sent */
+      sent: number;
+    };
     /** Totals */
     Totals: {
       /**
@@ -2507,6 +3561,23 @@ export interface components {
        */
       qr_svg: string;
     };
+    /** Unsubscribe */
+    Unsubscribe: {
+      /** Endpoint */
+      endpoint: string;
+    };
+    /** UploadTarget */
+    UploadTarget: {
+      /**
+       * Url
+       * @description PUT each part to <url>/<index>?token=<token>
+       */
+      url: string;
+      /** Token */
+      token: string;
+      /** Part Size */
+      part_size: number;
+    };
     /** ValidationError */
     ValidationError: {
       /** Location */
@@ -2519,6 +3590,24 @@ export interface components {
       input?: unknown;
       /** Context */
       ctx?: Record<string, never>;
+    };
+    /**
+     * Weather
+     * @description As Strava recorded it (OS-406).
+     */
+    Weather: {
+      /** Condition */
+      condition?: string | null;
+      /** Temperature */
+      temperature?: number | null;
+      /** Apparent Temperature */
+      apparent_temperature?: number | null;
+      /** Humidity */
+      humidity?: number | null;
+      /** Wind Speed */
+      wind_speed?: number | null;
+      /** Wind Direction */
+      wind_direction?: number | null;
     };
     /** Week */
     Week: {
@@ -3250,6 +4339,286 @@ export interface operations {
       };
     };
   };
+  getActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ActivityDetail'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  editActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ActivityEdit'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EditedActivity'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listGear: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GearOut'][];
+        };
+      };
+    };
+  };
+  createGear: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GearIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GearOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deleteGear: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gear_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  updateGear: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gear_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GearUpdate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GearOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  addPhoto: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'image/*': string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PhotoOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getPhoto: {
+    parameters: {
+      query?: {
+        thumb?: boolean;
+      };
+      header?: never;
+      path: {
+        photo_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'image/jpeg': string;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deletePhoto: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        photo_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
   listActivities: {
     parameters: {
       query?: {
@@ -3374,37 +4743,6 @@ export interface operations {
       };
     };
   };
-  getActivity: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        activity_id: number;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ActivityDetail'];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HTTPValidationError'];
-        };
-      };
-    };
-  };
   getActivityStreams: {
     parameters: {
       query?: never;
@@ -3491,6 +4829,629 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  previewSharedActivity: {
+    parameters: {
+      query?: {
+        show_map?: boolean;
+      };
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SharedActivity'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listShares: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShareOut'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  createShare: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ShareCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShareOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  revokeShare: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        share_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getSharedActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SharedActivity'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getSharedPhoto: {
+    parameters: {
+      query?: {
+        thumb?: boolean;
+      };
+      header?: never;
+      path: {
+        token: string;
+        photo_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'image/jpeg': string;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listImports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportOut'][];
+        };
+      };
+    };
+  };
+  createImport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ImportCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NewImport'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  finishImport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        import_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getImport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        import_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deleteImport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        import_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listExports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExportOut'][];
+        };
+      };
+    };
+  };
+  createExport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExportOut'];
+        };
+      };
+    };
+  };
+  uploadPart: {
+    parameters: {
+      query: {
+        token: string;
+      };
+      header?: never;
+      path: {
+        import_id: number;
+        index: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/octet-stream': string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  downloadExport: {
+    parameters: {
+      query: {
+        token: string;
+      };
+      header?: never;
+      path: {
+        export_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/zip': string;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getPushKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PushKey'];
+        };
+      };
+    };
+  };
+  listPushSubscriptions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionOut'][];
+        };
+      };
+    };
+  };
+  subscribePush: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubscriptionIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  unsubscribePush: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Unsubscribe'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  testPush: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TestResult'];
+        };
+      };
+    };
+  };
+  getReview: {
+    parameters: {
+      query?: {
+        period?: 'month' | 'year';
+        /** @description YYYY-MM for a month, YYYY for a year */
+        value?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Review'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getStravaComparison: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Comparison'];
         };
       };
     };

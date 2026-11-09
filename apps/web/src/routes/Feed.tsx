@@ -236,7 +236,14 @@ function Card({
             </div>
           ))}
         </dl>
-        {route ? (
+        {activity.photo ? (
+          <img
+            className="thumb photo"
+            src={`/api/photos/${activity.photo}?thumb=true`}
+            alt=""
+            loading="lazy"
+          />
+        ) : route ? (
           <svg className="thumb" viewBox="0 0 88 64" aria-hidden="true">
             <polyline points={route} />
           </svg>

@@ -1,7 +1,7 @@
 /**
  * The app's frame: theme, the persisted query cache (OS-505) and the session (OS-503). Opening the app
  * asks for the fingerprint; without a session it shows sign-in. Signed in, it registers notifications
- * (OS-507), the background sync (OS-506) and refreshes the widget (OS-509).
+ * (OS-507), the background sync (OS-506), refreshes the widget (OS-509) and reads Health Connect (OS-607).
  */
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import type { ThemeChoice } from '@zankup/core';
@@ -17,6 +17,7 @@ import { AuthContext } from '../src/auth';
 import { scheduleBackgroundSync } from '../src/background';
 import { t } from '../src/i18n';
 import { forgetOfflineData, keepOffline, OFFLINE_MAX_AGE, persister, queryClient } from '../src/offline';
+import { readAndSend as readHealthConnect } from '../src/healthConnect';
 import { listenToTaps, registerPush } from '../src/push';
 import { authorisedClient, signOut, storeRefreshToken, unlock, type Session } from '../src/session';
 import { SignIn } from '../src/SignIn';
@@ -70,6 +71,7 @@ export default function Root() {
     void registerPush(api);
     void scheduleBackgroundSync();
     void refreshWidget(api).catch(() => undefined);
+    void readHealthConnect(api).catch(() => undefined); // only once allowed, at most hourly (OS-607)
     return listenToTaps();
   }, [api, session?.accessToken]);
 

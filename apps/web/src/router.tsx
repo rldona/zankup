@@ -3,6 +3,7 @@ import { createBrowserRouter, type RouteObject } from 'react-router';
 import { Activity } from './routes/Activity';
 import { AppError } from './routes/AppError';
 import { Feed, PickActivity } from './routes/Feed';
+import { Health } from './routes/Health';
 import { NotFound } from './routes/NotFound';
 import { Profile } from './routes/Profile';
 import { RequireSession } from './routes/RequireSession';
@@ -40,6 +41,7 @@ const screens: RouteObject[] = [
   { path: 'stats', element: <Stats /> },
   { path: 'stats/calendar', element: <TrainingCalendar /> },
   { path: 'stats/heatmap', element: <Heatmap /> },
+  { path: 'health', element: <Health /> },
   { path: 'routes', element: <RoutesList /> },
   { path: 'routes/:id', element: <RouteView /> },
   { path: 'segments', element: <SegmentsList /> },

@@ -31,7 +31,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from zankup.db.base import Base, Timestamps
 
 SOURCES = ("garmin", "strava", "file")
-SOURCE_KINDS = ("garmin", "google_health", "strava", "file")
+SOURCE_KINDS = ("garmin", "google_health", "health_connect", "strava", "file")
+# Where health data comes from (OS-601), and what is kept from each one.
+HEALTH_SOURCES = ("garmin", "google_health", "health_connect")
+HEALTH_METRICS = ("sleep", "resting_hr", "hrv", "spo2", "respiration", "steps")
 PLATFORMS = ("web", "android")
 SYNC_TRIGGERS = ("cron", "button", "initial", "import")
 SYNC_STATUSES = ("queued", "running", "success", "error")
@@ -328,8 +331,8 @@ class SyncRun(Base):
 class Source(Timestamps, Base):
     """A connected data source and its sync state.
 
-    `access_token` holds short-lived tokens only (Garmin's lasts 24 h). Long-lived credentials such as
-    OAuth refresh tokens (OS-603) must be stored encrypted.
+    `access_token` holds short-lived tokens only (Garmin's lasts 24 h, Google's 1 h). Long-lived
+    credentials such as OAuth refresh tokens (OS-603) go in `secret`, encrypted.
     """
 
     __tablename__ = "sources"
@@ -345,6 +348,9 @@ class Source(Timestamps, Base):
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     sync_cursor: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="Source-specific sync state")
+    secret: Mapped[bytes | None] = mapped_column(
+        LargeBinary, comment="Long-lived credential (an OAuth refresh token), encrypted: zankup.health.crypto"
+    )
 
 
 class Job(Base):
@@ -641,3 +647,78 @@ class ExportRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+# --- health (phase 6) --------------------------------------------------------------------------------
+
+
+class SleepSession(Timestamps, Base):
+    """One sleep from one source (OS-601). Several sources can record the same night: they are all
+    kept, and the dashboard picks one per night (zankup.health.resolve, OS-605).
+
+    `day` is the local date the person woke up on. `stages` is a compact list of
+    `[seconds from start, duration in seconds, stage]` with stage one of awake, light, deep, rem.
+    `score` is Zankup's own (zankup.health.sleep_score), the same for every source.
+    """
+
+    __tablename__ = "sleep_sessions"
+    __table_args__ = (
+        UniqueConstraint("user_id", "source", "external_id"),
+        CheckConstraint(_in("source", HEALTH_SOURCES), name="source"),
+        Index("ix_sleep_sessions_user_id_day", "user_id", "day"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    source: Mapped[str] = mapped_column(String(20))
+    external_id: Mapped[str] = mapped_column(String(128))
+    origin: Mapped[str | None] = mapped_column(
+        String(120), comment="The app or device that recorded it, when the source says (Health Connect)"
+    )
+    day: Mapped[date] = mapped_column(Date)
+    start_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    end_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    utc_offset_s: Mapped[int | None] = mapped_column(Integer)
+    nap: Mapped[bool] = mapped_column(default=False, server_default="false")
+    asleep_s: Mapped[int | None] = mapped_column(Integer)
+    awake_s: Mapped[int | None] = mapped_column(Integer)
+    light_s: Mapped[int | None] = mapped_column(Integer)
+    deep_s: Mapped[int | None] = mapped_column(Integer)
+    rem_s: Mapped[int | None] = mapped_column(Integer)
+    score: Mapped[int | None] = mapped_column(SmallInteger)
+    stages: Mapped[list[Any] | None] = mapped_column(JSONB)
+
+
+class DailyHealth(Timestamps, Base):
+    """One day's figures from one source (OS-601): resting HR, overnight HRV (RMSSD), SpO₂,
+    respiration and steps. `wear_s` is how long the source measured heart rate that day, used to
+    choose between sources (OS-605)."""
+
+    __tablename__ = "daily_health"
+    __table_args__ = (
+        UniqueConstraint("user_id", "source", "day"),
+        CheckConstraint(_in("source", HEALTH_SOURCES), name="source"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    source: Mapped[str] = mapped_column(String(20))
+    external_id: Mapped[str] = mapped_column(String(128))
+    day: Mapped[date] = mapped_column(Date)
+    resting_hr: Mapped[float | None] = mapped_column(Float)
+    hrv_ms: Mapped[float | None] = mapped_column(Float)
+    spo2: Mapped[float | None] = mapped_column(Float)
+    respiration: Mapped[float | None] = mapped_column(Float)
+    steps: Mapped[int | None] = mapped_column(Integer)
+    wear_s: Mapped[int | None] = mapped_column(Integer)
+
+
+class SourcePriority(Base):
+    """The person's order of sources for one metric (OS-605). Without a row, the automatic rules apply."""
+
+    __tablename__ = "source_priority"
+    __table_args__ = (CheckConstraint(_in("metric", HEALTH_METRICS), name="metric"),)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    metric: Mapped[str] = mapped_column(String(20), primary_key=True)
+    sources: Mapped[list[str]] = mapped_column(JSONB)

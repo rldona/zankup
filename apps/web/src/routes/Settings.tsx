@@ -17,6 +17,7 @@ import { Link } from 'react-router';
 
 import { api } from '../api';
 import { chosenLanguage, locale, switchLanguage, t } from '../i18n';
+import { HealthSources } from '../settings/Health';
 import { Notifications } from '../settings/Notifications';
 import { PrivacyZones } from '../settings/Privacy';
 import { ExportData } from './Library';
@@ -37,8 +38,8 @@ const day = (iso: string) =>
 
 /**
  * Settings (OS-212, OS-214): appearance, language and units, heart rate and zones, notifications
- * (OS-401), privacy zones (OS-407), your data (import, gear, export: OS-404, OS-410, OS-411), Garmin
- * and sessions.
+ * (OS-401), privacy zones (OS-407), your data (import, gear, export: OS-404, OS-410, OS-411), Garmin,
+ * health sources (OS-603, OS-605) and sessions.
  */
 export function Settings() {
   return (
@@ -52,6 +53,7 @@ export function Settings() {
       <PrivacyZones />
       <YourData />
       <Garmin />
+      <HealthSources />
       <Sessions />
     </section>
   );

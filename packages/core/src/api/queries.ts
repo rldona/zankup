@@ -36,6 +36,11 @@ export type Week = Json<'/api/week', 'get'>;
 export type SearchParams = NonNullable<paths['/api/activities/search']['get']['parameters']['query']>;
 export type SearchPage = Json<'/api/activities/search', 'get'>;
 export type PasskeyInfo = Json<'/api/auth/passkeys', 'get'>[number];
+export type HealthDay = Json<'/api/wellness/days', 'get'>[number];
+export type HealthNight = Json<'/api/wellness/nights/{day}', 'get'>;
+export type HealthSettings = Json<'/api/wellness/settings', 'get'>;
+export type HealthSourceName = HealthSettings['sources'][number]['source'];
+export type HealthMetric = keyof HealthSettings['priority'];
 
 /** An API error with its HTTP status, so callers can tell "signed out" (401) from other failures. */
 export class ApiError extends Error {
@@ -69,6 +74,7 @@ export const queryKeys = {
   passkeys: ['passkeys'] as const,
   syncs: ['syncs'] as const,
   providers: ['providers'] as const,
+  wellness: ['wellness'] as const,
   search: (params: object) => ['activities', 'search', params] as const,
   week: (today: string) => ['activities', 'week', today] as const,
   activities: (sport?: readonly string[]) => ['activities', { sport: sport ?? [] }] as const,
@@ -512,5 +518,34 @@ export function pushKeyQuery(api: ApiClient) {
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/notifications/key', { signal })),
     staleTime: Infinity,
+  };
+}
+
+// --- health (phase 6) ------------------------------------------------------------------------------
+
+/** One row per day with health data, one value per metric chosen between sources (OS-605, OS-606). */
+export function healthDaysQuery(api: ApiClient, start: string, end: string) {
+  return {
+    queryKey: [...queryKeys.wellness, 'days', start, end] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/wellness/days', { params: { query: { start, end } }, signal })),
+  };
+}
+
+/** A night's stages and how each source recorded it. */
+export function healthNightQuery(api: ApiClient, day: string) {
+  return {
+    queryKey: [...queryKeys.wellness, 'night', day] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/wellness/nights/{day}', { params: { path: { day } }, signal })),
+  };
+}
+
+/** The health sources, their state and the order chosen per metric. */
+export function healthSettingsQuery(api: ApiClient) {
+  return {
+    queryKey: [...queryKeys.wellness, 'settings'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/wellness/settings', { signal })),
   };
 }

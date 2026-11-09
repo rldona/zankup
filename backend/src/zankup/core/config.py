@@ -83,6 +83,14 @@ class Settings(BaseSettings):
 
     google_client_id: str | None = None
     google_client_secret: SecretStr | None = None
+    # Google Health (OS-603): the same OAuth client, with the Google Health API enabled in its project
+    # and <origin>/api/wellness/google/callback as an extra redirect URI.
+    google_health_enabled: bool = Field(
+        default=False, description="Offer connecting Google Health (Fitbit Air) in Settings"
+    )
+    google_health_webhook_secret: SecretStr | None = Field(
+        default=None, description="The subscriber's secret for /api/webhooks/google-health (OS-604)"
+    )
     anthropic_api_key: SecretStr | None = None
 
     @property
@@ -118,6 +126,9 @@ class Settings(BaseSettings):
             "email": self.resend_api_key is not None,
             "backups": self.backup_s3_bucket is not None or self.backup_dir is not None,
             "google_sign_in": self.google_client_id is not None and self.google_client_secret is not None,
+            "google_health": self.google_health_enabled
+            and self.google_client_id is not None
+            and self.google_client_secret is not None,
             "ai": self.anthropic_api_key is not None,
         }
 

@@ -1,5 +1,5 @@
 /**
- * Stats (OS-508): today's form, the last 28 days against the same span a year before, the estimates
+ * Stats (OS-508): today's form, last night's sleep and readiness (OS-606), the last 28 days against the same span a year before, the estimates
  * and predictions, and the records. All read from what the engine precomputed.
  */
 import {
@@ -7,6 +7,7 @@ import {
   fitnessQuery,
   formatDuration,
   formatHoursMinutes,
+  healthDaysQuery,
   recordsQuery,
   summaryQuery,
 } from '@zankup/core';
@@ -36,6 +37,9 @@ export default function StatsScreen() {
   const summary = useQuery(summaryQuery(api, period));
   const estimates = useQuery(estimatesQuery(api));
   const records = useQuery(recordsQuery(api, period));
+  const health = useQuery(healthDaysQuery(api, iso(new Date(now.getTime() - 3 * 86_400_000)), period.to));
+  const today = health.data?.at(-1);
+  const night = [...(health.data ?? [])].reverse().find((d) => d.sleep)?.sleep;
   const form = fitness.data?.at(-1);
   const current = summary.data?.current;
   const previous = summary.data?.previous;
@@ -52,6 +56,22 @@ export default function StatsScreen() {
             <Stat label={t('stats.ctl')} value={form.ctl.toFixed(0)} />
             <Stat label={t('stats.atl')} value={form.atl.toFixed(0)} />
             <Stat label={t('stats.tsb')} value={`${form.tsb > 0 ? '+' : ''}${form.tsb.toFixed(0)}`} />
+          </View>
+        </Card>
+      )}
+      {(night || today?.readiness) && (
+        <Card>
+          <Heading>{t('nav.health')}</Heading>
+          <View style={ui.stats}>
+            {today?.readiness && <Stat label={t('health.readiness')} value={String(today.readiness.score)} />}
+            {night && <Stat label={t('health.score')} value={String(night.score ?? '–')} />}
+            {night?.asleep_s != null && (
+              <Stat label={t('health.asleep')} value={formatHoursMinutes(night.asleep_s)} />
+            )}
+            {today?.hrv && <Stat label={t('health.hrv')} value={`${today.hrv.value.toFixed(0)} ms`} />}
+            {today?.resting_hr && (
+              <Stat label={t('health.restingHr')} value={`${today.resting_hr.value.toFixed(0)} bpm`} />
+            )}
           </View>
         </Card>
       )}

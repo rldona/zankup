@@ -20,6 +20,7 @@ def test_settings_read_environment(monkeypatch: pytest.MonkeyPatch) -> None:
         "email": False,
         "backups": False,
         "google_sign_in": False,
+        "google_health": False,
         "ai": False,
     }
 

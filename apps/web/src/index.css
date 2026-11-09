@@ -2443,3 +2443,72 @@ a.button {
   border-radius: var(--radius);
   overflow: hidden;
 }
+
+/* Health (OS-606) */
+.statshead .seg {
+  margin-left: auto;
+}
+
+.night .nighthead {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hypnogram {
+  position: relative;
+  height: 72px;
+  margin: 14px 0 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.hypnogram span {
+  position: absolute;
+  height: 25%;
+  min-width: 1px;
+}
+
+.stage-deep {
+  --stage: var(--sleep-deep);
+}
+.stage-light {
+  --stage: var(--sleep-light);
+}
+.stage-rem {
+  --stage: var(--sleep-rem);
+}
+.stage-awake {
+  --stage: var(--sleep-awake);
+}
+
+.hypnogram span,
+.stagelegend i {
+  background: var(--stage);
+}
+
+.stagelegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 0;
+  margin: 8px 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.stagelegend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+}
+
+.rows li > .actions {
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

@@ -35,6 +35,7 @@ Research carried out on 6–7 November 2026 for Zankup. Reference device: Garmin
   - `GET /activitylist-service/activities/search/activities?start=&limit=&startDate=&endDate=`: activity list, paginated with `start` and `limit`, dates as `YYYY-MM-DD`.
   - `GET /download-service/files/activity/{activityId}`: a ZIP containing `{id}_ACTIVITY.fit`.
   - `GET /activity-service/activity/{activityId}`: activity detail (not used yet).
+  - Health (phase 6): `GET /sleep-service/sleep/dailySleep?date=`, `GET /wellness-service/wellness/dailyHeartRate?date=`, `GET /hrv-service/hrv/daily/{start}/{end}` (204 when the watch has no HRV) and `GET /usersummary-service/stats/steps/daily/{start}/{end}`. Garmin documents no response schemas; the fields Zankup reads were taken from real answers (9 Nov 2026). This watch returned empty nights and HRV: it does not record sleep.
 - **List metadata:** about 80 fields per activity, including `activityId`, `activityName`, `activityType.typeKey`, `startTimeLocal`, `startTimeGMT`, `distance`, `duration`, `movingDuration`, `elevationGain`, `averageHR`, `maxHR`, `aerobicTrainingEffect`, `activityTrainingLoad`, `hrTimeInZone_1..5`, `fastestSplit_1000/1609/5000`, `startLatitude`, `startLongitude` and `locationName`.
 - **Real test (7 Nov 2026):** 5 activities since 25 October, listed and downloaded without errors (3 strength, 1 run, 1 ROUVY indoor ride).
 - **To be confirmed:** usage limits (not published), and whether Garmin will eventually strip the FITs from this API too, as it does with those it sends to third parties.
@@ -126,7 +127,26 @@ Export from 7 Nov 2026 (`strava/export_95859`, 370 MB, **outside git**):
 4. **Validation:** Strava's Relative Effort and grade-adjusted distance are used to cross-check our TRIMP and GAP.
 5. **Privacy zones:** can be imported as a starting point. ⚠️ They contain the home address: they never leave the server.
 
-## 11. Sources
+## 11. Phase 6 evaluations
+
+### Offline map downloads for routes (OS-609)
+
+- **What exists:** MapLibre React Native 11 (already in the app) has an `OfflineManager`: `createPack({ name, styleURL, bounds, minZoom, maxZoom })` downloads every tile of a box into the same SQLite cache the map uses, with progress events, and the map then works without a connection.
+- **Size:** a route's box plus a 1 km margin, zooms 10 to 15. A 20 × 20 km box is about 440 tiles at zoom 15 and 650 in all, roughly 20–40 MB of vector tiles. A long point-to-point route has a much larger box than its corridor, so it would be split into several small boxes along the line.
+- **Tiles:** OpenFreeMap (what the app and the PWA use) needs no key and has no published limit, but bulk downloads are exactly the use a free service asks you to be careful with. For larger use, a regional extract as a single PMTiles file served from the instance itself (Protomaps' tools) keeps it independent.
+- **Effort:** small to medium. A "Download map" button on a route, at most a few packs kept, deleted from Settings. The data side (routes, OS-322) already exists.
+- **Decision:** viable and cheap. Not built now: activities are recorded on the watch, and the map is only looked at afterwards. It goes back to the backlog for when routes are planned in Zankup.
+
+### Recording activities with the phone's GPS on Android (OS-610)
+
+- **What it takes:** a foreground service with type `location` (Android 14 requires `FOREGROUND_SERVICE_LOCATION`), precise location permission and, so the screen can be off, background location, which Google Play only allows with a declaration and a review. `expo-location`'s `startLocationUpdatesAsync` with its foreground service and `expo-task-manager` cover it in Expo; samples at 1 s with `BestForNavigation` accuracy.
+- **Heart rate:** a chest strap over Bluetooth LE (Heart Rate Service `0x180D`) with `react-native-ble-plx`.
+- **Saving:** points kept on the phone (SQLite) while recording, written as a GPX or TCX at the end and sent through the existing import (OS-404), which merges it if the watch recorded the same activity.
+- **Costs and risks:** battery (GPS at 1 Hz plus the screen), Doze and manufacturers that kill background apps (Samsung in particular), GPS noise on distance and elevation (docs/findings.md §4), and Play's review of background location.
+- **Effort:** large, as the roadmap guessed.
+- **Decision:** not worth it now. The watch records better data (barometric altitude, HR, Training Effect) and the phone would only duplicate it. It would make sense for people without a watch; if Zankup ever opens to them, start with a minimal recorder (GPS only, GPX through the import).
+
+## 12. Sources
 
 - Garmin: [Developer Program](https://developer.garmin.com/gc-developer-program/overview/), [Personal API](https://developer.garmin.com/gc-developer-program/personal/personal-api/), [official Python library](https://github.com/garmin/connect-personal-api-python)
 - [DC Rainmaker: Garmin opens its API](https://www.dcrainmaker.com/2026/10/garmin-connect-api-revamps-connect-developer.html), [the5krunner: Personal API](https://the5krunner.com/2026/10/22/garmin-personal-api/)

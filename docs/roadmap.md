@@ -407,6 +407,12 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
 
 **Goal:** sleep, HRV, resting HR and daily data from all your sources in a single model, without duplicates.
 
+**Status (9 Nov 2026):** built in one branch, OS-601 to OS-610. The dashboard was checked with sample
+data from two sources; Garmin's health endpoints were checked against the real Personal API (this watch
+records no sleep or HRV). Connecting Google Health in production needs the owner to enable the API and
+its scopes in Google Cloud (docs/self-hosting.md). OS-609 and OS-610 are evaluations, written up in
+docs/findings.md.
+
 - **OS-601 · Health data model** (M) · depends on OS-102
   - Tables `sleep_sessions` (stages), `daily_health` (resting HR, HRV, SpO₂, respiration, steps), `sources` and `source_priority`. Every data point stores its source and its `external_id`.
 - **OS-602 · Garmin: sleep, HRV and daily data from the Personal API** (M) · depends on OS-601 and OS-103

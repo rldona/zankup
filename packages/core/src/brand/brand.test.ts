@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import source from '../../../../docs/brand/assets/logo-mark.svg?raw';
 import wordmarkSource from '../../../../docs/brand/assets/wordmark.svg?raw';
 import { themes, THEMES } from '../tokens';
-import { MARK_SHAPES, markMaskUrl, markSvg } from './mark';
+import { MARK_SHAPES, MARK_VIEWBOX, markMaskUrl, markSvg } from './mark';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX, wordmarkSvg } from './wordmark';
 
 const attrs = (tag: string, from = source) => {
@@ -30,7 +30,8 @@ describe('brand mark', () => {
     const path = attrs('path');
     expect(path.d).toBe(MARK_SHAPES.path.d);
     expect(Number(path['stroke-width'])).toBe(MARK_SHAPES.path.strokeWidth);
-    expect(path['stroke-linecap']).toBe('round');
+    expect(path['stroke-linecap']).toBe(MARK_SHAPES.path.linecap);
+    expect(source).toContain(`viewBox="0 0 ${MARK_VIEWBOX.width} ${MARK_VIEWBOX.height}"`);
   });
 
   it('is one colour and can be used as a CSS mask', () => {

@@ -21,27 +21,27 @@ Zankup is the product name that replaces the working name OpenSport. This docume
 
 ## 2. Mark
 
-The **stride**: the n and the u of the wordmark drawn as one line that climbs, arches over, drops down the shared stem and arches back up. A *zancada*, and a route out and back. It comes from the letters the way Strava's chevron comes from its a's: in Momo Trust Display the n is exactly the u turned 180°, so the two letters compose into one stroke. Decided on 9 November 2026 from the exploration in `exploration/zankup/mark-nu*.html`: the falling wave, at the heaviest weight that stays open at 16 px, with round terminals like the earlier Z mark.
+The **stride**: the n and the u of the wordmark drawn as one line that climbs, arches over, drops down the shared stem and arches back up. A *zancada*, and a route out and back. It comes from the letters the way Strava's chevron comes from its a's: in Momo Trust Display the n is exactly the u turned 180°, so the two letters compose into one stroke. Decided on 9 November 2026 from the exploration in `exploration/zankup/mark-nu*.html`, and revised the same day after `mark-nu-bold.html`: the falling wave at weight 260 with flat terminals, like the typeface's own (`exploration/zankup/mark-nu-zancada-desc-plano-260.svg`).
 
 ![Zankup mark](assets/logo-mark.svg)
 
-Geometry (viewBox `0 0 120 134`, one colour, one stroke):
+Geometry (viewBox `0 0 1106 1300`, in the font's units, one colour, one stroke):
 
 ```svg
-<path d="M16 73 V38 A22 22 0 0 1 60 38 V96 A22 22 0 0 0 104 96 V61" fill="none" stroke="currentColor" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M140 710 V346 A206 206 0 0 1 553 346 V954 A206 206 0 0 0 966 954 V590" fill="none" stroke="currentColor" stroke-width="260" stroke-linecap="butt"/>
 ```
 
-Built on the Momo Trust Display lower case: stems to the x-height, semicircular arches, the n and the u sharing a stem, the u half a body lower. The stroke is 300/1000 em (the font's own is 162) and the counter 14 units, the bold cut the typeface does not have. Visual bounds are x 1 to 119 and y 1 to 133, so the mark is centred on the viewBox centre (60, 67).
+Built on the Momo Trust Display lower case: stems to the x-height, semicircular arches (radius 206), the n and the u sharing a stem, the u half a body (450 units) lower. The stroke is 260/1000 em (the font's own is 162) and the counter 153 units, the bold cut the typeface does not have. Visual bounds are x 10 to 1096 and y 10 to 1290, so the mark is centred on the viewBox centre (553, 650).
 
 Rules:
 
 - One colour only. The mark takes the foreground colour of the theme it sits on (`fg` on surfaces, `accentFg` on the accent). Render it as a CSS mask over `currentColor`, as the web app's `.mark` class does, or as an inline SVG with `currentColor`. The Android app draws the same path with Skia (`apps/mobile/src/Lockup.tsx`), from the geometry exported by `packages/core`.
 - Minimum size 16 px high. At that size the counters close to slits; the silhouette still reads as the wave.
-- Clear space: at least the stroke width (30/134 of the height) on every side.
-- Do not rotate, mirror, outline, add gradients or shadows, change the stroke weight, flatten the terminals, separate the two arches or add a third.
+- Clear space: at least the stroke width (260/1300 of the height) on every side.
+- Do not rotate, mirror, outline, add gradients or shadows, change the stroke weight, round the terminals, separate the two arches or add a third.
 - Do not use the bare letters "nu" from any typeface as the symbol: the mark is the two letters at a weight and an offset the font does not have, and that is what makes it a symbol.
 
-Kept alternatives, not for production: `assets/logo-mark-z.svg` (the earlier mark, a Z walked bottom-up from a start ring whose last stroke turns back and points up, internal name "F1"), `assets/logo-mark-z4.svg` (that Z without the ring), `assets/logo-mark-flat.svg` and `assets/logo-mark-sharp.svg` (flat terminals). The rising wave, the chain links, the padlock and the open ring from the same round stay in `exploration/zankup/`.
+Kept alternatives, not for production: the round-terminal stride at weight 300 that shipped first (`exploration/zankup/mark-nu-zancada-desc-redondo-300.svg`), `assets/logo-mark-z.svg` (the earlier mark, a Z walked bottom-up from a start ring whose last stroke turns back and points up, internal name "F1"), `assets/logo-mark-z4.svg` (that Z without the ring), `assets/logo-mark-flat.svg` and `assets/logo-mark-sharp.svg` (flat terminals). The rising wave, the chain links, the padlock and the open ring from the same round stay in `exploration/zankup/`.
 
 ## 3. Wordmark
 
@@ -74,7 +74,8 @@ The brand has no colour of its own beyond the product tokens in `packages/core/s
 | Mark and wordmark on surfaces | `fg` #17191a | `fg` #eceeed | `fg` #f2f2f2 |
 | Mark and wordmark on the accent | `accentFg` #ffffff | `accentFg` #06221a | `accentFg` #001a12 |
 | Accent | #0b8f6a | #20c997 | #38d9a9 |
-| App icons | `accentFg` mark #06221a on the dark-theme accent #20c997, as on the sign-in panel | | |
+| Web icons (favicon, PWA) | `accentFg` mark #06221a on the dark-theme accent #20c997, as on the sign-in panel | | |
+| Android app icon and splash | White mark on #20c997 (launcher, adaptive layers); white on #111 (splash) | | |
 
 ## 6. Assets
 
@@ -90,7 +91,7 @@ All in `docs/brand/assets/`:
 | `icon-maskable-512.png` | Android maskable icon, mark inside the 80 % safe zone |
 | `apple-touch-icon-180.png` | iOS home-screen icon |
 
-The Expo app's icons (`apps/mobile/assets/`: `icon.png`, the Android adaptive layers and `splash-icon.png`) come from the same geometry. All the PNGs are rendered from the SVG path above with Chromium; regenerate them from the path when the mark changes rather than editing them.
+The Expo app's icons (`apps/mobile/assets/`: `icon.png`, the Android adaptive layers and `splash-icon.png`) come from the same geometry, with the mark in white. Every icon, `logo-mark.svg` and `favicon.svg` are generated by `scripts/brand_icons.py` from `packages/core/src/brand/mark.ts` (PNGs rendered with headless Chrome): run it when the mark changes rather than editing them.
 | `manifest.webmanifest` | PWA manifest with name, colours and the icons above |
 
 Everything here is an original design made for the project; nothing is traced from third-party material. The earlier mountain mark in `docs/prototypes/assets/logo-mark.svg` was traced from a template and **must not ship**: replace it when implementing this guide.
@@ -108,7 +109,7 @@ Two pieces of work, tracked separately. Do the rename only after the domain and 
 3. Load Momo Trust Display for brand text only, with the system stack as fallback.
 4. Check legibility at 16 px in every theme in `tokens.json` (light, dark, oled, and any high-contrast theme).
 5. Delete or replace `docs/prototypes/assets/` (the traced mountain and its icons) and the prototype's `.mark` mask URL.
-6. Expo: adaptive icon from the same mark, #06221a on #20c997 (monochrome layer white, Android tints it); splash, white mark on #111.
+6. Expo: adaptive icon from the same mark, white on #20c997 (monochrome layer white, Android tints it); splash, white mark on #111.
 
 **Status (9 November 2026):** done for the stride mark. The web app shows the vector wordmark from `packages/core` in the header and on the sign-in, setup, recovery and shared pages, and ships the mark as favicon, PWA icons and manifest; the Android app draws the same wordmark with Skia on sign-in and the lock screen and takes its launcher icon, adaptive layers and splash from `apps/mobile/assets/`. The mark no longer appears inside either app. The prototypes in `docs/prototypes/` keep the traced mountain and are not shipped.
 
@@ -142,4 +143,4 @@ The old volume (`opensport_pgdata`) can be removed with `docker volume rm opensp
 
 ## 8. Exploration
 
-The decision trail is in `exploration/`: `mountain/` holds the first logo round (mountain and switchback trail, candidate N1), `zankup/` holds the Z rounds, the fusion with the start ring, the wordmark comparisons, and `wordmark-n-inverted-u.*`: the wordmark built from the Momo Trust Display outlines with the N replaced by the U turned 180° (and, as a second column, flipped vertically), in the three cases, in the lock-up and at small sizes, plus one vector SVG per case (`wordmark-n-inverted-u-{caps,title,lower}.svg`). `mark-nu.*` is the symbol round built from the same two letters: six compositions of the n and u (rising and falling wave, links, padlock, open ring, ligature), each as a symbol, as an app icon, at 16 to 32 px and in the lock-up, with one SVG per candidate (`mark-nu-*.svg`). `mark-nu-bold.*` takes the two waves to heavier weights: Momo has a single weight, so the n and u are rebuilt on its geometry as a stroke of 220, 260, 300 and 340 thousandths of an em, with flat terminals like the font and round ones like the Z mark (`mark-nu-zancada-*.svg`). From that sheet the falling wave at 300 with round terminals became the mark (section 2). Each `comparison-*.png` is a rendered sheet; the matching `.html` regenerates it in a browser. The working page with every naming check (domains via registry RDAP, PyPI, npm, GitHub, app stores) lives outside the repo.
+The decision trail is in `exploration/`: `mountain/` holds the first logo round (mountain and switchback trail, candidate N1), `zankup/` holds the Z rounds, the fusion with the start ring, the wordmark comparisons, and `wordmark-n-inverted-u.*`: the wordmark built from the Momo Trust Display outlines with the N replaced by the U turned 180° (and, as a second column, flipped vertically), in the three cases, in the lock-up and at small sizes, plus one vector SVG per case (`wordmark-n-inverted-u-{caps,title,lower}.svg`). `mark-nu.*` is the symbol round built from the same two letters: six compositions of the n and u (rising and falling wave, links, padlock, open ring, ligature), each as a symbol, as an app icon, at 16 to 32 px and in the lock-up, with one SVG per candidate (`mark-nu-*.svg`). `mark-nu-bold.*` takes the two waves to heavier weights: Momo has a single weight, so the n and u are rebuilt on its geometry as a stroke of 220, 260, 300 and 340 thousandths of an em, with flat terminals like the font and round ones like the Z mark (`mark-nu-zancada-*.svg`). From that sheet the falling wave at 300 with round terminals became the mark first, and then the falling wave at 260 with flat terminals (section 2). Each `comparison-*.png` is a rendered sheet; the matching `.html` regenerates it in a browser. The working page with every naming check (domains via registry RDAP, PyPI, npm, GitHub, app stores) lives outside the repo.

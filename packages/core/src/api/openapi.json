@@ -103,7 +103,7 @@
           "auth"
         ],
         "summary": "Refresh",
-        "description": "App only: exchange a refresh token for a new access token and a new refresh token (rotation).",
+        "description": "App only: exchange a refresh token for a new access token and, unless `rotate` is false, a new\nrefresh token. Either way the session's expiry starts again.",
         "operationId": "refreshTokens",
         "requestBody": {
           "content": {
@@ -683,6 +683,70 @@
         "responses": {
           "303": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google/mobile/nonce": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Mobile Nonce",
+        "description": "A nonce for the app's native Google sign-in, and the signed state to send back with the token.",
+        "operationId": "googleMobileNonce",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileNonce"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/google/mobile": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Mobile Sign In",
+        "description": "The app's native Google sign-in: tokens for the user linked to that Google account, or 401.",
+        "operationId": "googleMobileSignIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MobileSignIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppTokens"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -2508,6 +2572,41 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/Unsubscribe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/fcm": {
+      "put": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Set Fcm Token",
+        "description": "The Android app's Firebase token for this signed-in device (OS-507).",
+        "operationId": "setFcmToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FcmToken"
               }
             }
           },
@@ -6038,6 +6137,28 @@
         ],
         "title": "ExportOut"
       },
+      "FcmToken": {
+        "properties": {
+          "token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4096
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token",
+            "description": "Null stops notifications on this device"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "FcmToken"
+      },
       "FitnessDay": {
         "properties": {
           "day": {
@@ -7062,6 +7183,57 @@
         ],
         "title": "MetricComparison"
       },
+      "MobileNonce": {
+        "properties": {
+          "nonce": {
+            "type": "string",
+            "title": "Nonce"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nonce",
+          "state"
+        ],
+        "title": "MobileNonce"
+      },
+      "MobileSignIn": {
+        "properties": {
+          "id_token": {
+            "type": "string",
+            "maxLength": 8192,
+            "title": "Id Token"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State",
+            "description": "From /mobile/nonce, when the token carries that nonce"
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Device Name",
+            "default": "Android"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_token"
+        ],
+        "title": "MobileSignIn"
+      },
       "MonthTotals": {
         "properties": {
           "month": {
@@ -7818,6 +7990,18 @@
           "google": {
             "type": "boolean",
             "title": "Google"
+          },
+          "google_client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Google Client Id",
+            "description": "Public: the Android app asks Google for ID tokens for this client"
           }
         },
         "type": "object",
@@ -7984,6 +8168,12 @@
           "refresh_token": {
             "type": "string",
             "title": "Refresh Token"
+          },
+          "rotate": {
+            "type": "boolean",
+            "title": "Rotate",
+            "description": "False keeps the same refresh token: the Android app stores it under the fingerprint (Keystore), where every write needs the sensor again",
+            "default": true
           }
         },
         "type": "object",

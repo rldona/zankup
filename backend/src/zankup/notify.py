@@ -13,6 +13,10 @@ Kinds (and whether they are on by default, OS-402):
 - `estimate`: an estimate (FTP, critical speed, VDOT) went up. Off by default.
 - `import`: an import finished.
 
+The Android app (OS-507) gets the same notifications through Firebase Cloud Messaging (HTTP v1): its
+token is kept on its device row (`devices.push_endpoint`) and messages are signed with the service
+account in FCM_SERVICE_ACCOUNT. A token FCM no longer knows is forgotten.
+
 Web Push is implemented here with `cryptography` and `pyjwt` (both already needed): payloads are
 encrypted with `aes128gcm` (RFC 8291) and requests signed with VAPID (RFC 8292). The VAPID key comes
 from VAPID_PRIVATE_KEY or, when that is not set, is generated once and kept on the data volume.
@@ -41,7 +45,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from zankup.core.config import Settings
-from zankup.db.models import Job, PushSubscription, UserSettings
+from zankup.db.models import Device, Job, PushSubscription, UserSettings
 from zankup.jobs.queue import enqueue
 
 log = logging.getLogger("zankup.notify")
@@ -115,6 +119,8 @@ def notify(session: Session, user_id: int, kind: str, data: dict[str, Any], key:
         return False
     subscribed = session.scalar(
         select(PushSubscription.id).where(PushSubscription.user_id == user_id).limit(1)
+    ) or session.scalar(
+        select(Device.id).where(Device.user_id == user_id, Device.push_endpoint.is_not(None)).limit(1)
     )
     if subscribed is None:
         return False
@@ -271,9 +277,83 @@ def send(settings: Settings, subscription: PushSubscription, content: dict[str, 
     return response.status_code
 
 
+# --- Firebase Cloud Messaging (the Android app) -------------------------------------------------------
+
+FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
+_fcm_token: dict[str, Any] = {}
+
+
+def fcm_access_token(account: dict[str, Any]) -> str:
+    """An OAuth access token for FCM from the service account (JWT bearer grant), cached ~55 min."""
+    now = int(time.time())
+    if _fcm_token.get("email") == account["client_email"] and _fcm_token.get("expires", 0) > now + 60:
+        return str(_fcm_token["token"])
+    token_uri = account.get("token_uri", "https://oauth2.googleapis.com/token")
+    assertion = jwt.encode(
+        {"iss": account["client_email"], "scope": FCM_SCOPE, "aud": token_uri, "iat": now, "exp": now + 3600},
+        account["private_key"],
+        algorithm="RS256",
+    )
+    response = httpx.post(
+        token_uri,
+        data={"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": assertion},
+        timeout=10,
+    )
+    response.raise_for_status()
+    body = response.json()
+    _fcm_token.update(
+        email=account["client_email"], token=body["access_token"], expires=now + int(body["expires_in"])
+    )
+    return str(body["access_token"])
+
+
+def send_fcm(account: dict[str, Any], token: str, content: dict[str, Any]) -> int:
+    """One FCM message. Returns the HTTP status (404 means the token is gone)."""
+    tag = str(content.get("tag", ""))
+    response = httpx.post(
+        f"https://fcm.googleapis.com/v1/projects/{account['project_id']}/messages:send",
+        headers={"Authorization": f"Bearer {fcm_access_token(account)}"},
+        json={
+            "message": {
+                "token": token,
+                "notification": {"title": content["title"], "body": content["body"]},
+                "data": {"url": str(content.get("url", "/")), "tag": tag},
+                "android": {"notification": {"tag": tag, "channel_id": "default"}},
+            }
+        },
+        timeout=10,
+    )
+    return response.status_code
+
+
+def fcm_account(settings: Settings) -> dict[str, Any] | None:
+    if settings.fcm_service_account is None:
+        return None
+    try:
+        account: dict[str, Any] = json.loads(settings.fcm_service_account.get_secret_value())
+    except ValueError:
+        log.warning("FCM_SERVICE_ACCOUNT is not valid JSON")
+        return None
+    return account
+
+
 def deliver(session: Session, settings: Settings, user_id: int, content: dict[str, Any]) -> int:
-    """Send to every subscription of the user. Returns how many accepted it."""
+    """Send to every browser subscription and app of the user. Returns how many accepted it."""
     sent = 0
+    account = fcm_account(settings)
+    if account is not None:
+        for device in session.scalars(
+            select(Device).where(Device.user_id == user_id, Device.push_endpoint.is_not(None))
+        ):
+            try:
+                code = send_fcm(account, str(device.push_endpoint), content)
+            except (httpx.HTTPError, KeyError, ValueError) as error:
+                log.warning("FCM not sent", extra={"device": device.id, "error": str(error)[:200]})
+                continue
+            if code == 404:
+                device.push_endpoint = None
+            elif 200 <= code < 300:
+                sent += 1
     for subscription in session.scalars(select(PushSubscription).where(PushSubscription.user_id == user_id)):
         try:
             code = send(settings, subscription, content)

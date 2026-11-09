@@ -1,5 +1,6 @@
 """Scheduled work: a Garmin sync every SYNC_INTERVAL_MINUTES (OS-109), the daily backup at
-BACKUP_HOUR_UTC (OS-114) and pruning of old jobs.
+BACKUP_HOUR_UTC (OS-114), hourly health syncs from Garmin and Google Health (OS-602, OS-603; Google's
+webhooks bring data sooner when set up, OS-604) and pruning of old jobs.
 
 Not a Railway cron service: it would not see the volume with the original FIT files, so the schedule
 lives next to the worker. Time is cut into slots of the interval, and each slot's sync job has the slot
@@ -36,8 +37,11 @@ class Scheduler:
         owner_email: str,
         backup_hour: int | None = None,
         garmin_key_expires_on: date | None = None,
+        garmin_health: bool = False,
+        google_health: bool = False,
         tick_s: float = TICK_S,
     ) -> None:
+        self.garmin_health, self.google_health = garmin_health, google_health
         self.sessions, self.interval, self.owner_email, self.tick_s = sessions, interval, owner_email, tick_s
         self.backup_hour = backup_hour
         self.garmin_key_expires_on = garmin_key_expires_on
@@ -70,6 +74,31 @@ class Scheduler:
 
         notify(session, user_id, "garmin_key", {"date": expires.isoformat()}, key=f"garmin_key:{expires}")
 
+    def queue_health(self, session: Session, user_id: int, when: datetime) -> list[str]:
+        """This hour's health syncs, for the sources that are connected and due."""
+        from zankup.health import garmin, google
+
+        hour = when.strftime("%Y%m%d%H")
+        queued = []
+        for kind, enabled, module in (
+            ("garmin_health", self.garmin_health, garmin),
+            ("google_health", self.google_health, google),
+        ):
+            if (
+                enabled
+                and module.due(session, user_id, when)
+                and enqueue(
+                    session,
+                    f"sync_{kind}",
+                    user_id=user_id,
+                    payload={"trigger": "cron"},
+                    dedupe_key=f"sync:{kind}:{user_id}:h{hour}",
+                    max_attempts=2,
+                )
+            ):
+                queued.append(kind)
+        return queued
+
     def tick(self, when: datetime | None = None) -> int | None:
         """Queue this slot's sync and today's backup if they are not queued yet, and prune old finished
         jobs. Returns the id of the sync job queued, if any."""
@@ -87,12 +116,15 @@ class Scheduler:
                     max_attempts=2,  # the next slot is a retry anyway
                 )
             backup_id = self.queue_backup(session, user_id, when)
+            health = self.queue_health(session, user_id, when)
             self.warn_garmin_key(session, user_id, when)
             pruned = session.execute(
                 delete(Job).where(Job.status.in_(("done", "failed")), Job.finished_at < when - KEEP_FINISHED)
             ).rowcount  # type: ignore[attr-defined]
         if job_id is not None:
             log.info("Scheduled sync queued", extra={"job_id": job_id, "slot": self.slot(when)})
+        if health:
+            log.info("Health syncs queued", extra={"sources": health})
         if backup_id is not None:
             log.info("Daily backup queued", extra={"job_id": backup_id})
         if pruned:
@@ -126,7 +158,8 @@ def build_scheduler() -> Scheduler | None:
     settings = get_settings()
     syncs = settings.garmin_personal_api_key is not None and settings.sync_interval_minutes > 0
     backups = settings.integrations()["backups"]
-    if not syncs and not backups:
+    google_health = settings.integrations()["google_health"]
+    if not syncs and not backups and not google_health:
         return None
     return Scheduler(
         sessionmaker(get_engine(), expire_on_commit=False),
@@ -134,4 +167,6 @@ def build_scheduler() -> Scheduler | None:
         owner_email=settings.owner_email,
         backup_hour=settings.backup_hour_utc if backups else None,
         garmin_key_expires_on=settings.garmin_key_expires_on if syncs else None,
+        garmin_health=syncs,
+        google_health=google_health,
     )

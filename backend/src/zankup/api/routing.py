@@ -22,6 +22,11 @@ PUBLIC_PATHS = {
     "/api/auth/google/callback",
     "/api/auth/google/mobile/nonce",
     "/api/auth/google/mobile",
+    # Connecting Google Health: a browser redirect; both check the session themselves (OS-603).
+    "/api/wellness/google/start",
+    "/api/wellness/google/callback",
+    # Google Health's notifications, authorised by the subscriber secret and a signature (OS-604).
+    "/api/webhooks/google-health",
     # A shared activity (OS-408): anyone with the link.
     "/api/public/shares/{token}",
     "/api/public/shares/{token}/photos/{photo_id}",

@@ -5,7 +5,7 @@ import { api } from '../api';
 import { t } from '../i18n';
 import { Wordmark } from '../Wordmark';
 import { ErrorBox } from '../signin/CodeForm';
-import { passwordStrength } from '../signin/strength';
+import { passwordStrength } from '@zankup/core';
 import { Waves } from '../signin/Waves';
 
 /** The sign-in screen's frame: brand panel with waves, and the card. */

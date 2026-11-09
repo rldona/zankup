@@ -28,6 +28,7 @@ import { ageOn, goalTarget, initials, validDate } from './helpers';
 import { effortName } from '../estimates';
 import { locale, t } from '../i18n';
 import { asSport, useFormat, useHrMax } from '../prefs';
+import { addPasskey, passkeysSupported, SignInError } from '../session';
 import { GoalCard } from '../stats/Sections';
 import { useTheme } from '../theme';
 import {
@@ -486,7 +487,7 @@ export function Account({ me }: { me: Me }) {
             onPress={() => router.push('/settings/account')}
           />
         )}
-        <MenuRow label={t('profile.sessionsLink')} onPress={() => router.push('/settings/account')} last />
+        <MenuRow label={t('settings.sessions')} onPress={() => router.push('/settings/account')} last />
       </Card>
       <Button onPress={() => void signOut()}>{t('nav.signOut')}</Button>
     </>
@@ -504,9 +505,16 @@ function Passkeys() {
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: passkeysQuery(api).queryKey }),
   });
+  const add = useMutation({
+    mutationFn: () => addPasskey(api),
+    onSuccess: (added) => {
+      if (added) void queryClient.invalidateQueries({ queryKey: passkeysQuery(api).queryKey });
+    },
+  });
   return (
     <Card>
       <Heading>{t('profile.passkeys')}</Heading>
+      <Muted>{t('profile.passkeysHelp')}</Muted>
       <Muted>{t('mobile.passkeysOnWeb')}</Muted>
       {passkeys.data?.length === 0 && <Muted>{t('profile.noPasskeys')}</Muted>}
       {passkeys.data?.map((p) => (
@@ -537,6 +545,17 @@ function Passkeys() {
           </Button>
         </ListRow>
       ))}
+      {passkeysSupported() && (
+        <Button disabled={add.isPending} onPress={() => add.mutate()}>
+          {t('profile.addPasskey')}
+        </Button>
+      )}
+      {add.data === true && <Muted accessibilityRole="alert">{t('profile.passkeyAdded')}</Muted>}
+      {add.isError && (
+        <Muted accessibilityRole="alert">
+          {add.error instanceof SignInError ? add.error.message : t('profile.passkeyFailed')}
+        </Muted>
+      )}
     </Card>
   );
 }

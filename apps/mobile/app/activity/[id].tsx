@@ -32,7 +32,7 @@ import { RouteMap } from '../../src/detail/RouteMap';
 import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../../src/detail/Sections';
 import { Strength } from '../../src/detail/Strength';
 import { EditActivity, metaLine, Photos, Replay, SaveSegment } from '../../src/detail/Tools';
-import { SportIcon } from '../../src/Icon';
+import { Icon, SportIcon } from '../../src/Icon';
 import { buildTrack, sectionStats, type SectionStats } from '../../src/detail/track';
 import { locale, t } from '../../src/i18n';
 import { streamsQuery } from '../../src/offline';
@@ -43,7 +43,6 @@ import { useTheme } from '../../src/theme';
 import {
   accent,
   onAccent,
-  Button,
   Card,
   Choice,
   Empty,
@@ -177,7 +176,31 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
 
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: 32 }}>
-      <Stack.Screen options={{ title: a.name ?? t(`sport.${sport}`) }} />
+      <Stack.Screen
+        options={{
+          title: a.name ?? t(`sport.${sport}`),
+          headerRight: () => (
+            <View style={{ flexDirection: 'row', gap: 20, alignItems: 'center' }}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('activity.edit')}
+                hitSlop={10}
+                onPress={() => setEditing(true)}
+              >
+                <Icon name="edit" color={c.fg} />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('activity.share')}
+                hitSlop={10}
+                onPress={() => void share()}
+              >
+                <Icon name="share" color={c.fg} />
+              </Pressable>
+            </View>
+          ),
+        }}
+      />
       {track?.hasGps && (
         <View style={{ height: 300 }}>
           <RouteMap
@@ -298,8 +321,8 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
           </Card>
         )}
         <Photos activity={a} />
-        {(a.sets ?? []).length > 0 && <Strength sets={a.sets} />}
         {series && <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />}
+        {(a.sets ?? []).length > 0 && <Strength sets={a.sets} />}
         <RouteAndSegments activity={a} />
         <Power activity={a} />
         <BestEfforts activity={a} format={format} />
@@ -310,19 +333,8 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             <Text style={{ color: c.fg }}>{a.description}</Text>
           </Card>
         ) : null}
-        <Button onPress={() => setEditing(true)}>{t('activity.edit')}</Button>
-        <Button onPress={() => void share()}>{t('activity.share')}</Button>
-        <Muted>
-          {t('activity.origin')}: {sourceLabel(a.source)}
-        </Muted>
       </View>
       {editing && <EditActivity activity={a} onClose={() => setEditing(false)} />}
     </ScrollView>
   );
-}
-
-function sourceLabel(source: string): string {
-  return source === 'garmin' || source === 'strava' || source === 'manual'
-    ? t(`activity.source.${source}`)
-    : source;
 }

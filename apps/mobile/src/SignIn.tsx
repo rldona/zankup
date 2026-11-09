@@ -4,7 +4,6 @@
  * account sheet; "forgot it?"; and on a brand-new instance, creating its account. After that the
  * fingerprint is enough (session.ts).
  */
-import { GoogleSignin, isErrorWithCode, statusCodes } from '@react-native-google-signin/google-signin';
 import { createApiClient } from '@zankup/core';
 import { useEffect, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Pressable, Text, View } from 'react-native';
@@ -228,21 +227,8 @@ function PasswordStep({
   const google = () =>
     run('google', async () => {
       if (!googleClient) return;
-      GoogleSignin.configure({ webClientId: googleClient });
-      try {
-        await GoogleSignin.hasPlayServices();
-        const result = await GoogleSignin.signIn();
-        if (result.type !== 'success' || !result.data.idToken) return; // closed the sheet
-        onSignedIn(await googleStep(baseUrl, result.data.idToken));
-      } catch (failure) {
-        if (isErrorWithCode(failure) && failure.code === statusCodes.SIGN_IN_CANCELLED) return;
-        throw failure instanceof SignInError ? failure : new SignInError(t('mobile.googleFailed'));
-      } finally {
-        // The API takes each Google token once (this free SDK cannot carry a nonce), and Google keeps
-        // handing back the same one for about an hour: revoking clears it, so the next sign-in gets a
-        // fresh token and picks the account again.
-        await GoogleSignin.revokeAccess().catch(() => GoogleSignin.signOut().catch(() => undefined));
-      }
+      const session = await googleStep(baseUrl, googleClient);
+      if (session) onSignedIn(session);
     });
 
   return (

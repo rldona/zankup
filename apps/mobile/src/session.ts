@@ -18,6 +18,7 @@ import { Passkey, type PasskeyCreateRequest, type PasskeyGetRequest } from 'reac
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 
+import { signInWithGoogle } from '../modules/google-id/src';
 import { t } from './i18n';
 import { keyInvalidated, normaliseUrl } from './links';
 import { failure } from './signin/rules';
@@ -95,13 +96,28 @@ export async function codeStep(baseUrl: string, challenge: string, code: string)
   return keep(baseUrl, data);
 }
 
-/** Native Google sign-in: the ID token from the account sheet, for this instance's web client. */
-export async function googleStep(baseUrl: string, idToken: string): Promise<Session> {
+/**
+ * Native Google sign-in (Android's Credential Manager): the instance gives a nonce, Google an ID token
+ * for this instance's web client carrying it, and the API checks both. A fresh token every time; null
+ * when the sheet is dismissed.
+ */
+export async function googleStep(baseUrl: string, webClientId: string): Promise<Session | null> {
   const api = createApiClient(baseUrl);
-  const { data, error } = await api.POST('/api/auth/google/mobile', {
-    body: { id_token: idToken, device_name: deviceName() },
-  });
-  if (!data) throw new SignInError(detail(error) ?? t('mobile.googleRejected'));
+  const nonce = await answer(api.GET('/api/auth/google/mobile/nonce'));
+  if (!nonce.data) throw rejected(nonce.response);
+  let idToken: string | null;
+  try {
+    idToken = await signInWithGoogle(webClientId, nonce.data.nonce);
+  } catch {
+    throw new SignInError(t('mobile.googleFailed'));
+  }
+  if (!idToken) return null;
+  const { data, response } = await answer(
+    api.POST('/api/auth/google/mobile', {
+      body: { id_token: idToken, state: nonce.data.state, device_name: deviceName() },
+    }),
+  );
+  if (!data) throw response.status === 401 ? new SignInError(t('signIn.error.google')) : rejected(response);
   return keep(baseUrl, data);
 }
 

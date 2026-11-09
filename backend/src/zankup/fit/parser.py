@@ -162,6 +162,7 @@ class ParsedActivity:
     laps: list[Lap]
     streams: Streams
     sets: list[StrengthSet] = field(default_factory=list)
+    distance_from_gps: bool = False  # TCX/GPX without distances: no best efforts from it (OS-406)
 
     @property
     def has_gps(self) -> bool:

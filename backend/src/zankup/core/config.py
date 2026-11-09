@@ -67,6 +67,16 @@ class Settings(BaseSettings):
         description="Origins of the PWA (and later the Android app's apk-key-hash origin)",
     )
 
+    # Web Push (OS-401): generated on the data volume when not set.
+    vapid_private_key: SecretStr | None = Field(
+        default=None, description="PEM or base64url P-256 key; without it one is kept in DATA_DIR"
+    )
+    # Large uploads and downloads (imports, exports) go straight to the API host, not through the web
+    # proxy, which limits request sizes and bills for the traffic.
+    api_public_url: str | None = Field(
+        default=None, description="e.g. https://api.zankup.com; unset means the same origin as the app"
+    )
+
     google_client_id: str | None = None
     google_client_secret: SecretStr | None = None
     anthropic_api_key: SecretStr | None = None
@@ -87,6 +97,10 @@ class Settings(BaseSettings):
             if url.startswith(prefix):
                 return "postgresql+psycopg://" + url[len(prefix) :]
         return url
+
+    @property
+    def vapid_subject(self) -> str:
+        return f"mailto:{self.alert_email or self.owner_email}"
 
     @property
     def raw_dir(self) -> Path:

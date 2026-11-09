@@ -94,7 +94,12 @@ class UserSettings(Timestamps, Base):
     lthr: Mapped[int | None] = mapped_column(SmallInteger)
     ftp: Mapped[int | None] = mapped_column(SmallInteger)
     zone_model: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
-    privacy_zones: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+    privacy_zones: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        JSONB, comment="Hidden in anything shared (OS-407): [{id, name, lat, lon, radius_m}]"
+    )
+    notifications: Mapped[dict[str, bool] | None] = mapped_column(
+        JSONB, comment="Which push notifications to send (OS-402); missing keys use the defaults"
+    )
 
 
 class Device(Timestamps, Base):
@@ -237,6 +242,15 @@ class Activity(Timestamps, Base):
         JSONB, comment="Strength sets (OS-225): start_s, duration_s, kind, reps, weight_kg, category"
     )
     raw_meta: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="Source metadata, as received")
+    strava: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB,
+        comment="From a Strava export (OS-406): id, Strava's own effort, calories and grade-adjusted "
+        "distance (references for OS-323) and the weather",
+    )
+    gear_id: Mapped[int | None] = mapped_column(ForeignKey("gear.id", ondelete="SET NULL"), index=True)
+    edited_fields: Mapped[list[str] | None] = mapped_column(
+        JSONB, comment="Fields the user edited (OS-409): reprocessing and imports never overwrite them"
+    )
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -504,3 +518,126 @@ class EngineRun(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error: Mapped[str | None] = mapped_column(Text)
+
+
+GEAR_KINDS = ("shoe", "bike", "other")
+IMPORT_STATUSES = ("uploading", "queued", "running", "done", "error")
+EXPORT_STATUSES = ("queued", "running", "done", "error")
+
+
+class Gear(Timestamps, Base):
+    """Shoes and bikes (OS-410). Mileage is the sum of the activities using it plus `initial_m`."""
+
+    __tablename__ = "gear"
+    __table_args__ = (
+        CheckConstraint(_in("kind", GEAR_KINDS), name="kind"),
+        UniqueConstraint("user_id", "name"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    kind: Mapped[str] = mapped_column(String(10))
+    name: Mapped[str] = mapped_column(String(120))
+    brand: Mapped[str | None] = mapped_column(String(120))
+    model: Mapped[str | None] = mapped_column(String(120))
+    sports: Mapped[list[str] | None] = mapped_column(
+        JSONB, comment="Sports it is the default for: new activities of these sports get it"
+    )
+    initial_m: Mapped[float] = mapped_column(Float, server_default="0")
+    limit_m: Mapped[float | None] = mapped_column(Float, comment="Warn when the mileage passes it")
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    strava_id: Mapped[str | None] = mapped_column(String(32))
+
+
+class Photo(Base):
+    """A photo of an activity (OS-412), stored re-encoded without EXIF under DATA_DIR/photos."""
+
+    __tablename__ = "photos"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    activity_id: Mapped[int] = mapped_column(ForeignKey("activities.id", ondelete="CASCADE"), index=True)
+    key: Mapped[str] = mapped_column(String(255), unique=True)
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
+    caption: Mapped[str | None] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(String(10), server_default="upload")
+    source_name: Mapped[str | None] = mapped_column(String(255), comment="File name in the Strava export")
+    position: Mapped[int] = mapped_column(SmallInteger, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PushSubscription(Base):
+    """A browser's Web Push subscription (OS-401)."""
+
+    __tablename__ = "push_subscriptions"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    endpoint: Mapped[str] = mapped_column(Text, unique=True)
+    p256dh: Mapped[str] = mapped_column(String(200))
+    auth: Mapped[str] = mapped_column(String(100))
+    name: Mapped[str | None] = mapped_column(String(120))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    failures: Mapped[int] = mapped_column(SmallInteger, server_default="0")
+
+
+class ShareLink(Base):
+    """A public, expiring link to one activity (OS-408). Only the token's SHA-256 is stored."""
+
+    __tablename__ = "share_links"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    activity_id: Mapped[int] = mapped_column(ForeignKey("activities.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    show_map: Mapped[bool] = mapped_column(server_default="true")
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    views: Mapped[int] = mapped_column(Integer, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ImportRow(Base):
+    """An uploaded file or archive and its import (OS-404, OS-406)."""
+
+    __tablename__ = "imports"
+    __table_args__ = (CheckConstraint(_in("status", IMPORT_STATUSES), name="status"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    kind: Mapped[str | None] = mapped_column(String(10), comment="strava, archive or file, once read")
+    status: Mapped[str] = mapped_column(String(10), server_default="uploading")
+    filename: Mapped[str] = mapped_column(String(255))
+    size: Mapped[int] = mapped_column(BigInteger)
+    received: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    total: Mapped[int] = mapped_column(Integer, server_default="0")
+    processed: Mapped[int] = mapped_column(Integer, server_default="0")
+    created: Mapped[int] = mapped_column(Integer, server_default="0")
+    merged: Mapped[int] = mapped_column(Integer, server_default="0")
+    skipped: Mapped[int] = mapped_column(Integer, server_default="0")
+    failed: Mapped[int] = mapped_column(Integer, server_default="0")
+    photos: Mapped[int] = mapped_column(Integer, server_default="0")
+    errors: Mapped[list[dict[str, str]] | None] = mapped_column(JSONB)
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ExportRow(Base):
+    """A ZIP with all of a user's data (OS-411), kept for a few days under DATA_DIR/exports."""
+
+    __tablename__ = "exports"
+    __table_args__ = (CheckConstraint(_in("status", EXPORT_STATUSES), name="status"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    status: Mapped[str] = mapped_column(String(10), server_default="queued")
+    path: Mapped[str | None] = mapped_column(String(255))
+    size: Mapped[int | None] = mapped_column(BigInteger)
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

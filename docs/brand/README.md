@@ -57,6 +57,7 @@ Kept alternatives, not for production: `assets/logo-mark-z4.svg` (same Z without
 
   For a self-hosted build, download the OFL file from Google Fonts and ship it with the app; keep `system-ui, sans-serif` as the fallback.
 - There is no outlined (vector) wordmark yet. When one is needed for places without the font (favicons with text, OG images), export it from the font and add it to `assets/`.
+- Under exploration, not decided: drawing the **N as the U turned upside down**, so the two letters rhyme (the same arch, one open upwards and one downwards: `ZA∩KUP`). See `exploration/zankup/wordmark-n-inverted-u.html`.
 
 ## 4. Lock-up
 
@@ -133,4 +134,4 @@ The old volume (`opensport_pgdata`) can be removed with `docker volume rm opensp
 
 ## 8. Exploration
 
-The decision trail is in `exploration/`: `mountain/` holds the first logo round (mountain and switchback trail, candidate N1), `zankup/` holds the Z rounds, the fusion with the start ring, and the wordmark comparisons. Each `comparison-*.png` is a rendered sheet; the matching `.html` regenerates it in a browser. The working page with every naming check (domains via registry RDAP, PyPI, npm, GitHub, app stores) lives outside the repo.
+The decision trail is in `exploration/`: `mountain/` holds the first logo round (mountain and switchback trail, candidate N1), `zankup/` holds the Z rounds, the fusion with the start ring, the wordmark comparisons, and `wordmark-n-inverted-u.*`: the wordmark built from the Momo Trust Display outlines with the N replaced by the U turned 180° (and, as a second column, flipped vertically), in the three cases, in the lock-up and at small sizes, plus one vector SVG per case (`wordmark-n-inverted-u-{caps,title,lower}.svg`). Each `comparison-*.png` is a rendered sheet; the matching `.html` regenerates it in a browser. The working page with every naming check (domains via registry RDAP, PyPI, npm, GitHub, app stores) lives outside the repo.

@@ -130,6 +130,8 @@ INTERFACE = [
     "visibility_off",
     "passkey",
     "chevron_right",
+    "keyboard_arrow_down",
+    "keyboard_arrow_up",
     "chevron_left",
     "close",
     "add",

@@ -64,7 +64,7 @@ describe('app skeleton', () => {
   it('sends visitors without a session to sign-in, keeping where they wanted to go', async () => {
     mockApi({ '/api/auth/me': signedOut });
     const router = renderAt('/activities/7');
-    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Welcome back!' })).toBeInTheDocument();
     expect(screen.getByText('Your sports and health data together.')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sign-in');
     expect(router.state.location.search).toBe('?next=%2Factivities%2F7');
@@ -262,7 +262,7 @@ describe('app skeleton', () => {
     const router = renderAt('/profile?tab=account');
     expect(await screen.findByText('runner@example.com', { selector: 'b' })).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
-    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Welcome back!' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sign-in');
     expect(calls).toContain('POST /api/auth/logout');
   });

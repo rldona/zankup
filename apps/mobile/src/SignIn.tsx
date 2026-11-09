@@ -113,7 +113,7 @@ function Brand() {
   return (
     <View style={{ gap: 10, paddingBottom: 8 }}>
       <Wordmark />
-      <Text style={{ color: c.fg, fontSize: 20, fontWeight: '700', letterSpacing: -0.2 }}>
+      <Text style={{ color: c.fg, fontSize: 20, fontWeight: '400', letterSpacing: -0.2 }}>
         {t('app.claim')}
       </Text>
     </View>
@@ -231,7 +231,7 @@ function PasswordStep({
 
   return (
     <>
-      <Title title={t('signIn.welcome')} sub={t('signIn.sub')} />
+      <Title title={t('signIn.welcome')} />
       <ErrorBox message={error} />
       <Field
         label={t('signIn.email')}

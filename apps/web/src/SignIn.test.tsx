@@ -193,7 +193,7 @@ describe('sign-in', () => {
   it('hides the passkey option where the browser has no WebAuthn', async () => {
     mockApi({ '/api/auth/me': signedOut });
     renderSignIn();
-    await screen.findByRole('heading', { name: 'Welcome back' });
+    await screen.findByRole('heading', { name: 'Welcome back!' });
     expect(screen.queryByRole('button', { name: 'Sign in with a passkey' })).not.toBeInTheDocument();
   });
 

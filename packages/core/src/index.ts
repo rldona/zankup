@@ -11,3 +11,4 @@ export * from './map/colour';
 export * from './map/style';
 export * from './charts/theme';
 export * from './domain/strength';
+export * from './stats/period';

@@ -95,6 +95,9 @@ const DETAIL = {
   ],
   best_efforts: [{ distance_key: '5k', distance_m: 5000, time_s: 1640, start_s: 0, start_distance_m: 0 }],
   sets: [],
+  metrics: null,
+  route_group: null,
+  segments: [],
   streams: { series: Object.keys(STREAMS), sample_count: n },
 };
 
@@ -242,6 +245,93 @@ export async function fakeApi(page: Page) {
       ]);
     if (path === '/api/auth/passkeys') return json(route, []);
     if (path === '/api/sync') return json(route, []);
+    // Phase 3: the engine's tables
+    const t5 = (count: number) => ({
+      count,
+      distance_m: count * 8000,
+      moving_s: count * 2700,
+      ascent_m: count * 60,
+      load: count * 70,
+    });
+    if (path === '/api/stats/years') return json(route, [2026, 2025]);
+    if (path === '/api/stats/fitness')
+      return json(
+        route,
+        Array.from({ length: 60 }, (_, i) => ({
+          day: `2026-09-${String((i % 30) + 1).padStart(2, '0')}`,
+          load: 40,
+          ctl: 30 + i / 5,
+          atl: 28,
+          tsb: 2,
+        })),
+      );
+    if (path === '/api/stats/summary')
+      return json(route, { current: t5(40), previous: t5(30), by_sport: { run: t5(30), ride: t5(10) } });
+    if (path === '/api/stats/volume')
+      return json(
+        route,
+        Array.from({ length: 12 }, (_, i) => ({
+          start: `2026-${String(i + 1).padStart(2, '0')}-01`,
+          totals: t5(4),
+          by_sport: { run: t5(3), ride: t5(1) },
+        })),
+      );
+    if (path === '/api/stats/curves')
+      return json(
+        route,
+        [5, 60, 300, 1200].map((d) => ({
+          duration_s: d,
+          value: 4 - d / 1000,
+          activity_id: 7,
+          day: '2026-11-07',
+        })),
+      );
+    if (path === '/api/stats/records')
+      return json(route, {
+        all_time: [{ distance_key: '5k', distance_m: 5000, time_s: 1640, activity_id: 7, day: '2026-11-07' }],
+        period: [],
+        progression: {},
+      });
+    if (path === '/api/stats/estimates')
+      return json(route, [
+        {
+          kind: 'vdot',
+          value: 40.1,
+          method: 'vdot:5',
+          day: '2026-11-09',
+          sources: [{ id: 7, name: 'Morning run', sport: 'run', day: '2026-11-07' }],
+          history: [],
+        },
+      ]);
+    if (path === '/api/stats/progress') return json(route, [{ year: 2026, cumulative_m: [0, 5000, 12000] }]);
+    if (path === '/api/stats/efficiency') return json(route, []);
+    if (path === '/api/stats/calendar')
+      return json(
+        route,
+        Array.from({ length: 35 }, (_, i) => ({
+          day: new Date(Date.UTC(2026, 9, 26 + i)).toISOString().slice(0, 10),
+          tsb: 3,
+          activities:
+            i === 12
+              ? [{ id: 7, sport: 'run', name: 'Morning run', load: 60, distance_m: 5400, moving_s: 1800 }]
+              : [],
+        })),
+      );
+    if (path === '/api/stats/heatmap') return json(route, { routes: [RUN.route] });
+    if (path === '/api/routes') return json(route, []);
+    if (path === '/api/segments') return json(route, []);
+    if (path === '/api/goals') return json(route, []);
+    if (path === '/api/events') return json(route, []);
+    if (path === '/api/engine')
+      return json(route, {
+        running: false,
+        reason: null,
+        done: 0,
+        total: 0,
+        computed: 2,
+        activities: 2,
+        metrics_version: 2,
+      });
     return json(route, { detail: 'Not Found' }, 404);
   });
 }

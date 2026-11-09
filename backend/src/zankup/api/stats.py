@@ -270,13 +270,18 @@ class Source(BaseModel):
     day: date
 
 
+class EstimatePoint(BaseModel):
+    day: date
+    value: float
+
+
 class EstimateOut(BaseModel):
     kind: str
     value: float
     method: str
     day: date
     sources: list[Source]
-    history: list[tuple[date, float]] = Field(description="(day, value) as it changed")
+    history: list[EstimatePoint] = Field(description="Each time it changed")
 
 
 @router.get("/estimates", operation_id="getEstimates")
@@ -300,10 +305,10 @@ def estimates(db: DbSession, user: CurrentUser) -> list[EstimateOut]:
             for i in latest.source_activity_ids
             if (a := activities.get(i))
         ]
-        changes: list[tuple[date, float]] = []
+        changes: list[EstimatePoint] = []
         for r in history:
-            if not changes or abs(changes[-1][1] - r.value) > 1e-6:
-                changes.append((r.day, r.value))
+            if not changes or abs(changes[-1].value - r.value) > 1e-6:
+                changes.append(EstimatePoint(day=r.day, value=r.value))
         out.append(
             EstimateOut(
                 kind=kind,

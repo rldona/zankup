@@ -423,7 +423,7 @@ class EstimateRow(Base):
     kind: Mapped[str] = mapped_column(String(30), comment="ftp, critical_speed, lthr, hr_max, vdot, race_5k…")
     day: Mapped[date] = mapped_column(Date)
     value: Mapped[float] = mapped_column(Float)
-    method: Mapped[str] = mapped_column(String(120))
+    method: Mapped[str] = mapped_column(String(120))  # a key such as ftp_20min or riegel:10
     source_activity_ids: Mapped[list[int]] = mapped_column(JSONB, server_default="[]")
     metrics_version: Mapped[int] = mapped_column(SmallInteger)
 

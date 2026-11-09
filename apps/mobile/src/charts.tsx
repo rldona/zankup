@@ -12,7 +12,18 @@ import { useTheme } from './theme';
 type Value = number | null | undefined;
 
 export type Layer =
-  | { kind: 'line'; label: string; color: string; values: Value[]; domain?: [number, number] }
+  | {
+      kind: 'line';
+      label: string;
+      color: string;
+      values: Value[];
+      domain?: [number, number];
+      /** Line width (2 by default) and opacity, to set one line apart from the rest. */
+      width?: number;
+      opacity?: number;
+      /** Left out of the legend (many lines of the same kind). */
+      hideLegend?: boolean;
+    }
   | {
       kind: 'bars';
       /** Several series are stacked; values below zero hang from a zero line. */
@@ -91,7 +102,15 @@ export function Chart({
         )
         .join('');
       return path ? (
-        <Path key={index} path={path} style="stroke" strokeWidth={2} strokeCap="round" color={layer.color} />
+        <Path
+          key={index}
+          path={path}
+          style="stroke"
+          strokeWidth={layer.width ?? 2}
+          strokeCap="round"
+          color={layer.color}
+          opacity={layer.opacity ?? 1}
+        />
       ) : null;
     }
     const zero = y(0);
@@ -123,7 +142,11 @@ export function Chart({
   });
 
   const legend = layers.flatMap((layer) =>
-    layer.kind === 'line' ? [{ label: layer.label, color: layer.color }] : layer.series,
+    layer.kind === 'line'
+      ? layer.hideLegend
+        ? []
+        : [{ label: layer.label, color: layer.color }]
+      : layer.series,
   );
   return (
     <View accessible accessibilityLabel={label} style={{ gap: 6 }}>

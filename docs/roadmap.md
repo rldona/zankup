@@ -375,8 +375,8 @@ Play Store release (OS-510) is parked: builds are installed straight on the owne
 That first pass stopped short of the PWA: four tabs, a basic detail and settings. Parity comes in blocks
 (OS-511 onwards). Block 1, navigation and the missing screens (OS-511 to OS-515), is built: a Sync
 tab, the You tab as a hub, and Health, Coach, Gear and Import on the phone. Block 2, the full activity
-detail (OS-516 to OS-518), is built too. Still to come: the full stats and training screens, and the
-full profile and settings.
+detail (OS-516 to OS-518), and block 3, the full stats, training screens and reviews (OS-519 to
+OS-521), are built too. Still to come: the full profile and settings.
 
 The performance proof of concept (OS-501) runs at the start of phase 2. This phase assumes React Native won; if Kotlin did, it is re-planned.
 
@@ -421,6 +421,10 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
   - The route in pieces coloured over the shared ramp, its legend, replay at 10×/30×/100× and saving a section as a segment.
 - **OS-518 · Zones, best efforts, laps, power and strength on the phone** (M) · depends on OS-504
   - HR and power zones, the power curve, best efforts, laps, splits, route rank, segments, strength sets and the body map (its shapes now live in `packages/core`).
+- **OS-519 · Full stats on the phone** (L) · depends on OS-508
+  - Period picker, "Now" (form, load, goals, events, estimates with method and sources), summary, fitness, volume by sport, curves, records with progression, year over year, efficiency and the comparison with Strava.
+- **OS-520 · Training calendar, heatmap, routes and segments on the phone** (M) · depends on OS-519
+- **OS-521 · Month and year in review on the phone** (S) · depends on OS-519
 
 **M5 is done when** the Android app replaces the PWA on your phone, with reliable notifications and background sync.
 

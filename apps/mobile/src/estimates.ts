@@ -1,6 +1,6 @@
 import { formatDuration, type MessageKey } from '@zankup/core';
 
-import { t } from './i18n';
+import { locale, t } from './i18n';
 import type { useFormat } from './prefs';
 
 type Format = ReturnType<typeof useFormat>;
@@ -27,4 +27,16 @@ export function estimateName(kind: string): string {
   const id = `estimate.${kind}` as MessageKey;
   const text = t(id);
   return text === id ? kind : text;
+}
+
+/** "12 nov 2025": a day of the API (YYYY-MM-DD) in the app's language. */
+export const shortDay = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+
+/** The method an estimate was made with, in words: "riegel:10" → "Riegel's formula from your best 10 km". */
+export function methodText(method: string): string {
+  const [key = '', km = ''] = method.split(':');
+  const id = `method.${key}` as MessageKey;
+  const text = t(id, { km: km ? Number(km).toLocaleString(locale) : '' });
+  return text === id ? method : text;
 }

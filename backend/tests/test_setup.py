@@ -19,7 +19,7 @@ from zankup.auth import rate_limit
 from zankup.auth.deps import SESSION_COOKIE
 from zankup.auth.setup import PWNED_URL, announce_setup_code, ensure_setup_code
 from zankup.core.config import Settings, get_settings
-from zankup.db.models import Activity, RecoveryCode, SetupCode, User
+from zankup.db.models import Activity, Device, RecoveryCode, SetupCode, User
 from zankup.db.session import get_engine, get_session
 
 SECRET = "test-secret"
@@ -117,6 +117,28 @@ def test_the_whole_sign_up(ctx: Ctx, pwned: respx.Router) -> None:
         assert len(stored) == 8 and not set(codes) & set(stored)  # only hashes are kept
         user = db.scalars(select(User)).one()
         assert user.display_name == "Raúl"
+
+
+def test_the_android_app_gets_its_tokens(ctx: Ctx, pwned: respx.Router) -> None:
+    totp = account(ctx).json()
+    done = ctx.http.post(
+        "/api/setup/totp",
+        json={
+            "setup_token": totp["setup_token"],
+            "code": next_code(totp["secret"]),
+            "client": "android",
+            "device_name": "Pixel",
+        },
+    )
+    assert done.status_code == 200, done.text
+    body = done.json()
+    assert body["me"]["email"] == "me@example.com" and len(body["recovery_codes"]) == 8
+    assert body["tokens"]["refresh_token"] and not ctx.http.cookies.get(SESSION_COOKIE)
+    me = ctx.http.get("/api/auth/me", headers={"Authorization": f"Bearer {body['tokens']['access_token']}"})
+    assert me.status_code == 200
+    with ctx.sessions() as db:
+        device = db.scalars(select(Device)).one()
+        assert (device.platform, device.name) == ("android", "Pixel")
 
 
 def test_a_wrong_setup_code_is_refused_and_slowed_down(ctx: Ctx, pwned: respx.Router) -> None:

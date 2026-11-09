@@ -845,7 +845,7 @@
           "auth"
         ],
         "summary": "Setup Totp",
-        "description": "Step 2: a code from the app turns two-step verification on, closes sign-up and signs in.",
+        "description": "Step 2: a code from the app turns two-step verification on, closes sign-up and signs in: a\nbrowser session (cookie), or tokens for the Android app (OS-525).",
         "operationId": "setupTotp",
         "requestBody": {
           "content": {
@@ -10727,6 +10727,17 @@
             },
             "type": "array",
             "title": "Recovery Codes"
+          },
+          "tokens": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AppTokens"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For the Android app: its session"
           }
         },
         "type": "object",
@@ -11820,6 +11831,21 @@
             "maxLength": 8,
             "minLength": 6,
             "title": "Code"
+          },
+          "client": {
+            "type": "string",
+            "enum": [
+              "web",
+              "android"
+            ],
+            "title": "Client",
+            "default": "web"
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Device Name",
+            "default": "Browser"
           }
         },
         "type": "object",

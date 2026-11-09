@@ -376,9 +376,9 @@ That first pass stopped short of the PWA: four tabs, a basic detail and settings
 (OS-511 onwards). Block 1, navigation and the missing screens (OS-511 to OS-515), is built: a Sync
 tab, the You tab as a hub, and Health, Coach, Gear and Import on the phone. Block 2, the full activity
 detail (OS-516 to OS-518), and block 3, the full stats, training screens and reviews (OS-519 to
-OS-521), are built too, and so is block 4, the full settings and profile (OS-522 and OS-523): the
-app now covers everything the PWA does, except creating passkeys, linking Google and connecting
-Google Health, which need the browser.
+OS-521), are built too, and so is block 4, the full settings and profile (OS-522 and OS-523). Block 5,
+signing in (OS-524 to OS-526), brings the PWA's sign-in, the first account on a new instance and
+passkeys to the phone. Linking Google and connecting Google Health still need the browser.
 
 The performance proof of concept (OS-501) runs at the start of phase 2. This phase assumes React Native won; if Kotlin did, it is re-planned.
 
@@ -386,7 +386,7 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
   - `apps/mobile` with Expo Router, the new architecture and Hermes. EAS Build and EAS Update. CI with lint, tests and build. Theme generated from the `packages/core` tokens (OS-214), plus Android dynamic colour. i18n with the shared catalogues and `expo-localization`.
 - **OS-503 · Authentication in the app** (L) · depends on OS-502, OS-110 and OS-220
   - **First sign-in**, with two options now and a third with OS-405:
-    - **Native Google** with `@react-native-google-signin/google-signin` (Android Credential Manager: one-tap account sheet). The app sends the ID token to `POST /api/auth/google/mobile` and the backend applies the same linked-account-only rule.
+    - **Native Google** with Android's Credential Manager (the app's own `modules/google-id`) and the instance's nonce. The app sends the ID token to `POST /api/auth/google/mobile` and the backend applies the same linked-account-only rule.
     - **Password + TOTP.**
     - *Later:* **passkey** with `react-native-passkey`, the same one as the PWA, thanks to the `assetlinks.json` published on the instance's URL.
   - **Day to day with the fingerprint:** the refresh token is stored in `expo-secure-store` with `requireAuthentication`, bound to Android's secure keystore and released only after biometric verification (`expo-local-authentication`). Opening the app means touching the sensor.
@@ -431,6 +431,12 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
   - A section per screen: general, heart rate and zones (with recomputing), notifications by kind and a test, the AI assistant and MCP tokens, privacy zones on a map, health sources (priority, deleting a source's data), exporting your data, Garmin and the signed-in devices.
 - **OS-523 · Full profile on the phone** (M) · depends on OS-508
   - Editing who you are, the year's numbers, by sport this year and all time, records, physical data, goals you can add and delete, estimates, and the account (sign-in methods, passkeys listed and removed, Google unlinked).
+- **OS-524 · Sign-in on par with the PWA on the phone** (M) · depends on OS-503
+  - The PWA's look and errors, the password shown or hidden, the code in six boxes that submit themselves, an expired challenge sending you back, and "forgot it?".
+- **OS-525 · First account setup on the phone** (M) · depends on OS-221 and OS-503
+  - Account, two-step verification opened in the authenticator app on the same phone, recovery codes and loading the history. `POST /api/setup/totp` takes `client: "android"` and returns the app's tokens.
+- **OS-526 · Passkeys on the phone** (M) · depends on OS-405 and OS-503
+  - Signing in and adding one with `react-native-passkey`. Release builds are signed with the owner's own key, published in `/.well-known/assetlinks.json` on the relying party's domain, whose `android:apk-key-hash` origin goes in `WEBAUTHN_ORIGINS`.
 
 **M5 is done when** the Android app replaces the PWA on your phone, with reliable notifications and background sync.
 

@@ -20,6 +20,7 @@ import hmac
 import logging
 import secrets
 from datetime import UTC, datetime
+from typing import Literal
 
 import httpx
 import segno
@@ -32,7 +33,7 @@ from zankup.admin import MIN_PASSWORD, AdminError, set_password
 from zankup.auth.deps import AppSettings, DbSession
 from zankup.auth.rate_limit import limiter
 from zankup.auth.recovery import new_recovery_codes
-from zankup.auth.routes import Me, start_session
+from zankup.auth.routes import AppTokens, Me, _me, start_session
 from zankup.auth.security import (
     create_setup_token,
     decrypt_secret,
@@ -151,11 +152,14 @@ class TotpSetup(BaseModel):
 class TotpConfirm(BaseModel):
     setup_token: str
     code: str = Field(min_length=6, max_length=8)
+    client: Literal["web", "android"] = "web"
+    device_name: str = Field(default="Browser", max_length=120)
 
 
 class SetupDone(BaseModel):
     me: Me
     recovery_codes: list[str]
+    tokens: AppTokens | None = Field(default=None, description="For the Android app: its session")
 
 
 def _secret(settings: AppSettings) -> str | None:
@@ -230,7 +234,8 @@ def setup_account(body: AccountRequest, request: Request, db: DbSession, setting
 def setup_totp(
     body: TotpConfirm, request: Request, response: Response, db: DbSession, settings: AppSettings
 ) -> SetupDone:
-    """Step 2: a code from the app turns two-step verification on, closes sign-up and signs in."""
+    """Step 2: a code from the app turns two-step verification on, closes sign-up and signs in: a
+    browser session (cookie), or tokens for the Android app (OS-525)."""
     if not sign_up_open(db):
         raise _closed()
     key = f"setup:{_ip(request)}"
@@ -256,6 +261,10 @@ def setup_totp(
     db.execute(delete(SetupCode))
     limiter.success(key)
     log.info("Sign-up finished: the instance has its account")
-    me = start_session(db, user, response, settings, web=True, remember=False, device_name="Browser")
-    assert isinstance(me, Me)
-    return SetupDone(me=me, recovery_codes=codes)
+    web = body.client == "web"
+    session = start_session(
+        db, user, response, settings, web=web, remember=False, device_name=body.device_name
+    )
+    if isinstance(session, Me):
+        return SetupDone(me=session, recovery_codes=codes)
+    return SetupDone(me=_me(user), recovery_codes=codes, tokens=session)

@@ -858,10 +858,16 @@
   "mobile.section.dataNote": "Importar, material y exportarlo todo",
   "mobile.section.account": "Seguridad y sesiones",
   "mobile.section.accountNote": "Biometría, Garmin y dispositivos con sesión",
-  "mobile.passkeysOnWeb": "Las passkeys se añaden desde la web; aquí puedes verlas y quitarlas.",
+  "mobile.passkeysOnWeb": "Las passkeys creadas en la web funcionan aquí, y una añadida aquí funciona en la web.",
   "mobile.googleLinkOnWeb": "Puedes vincular una cuenta de Google desde la web.",
   "mobile.googleHealthOnWeb": "Conecta Google Health desde la web; en este teléfono, Health Connect lo lee directamente.",
   "mobile.share": "Compartir",
   "mobile.dateFormat": "AAAA-MM-DD",
-  "mobile.invalidDate": "Escribe la fecha como AAAA-MM-DD."
+  "mobile.invalidDate": "Escribe la fecha como AAAA-MM-DD.",
+  "mobile.totpSub": "Añade esta clave a tu app de autenticación (Google Authenticator, 1Password, Aegis…): ábrela desde aquí si está en este teléfono, o escribe la clave. Después introduce el código de 6 dígitos que muestre.",
+  "mobile.openAuthenticator": "Abrir la app de autenticación",
+  "mobile.noAuthenticator": "Ninguna app de este teléfono abre la clave: escríbela en tu app de autenticación.",
+  "mobile.shareCodes": "Compartir los códigos",
+  "mobile.resetOnWeb": "El enlace abre la web, donde eliges la contraseña nueva. Después vuelve aquí e inicia sesión.",
+  "mobile.typeKey": "O escribe esta clave en la app:"
 }

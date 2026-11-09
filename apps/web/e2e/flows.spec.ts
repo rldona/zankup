@@ -35,6 +35,14 @@ test('open an activity: figures, route, zones and laps', async ({ page }, info) 
   // Charts load when they come near the screen (OS-215): on a phone the profile is further down.
   await detail.locator('.profile').scrollIntoViewIfNeeded();
   await expect(detail.locator('.profile svg')).toBeVisible();
+  // Leaving the detail inside the app takes the chart down with it: the app must carry on (this
+  // crashed in production on 9 Nov 2026).
+  await page
+    .getByRole('link', { name: w('nav.search') })
+    .filter({ visible: true })
+    .first()
+    .click();
+  await expect(page.getByRole('searchbox')).toBeVisible();
 });
 
 test('search keeps its filters in the URL', async ({ page }, info) => {

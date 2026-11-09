@@ -1,6 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
 
 import { Activity } from './routes/Activity';
+import { AppError } from './routes/AppError';
 import { Feed, PickActivity } from './routes/Feed';
 import { NotFound } from './routes/NotFound';
 import { Profile } from './routes/Profile';
@@ -16,31 +17,39 @@ import { Stats } from './routes/Stats';
 import { Sync } from './routes/Sync';
 
 /** Every screen. Public: /sign-in and /setup. Everything else needs a session. */
-export const routes: RouteObject[] = [
-  { path: '/sign-in', element: <SignIn /> },
-  { path: '/setup', element: <Setup /> },
-  { path: '/forgot', element: <ForgotPassword /> },
-  { path: '/reset-password', element: <ResetPassword /> },
+const screens: RouteObject[] = [
   {
-    element: <RequireSession />,
+    element: <Feed />,
     children: [
+      { index: true, element: <PickActivity /> },
+      { path: 'activities/:id', element: <Activity /> },
+    ],
+  },
+  { path: 'search', element: <Search /> },
+  { path: 'stats', element: <Stats /> },
+  { path: 'sync', element: <Sync /> },
+  { path: 'settings', element: <Settings /> },
+  { path: 'catalogue', element: <Catalogue /> },
+  { path: 'profile', element: <Profile /> },
+  { path: '*', element: <NotFound /> },
+];
+
+export const routes: RouteObject[] = [
+  {
+    errorElement: <AppError />,
+    children: [
+      { path: '/sign-in', element: <SignIn /> },
+      { path: '/setup', element: <Setup /> },
+      { path: '/forgot', element: <ForgotPassword /> },
+      { path: '/reset-password', element: <ResetPassword /> },
       {
-        element: <Shell />,
+        element: <RequireSession />,
         children: [
           {
-            element: <Feed />,
-            children: [
-              { index: true, element: <PickActivity /> },
-              { path: 'activities/:id', element: <Activity /> },
-            ],
+            element: <Shell />,
+            // An error in a screen shows inside the frame, with the navigation still there.
+            children: [{ errorElement: <AppError />, children: screens }],
           },
-          { path: 'search', element: <Search /> },
-          { path: 'stats', element: <Stats /> },
-          { path: 'sync', element: <Sync /> },
-          { path: 'settings', element: <Settings /> },
-          { path: 'catalogue', element: <Catalogue /> },
-          { path: 'profile', element: <Profile /> },
-          { path: '*', element: <NotFound /> },
         ],
       },
     ],

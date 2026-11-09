@@ -386,7 +386,7 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
   - `apps/mobile` with Expo Router, the new architecture and Hermes. EAS Build and EAS Update. CI with lint, tests and build. Theme generated from the `packages/core` tokens (OS-214), plus Android dynamic colour. i18n with the shared catalogues and `expo-localization`.
 - **OS-503 · Authentication in the app** (L) · depends on OS-502, OS-110 and OS-220
   - **First sign-in**, with two options now and a third with OS-405:
-    - **Native Google** with `@react-native-google-signin/google-signin` (Android Credential Manager: one-tap account sheet). The app sends the ID token to `POST /api/auth/google/mobile` and the backend applies the same linked-account-only rule.
+    - **Native Google** with Android's Credential Manager (the app's own `modules/google-id`) and the instance's nonce. The app sends the ID token to `POST /api/auth/google/mobile` and the backend applies the same linked-account-only rule.
     - **Password + TOTP.**
     - *Later:* **passkey** with `react-native-passkey`, the same one as the PWA, thanks to the `assetlinks.json` published on the instance's URL.
   - **Day to day with the fingerprint:** the refresh token is stored in `expo-secure-store` with `requireAuthentication`, bound to Android's secure keystore and released only after biometric verification (`expo-local-authentication`). Opening the app means touching the sensor.

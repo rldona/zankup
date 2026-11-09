@@ -199,6 +199,7 @@ the API.
 | `API_PUBLIC_URL` | The API's own public address (e.g. `https://api.example.com`) when the app reaches it through a proxy: imports and exports then go there directly. Leave it empty when the app and the API share an origin. |
 | `FCM_SERVICE_ACCOUNT` | Notifications in the Android app: the Firebase service account key (the whole JSON). |
 | `VAPID_PRIVATE_KEY` | Push notifications. Optional: without it a key is generated once and kept in `DATA_DIR`. |
-| `ANTHROPIC_API_KEY` | AI features (phase 7). |
+| `ANTHROPIC_API_KEY` | AI features (phase 7): the summary of each activity, Monday's report and the Coach. Without it they stay hidden. |
+| `AI_MODEL`, `AI_MONTHLY_BUDGET_USD`, `WEEKLY_REPORT_HOUR_UTC` | The model (default `claude-haiku-5-5`), the monthly spending cap (default 5 USD; AI features pause when it is reached) and the hour (UTC) Monday's report is queued. |
 | `POSTGRES_PASSWORD`, `ZANKUP_SITE` | Only for `deploy/compose.yaml`. |
 | `RAILWAY_API_TOKEN`, `VERCEL_TOKEN` | Only for scripting the cloud setup; never needed by the app. |

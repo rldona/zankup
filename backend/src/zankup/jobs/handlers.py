@@ -212,6 +212,17 @@ def default_handlers(
     if settings is not None and sessions is not None:
         handlers["import_upload"] = import_upload(sessions, store, settings)
         handlers["export"] = export(sessions, store, settings)
+    if settings is not None:
+        from zankup.ai.client import build_llm
+
+        llm = build_llm(settings)
+        if llm is not None:  # phase 7: hidden without a key
+            from zankup.ai.summary import summary_handler
+            from zankup.ai.weekly import weekly_handler, weekly_poll_handler
+
+            handlers["ai_summary"] = summary_handler(llm)
+            handlers["ai_weekly"] = weekly_handler(llm)
+            handlers["ai_weekly_poll"] = weekly_poll_handler(llm)
     return handlers
 
 

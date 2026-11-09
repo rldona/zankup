@@ -12,6 +12,7 @@ Kinds (and whether they are on by default, OS-402):
 - `garmin_key`: the Garmin Personal API key expires within 14 days (OS-403).
 - `estimate`: an estimate (FTP, critical speed, VDOT) went up. Off by default.
 - `import`: an import finished.
+- `weekly`: Monday's AI report on the week that ended (OS-704).
 
 The Android app (OS-507) gets the same notifications through Firebase Cloud Messaging (HTTP v1): its
 token is kept on its device row (`devices.push_endpoint`) and messages are signed with the service
@@ -50,7 +51,7 @@ from zankup.jobs.queue import enqueue
 
 log = logging.getLogger("zankup.notify")
 
-KINDS = ("activity", "record", "sync_error", "garmin_key", "estimate", "import", "health_reauth")
+KINDS = ("activity", "record", "sync_error", "garmin_key", "estimate", "import", "health_reauth", "weekly")
 DEFAULTS = {
     "activity": True,
     "record": True,
@@ -59,6 +60,7 @@ DEFAULTS = {
     "estimate": False,
     "import": True,
     "health_reauth": True,
+    "weekly": True,
 }
 MAX_FAILURES = 5
 TTL_S = 24 * 60 * 60
@@ -80,6 +82,7 @@ TEXTS: dict[str, dict[str, tuple[str, str]]] = {
             "Connect Google Health again",
             "Google stopped sharing your health data with Zankup: connect it again in Settings.",
         ),
+        "weekly": ("Your weekly report", "{headline}"),
         "test": ("Notifications work", "This is how Zankup will tell you about new activities."),
     },
     "es": {
@@ -94,6 +97,7 @@ TEXTS: dict[str, dict[str, tuple[str, str]]] = {
             "Vuelve a conectar Google Health",
             "Google ha dejado de compartir tus datos de salud con Zankup: conéctalo de nuevo en Ajustes.",
         ),
+        "weekly": ("Tu informe semanal", "{headline}"),
         "test": ("Las notificaciones funcionan", "Así te avisará Zankup de tus nuevas actividades."),
     },
 }
@@ -191,6 +195,9 @@ def message(kind: str, data: dict[str, Any], language: str) -> dict[str, Any]:
                 kind = "import_error"
             values = {"created": data.get("created", 0), "merged": data.get("merged", 0)}
             url = "/settings/import"
+        case "weekly":
+            values = {"headline": str(data.get("headline") or "")[:140]}
+            url = "/coach"
     title, body = texts.get(kind, texts["test"])
     return {"title": title, "body": body.format(**values), "url": url, "tag": kind}
 

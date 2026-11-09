@@ -1,6 +1,7 @@
 /**
  * Settings on the phone: language, theme and units (shared with the account), notifications on this
- * phone (OS-507), the biometric option for phones whose face unlock is weak (OS-503), and sign-out.
+ * phone (OS-507), Health Connect (OS-607), the biometric option for phones whose face unlock is weak
+ * (OS-503), and sign-out.
  */
 import { settingsQuery, THEME_CHOICES, type Locale } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 
 import { useAuth } from '../src/auth';
+import { ask, available, lastRead, readAndSend, type ReadResult } from '../src/healthConnect';
 import { locale, saveLanguage, t } from '../src/i18n';
 import { registerPush, unregisterPush, type PushResult } from '../src/push';
 import { availableBiometrics, instanceUrl, type Biometrics } from '../src/session';
@@ -134,6 +136,8 @@ export default function SettingsScreen() {
         {push && <Muted>{t(`mobile.push.${push}`)}</Muted>}
       </Card>
 
+      <HealthConnectCard />
+
       <Card>
         <Heading>{t('mobile.security')}</Heading>
         <Muted>
@@ -163,5 +167,63 @@ export default function SettingsScreen() {
 
       <Button onPress={() => void signOut()}>{t('nav.signOut')}</Button>
     </Screen>
+  );
+}
+
+function HealthConnectCard() {
+  const { api } = useAuth();
+  const queryClient = useQueryClient();
+  const [ready, setReady] = useState<boolean | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState(lastRead());
+  useEffect(() => {
+    void available().then(setReady);
+  }, []);
+  const run = async (askFirst: boolean) => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      if (askFirst && !(await ask())) {
+        setMessage(t('mobile.hc.denied'));
+        return;
+      }
+      const result: ReadResult | null = await readAndSend(api, true);
+      if (result) {
+        setMessage(t('mobile.hc.done', result));
+        setLast(lastRead());
+        void queryClient.invalidateQueries({ queryKey: ['wellness'] });
+      } else setMessage(t('mobile.hc.denied'));
+    } catch {
+      setMessage(t('common.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card>
+      <Heading>{t('mobile.hc.title')}</Heading>
+      <Muted>{ready === false ? t('mobile.hc.unavailable') : t('mobile.hc.note')}</Muted>
+      {ready && (
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+          <Button primary disabled={busy} onPress={() => void run(true)}>
+            {t('mobile.hc.connect')}
+          </Button>
+          {last && (
+            <Button disabled={busy} onPress={() => void run(false)}>
+              {t('mobile.hc.read')}
+            </Button>
+          )}
+        </View>
+      )}
+      {last && (
+        <Muted>
+          {t('mobile.hc.last', {
+            date: new Date(last).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }),
+          })}
+        </Muted>
+      )}
+      {message && <Muted accessibilityRole="alert">{message}</Muted>}
+    </Card>
   );
 }

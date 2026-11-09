@@ -12,7 +12,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router';
 
 import { api } from '../api';
-import { Lockup } from '../Lockup';
+import { Wordmark } from '../Wordmark';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { SportIcon } from '../SportIcon';
@@ -28,7 +28,7 @@ export function Shared() {
   if (shared.error instanceof ApiError && shared.error.status === 404) {
     return (
       <main className="placeholder">
-        <Lockup />
+        <Wordmark />
         <p>{t('shared.gone')}</p>
       </main>
     );
@@ -141,7 +141,7 @@ function View({ data, token }: { data: SharedActivity; token: string }) {
         </section>
       )}
       <footer className="note shared-foot">
-        <Lockup />
+        <Wordmark />
         {data.expires_at && (
           <span>{t('shared.until', { date: new Date(data.expires_at).toLocaleDateString(locale) })}</span>
         )}

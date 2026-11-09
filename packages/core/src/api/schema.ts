@@ -55,7 +55,8 @@ export interface paths {
     put?: never;
     /**
      * Refresh
-     * @description App only: exchange a refresh token for a new access token and a new refresh token (rotation).
+     * @description App only: exchange a refresh token for a new access token and, unless `rotate` is false, a new
+     *     refresh token. Either way the session's expiry starts again.
      */
     post: operations['refreshTokens'];
     delete?: never;
@@ -353,6 +354,46 @@ export interface paths {
     get: operations['googleCallback'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/google/mobile/nonce': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Mobile Nonce
+     * @description A nonce for the app's native Google sign-in, and the signed state to send back with the token.
+     */
+    get: operations['googleMobileNonce'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/google/mobile': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mobile Sign In
+     * @description The app's native Google sign-in: tokens for the user linked to that Google account, or 401.
+     */
+    post: operations['googleMobileSignIn'];
     delete?: never;
     options?: never;
     head?: never;
@@ -895,6 +936,26 @@ export interface paths {
     put?: never;
     /** Unsubscribe */
     post: operations['unsubscribePush'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/notifications/fcm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Set Fcm Token
+     * @description The Android app's Firebase token for this signed-in device (OS-507).
+     */
+    put: operations['setFcmToken'];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -2120,6 +2181,14 @@ export interface components {
        */
       download_url: string | null;
     };
+    /** FcmToken */
+    FcmToken: {
+      /**
+       * Token
+       * @description Null stops notifications on this device
+       */
+      token: string | null;
+    };
     /** FitnessDay */
     FitnessDay: {
       /**
@@ -2467,6 +2536,28 @@ export interface components {
        */
       largest: components['schemas']['ComparisonPoint'][];
     };
+    /** MobileNonce */
+    MobileNonce: {
+      /** Nonce */
+      nonce: string;
+      /** State */
+      state: string;
+    };
+    /** MobileSignIn */
+    MobileSignIn: {
+      /** Id Token */
+      id_token: string;
+      /**
+       * State
+       * @description From /mobile/nonce, when the token carries that nonce
+       */
+      state?: string | null;
+      /**
+       * Device Name
+       * @default Android
+       */
+      device_name: string;
+    };
     /**
      * MonthTotals
      * @description One month of the feed, in the activities' own local time.
@@ -2741,6 +2832,11 @@ export interface components {
     Providers: {
       /** Google */
       google: boolean;
+      /**
+       * Google Client Id
+       * @description Public: the Android app asks Google for ID tokens for this client
+       */
+      google_client_id?: string | null;
     };
     /** PushKey */
     PushKey: {
@@ -2819,6 +2915,12 @@ export interface components {
     RefreshRequest: {
       /** Refresh Token */
       refresh_token: string;
+      /**
+       * Rotate
+       * @description False keeps the same refresh token: the Android app stores it under the fingerprint (Keystore), where every write needs the sensor again
+       * @default true
+       */
+      rotate: boolean;
     };
     /** RegisterRequest */
     RegisterRequest: {
@@ -4235,6 +4337,59 @@ export interface operations {
       };
     };
   };
+  googleMobileNonce: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MobileNonce'];
+        };
+      };
+    };
+  };
+  googleMobileSignIn: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MobileSignIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AppTokens'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
   googleUnlink: {
     parameters: {
       query?: never;
@@ -5362,6 +5517,37 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['Unsubscribe'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  setFcmToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FcmToken'];
       };
     };
     responses: {

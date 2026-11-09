@@ -93,6 +93,11 @@ class AppTokens(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+    rotate: bool = Field(
+        default=True,
+        description="False keeps the same refresh token: the Android app stores it under the fingerprint "
+        "(Keystore), where every write needs the sensor again",
+    )
 
 
 def _secret(settings: AppSettings) -> str | None:
@@ -231,12 +236,13 @@ def start_session(
 
 @router.post("/refresh", operation_id="refreshTokens")
 def refresh(body: RefreshRequest, db: DbSession, settings: AppSettings) -> AppTokens:
-    """App only: exchange a refresh token for a new access token and a new refresh token (rotation)."""
+    """App only: exchange a refresh token for a new access token and, unless `rotate` is false, a new
+    refresh token. Either way the session's expiry starts again."""
     now = datetime.now(UTC)
     device = db.scalar(select(Device).where(Device.refresh_token_hash == token_hash(body.refresh_token)))
     if device is None or device.platform == "web" or (device.expires_at and device.expires_at <= now):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sign in again")
-    token, digest = new_token()
+    token, digest = new_token() if body.rotate else (body.refresh_token, device.refresh_token_hash)
     device.refresh_token_hash, device.expires_at, device.last_seen = digest, now + APP_REFRESH, now
     db.commit()
     access = create_access_token(device.user_id, device.id, _secret(settings))

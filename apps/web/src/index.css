@@ -1768,7 +1768,7 @@ a.button.block {
   display: inline-block;
   flex: none;
   height: 0.8em;
-  aspect-ratio: 120 / 90;
+  aspect-ratio: 120 / 134;
   background: currentColor;
   mask-repeat: no-repeat;
   mask-position: center;

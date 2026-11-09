@@ -404,5 +404,9 @@
   "strength.front": "Delante",
   "strength.back": "Detrás",
   "strength.noMuscles": "El reloj no registró qué ejercicios eran, así que no se marca ningún músculo.",
-  "strength.bodyweight": "Peso corporal"
+  "strength.bodyweight": "Peso corporal",
+  "error.title": "Algo ha fallado",
+  "error.body": "Esta pantalla ha tenido un error inesperado. Recargar suele arreglarlo.",
+  "error.reload": "Recargar",
+  "error.home": "Ir a actividades"
 }

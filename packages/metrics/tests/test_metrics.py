@@ -9,7 +9,7 @@ def steady(speed: float, seconds: int, every: int = 1) -> tuple[list[float], lis
 
 
 def test_version() -> None:
-    assert m.__version__ == "0.1.0"
+    assert m.__version__ == "0.2.0"
 
 
 def test_best_efforts_at_a_steady_pace() -> None:

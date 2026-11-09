@@ -62,6 +62,9 @@ def test_the_theme_starts_as_system_and_is_kept(http: tuple[TestClient, sessionm
         "hr_max": None,
         "hr_rest": None,
         "hr_max_estimate": None,
+        "zone_model": "max",
+        "lthr": None,
+        "ftp": None,
     }
     assert client.get("/api/settings").json() == defaults
     assert client.patch("/api/settings", json={"theme": "oled"}).json()["theme"] == "oled"

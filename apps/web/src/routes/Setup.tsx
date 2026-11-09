@@ -70,10 +70,7 @@ export function Setup() {
         </div>
       </section>
       <section className="lform">
-        <div className="lcard">
-          {card}
-          <div className="lfoot">{t('signIn.footer')}</div>
-        </div>
+        <div className="lcard">{card}</div>
       </section>
     </div>
   );

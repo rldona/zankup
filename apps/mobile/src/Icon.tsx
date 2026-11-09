@@ -1,5 +1,6 @@
 /** The PWA's interface icons (24×24 strokes), drawn with Skia. */
 import { Canvas, Path, Skia } from '@shopify/react-native-skia';
+import { GOOGLE_G } from '@zankup/core';
 import type { ColorValue } from 'react-native';
 
 const PATHS = {
@@ -38,6 +39,27 @@ export function Icon({ name, color, size = 24 }: { name: IconName; color: ColorV
         color={String(color)}
         transform={[{ scale: size / 24 }]}
       />
+    </Canvas>
+  );
+}
+
+// Google's G in one colour (packages/core), white on the "Continue with Google" button.
+const GOOGLE_RING = Skia.Path.MakeFromSVGString(GOOGLE_G.ring.d);
+const GOOGLE_BAR = Skia.Path.MakeFromSVGString(GOOGLE_G.bar.d);
+
+export function GoogleIcon({ color, size = 20 }: { color: ColorValue; size?: number }) {
+  if (!GOOGLE_RING || !GOOGLE_BAR) return null;
+  const transform = [{ scale: size / GOOGLE_G.size }];
+  return (
+    <Canvas style={{ width: size, height: size }}>
+      <Path
+        path={GOOGLE_RING}
+        style="stroke"
+        strokeWidth={GOOGLE_G.ring.strokeWidth}
+        color={String(color)}
+        transform={transform}
+      />
+      <Path path={GOOGLE_BAR} color={String(color)} transform={transform} />
     </Canvas>
   );
 }

@@ -108,12 +108,18 @@ export function Button({
   primary,
   disabled,
   accessibilityLabel,
+  icon,
+  labelColor,
 }: {
   children: string;
   onPress: () => void;
   primary?: boolean;
   disabled?: boolean;
   accessibilityLabel?: string;
+  /** Drawn before the label (Google's G on "Continue with Google"). */
+  icon?: ReactNode;
+  /** The label's colour, when it is not the button's usual one (white on "Continue with Google"). */
+  labelColor?: string;
 }) {
   const c = useTheme();
   return (
@@ -132,7 +138,14 @@ export function Button({
         },
       ]}
     >
-      <Text style={{ color: primary ? onAccent(c) : c.fg, fontWeight: '600', fontSize: 15 }}>{children}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        {icon}
+        <Text
+          style={{ color: labelColor ?? (primary ? onAccent(c) : c.fg), fontWeight: '600', fontSize: 15 }}
+        >
+          {children}
+        </Text>
+      </View>
     </Pressable>
   );
 }

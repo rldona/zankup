@@ -101,14 +101,14 @@ def main() -> None:
         png(icon(180, color=DARK, share=0.6, background=GREEN), 180, folder / "apple-touch-icon-180.png")
 
     # The Android app: the white mark on the green; the adaptive layers keep it in the 66 % safe zone.
-    png(icon(1024, color=WHITE, share=0.6, background=GREEN), 1024, mobile / "icon.png")
+    png(icon(1024, color=WHITE, share=0.52, background=GREEN), 1024, mobile / "icon.png")
     plain = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512">'
         f'<rect width="512" height="512" fill="{GREEN}"/></svg>'
     )
     png(plain, 512, mobile / "android-icon-background.png")
-    png(icon(512, color=WHITE, share=0.46, background=None), 512, mobile / "android-icon-foreground.png")
-    png(icon(432, color=WHITE, share=0.46, background=None), 432, mobile / "android-icon-monochrome.png")
+    png(icon(512, color=WHITE, share=0.4, background=None), 512, mobile / "android-icon-foreground.png")
+    png(icon(432, color=WHITE, share=0.4, background=None), 432, mobile / "android-icon-monochrome.png")
     png(icon(1024, color=WHITE, share=0.56, background=None), 1024, mobile / "splash-icon.png")
 
 

@@ -1,13 +1,27 @@
 name: Android
 
-# The app's release build (OS-502): only when the app, the shared package or the lockfile change.
-# Lint, types and unit tests run in CI's web job with the rest of the workspace.
+# The app's release build (OS-502), as a check that the native side still compiles: only when what it
+# depends on changes (the Expo config and plugins, native modules, dependencies). JavaScript-only
+# changes are covered by lint, types and unit tests in CI's web job. The APK is not kept: CI has no
+# signing key, and builds for the phone are made locally.
 on:
   pull_request:
-    paths: ['apps/mobile/**', 'packages/core/**', 'pnpm-lock.yaml', '.github/workflows/android.yml']
+    paths:
+      - 'apps/mobile/app.config.ts'
+      - 'apps/mobile/package.json'
+      - 'apps/mobile/modules/**'
+      - 'apps/mobile/plugins/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/android.yml'
   push:
     branches: [main]
-    paths: ['apps/mobile/**', 'packages/core/**', 'pnpm-lock.yaml', '.github/workflows/android.yml']
+    paths:
+      - 'apps/mobile/app.config.ts'
+      - 'apps/mobile/package.json'
+      - 'apps/mobile/modules/**'
+      - 'apps/mobile/plugins/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/android.yml'
 
 permissions:
   contents: read

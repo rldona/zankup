@@ -1,0 +1,482 @@
+[
+  {
+    "id": "summary-latest-en",
+    "kind": "summary",
+    "language": "en",
+    "activity": "latest"
+  },
+  {
+    "id": "summary-run-en",
+    "kind": "summary",
+    "language": "en",
+    "activity": "latest:run"
+  },
+  {
+    "id": "summary-ride-en",
+    "kind": "summary",
+    "language": "en",
+    "activity": "latest:ride"
+  },
+  {
+    "id": "summary-strength-en",
+    "kind": "summary",
+    "language": "en",
+    "activity": "latest:strength"
+  },
+  {
+    "id": "summary-walk-en",
+    "kind": "summary",
+    "language": "en",
+    "activity": "latest:walk"
+  },
+  {
+    "id": "summary-latest-es",
+    "kind": "summary",
+    "language": "es",
+    "activity": "latest"
+  },
+  {
+    "id": "summary-run-es",
+    "kind": "summary",
+    "language": "es",
+    "activity": "latest:run"
+  },
+  {
+    "id": "summary-ride-es",
+    "kind": "summary",
+    "language": "es",
+    "activity": "latest:ride"
+  },
+  {
+    "id": "summary-strength-es",
+    "kind": "summary",
+    "language": "es",
+    "activity": "latest:strength"
+  },
+  {
+    "id": "summary-walk-es",
+    "kind": "summary",
+    "language": "es",
+    "activity": "latest:walk"
+  },
+  {
+    "id": "coach-volume-month-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "How many kilometres have I run in the last 30 days?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": [
+      "km"
+    ]
+  },
+  {
+    "id": "coach-volume-week-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "How did last week compare with the week before?",
+    "expect_tools": [
+      "search_activities",
+      "fitness_stats"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-longest-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "What was my longest run this year?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": [
+      "km"
+    ]
+  },
+  {
+    "id": "coach-hardest-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "Which was my hardest session in the last three months?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-form-today-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "How is my form today?",
+    "expect_tools": [
+      "fitness_stats"
+    ],
+    "expect_any": [
+      "form",
+      "fitness",
+      "fatigue"
+    ]
+  },
+  {
+    "id": "coach-fitness-trend-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "Is my fitness going up or down over the last 90 days?",
+    "expect_tools": [
+      "fitness_stats"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-records-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "What are my personal records over 5 km and 10 km?",
+    "expect_tools": [
+      "records"
+    ],
+    "expect_any": [
+      "5",
+      "10"
+    ]
+  },
+  {
+    "id": "coach-record-recent-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "Have I set any records in the last two months?",
+    "expect_tools": [
+      "records"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-ten-k-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "How am I doing for a 10K? What time could I run?",
+    "expect_tools": [
+      "estimates",
+      "records"
+    ],
+    "expect_any": [
+      "10"
+    ]
+  },
+  {
+    "id": "coach-vdot-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "What is my current VDOT or critical speed estimate?",
+    "expect_tools": [
+      "estimates"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-sleep-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "How have I been sleeping this week?",
+    "expect_tools": [
+      "daily_health"
+    ],
+    "expect_any": [
+      "sleep",
+      "hours",
+      "h"
+    ]
+  },
+  {
+    "id": "coach-hrv-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "Is my HRV lower than usual lately?",
+    "expect_tools": [
+      "daily_health"
+    ],
+    "expect_any": [
+      "HRV",
+      "ms"
+    ]
+  },
+  {
+    "id": "coach-rest-day-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "Should I rest tomorrow or train?",
+    "expect_tools": [
+      "fitness_stats"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-detail-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "Tell me about my most recent activity in detail.",
+    "expect_tools": [
+      "search_activities",
+      "activity_details"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-rides-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "How many rides did I do last month and how much climbing?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": [
+      "m",
+      "ride"
+    ]
+  },
+  {
+    "id": "coach-unknown-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "What was my blood pressure yesterday?",
+    "expect_tools": [],
+    "expect_any": [
+      "not",
+      "don't",
+      "no "
+    ]
+  },
+  {
+    "id": "coach-pace-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "What was my average pace on my last run?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": [
+      "min"
+    ]
+  },
+  {
+    "id": "coach-streak-en",
+    "kind": "coach",
+    "language": "en",
+    "question": "How many days in a row have I trained?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-volume-month-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cuántos kilómetros he corrido en los últimos 30 días?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": [
+      "km"
+    ]
+  },
+  {
+    "id": "coach-volume-week-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Qué tal la semana pasada comparada con la anterior?",
+    "expect_tools": [
+      "search_activities",
+      "fitness_stats"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-longest-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cuál ha sido mi carrera más larga este año?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": [
+      "km"
+    ]
+  },
+  {
+    "id": "coach-hardest-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cuál fue mi sesión más dura de los últimos tres meses?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-form-today-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cómo está mi forma hoy?",
+    "expect_tools": [
+      "fitness_stats"
+    ],
+    "expect_any": [
+      "forma",
+      "fitness",
+      "fatiga"
+    ]
+  },
+  {
+    "id": "coach-fitness-trend-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Mi fitness sube o baja en los últimos 90 días?",
+    "expect_tools": [
+      "fitness_stats"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-records-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cuáles son mis récords en 5 km y 10 km?",
+    "expect_tools": [
+      "records"
+    ],
+    "expect_any": [
+      "5",
+      "10"
+    ]
+  },
+  {
+    "id": "coach-record-recent-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿He hecho algún récord en los últimos dos meses?",
+    "expect_tools": [
+      "records"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-ten-k-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cómo voy para un 10K? ¿Qué tiempo podría hacer?",
+    "expect_tools": [
+      "estimates",
+      "records"
+    ],
+    "expect_any": [
+      "10"
+    ]
+  },
+  {
+    "id": "coach-vdot-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cuál es mi estimación actual de VDOT o velocidad crítica?",
+    "expect_tools": [
+      "estimates"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-sleep-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Qué tal he dormido esta semana?",
+    "expect_tools": [
+      "daily_health"
+    ],
+    "expect_any": [
+      "sueño",
+      "dormido",
+      "horas",
+      "h"
+    ]
+  },
+  {
+    "id": "coach-hrv-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Tengo la VFC más baja de lo normal últimamente?",
+    "expect_tools": [
+      "daily_health"
+    ],
+    "expect_any": [
+      "VFC",
+      "HRV",
+      "ms"
+    ]
+  },
+  {
+    "id": "coach-rest-day-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Mañana descanso o entreno?",
+    "expect_tools": [
+      "fitness_stats"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-detail-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "Cuéntame mi última actividad con detalle.",
+    "expect_tools": [
+      "search_activities",
+      "activity_details"
+    ],
+    "expect_any": []
+  },
+  {
+    "id": "coach-rides-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cuántas salidas en bici hice el mes pasado y cuánto desnivel?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": [
+      "m",
+      "bici"
+    ]
+  },
+  {
+    "id": "coach-unknown-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Qué tensión arterial tenía ayer?",
+    "expect_tools": [],
+    "expect_any": [
+      "no "
+    ]
+  },
+  {
+    "id": "coach-pace-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿A qué ritmo medio fue mi última carrera?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": [
+      "min"
+    ]
+  },
+  {
+    "id": "coach-streak-es",
+    "kind": "coach",
+    "language": "es",
+    "question": "¿Cuántos días seguidos llevo entrenando?",
+    "expect_tools": [
+      "search_activities"
+    ],
+    "expect_any": []
+  }
+]

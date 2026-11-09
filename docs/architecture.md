@@ -398,15 +398,26 @@ What is shared is the logic, not the visual components: the web uses the DOM (EC
 
 ## AI layer (small LLM via API)
 
-- **Model:** **Claude Haiku 5.5** (`claude-haiku-5-5`) with the official Python SDK `anthropic`. It costs $0.10 per million input tokens and $0.50 per million output tokens (prompts up to 100K tokens). An activity summary (about 3K input tokens and 300 output) costs about $0.0005: **cents per month** for one user.
+- **Model:** **Claude Haiku 5.5** (`claude-haiku-5-5`, `AI_MODEL` to change it) with the official Python SDK `anthropic`. It costs $0.10 per million input tokens and $0.50 per million output tokens (prompts up to 100K tokens). An activity summary (about 3K input tokens and 300 output) costs about $0.0005: **cents per month** for one user.
 - **Uses:**
   1. **Summary when each activity is imported**, with structured output (`output_config.format`).
   2. **Weekly report** with the Batch API, at half price because it does not need to be immediate.
-  3. **Coach**: natural-language questions. The model uses tools (`search_activities`, `fitness_stats`, `records`, `daily_health`) that query our API, instead of receiving the whole history. Streamed answers.
+  3. **Coach**: natural-language questions. The model uses tools (`search_activities`, `activity_details`, `fitness_stats`, `records`, `daily_health`, `estimates`) that query our database, instead of receiving the whole history. Streamed answers.
 - **Language:** the model answers in the user's interface language (English or Spanish).
 - **Cost under control:** stable system prompt and tools to benefit from prompt caching, token logging per call and a monthly spending cap.
 - **Privacy:** the LLM **never receives coordinates, routes or profile data**, only aggregated numbers. There is a global "use AI" switch and Settings explains what is sent. The provider's data retention and usage terms must be reviewed when the account is activated.
 - **No invented numbers:** answers quote data returned by the tools, and an evaluation set checks that the numbers match the database before the prompt or the model changes. If an analysis needs more capability, only that route can be tried on a larger model, measured with the same evaluation.
+
+### As built (phase 7)
+
+- **`zankup.ai`** in the backend: `client.py` wraps the SDK client (`Llm`), turns its errors into `LlmError`, writes every call to `llm_calls` with tokens, cache hits and cost, and refuses to spend past `AI_MONTHLY_BUDGET_USD` (default 5). `context.py` builds what the model sees from aggregated numbers and refuses a fixed list of forbidden keys (coordinates, routes, device, name, description, photos, e-mail, profile); the tests feed it an activity that has all of them. `tools.py` is one registry for the Coach and the MCP server, each tool a pydantic model (the JSON schema the model sees) and a function; every answer goes through the same check.
+- **Summaries (OS-703):** `metrics_activity` queues `ai_summary` once records are known, only for activities started in the last 14 days (a history backfill is never summarised; the page offers "Summarise" for older ones). Stored in `activity_summaries` with the suggested title and highlights; `GET/POST /api/activities/{id}/summary`.
+- **Weekly report (OS-704):** the scheduler queues `ai_weekly` on Mondays at `WEEKLY_REPORT_HOUR_UTC`; the job submits one Batch API request, and `ai_weekly_poll` collects it ten minutes later (and again while it runs), stores it in `weekly_reports` and sends the `weekly` notification, which opens `/coach`. `POST /api/ai/weekly` writes it at once through a normal request.
+- **Coach (OS-705):** `POST /api/ai/coach` takes the conversation (kept by the client, never stored) and streams NDJSON events: `text` pieces, `tool` calls as they happen, then `done` or `error`. A manual tool loop of at most six rounds; the thinking blocks go back unchanged. The PWA renders paragraphs, bullet lists and links to `/activities/{id}`. The stream goes through the Vercel proxy (the first streamed route): if the proxy buffers it the answer arrives whole.
+- **Prompt caching (OS-706):** the system prompt of each use is one cached block and the tool list is stable; per-call instructions (language, units, today) ride on the user message. `cache_read_input_tokens` is logged per call and summed in `GET /api/ai/status`, which also reports this month's spend, the warning at 80 % and whether the cap is reached.
+- **Evaluation (OS-707):** `fixtures/ai_eval/cases.json` (10 summaries, 36 questions, both languages) and `python -m zankup.ai.eval`, which runs them against a database with the real model and checks that every number the model quotes exists in the data it was given, that the expected tools were called and that the answer contains an expected word. No baseline is committed: the set depends on the database it runs against.
+- **Privacy (OS-708):** `settings.ai` holds `enabled`, `summaries` and `weekly`; `GET /api/ai/status` lists what is sent and never sent, shown in Settings on the web and the phone.
+- **MCP server (OS-709):** `POST /api/mcp`, Streamable HTTP in its stateless form (JSON-RPC by POST, JSON answers, no SSE): `initialize`, `ping`, `tools/list`, `tools/call`. Authorised by personal tokens (`api_tokens`, `zk_…`, only the SHA-256 stored, revocable from Settings), never by the session. It works without an Anthropic key.
 
 ## Data model (Postgres)
 
@@ -432,8 +443,12 @@ effort_curves activity_id | period · sport · kind (pace|power|hr) · duration_
 estimates     date · kind (ftp|threshold_pace|critical_pace|lthr|hr_max|vdot|race_5k…) · value · method · confidence · source_activities[] · metrics_version
 progress      period · metric · value · prev_value · goal · metrics_version
 events        id · kind (pr|estimate_up|ramp_warning…) · payload · created_at · notified
-llm_calls     id · purpose (summary|weekly|coach) · model · input_tokens · output_tokens · cost_usd · created_at
-settings      language (en|es) · units (metric|imperial) · theme · hr_max · hr_rest · lthr · ftp · zone_model · privacy_zones
+llm_calls     id · purpose (summary|weekly|coach|eval) · model · input_tokens · output_tokens · cache_read_tokens
+              cache_write_tokens · cost_usd · batch · duration_ms · created_at
+activity_summaries  activity_id · language · suggested_title · summary · highlights · model · metrics_version
+weekly_reports  id · week_start · language · status · batch_id · headline · summary · recommendation · highlights · context
+api_tokens    id · name · token_hash · prefix · created_at · last_used_at · revoked_at   ← the MCP server's tokens
+settings      language (en|es) · units (metric|imperial) · theme · hr_max · hr_rest · lthr · ftp · zone_model · privacy_zones · notifications · ai
 auth_methods  id · kind (password_totp|google|passkey) · google_sub · email · credential_id · created_at · last_used
 devices       id · name · platform (web|android) · push_endpoint · refresh_token_hash · last_seen
 sync_runs     id · trigger (cron|button) · started_at · finished_at · new_count · status · error
@@ -465,6 +480,12 @@ sync_runs     id · trigger (cron|button) · started_at · finished_at · new_co
 | `GET` | `/api/stats/records` · `/volume` · `/power-curve` · `/heatmap` | Stats |
 | `POST` | `/api/import` | Uploads a FIT or ZIP |
 | `GET/PUT` | `/api/settings` | Language, units, theme, HR, thresholds, privacy zones |
+| `GET` | `/api/ai/status` | Whether this server has a model, the user's AI switches, this month's spend and what the model receives |
+| `GET/POST` | `/api/activities/{id}/summary` | The model's summary of an activity; POST writes it now |
+| `GET/POST` | `/api/ai/weekly` | The weekly reports; POST writes last week's now |
+| `POST` | `/api/ai/coach` | Ask the Coach; the answer streams as NDJSON events |
+| `GET/POST/DELETE` | `/api/ai/tokens` · `/{id}` | Personal tokens for the MCP server, shown once |
+| `POST` | `/api/mcp` | The read-only MCP server (JSON-RPC), authorised by a personal token |
 | `POST/DELETE` | `/api/devices` | Register or revoke a device and its notification endpoint |
 
 ## Sync flow

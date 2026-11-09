@@ -1,6 +1,6 @@
 """The signed-in user's preferences (`/api/settings`): theme (OS-214), language (OS-223), units and the
 heart-rate settings the zones and effort are computed with (OS-212), the privacy zones (OS-407) and
-which push notifications to send (OS-402).
+which push notifications to send (OS-402), and which AI features are on (OS-708).
 
 Each client keeps its own copy (the PWA in localStorage, so the theme is applied before painting) and
 this is the copy that follows the user to other browsers and to the Android app.
@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from zankup.ai import ai_preferences
 from zankup.api.routing import protected_router
 from zankup.auth.deps import CurrentUser, DbSession
 from zankup.db.models import Activity, User, UserSettings
@@ -46,8 +47,18 @@ class Notifications(BaseModel):
     garmin_key: bool = True
     estimate: bool = False
     import_: bool = Field(default=True, alias="import")
+    health_reauth: bool = True
+    weekly: bool = Field(default=True, description="Monday's AI report (OS-704)")
 
     model_config = {"populate_by_name": True}
+
+
+class AiPreferences(BaseModel):
+    """Which AI features are on (OS-708); `enabled` is the global switch."""
+
+    enabled: bool = True
+    summaries: bool = Field(default=True, description="A summary of each new activity")
+    weekly: bool = Field(default=True, description="Monday's report on the week")
 
 
 class Preferences(BaseModel):
@@ -64,6 +75,7 @@ class Preferences(BaseModel):
     ftp: int | None = Field(description="FTP set by the user (else the estimate)")
     privacy_zones: list[PrivacyZone] = Field(description="Hidden from anything shared")
     notifications: Notifications
+    ai: AiPreferences
 
 
 class PreferencesUpdate(BaseModel):
@@ -79,6 +91,7 @@ class PreferencesUpdate(BaseModel):
     ftp: int | None = Field(None, ge=30, le=600)
     privacy_zones: list[PrivacyZone] | None = Field(None, max_length=20)
     notifications: Notifications | None = None
+    ai: AiPreferences | None = None
 
 
 def _settings(db: Session, user: User) -> UserSettings:
@@ -105,6 +118,7 @@ def _out(db: Session, row: UserSettings) -> Preferences:
         ftp=row.ftp,
         privacy_zones=[PrivacyZone(**z) for z in clean_zones(row.privacy_zones or [])],
         notifications=Notifications.model_validate(preferences(db, row.user_id)),
+        ai=AiPreferences.model_validate(ai_preferences(db, row.user_id)),
     )
 
 
@@ -128,6 +142,8 @@ def update_preferences(body: PreferencesUpdate, db: DbSession, user: CurrentUser
         row.privacy_zones = clean_zones([z.model_dump() for z in body.privacy_zones]) or None
     if "notifications" in sent and body.notifications is not None:
         row.notifications = body.notifications.model_dump(by_alias=True)
+    if "ai" in sent and body.ai is not None:
+        row.ai = body.ai.model_dump()
     if "zone_model" in sent and body.zone_model is not None:
         row.zone_model = {**(row.zone_model or {}), "hr": body.zone_model}
     if before != (row.hr_max, row.hr_rest, row.lthr, row.ftp, (row.zone_model or {}).get("hr")):

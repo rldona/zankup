@@ -441,6 +441,16 @@ docs/findings.md.
 
 It can start as soon as M3 is done (it needs the metrics), in parallel with phases 4 to 6.
 
+**Status (9 Nov 2026):** built in one branch, OS-701 to OS-709, with a fake SDK client in the tests:
+nothing in CI calls Anthropic. The backend is `zankup.ai` (client, context, tools, summary, weekly,
+coach, eval), the API `/api/ai/*`, `/api/activities/{id}/summary` and `/api/mcp`. Without
+`ANTHROPIC_API_KEY` every AI feature is hidden; with it, the Coach appears in the PWA's navigation,
+each recent activity gets a summary once the engine has its metrics, and Monday's report goes through
+the Batch API. Pending on the owner's side: an Anthropic key in Railway and a first run of
+`python -m zankup.ai.eval` against real data to tune the prompts (OS-707 ships the set and the
+grounding check, not a baseline). The Coach's stream goes through the Vercel proxy: if the proxy
+buffers it the answer arrives whole, which is acceptable at this length.
+
 - **OS-701 · LLM client in the backend** (S) · depends on OS-101
   - Official `anthropic` SDK with `claude-haiku-5-5`. Each instance brings its own key in the Railway variables; **without a key, every AI feature is hidden** and the rest of the app works the same. Retries and typed errors. Token and cost logging per call in the `llm_calls` table.
 - **OS-702 · Data minimisation** (M) · depends on OS-701

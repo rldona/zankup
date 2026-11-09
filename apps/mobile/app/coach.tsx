@@ -6,8 +6,8 @@
 import { aiStatusQuery, weeklyReportsQuery, type WeeklyReport } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetch } from 'expo/fetch';
-import { router, Stack } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { router, useNavigation } from 'expo-router';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -117,6 +117,28 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
   const abort = useRef<AbortController | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
   useEffect(() => () => abort.current?.abort(), []);
+  // "New conversation" in the header as soon as there is one; while answering it stops first.
+  const navigation = useNavigation();
+  const hasTurns = turns.length > 0;
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: hasTurns
+        ? () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('coach.clear')}
+              hitSlop={10}
+              onPress={() => {
+                abort.current?.abort();
+                setTurns([]);
+              }}
+            >
+              <Icon name="add_comment" color={c.fg} />
+            </Pressable>
+          )
+        : undefined,
+    });
+  }, [navigation, hasTurns, c.fg]);
 
   const ask = async (question: string) => {
     const history: Turn[] = [...turns, { role: 'user', content: question }];
@@ -170,21 +192,6 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
 
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: c.bg }}>
-      <Stack.Screen
-        options={{
-          headerRight: () =>
-            turns.length > 0 && !busy ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('coach.clear')}
-                hitSlop={10}
-                onPress={() => setTurns([])}
-              >
-                <Icon name="add_comment" color={c.fg} />
-              </Pressable>
-            ) : null,
-        }}
-      />
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }} keyboardVerticalOffset={90}>
         <ScrollView
           ref={scroll}

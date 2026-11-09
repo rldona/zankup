@@ -159,3 +159,13 @@ def decrypt_secret(encrypted: str, jwt_secret: str | None, purpose: bytes) -> st
         return Fernet(base64.urlsafe_b64encode(_key(jwt_secret, purpose))).decrypt(encrypted).decode()
     except InvalidToken as error:
         raise AuthConfigError("Cannot decrypt: JWT_SECRET changed") from error
+
+
+def create_grant(purpose: str, user_id: int, secret: str | None, ttl: timedelta, **extra: Any) -> str:
+    """A short-lived signed permission for one thing (an upload, a download), used where a cookie
+    cannot go: requests straight to the API host, bypassing the web proxy."""
+    return _sign({"purpose": f"grant:{purpose}", "sub": str(user_id), **extra}, secret, ttl)
+
+
+def read_grant(token: str, secret: str | None, purpose: str) -> dict[str, Any] | None:
+    return _verify(token, secret, f"grant:{purpose}")

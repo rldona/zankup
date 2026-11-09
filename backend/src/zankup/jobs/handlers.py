@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
@@ -11,12 +12,36 @@ from sqlalchemy.orm import Session, sessionmaker
 from zankup.alerts import Sender
 from zankup.core.config import Settings
 from zankup.db.models import Job
-from zankup.ingest import ingest_fit
+from zankup.ingest import ingest_file
 from zankup.storage import RawStore
 
 log = logging.getLogger("zankup.jobs")
 
 Handler = Callable[[Session, Job], None]
+
+
+RECENT = timedelta(days=2)  # only these are "new": a history backfill never notifies
+
+
+def notify_new_activity(session: Session, user_id: int, activity_id: int) -> None:
+    from zankup.db.models import Activity
+    from zankup.notify import notify
+
+    activity = session.get(Activity, activity_id)
+    if activity is None or datetime.now(UTC) - activity.start_utc > RECENT:
+        return
+    notify(
+        session,
+        user_id,
+        "activity",
+        {
+            "activity_id": activity.id,
+            "name": activity.name,
+            "distance_m": activity.distance_m,
+            "duration_s": activity.moving_s or activity.duration_s,
+        },
+        key=f"activity:{activity.id}",
+    )
 
 
 def ingest_stored_fit(store: RawStore) -> Handler:
@@ -27,16 +52,20 @@ def ingest_stored_fit(store: RawStore) -> Handler:
 
     def handle(session: Session, job: Job) -> None:
         payload: dict[str, Any] = job.payload
-        ingest_fit(
+        key = str(payload["key"])
+        result = ingest_file(
             session,
             store,
             user_id=job.user_id,
             source=payload["source"],
             external_id=str(payload["external_id"]),
-            fit=store.get(payload["key"]),
+            data=store.get(key),
+            fmt=key.rsplit(".", 1)[-1] if key.endswith((".tcx", ".gpx")) else "fit",
             meta=payload.get("meta"),
             reprocess=bool(payload.get("reprocess", False)),
         )
+        if result.created or result.merged:
+            notify_new_activity(session, job.user_id, result.activity_id)
 
     return handle
 
@@ -145,4 +174,37 @@ def default_handlers(
         handlers["sync_garmin"] = sync_garmin(sessions, store, garmin_api_key, alert)
     if settings is not None:
         handlers["backup"] = backup(settings, alert)
+        from zankup.notify import push_handler
+
+        handlers["push"] = push_handler(settings)
+    if settings is not None and sessions is not None:
+        handlers["import_upload"] = import_upload(sessions, store, settings)
+        handlers["export"] = export(sessions, store, settings)
     return handlers
+
+
+def import_upload(sessions: sessionmaker[Session], store: RawStore, settings: Settings) -> Handler:
+    """Import an uploaded file or archive (OS-404, OS-406). Payload: import_id."""
+    from zankup.api.transfers import upload_path
+    from zankup.importer import run_import
+    from zankup.photos import get_photo_store
+
+    def handle(_: Session, job: Job) -> None:
+        import_id = int(job.payload["import_id"])
+        run_import(sessions, store, get_photo_store(settings), import_id, upload_path(settings, import_id))
+
+    return handle
+
+
+def export(sessions: sessionmaker[Session], store: RawStore, settings: Settings) -> Handler:
+    """Write a ZIP with all of a user's data (OS-411). Payload: export_id."""
+    from zankup.api.transfers import export_dir
+    from zankup.exporter import run_export
+    from zankup.photos import get_photo_store
+
+    def handle(_: Session, job: Job) -> None:
+        run_export(
+            sessions, store, get_photo_store(settings), export_dir(settings), int(job.payload["export_id"])
+        )
+
+    return handle

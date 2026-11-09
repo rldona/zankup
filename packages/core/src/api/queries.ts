@@ -12,6 +12,13 @@ type Json<P extends keyof paths, M extends 'get' | 'post'> = paths[P][M] extends
   ? T
   : never;
 
+/** The body of a 201 Created answer. */
+type Created<P extends keyof paths> = paths[P]['post'] extends {
+  responses: { 201: { content: { 'application/json': infer T } } };
+}
+  ? T
+  : never;
+
 export type Me = Json<'/api/auth/me', 'get'>;
 export type ActivityPage = Json<'/api/activities', 'get'>;
 export type ActivitySummary = ActivityPage['items'][number];
@@ -407,5 +414,103 @@ export function engineQuery(api: ApiClient) {
   return {
     queryKey: ['engine'] as const,
     queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/engine', { signal })),
+  };
+}
+
+// --- phase 4: history, privacy and sharing --------------------------------------------------------
+
+export type GearOut = Json<'/api/gear', 'get'>[number];
+export type ImportOut = Json<'/api/imports', 'get'>[number];
+export type NewImport = Created<'/api/imports'>;
+export type ExportOut = Json<'/api/exports', 'get'>[number];
+export type ShareOut = Json<'/api/activities/{activity_id}/shares', 'get'>[number];
+export type SharedActivity = Json<'/api/public/shares/{token}', 'get'>;
+export type Review = Json<'/api/stats/review', 'get'>;
+export type StravaComparison = Json<'/api/stats/strava-comparison', 'get'>;
+export type PrivacyZone = Preferences['privacy_zones'][number];
+export type NotificationPrefs = Preferences['notifications'];
+export type PhotoRef = ActivityDetail['photo_list'][number];
+
+export function gearQuery(api: ApiClient) {
+  return {
+    queryKey: ['activities', 'gear'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/gear', { signal })),
+  };
+}
+
+export function importsQuery(api: ApiClient) {
+  return {
+    queryKey: ['imports'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/imports', { signal })),
+  };
+}
+
+export function exportsQuery(api: ApiClient) {
+  return {
+    queryKey: ['exports'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/exports', { signal })),
+  };
+}
+
+export function sharesQuery(api: ApiClient, activityId: number) {
+  return {
+    queryKey: ['activity', activityId, 'shares'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities/{activity_id}/shares', {
+          params: { path: { activity_id: activityId } },
+          signal,
+        }),
+      ),
+  };
+}
+
+export function sharedPreviewQuery(api: ApiClient, activityId: number, showMap: boolean) {
+  return {
+    queryKey: ['activity', activityId, 'shared', showMap] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(
+        await api.GET('/api/activities/{activity_id}/shared', {
+          params: { path: { activity_id: activityId }, query: { show_map: showMap } },
+          signal,
+        }),
+      ),
+  };
+}
+
+/** A shared activity, for anyone with the link: no session, so it is not under a user's scope. */
+export function sharedActivityQuery(api: ApiClient, token: string) {
+  return {
+    queryKey: ['public', 'share', token] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/public/shares/{token}', { params: { path: { token } }, signal })),
+    retry: false,
+  };
+}
+
+export function reviewQuery(api: ApiClient, period: 'month' | 'year', value: string) {
+  return {
+    queryKey: ['activities', 'stats', 'review', { period, value }] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/review', { params: { query: { period, value } }, signal })),
+  };
+}
+
+export function stravaComparisonQuery(api: ApiClient) {
+  return {
+    queryKey: ['activities', 'stats', 'strava-comparison'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/strava-comparison', { signal })),
+  };
+}
+
+export function pushKeyQuery(api: ApiClient) {
+  return {
+    queryKey: ['push-key'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/notifications/key', { signal })),
+    staleTime: Infinity,
   };
 }

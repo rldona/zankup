@@ -20,6 +20,12 @@ PUBLIC_PATHS = {
     "/api/auth/google/providers",
     "/api/auth/google/start",
     "/api/auth/google/callback",
+    # A shared activity (OS-408): anyone with the link.
+    "/api/public/shares/{token}",
+    "/api/public/shares/{token}/photos/{photo_id}",
+    # Uploads and downloads on the API host, authorised by a signed token in the URL (OS-404, OS-411).
+    "/api/direct/uploads/{import_id}/{index}",
+    "/api/direct/exports/{export_id}",
 }
 
 

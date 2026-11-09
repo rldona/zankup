@@ -3,7 +3,7 @@ distance, calories, efficiency, decoupling and the best-effort curves, from the 
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, select
@@ -15,6 +15,8 @@ from zankup.db.models import Activity, ActivityMetrics, BestEffort, Event, Strea
 from zankup.engine import METRICS_VERSION
 from zankup.engine.athlete import Athlete
 from zankup.fit.streams import decode_streams
+
+RECENT = timedelta(days=2)  # records of older activities (a backfill, an import) are not notified
 
 PACE_SPORTS = {"run", "walk"}
 SPEED_SPORTS = {"run", "walk", "ride", "row", "swim"}
@@ -149,7 +151,7 @@ def record_events(db: Session, activity: Activity) -> int:
             )
         )
         if not faster and earlier:  # a record only means something once there is something to beat
-            db.execute(
+            inserted = db.execute(
                 insert(Event)
                 .values(
                     user_id=activity.user_id,
@@ -163,5 +165,19 @@ def record_events(db: Session, activity: Activity) -> int:
                 )
                 .on_conflict_do_nothing(index_elements=["dedupe_key"])
             )
+            if inserted.rowcount and datetime.now(UTC) - activity.start_utc <= RECENT:  # type: ignore[attr-defined]
+                from zankup.notify import notify
+
+                notify(
+                    db,
+                    activity.user_id,
+                    "record",
+                    {
+                        "activity_id": activity.id,
+                        "distance_key": effort.distance_key,
+                        "time_s": effort.time_s,
+                    },
+                    key=f"record:{activity.id}:{effort.distance_key}",
+                )
             count += 1
     return count

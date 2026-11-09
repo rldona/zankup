@@ -13,8 +13,8 @@ Zankup is the product name that replaces the working name OpenSport. This docume
   - `zankup` for identifiers: domain, package names, GitHub organisation, footer.
 ### Claim
 
-- Spanish: **Tus datos deportivos, de principio a fin.** English: **Your sports data, from start to finish.**
-- It says what the product does (your whole history, the original files, on your own server) and it is what the mark draws: a stride, out and back. It replaces "Your sports data, on another level" / "Tus datos deportivos, en otro nivel", which promised metrics; that promise can stay as the second line of the sign-in panel ("Sync with Garmin, import your Strava history and follow your form without depending on anyone").
+- Spanish: **Todos tus datos deportivos juntos.** English: **All your sports data together.**
+- It says what the product does: Garmin, Strava, the files you import and your health sources, in one place. Chosen on 9 November 2026; it replaces "Your sports data, from start to finish" / "Tus datos deportivos, de principio a fin", which in turn had replaced "Your sports data, on another level" / "Tus datos deportivos, en otro nivel", which promised metrics; that promise can stay as the second line of the sign-in panel ("Sync with Garmin, import your Strava history and follow your form without depending on anyone").
 - Where it goes: the README tagline, the PWA manifest `description`, the sign-in panel headline (OS-203), store listings and social images. Always sentence case with the final full stop; never in capitals.
 
 - Why it changed: an established app called "OpenSports" (leagues and pick-up games) already exists in the same store category, and every real-word candidate (Umbral, Senda, Cota, Mirador, Cumbre) had its domains taken. Zankup had `.com`, `.app`, `.dev`, `.io`, `.run` and `.fit` unregistered, and the exact name free on PyPI, npm and GitHub, when checked on 8 November 2026.

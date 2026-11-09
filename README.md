@@ -1,6 +1,6 @@
 # Zankup
 
-**Your sports data, from start to finish.**
+**All your sports data together.**
 
 Zankup is an open source, self-hosted alternative to Strava for your own training data. It syncs your Garmin activities automatically through the official Garmin Connect Personal API, keeps the original FIT files, imports your full Strava history and computes the advanced metrics that other platforms keep behind a subscription: relative effort, fitness and form, best-effort curves, FTP and threshold estimates, race predictions and more.
 

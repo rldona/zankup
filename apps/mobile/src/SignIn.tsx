@@ -113,7 +113,7 @@ function Brand() {
   return (
     <View style={{ gap: 10, paddingBottom: 8 }}>
       <Wordmark />
-      <Text style={{ color: c.fg, fontSize: 24, fontWeight: '700', letterSpacing: -0.3 }}>
+      <Text style={{ color: c.fg, fontSize: 20, fontWeight: '700', letterSpacing: -0.2 }}>
         {t('app.claim')}
       </Text>
     </View>

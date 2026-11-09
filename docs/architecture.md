@@ -320,7 +320,7 @@ There are three kinds of charts, depending on how much they move and how much yo
   - Notifications with FCM (`expo-notifications`).
   - Health Connect with `react-native-health-connect`.
   - i18next with the shared catalogues and `expo-localization` to detect the device language.
-  - **Sign-in:** native Google (`@react-native-google-signin/google-signin`, Credential Manager) or password + TOTP, against the instance URL entered on first launch. Passkeys (`react-native-passkey`) use the same backend as the PWA (OS-405), once `assetlinks.json` is published on the domain.
+  - **Sign-in:** native Google (`@react-native-google-signin/google-signin`, Credential Manager) or password + TOTP, against the instance URL entered on first launch. Passkeys (`react-native-passkey`, OS-526) use the same backend as the PWA (OS-405): `assetlinks.json` on the relying party's domain names the app's signing key, and that key's `android:apk-key-hash` origin is listed in `WEBAUTHN_ORIGINS`.
   - **Fingerprint unlock:** the refresh token is stored in `expo-secure-store` protected by strong biometrics (`expo-local-authentication`). On many Samsung phones face recognition is weak biometrics and cannot release keys, so the fingerprint is used there.
 - **Themes:** the same tokens as the PWA, from the single source in `packages/core`, plus Android dynamic colour (Material You) through a small module.
 - **The only native-specific piece:** the home-screen widget (with `react-native-android-widget` or an Expo module in Kotlin).

@@ -30,14 +30,23 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 
 On first launch use `http://localhost:8000` as the server.
 
+Release builds are signed with the owner's own key when
+`~/.config/zankup/android/signing.properties` exists (or the file `ZANKUP_SIGNING` points at), with
+`storeFile`, `storePassword`, `keyAlias` and `keyPassword`. It is never committed and must be backed up:
+passkeys (`apps/web/public/.well-known/assetlinks.json`) and Google sign-in trust the app by that key,
+and Android only updates an installed app signed with the same one. Without the file, release builds
+keep the public debug key and passkeys do not work.
+
 ## What needs an account (not in the repository)
 
 - **Notifications:** a Firebase project with an Android app `com.zankup.app`. Its `google-services.json`
   goes in this folder before building; its service account key (JSON) goes in the API's
   `FCM_SERVICE_ACCOUNT` variable.
 - **Google sign-in:** an _Android_ OAuth client in the instance's Google Cloud project, with the package
-  `com.zankup.app` and the SHA-1 of the signing certificate (`eas credentials`, or the debug keystore's
-  for local builds). The app asks for ID tokens for the instance's existing _web_ client.
+  `com.zankup.app` and the SHA-1 of the signing certificate (`keytool -list -v` on the release key
+  above, or `eas credentials`). The app asks for ID tokens for the instance's existing _web_ client.
+- **Passkeys:** the API's `WEBAUTHN_ORIGINS` must include `android:apk-key-hash:<base64url SHA-256 of
+the signing certificate>`, and `assetlinks.json` must list the same SHA-256.
 - **Play Store (internal testing):** parked for now (OS-510); builds are installed straight on a phone as
   above. When it comes back: an Expo account (`eas build -p android --profile production`) and a Google
   Play service account in `play-service-account.json` for `eas submit -p android`.

@@ -55,6 +55,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ['expo-notifications', { color: '#20c997', defaultChannel: 'default' }],
     '@react-native-google-signin/google-signin',
     'react-native-health-connect',
+    './plugins/withReleaseSigning',
     [
       'expo-build-properties',
       {

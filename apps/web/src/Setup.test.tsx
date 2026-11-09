@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
 import { routes } from './router';
-import { passwordStrength } from './signin/strength';
+import { passwordStrength } from '@zankup/core';
 
 const ME = { id: 1, email: 'me@example.com', display_name: 'Raúl', totp_enabled: true };
 const CODES = [
@@ -103,7 +103,9 @@ describe('sign-up', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Go to your activities' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/'));
-    expect(bodies['/api/setup/totp']).toEqual([{ setup_token: 'tok', code: '123456' }]);
+    expect(bodies['/api/setup/totp']).toEqual([
+      { setup_token: 'tok', code: '123456', client: 'web', device_name: 'Browser' },
+    ]);
   });
 
   it('explains a wrong setup code and where to find it', async () => {

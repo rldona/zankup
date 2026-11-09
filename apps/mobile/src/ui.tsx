@@ -32,18 +32,33 @@ export function Screen({
   children,
   scroll = true,
   header = false,
+  title,
+  toolbar,
 }: {
   children: ReactNode;
   scroll?: boolean;
   /** Under a stack header, which already keeps clear of the status bar. */
   header?: boolean;
+  /** A title that stays put while the screen scrolls under it (the tabs). */
+  title?: string;
+  /** Controls that stay put under the title (Stats' period). */
+  toolbar?: ReactNode;
 }) {
   const c = useTheme();
   return (
     <SafeAreaView edges={header ? [] : ['top']} style={{ flex: 1, backgroundColor: c.bg }}>
+      {title ? (
+        <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 }}>
+          <Title>{title}</Title>
+        </View>
+      ) : null}
+      {toolbar ? <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}>{toolbar}</View> : null}
       {scroll ? (
         // "handled": a tap on a button works at once, even with the keyboard open.
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[styles.page, title ? { paddingTop: 4 } : null]}
+        >
           {children}
         </ScrollView>
       ) : (

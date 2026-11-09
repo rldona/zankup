@@ -31,8 +31,8 @@ export default function SearchScreen() {
   const items = results.data?.pages.flatMap((p) => p.items) ?? [];
   const totals = results.data?.pages[0]?.totals;
   return (
-    <Screen scroll={false}>
-      <View style={{ padding: 16, gap: 10 }}>
+    <Screen scroll={false} title={t('nav.search')}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 16, gap: 10 }}>
         <TextInput
           value={text}
           onChangeText={setText}

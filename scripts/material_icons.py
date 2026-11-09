@@ -115,6 +115,7 @@ METRICS = [
 # Interface.
 INTERFACE = [
     "home",
+    "cards_stack",
     "list",
     "search",
     "sync",
@@ -169,7 +170,18 @@ INTERFACE = [
     "group",
     "cloud_sync",
 ]
-FILLED = ["home", "list", "search", "sync", "person", "bar_chart", "monitoring", "favorite", "settings"]
+FILLED = [
+    "home",
+    "cards_stack",
+    "list",
+    "search",
+    "sync",
+    "person",
+    "bar_chart",
+    "monitoring",
+    "favorite",
+    "settings",
+]
 
 
 def main() -> None:

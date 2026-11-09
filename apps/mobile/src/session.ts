@@ -261,9 +261,12 @@ export async function availableBiometrics(): Promise<Biometrics> {
   return level === LocalAuthentication.SecurityLevel.BIOMETRIC_STRONG ? 'strong' : 'weak';
 }
 
+/** Whether opening Zankup asks for the fingerprint (on unless turned off in Settings). */
+export const biometricLockOn = () => readSync(keys.biometricLock) !== '0';
+
 export async function storeRefreshToken(token: string): Promise<void> {
   const weakLock = readSync(keys.weakBiometrics) === '1';
-  const strong = !weakLock && (await availableBiometrics()) === 'strong';
+  const strong = biometricLockOn() && !weakLock && (await availableBiometrics()) === 'strong';
   await SecureStore.deleteItemAsync(TOKEN).catch(() => undefined);
   await SecureStore.setItemAsync(TOKEN, token, {
     requireAuthentication: strong,
@@ -283,7 +286,7 @@ export async function unlock(): Promise<Unlock> {
   const baseUrl = instanceUrl();
   if (!baseUrl) return { signedOut: true };
   const isProtected = readSync(PROTECTED) === '1';
-  if (!isProtected && readSync(keys.weakBiometrics) === '1') {
+  if (!isProtected && biometricLockOn() && readSync(keys.weakBiometrics) === '1') {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: t('mobile.unlockPrompt'),
       biometricsSecurityLevel: 'weak',

@@ -20,7 +20,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Image, Pressable, Text, View } from 'react-native';
 
 import { useApi, useAuth } from '../auth';
 import { Sheet } from '../detail/Tools';
@@ -56,19 +56,27 @@ export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSumma
   const c = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-      <View
-        accessible={false}
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: 32,
-          backgroundColor: c.surface2,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ color: c.fg, fontSize: 22, fontWeight: '700' }}>{initials(me)}</Text>
-      </View>
+      {me.avatar_url ? (
+        <Image
+          accessible={false}
+          source={{ uri: me.avatar_url }}
+          style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: c.surface2 }}
+        />
+      ) : (
+        <View
+          accessible={false}
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            backgroundColor: c.surface2,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: c.fg, fontSize: 22, fontWeight: '700' }}>{initials(me)}</Text>
+        </View>
+      )}
       <View style={{ flex: 1, gap: 4 }}>
         <Text
           accessibilityRole="header"

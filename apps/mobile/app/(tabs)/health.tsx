@@ -17,11 +17,11 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 
-import { useApi } from '../src/auth';
-import { Chart } from '../src/charts';
-import { locale, t } from '../src/i18n';
-import { useTheme } from '../src/theme';
-import { Button, Card, Choice, Heading, Loading, Muted, Screen, styles as ui } from '../src/ui';
+import { useApi } from '../../src/auth';
+import { Chart } from '../../src/charts';
+import { locale, t } from '../../src/i18n';
+import { useTheme } from '../../src/theme';
+import { Button, Card, Choice, Heading, Loading, Muted, Screen, styles as ui } from '../../src/ui';
 
 const PERIODS = ['30', '90', '365'] as const;
 type Period = (typeof PERIODS)[number];
@@ -67,7 +67,7 @@ export default function HealthScreen() {
   const nights = list.filter((d) => d.sleep);
 
   return (
-    <Screen header>
+    <Screen title={t('nav.health')}>
       <Choice
         label={t('stats.period')}
         value={period}

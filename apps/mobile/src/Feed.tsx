@@ -47,7 +47,6 @@ export function Feed() {
       data={items}
       keyExtractor={(a) => String(a.id)}
       renderItem={({ item }) => <ActivityCard activity={item} format={format} />}
-      ListHeaderComponent={<WeekHeader format={format} />}
       ListEmptyComponent={feed.isFetched ? <Empty>{t('feed.empty')}</Empty> : null}
       onEndReached={() => feed.hasNextPage && !feed.isFetchingNextPage && void feed.fetchNextPage()}
       onEndReachedThreshold={0.5}
@@ -64,7 +63,8 @@ export function Feed() {
   );
 }
 
-function WeekHeader({ format }: { format: Format }) {
+/** "This week" (OS-217): the seven days with what was done on each, the streak and the week's numbers. */
+export function WeekHeader({ format }: { format: Format }) {
   const api = useApi();
   const c = useTheme();
   const day = today();
@@ -72,7 +72,7 @@ function WeekHeader({ format }: { format: Format }) {
   if (!week.data) return <View style={{ height: 8 }} />;
   const { days, this_week: totals, streak_weeks: streak } = week.data;
   return (
-    <Card style={{ marginBottom: 14 }}>
+    <Card>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={[ui.heading, { color: c.fg, marginTop: 0 }]}>{t('week.title')}</Text>
         <Muted>{t('week.streak', { count: streak })}</Muted>
@@ -189,7 +189,8 @@ export const ActivityCard = memo(function ActivityCard({
   );
 });
 
-function Thumbnail({ route, colour }: { route: string; colour: string }) {
+/** A route drawn small, on its own tile (or bare, with `tile` false). */
+export function Thumbnail({ route, colour, tile = true }: { route: string; colour: string; tile?: boolean }) {
   const c = useTheme();
   const path = useMemo(() => {
     const points = decodePolyline(route);
@@ -214,7 +215,15 @@ function Thumbnail({ route, colour }: { route: string; colour: string }) {
   if (!path) return null;
   // On its own tile, as in the PWA, so the route stands apart from the card.
   return (
-    <View style={{ width: 88, height: 64, borderRadius: 8, backgroundColor: c.surface2, overflow: 'hidden' }}>
+    <View
+      style={{
+        width: 88,
+        height: 64,
+        borderRadius: 8,
+        backgroundColor: tile ? c.surface2 : 'transparent',
+        overflow: 'hidden',
+      }}
+    >
       <Canvas style={{ width: 88, height: 64 }}>
         <Path
           path={path}

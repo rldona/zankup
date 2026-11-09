@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     vapid_private_key: SecretStr | None = Field(
         default=None, description="PEM or base64url P-256 key; without it one is kept in DATA_DIR"
     )
+    # Android notifications (OS-507): the Firebase service account's JSON key, as is.
+    fcm_service_account: SecretStr | None = Field(
+        default=None, description="Firebase service account JSON; without it the app gets no notifications"
+    )
     # Large uploads and downloads (imports, exports) go straight to the API host, not through the web
     # proxy, which limits request sizes and bills for the traffic.
     api_public_url: str | None = Field(

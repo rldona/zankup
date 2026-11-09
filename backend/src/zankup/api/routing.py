@@ -20,6 +20,8 @@ PUBLIC_PATHS = {
     "/api/auth/google/providers",
     "/api/auth/google/start",
     "/api/auth/google/callback",
+    "/api/auth/google/mobile/nonce",
+    "/api/auth/google/mobile",
     # A shared activity (OS-408): anyone with the link.
     "/api/public/shares/{token}",
     "/api/public/shares/{token}/photos/{photo_id}",

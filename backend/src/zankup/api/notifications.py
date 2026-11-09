@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from zankup.api.routing import protected_router
-from zankup.auth.deps import AppSettings, CurrentUser, DbSession
-from zankup.db.models import PushSubscription
+from zankup.auth.deps import AppSettings, CurrentDevice, CurrentUser, DbSession
+from zankup.db.models import Device, PushSubscription
 from zankup.notify import deliver, forget, language_of, message, public_key, vapid_key
 
 router = protected_router(prefix="/api/notifications", tags=["notifications"])
@@ -66,6 +66,23 @@ def subscribe(body: SubscriptionIn, db: DbSession, user: CurrentUser) -> Subscri
 @router.post("/unsubscribe", operation_id="unsubscribePush", status_code=204)
 def unsubscribe(body: Unsubscribe, db: DbSession, user: CurrentUser) -> Response:
     forget(db, user.id, body.endpoint)
+    db.commit()
+    return Response(status_code=204)
+
+
+class FcmToken(BaseModel):
+    token: str | None = Field(max_length=4096, description="Null stops notifications on this device")
+
+
+@router.put("/fcm", operation_id="setFcmToken", status_code=204)
+def set_fcm_token(body: FcmToken, db: DbSession, device: CurrentDevice) -> Response:
+    """The Android app's Firebase token for this signed-in device (OS-507)."""
+    if body.token:
+        for other in db.scalars(
+            select(Device).where(Device.push_endpoint == body.token, Device.id != device.id)
+        ):
+            other.push_endpoint = None  # the phone signed in again, or changed hands
+    device.push_endpoint = body.token or None
     db.commit()
     return Response(status_code=204)
 

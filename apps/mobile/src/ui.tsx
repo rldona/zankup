@@ -27,10 +27,19 @@ export function onAccent(c: Palette) {
   return c.dynamic ? dynamicOnAccent[scheme(c)] : c.accentFg;
 }
 
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+export function Screen({
+  children,
+  scroll = true,
+  header = false,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  /** Under a stack header, which already keeps clear of the status bar. */
+  header?: boolean;
+}) {
   const c = useTheme();
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: c.bg }}>
+    <SafeAreaView edges={header ? [] : ['top']} style={{ flex: 1, backgroundColor: c.bg }}>
       {scroll ? (
         // "handled": a tap on a button works at once, even with the keyboard open.
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
@@ -159,6 +168,138 @@ export function Empty({ children }: { children: ReactNode }) {
   );
 }
 
+/** One choice among a few, as pills (language, theme, units, a period). */
+export function Choice<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  label: string;
+}) {
+  const c = useTheme();
+  return (
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={label}
+      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}
+    >
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <Pressable
+            key={o.value}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            onPress={() => onChange(o.value)}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: on ? 'transparent' : c.line,
+              backgroundColor: on ? accent(c) : c.surface,
+            }}
+          >
+            <Text style={{ color: on ? onAccent(c) : c.fg }}>{o.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** A bar from 0 to `max`, for uploads, syncs and gear mileage. */
+export function ProgressBar({
+  value,
+  max,
+  color,
+  label,
+}: {
+  value: number;
+  max: number;
+  color?: string;
+  label?: string;
+}) {
+  const c = useTheme();
+  const share = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
+  return (
+    <View
+      accessibilityRole="progressbar"
+      accessibilityLabel={label}
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
+      style={{ height: 6, borderRadius: 3, backgroundColor: c.line, overflow: 'hidden' }}
+    >
+      <View
+        style={{ height: 6, borderRadius: 3, width: `${share * 100}%`, backgroundColor: color ?? c.accent }}
+      />
+    </View>
+  );
+}
+
+/** A row of a menu: an icon, a label, an optional note and a chevron. */
+export function MenuRow({
+  icon,
+  label,
+  note,
+  onPress,
+  last,
+}: {
+  icon?: ReactNode;
+  label: string;
+  note?: string;
+  onPress: () => void;
+  /** The last row of its card: no line under it. */
+  last?: boolean;
+}) {
+  const c = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={note ? `${label}, ${note}` : label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.row,
+        { borderColor: c.line, opacity: pressed ? 0.7 : 1 },
+        last && { borderBottomWidth: 0 },
+      ]}
+    >
+      {icon}
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: c.fg, fontSize: 16, fontWeight: '600' }}>{label}</Text>
+        {note ? <Text style={{ color: c.muted, fontSize: 13 }}>{note}</Text> : null}
+      </View>
+      <Text style={{ color: c.muted, fontSize: 20 }}>›</Text>
+    </Pressable>
+  );
+}
+
+/** A small rounded label: a status, a highlight. */
+export function Badge({ children, tone }: { children: string; tone?: 'good' | 'bad' }) {
+  const c = useTheme();
+  const bg = tone === 'good' ? c.accent : tone === 'bad' ? c.zone5 : c.surface2;
+  const fg = tone === 'good' ? c.accentFg : tone ? '#fff' : c.fg;
+  return (
+    <Text
+      style={{
+        color: fg,
+        backgroundColor: bg,
+        fontSize: 12,
+        fontWeight: '600',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 999,
+        overflow: 'hidden',
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
+
 export const styles = StyleSheet.create({
   page: { padding: 16, gap: 12, paddingBottom: 32 },
   title: { fontSize: 26, fontWeight: '700', letterSpacing: -0.3 },
@@ -177,4 +318,11 @@ export const styles = StyleSheet.create({
   },
   input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
 });

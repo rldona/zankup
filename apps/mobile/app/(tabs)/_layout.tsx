@@ -8,6 +8,7 @@ const TABS: { name: string; icon: IconName; label: Parameters<typeof t>[0] }[] =
   { name: 'index', icon: 'feed', label: 'nav.feed' },
   { name: 'stats', icon: 'stats', label: 'nav.stats' },
   { name: 'search', icon: 'search', label: 'nav.search' },
+  { name: 'sync', icon: 'sync', label: 'nav.sync' },
   { name: 'profile', icon: 'profile', label: 'nav.you' },
 ];
 

@@ -4,16 +4,17 @@ The Android app (phase 5): React Native with Expo (SDK 58, new architecture, Her
 `packages/core` for the API client, queries, formatting, tokens and translations. The architecture and
 the decision behind it are in [docs/architecture.md](../../docs/architecture.md#android-app-phase-5-react-native--expo).
 
-|                                                                                                                     | Where                                                              |
-| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Sign-in: instance URL, Google (native sheet), password + TOTP; fingerprint afterwards                               | `src/session.ts`, `src/SignIn.tsx`                                 |
-| Feed with "This week", detail (map, profile with cursor and sections, photos, splits), stats, search, you, settings | `app/`, `src/`                                                     |
-| Offline: query cache and series in SQLite                                                                           | `src/offline.ts`                                                   |
-| Background sync (WorkManager)                                                                                       | `src/background.ts`                                                |
-| Notifications (FCM)                                                                                                 | `src/push.ts`; the API sends them (`backend/src/zankup/notify.py`) |
-| Home-screen widget                                                                                                  | `src/widget/`                                                      |
-| Wordmark: ZANKUP as one path from `packages/core`, drawn with Skia (sign-in, lock screen)                           | `src/Wordmark.tsx`                                                 |
-| AI assistant (phase 7): the summary of an activity and the switches in Settings; the Coach stays in the PWA         | `src/Ai.tsx`                                                       |
+|                                                                                                                                            | Where                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Sign-in: instance URL, Google (native sheet), password + TOTP; fingerprint afterwards                                                      | `src/session.ts`, `src/SignIn.tsx`                                                    |
+| Feed with "This week", detail (map, profile with cursor and sections, photos, splits), stats, search, sync, you, settings                  | `app/`, `src/`                                                                        |
+| Health (sleep, readiness, trends drawn with Skia), gear, import (files picked on the phone, uploaded in parts)                             | `app/health.tsx`, `app/gear.tsx`, `app/import.tsx`, `src/charts.tsx`, `src/upload.ts` |
+| Offline: query cache and series in SQLite                                                                                                  | `src/offline.ts`                                                                      |
+| Background sync (WorkManager)                                                                                                              | `src/background.ts`                                                                   |
+| Notifications (FCM)                                                                                                                        | `src/push.ts`; the API sends them (`backend/src/zankup/notify.py`)                    |
+| Home-screen widget                                                                                                                         | `src/widget/`                                                                         |
+| Wordmark: ZANKUP as one path from `packages/core`, drawn with Skia (sign-in, lock screen)                                                  | `src/Wordmark.tsx`                                                                    |
+| AI assistant (phase 7): the summary of an activity, the switches in Settings, the weekly report and the Coach (streamed with `expo/fetch`) | `src/Ai.tsx`, `app/coach.tsx`, `src/coach.ts`                                         |
 
 ## Run it on the emulator or a phone
 
@@ -36,5 +37,6 @@ On first launch use `http://localhost:8000` as the server.
 - **Google sign-in:** an _Android_ OAuth client in the instance's Google Cloud project, with the package
   `com.zankup.app` and the SHA-1 of the signing certificate (`eas credentials`, or the debug keystore's
   for local builds). The app asks for ID tokens for the instance's existing _web_ client.
-- **Play Store (internal testing):** an Expo account (`eas build -p android --profile production`) and a
-  Google Play service account in `play-service-account.json` for `eas submit -p android`.
+- **Play Store (internal testing):** parked for now (OS-510); builds are installed straight on a phone as
+  above. When it comes back: an Expo account (`eas build -p android --profile production`) and a Google
+  Play service account in `play-service-account.json` for `eas submit -p android`.

@@ -1,14 +1,18 @@
-/** You (OS-508): who you are, this year by sport, your gear and its mileage, and Settings. */
-import { formatHoursMinutes, gearQuery, meQuery, profileSummaryQuery } from '@zankup/core';
+/**
+ * You (OS-508, OS-511): who you are, this year by sport, your gear and its mileage, and the way to the
+ * rest of the app: Health, the Coach (when the server has a model), Gear, Import and Settings.
+ */
+import { aiStatusQuery, formatHoursMinutes, gearQuery, meQuery, profileSummaryQuery } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { useApi } from '../../src/auth';
+import { Icon } from '../../src/Icon';
 import { t } from '../../src/i18n';
 import { asSport, useFormat } from '../../src/prefs';
 import { useTheme } from '../../src/theme';
-import { Button, Card, Heading, Muted, Screen, Title } from '../../src/ui';
+import { Card, Heading, MenuRow, Muted, Screen, Title } from '../../src/ui';
 
 export default function ProfileScreen() {
   const api = useApi();
@@ -17,10 +21,41 @@ export default function ProfileScreen() {
   const me = useQuery(meQuery(api));
   const summary = useQuery(profileSummaryQuery(api));
   const gear = useQuery(gearQuery(api));
+  const ai = useQuery({ ...aiStatusQuery(api), retry: false });
   return (
     <Screen>
       <Title>{me.data?.display_name ?? t('nav.you')}</Title>
       {me.data && <Muted>{me.data.email}</Muted>}
+      <Card style={{ paddingVertical: 0, gap: 0 }}>
+        <MenuRow
+          icon={<Icon name="health" color={c.fg} />}
+          label={t('nav.health')}
+          onPress={() => router.push('/health')}
+        />
+        {ai.data?.available && (
+          <MenuRow
+            icon={<Icon name="coach" color={c.fg} />}
+            label={t('nav.coach')}
+            onPress={() => router.push('/coach')}
+          />
+        )}
+        <MenuRow
+          icon={<Icon name="gear" color={c.fg} />}
+          label={t('gear.title')}
+          onPress={() => router.push('/gear')}
+        />
+        <MenuRow
+          icon={<Icon name="upload" color={c.fg} />}
+          label={t('import.title')}
+          onPress={() => router.push('/import')}
+        />
+        <MenuRow
+          icon={<Icon name="settings" color={c.fg} />}
+          label={t('nav.settings')}
+          onPress={() => router.push('/settings')}
+          last
+        />
+      </Card>
       {summary.data && summary.data.this_year.length > 0 && (
         <Card>
           <Heading>{String(summary.data.year)}</Heading>
@@ -68,7 +103,6 @@ export default function ProfileScreen() {
             ))}
         </Card>
       )}
-      <Button onPress={() => router.push('/settings')}>{t('nav.settings')}</Button>
     </Screen>
   );
 }

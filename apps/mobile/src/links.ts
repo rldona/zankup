@@ -11,6 +11,9 @@ export function screenFor(url: unknown): string {
   if (typeof url !== 'string') return '/';
   const activity = /^\/activities\/(\d+)/.exec(url);
   if (activity) return `/activity/${activity[1]}`;
+  if (url.startsWith('/settings/import')) return '/import';
+  for (const screen of ['/coach', '/health', '/sync', '/gear'])
+    if (url === screen || url.startsWith(`${screen}?`) || url.startsWith(`${screen}#`)) return screen;
   if (url.startsWith('/settings')) return '/settings';
   if (url.startsWith('/profile')) return '/profile';
   return '/';

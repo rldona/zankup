@@ -134,6 +134,10 @@ export default function Root() {
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="activity/[id]" options={{ title: '' }} />
                   <Stack.Screen name="settings" options={{ title: t('nav.settings') }} />
+                  <Stack.Screen name="health" options={{ title: t('nav.health') }} />
+                  <Stack.Screen name="coach" options={{ title: t('coach.title') }} />
+                  <Stack.Screen name="gear" options={{ title: t('gear.title') }} />
+                  <Stack.Screen name="import" options={{ title: t('import.title') }} />
                 </Stack>
               </AuthContext.Provider>
             )}

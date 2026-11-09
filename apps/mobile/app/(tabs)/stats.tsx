@@ -60,20 +60,24 @@ export default function StatsScreen() {
         </Card>
       )}
       {(night || today?.readiness) && (
-        <Card>
-          <Heading>{t('nav.health')}</Heading>
-          <View style={ui.stats}>
-            {today?.readiness && <Stat label={t('health.readiness')} value={String(today.readiness.score)} />}
-            {night && <Stat label={t('health.score')} value={String(night.score ?? '–')} />}
-            {night?.asleep_s != null && (
-              <Stat label={t('health.asleep')} value={formatHoursMinutes(night.asleep_s)} />
-            )}
-            {today?.hrv && <Stat label={t('health.hrv')} value={`${today.hrv.value.toFixed(0)} ms`} />}
-            {today?.resting_hr && (
-              <Stat label={t('health.restingHr')} value={`${today.resting_hr.value.toFixed(0)} bpm`} />
-            )}
-          </View>
-        </Card>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/health')}>
+          <Card>
+            <Heading>{t('nav.health')} ›</Heading>
+            <View style={ui.stats}>
+              {today?.readiness && (
+                <Stat label={t('health.readiness')} value={String(today.readiness.score)} />
+              )}
+              {night && <Stat label={t('health.score')} value={String(night.score ?? '–')} />}
+              {night?.asleep_s != null && (
+                <Stat label={t('health.asleep')} value={formatHoursMinutes(night.asleep_s)} />
+              )}
+              {today?.hrv && <Stat label={t('health.hrv')} value={`${today.hrv.value.toFixed(0)} ms`} />}
+              {today?.resting_hr && (
+                <Stat label={t('health.restingHr')} value={`${today.resting_hr.value.toFixed(0)} bpm`} />
+              )}
+            </View>
+          </Card>
+        </Pressable>
       )}
       {current && (
         <Card>

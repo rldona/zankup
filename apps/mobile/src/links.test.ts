@@ -11,7 +11,13 @@ describe('links', () => {
 
   it('opens the screen a notification is about', () => {
     expect(screenFor('/activities/42')).toBe('/activity/42');
-    expect(screenFor('/settings/import')).toBe('/settings');
+    expect(screenFor('/settings/import')).toBe('/import');
+    expect(screenFor('/settings#ai')).toBe('/settings');
+    expect(screenFor('/coach')).toBe('/coach'); // the weekly report's notification
+    expect(screenFor('/health?days=90')).toBe('/health');
+    expect(screenFor('/gear')).toBe('/gear');
+    expect(screenFor('/sync')).toBe('/sync');
+    expect(screenFor('/coachella')).toBe('/');
     expect(screenFor('/profile?tab=estimates')).toBe('/profile');
     expect(screenFor(undefined)).toBe('/');
     expect(screenFor('/elsewhere')).toBe('/');

@@ -12,6 +12,7 @@ the decision behind it are in [docs/architecture.md](../../docs/architecture.md#
 | Background sync (WorkManager)                                                                                       | `src/background.ts`                                                |
 | Notifications (FCM)                                                                                                 | `src/push.ts`; the API sends them (`backend/src/zankup/notify.py`) |
 | Home-screen widget                                                                                                  | `src/widget/`                                                      |
+| Wordmark: ZANKUP as one path from `packages/core`, drawn with Skia (sign-in, lock screen)                           | `src/Wordmark.tsx`                                                 |
 
 ## Run it on the emulator or a phone
 

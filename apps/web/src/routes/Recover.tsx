@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { t } from '../i18n';
-import { Lockup } from '../Lockup';
+import { Wordmark } from '../Wordmark';
 import { ErrorBox } from '../signin/CodeForm';
 import { passwordStrength } from '../signin/strength';
 import { Waves } from '../signin/Waves';
@@ -14,7 +14,7 @@ function Frame({ children }: { children: ReactNode }) {
     <div className="login">
       <section className="lart">
         <Waves />
-        <Lockup size="1.4rem" />
+        <Wordmark height="1.5rem" />
         <div>
           <h2>{t('app.claim')}</h2>
           <p>{t('signIn.panel')}</p>

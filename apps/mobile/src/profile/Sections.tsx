@@ -337,7 +337,8 @@ const goalName = (g: { period: string; sport: string | null }) =>
 
 // --- goals -----------------------------------------------------------------------------------------
 
-export function Goals() {
+/** The goals; with `withForm`, the form to add one under them (the modal on the Goals tab does without). */
+export function Goals({ withForm = true }: { withForm?: boolean }) {
   const api = useApi();
   const c = useTheme();
   const format = useFormat();
@@ -370,18 +371,20 @@ export function Goals() {
           </Pressable>
         </GoalCard>
       ))}
-      <GoalForm unit={format.unit} onDone={refresh} />
+      {withForm && <GoalForm unit={format.unit} onDone={refresh} />}
     </>
   );
 }
 
-function GoalForm({ unit, onDone }: { unit: string; onDone: () => void }) {
+/** Adding a goal; `bare` drops its card and heading, for a sheet that has its own title. */
+export function GoalForm({ unit, onDone, bare }: { unit: string; onDone: () => void; bare?: boolean }) {
   const api = useApi();
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
   const [metric, setMetric] = useState<'distance' | 'time' | 'count'>('distance');
   const [sport, setSport] = useState('');
   const [target, setTarget] = useState('');
   const value = Number(target.replace(',', '.'));
+
   const save = useMutation({
     mutationFn: async () => {
       const { error } = await api.POST('/api/goals', {
@@ -395,8 +398,8 @@ function GoalForm({ unit, onDone }: { unit: string; onDone: () => void }) {
     },
   });
   return (
-    <Card>
-      <Heading>{t('goals.add')}</Heading>
+    <Card style={bare ? { borderWidth: 0, padding: 0, backgroundColor: 'transparent' } : undefined}>
+      {!bare && <Heading>{t('goals.add')}</Heading>}
       <Muted>{t('stats.period')}</Muted>
       <Choice
         label={t('stats.period')}

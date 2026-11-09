@@ -2876,6 +2876,407 @@
         }
       }
     },
+    "/api/wellness/days": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Days",
+        "description": "One row per day with health data, one value per metric chosen between sources (OS-605).",
+        "operationId": "getHealthDays",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exclusive",
+              "title": "End"
+            },
+            "description": "Exclusive"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HealthDay"
+                  },
+                  "title": "Response Gethealthdays"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wellness/nights/{day}": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Night Detail",
+        "description": "A night's stages, and how every source recorded it.",
+        "operationId": "getHealthNight",
+        "parameters": [
+          {
+            "name": "day",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Day"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NightDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wellness/settings": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Settings",
+        "operationId": "getHealthSettings",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wellness/priority": {
+      "put": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Set Priority",
+        "description": "The order of sources per metric; an empty list goes back to the automatic rules.",
+        "operationId": "setHealthPriority",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PriorityIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthSettings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wellness/sync": {
+      "post": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Sync Now",
+        "description": "Fetch new health data from every connected source now.",
+        "operationId": "syncHealth",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response Synchealth"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wellness/sources/{source}/data": {
+      "delete": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Delete Data",
+        "description": "Delete every sleep and daily figure from one source. The connection stays, and its next sync\nstarts again from the beginning (30 days).",
+        "operationId": "deleteHealthData",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "garmin",
+                "google_health",
+                "health_connect"
+              ],
+              "type": "string",
+              "title": "Source"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wellness/health-connect": {
+      "post": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Upload Health Connect",
+        "description": "What the app read from Health Connect. Upserted: sending the same days again is harmless.",
+        "operationId": "uploadHealthConnect",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthConnectUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "type": "object",
+                  "title": "Response Uploadhealthconnect"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wellness/google": {
+      "delete": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Google Disconnect",
+        "description": "Revoke Zankup's access at Google and forget the tokens. The data already synced stays.",
+        "operationId": "disconnectGoogleHealth",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/wellness/google/start": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Google Start",
+        "description": "Off to Google to allow read-only access to sleep, health measurements and activity.",
+        "operationId": "googleHealthStart",
+        "responses": {
+          "303": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/wellness/google/callback": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Google Callback",
+        "operationId": "googleHealthCallback",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Error"
+            }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/settings": {
       "get": {
         "tags": [
@@ -5709,6 +6110,98 @@
         ],
         "title": "DayActivity"
       },
+      "DayUpload": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "resting_hr": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 200.0,
+                "exclusiveMinimum": 20.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resting Hr"
+          },
+          "hrv_ms": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 500.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hrv Ms"
+          },
+          "spo2": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "exclusiveMinimum": 50.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spo2"
+          },
+          "respiration": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 60.0,
+                "exclusiveMinimum": 2.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Respiration"
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMaximum": 200000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps"
+          },
+          "wear_s": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wear S"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day"
+        ],
+        "title": "DayUpload"
+      },
       "DeviceOut": {
         "properties": {
           "id": {
@@ -6729,6 +7222,239 @@
         ],
         "title": "Health"
       },
+      "HealthConnectUpload": {
+        "properties": {
+          "sleep": {
+            "items": {
+              "$ref": "#/components/schemas/SleepUpload"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Sleep"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/DayUpload"
+            },
+            "type": "array",
+            "maxItems": 400,
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "title": "HealthConnectUpload"
+      },
+      "HealthDay": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "sleep": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Night"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resting_hr": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Value"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hrv": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Value"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "spo2": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Value"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "respiration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Value"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Value"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tsb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tsb"
+          },
+          "readiness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReadinessOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "sleep",
+          "resting_hr",
+          "hrv",
+          "spo2",
+          "respiration",
+          "steps",
+          "tsb",
+          "readiness"
+        ],
+        "title": "HealthDay"
+      },
+      "HealthSettings": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/HealthSourceStatus"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "priority": {
+            "additionalProperties": {
+              "items": {
+                "type": "string",
+                "enum": [
+                  "garmin",
+                  "google_health",
+                  "health_connect"
+                ]
+              },
+              "type": "array"
+            },
+            "propertyNames": {
+              "enum": [
+                "sleep",
+                "resting_hr",
+                "hrv",
+                "spo2",
+                "respiration",
+                "steps"
+              ]
+            },
+            "type": "object",
+            "title": "Priority",
+            "description": "Empty list: the automatic rules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sources",
+          "priority"
+        ],
+        "title": "HealthSettings"
+      },
+      "HealthSourceStatus": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "garmin",
+              "google_health",
+              "health_connect"
+            ],
+            "title": "Source"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "description": "Configured on this instance (Garmin key, Google client…)"
+          },
+          "connected": {
+            "type": "boolean",
+            "title": "Connected"
+          },
+          "needs_reconnect": {
+            "type": "boolean",
+            "title": "Needs Reconnect",
+            "default": false
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing",
+            "description": "Google scopes the person did not grant"
+          },
+          "last_sync_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sync At"
+          },
+          "nights": {
+            "type": "integer",
+            "title": "Nights"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "available",
+          "connected",
+          "last_sync_at",
+          "nights",
+          "days"
+        ],
+        "title": "HealthSourceStatus"
+      },
       "Heatmap": {
         "properties": {
           "routes": {
@@ -7286,6 +8012,169 @@
         ],
         "title": "NewImport"
       },
+      "Night": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "garmin",
+              "google_health",
+              "health_connect"
+            ],
+            "title": "Source"
+          },
+          "start_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Utc"
+          },
+          "end_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End Utc"
+          },
+          "utc_offset_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utc Offset S"
+          },
+          "asleep_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asleep S"
+          },
+          "awake_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Awake S"
+          },
+          "light_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Light S"
+          },
+          "deep_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deep S"
+          },
+          "rem_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rem S"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "others": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "garmin",
+                "google_health",
+                "health_connect"
+              ]
+            },
+            "type": "array",
+            "title": "Others",
+            "description": "Other sources that recorded this night"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "start_utc",
+          "end_utc",
+          "utc_offset_s",
+          "asleep_s",
+          "awake_s",
+          "light_s",
+          "deep_s",
+          "rem_s",
+          "score",
+          "others"
+        ],
+        "title": "Night"
+      },
+      "NightDetail": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "chosen": {
+            "$ref": "#/components/schemas/Night"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/Stage_"
+            },
+            "type": "array",
+            "title": "Stages"
+          },
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/Night"
+            },
+            "type": "array",
+            "title": "Alternatives",
+            "description": "The same night from the other sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "chosen",
+          "stages",
+          "alternatives"
+        ],
+        "title": "NightDetail"
+      },
       "Notifications": {
         "properties": {
           "activity": {
@@ -7749,6 +8638,40 @@
         "title": "PreferencesUpdate",
         "description": "Only the fields sent are changed. Null clears the language, hr_max or hr_rest."
       },
+      "PriorityIn": {
+        "properties": {
+          "priority": {
+            "additionalProperties": {
+              "items": {
+                "type": "string",
+                "enum": [
+                  "garmin",
+                  "google_health",
+                  "health_connect"
+                ]
+              },
+              "type": "array"
+            },
+            "propertyNames": {
+              "enum": [
+                "sleep",
+                "resting_hr",
+                "hrv",
+                "spo2",
+                "respiration",
+                "steps"
+              ]
+            },
+            "type": "object",
+            "title": "Priority"
+          }
+        },
+        "type": "object",
+        "required": [
+          "priority"
+        ],
+        "title": "PriorityIn"
+      },
       "PrivacyZone": {
         "properties": {
           "id": {
@@ -8023,6 +8946,67 @@
           "public_key"
         ],
         "title": "PushKey"
+      },
+      "ReadinessOut": {
+        "properties": {
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "hrv": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hrv"
+          },
+          "resting_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resting Hr"
+          },
+          "sleep": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sleep"
+          },
+          "form": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form"
+          }
+        },
+        "type": "object",
+        "required": [
+          "score",
+          "hrv",
+          "resting_hr",
+          "sleep",
+          "form"
+        ],
+        "title": "ReadinessOut"
       },
       "RecentRecord": {
         "properties": {
@@ -9488,6 +10472,67 @@
         ],
         "title": "SharedSplit"
       },
+      "SleepUpload": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Id",
+            "description": "Health Connect's record id"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin",
+            "description": "The app that wrote it"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End"
+          },
+          "utc_offset_s": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 50400.0,
+                "minimum": -50400.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utc Offset S"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageIn"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Stages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "start",
+          "end"
+        ],
+        "title": "SleepUpload"
+      },
       "Source": {
         "properties": {
           "id": {
@@ -9678,6 +10723,66 @@
           "ascent_m"
         ],
         "title": "SportTotals"
+      },
+      "StageIn": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "End"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "awake",
+              "light",
+              "deep",
+              "rem"
+            ],
+            "title": "Stage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "stage"
+        ],
+        "title": "StageIn"
+      },
+      "Stage_": {
+        "properties": {
+          "offset_s": {
+            "type": "integer",
+            "title": "Offset S"
+          },
+          "duration_s": {
+            "type": "integer",
+            "title": "Duration S"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "awake",
+              "light",
+              "deep",
+              "rem"
+            ],
+            "title": "Stage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "offset_s",
+          "duration_s",
+          "stage"
+        ],
+        "title": "Stage_"
       },
       "StreamsInfo": {
         "properties": {
@@ -10193,6 +11298,42 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Value": {
+        "properties": {
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "garmin",
+              "google_health",
+              "health_connect"
+            ],
+            "title": "Source"
+          },
+          "others": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "garmin",
+                "google_health",
+                "health_connect"
+              ]
+            },
+            "type": "array",
+            "title": "Others"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "source",
+          "others"
+        ],
+        "title": "Value"
       },
       "Weather": {
         "properties": {

@@ -33,7 +33,17 @@ log = logging.getLogger("zankup.jobs")
 POLL_INTERVAL_S = 2.0
 STALE_CHECK_EVERY = timedelta(minutes=5)
 HEARTBEAT_S = 60.0
-LONG_KINDS = frozenset({"sync_garmin", "backup", "metrics_full", "import_upload", "export"})
+LONG_KINDS = frozenset(
+    {
+        "sync_garmin",
+        "sync_garmin_health",
+        "sync_google_health",
+        "backup",
+        "metrics_full",
+        "import_upload",
+        "export",
+    }
+)
 
 
 class Worker:

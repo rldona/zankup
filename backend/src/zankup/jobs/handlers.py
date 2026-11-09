@@ -127,6 +127,35 @@ def sync_garmin(
     return handle
 
 
+def sync_garmin_health(sessions: sessionmaker[Session], api_key: str) -> Handler:
+    """Sleep, HRV, resting HR and steps from Garmin (OS-602). Payload: optional since (YYYY-MM-DD)."""
+    from datetime import date
+
+    from zankup.health.garmin import sync_health
+    from zankup.sync.garmin import GarminClient
+    from zankup.sync.tokens import DbTokenCache
+
+    def handle(_: Session, job: Job) -> None:
+        since = job.payload.get("since")
+        client = GarminClient(api_key, DbTokenCache(sessions, job.user_id))
+        sync_health(sessions, client, job.user_id, since=date.fromisoformat(since) if since else None)
+
+    return handle
+
+
+def sync_google_health(sessions: sessionmaker[Session], settings: Settings) -> Handler:
+    """Sleep and daily figures from the Google Health API (OS-603). Payload: optional since."""
+    from datetime import date
+
+    from zankup.health.google import sync
+
+    def handle(_: Session, job: Job) -> None:
+        since = job.payload.get("since")
+        sync(sessions, settings, job.user_id, since=date.fromisoformat(since) if since else None)
+
+    return handle
+
+
 def backup(settings: Settings, alert: Sender | None = None) -> Handler:
     """The daily backup (OS-114). On its last failed attempt it e-mails the owner."""
     from zankup.backup import backup_store, run_backup
@@ -172,6 +201,9 @@ def default_handlers(
         handlers["metrics_full"] = engine.metrics_full(sessions)
     if sessions is not None and garmin_api_key:
         handlers["sync_garmin"] = sync_garmin(sessions, store, garmin_api_key, alert)
+        handlers["sync_garmin_health"] = sync_garmin_health(sessions, garmin_api_key)
+    if sessions is not None and settings is not None and settings.integrations()["google_health"]:
+        handlers["sync_google_health"] = sync_google_health(sessions, settings)
     if settings is not None:
         handlers["backup"] = backup(settings, alert)
         from zankup.notify import push_handler

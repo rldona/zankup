@@ -25,6 +25,8 @@ from zankup.api.training import router as training_router
 from zankup.api.transfers import direct as transfers_direct
 from zankup.api.transfers import router as transfers_router
 from zankup.api.week import router as week_router
+from zankup.api.wellness import oauth as wellness_oauth
+from zankup.api.wellness import router as wellness_router
 from zankup.auth.google import router as google_router
 from zankup.auth.passkeys import router as passkeys_router
 from zankup.auth.password_reset import router as password_router
@@ -33,6 +35,7 @@ from zankup.auth.setup import router as setup_router
 from zankup.core.config import Settings, get_settings
 from zankup.core.logging import configure_logging
 from zankup.db.session import database_status, get_engine
+from zankup.health.webhooks import router as health_webhooks
 
 log = logging.getLogger("zankup.api")
 
@@ -110,6 +113,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(notifications_router)
     app.include_router(review_router)
     app.include_router(sync_router)
+    app.include_router(wellness_router)
+    app.include_router(wellness_oauth)
+    app.include_router(health_webhooks)
     app.include_router(preferences_router)
     app.include_router(profile_router)
     app.include_router(stats_router)

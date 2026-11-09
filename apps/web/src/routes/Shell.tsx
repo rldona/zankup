@@ -13,6 +13,7 @@ const SIDE: { to: string; icon: IconName; label: Parameters<typeof t>[0] }[] = [
   { to: '/', icon: 'feed', label: 'feed.title' },
   { to: '/search', icon: 'search', label: 'nav.search' },
   { to: '/stats', icon: 'stats', label: 'nav.stats' },
+  { to: '/health', icon: 'health', label: 'nav.health' },
   { to: '/profile', icon: 'profile', label: 'nav.profile' },
   { to: '/settings', icon: 'settings', label: 'nav.settings' },
 ];

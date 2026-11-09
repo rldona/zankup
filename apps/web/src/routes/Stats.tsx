@@ -140,6 +140,7 @@ export function Stats() {
       <nav className="panel statlinks" aria-label={t('stats.links')}>
         <Link to="/review/month">{t('review.monthLink')} ›</Link>
         <Link to="/review/year">{t('review.yearLink')} ›</Link>
+        <Link to="/health">{t('nav.health')} ›</Link>
         <Link to="/stats/calendar">{t('stats.calendar')} ›</Link>
         <Link to="/stats/heatmap">{t('stats.heatmap')} ›</Link>
         <Link to="/routes">{t('stats.routes')} ›</Link>

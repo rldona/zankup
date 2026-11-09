@@ -43,7 +43,7 @@ known-first-party = ["zankup", "zankup_metrics", "anonymise_fit", "anonymise_tra
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["backend/src", "packages/metrics/src", "tools/anonymise_fit.py", "tools/anonymise_track.py", "tools/check_fixtures.py", "tools/scrub_garmin_list.py", "backend/garmin_sync.py"]
+files = ["backend/src", "packages/metrics/src", "tools/anonymise_fit.py", "tools/anonymise_track.py", "tools/check_fixtures.py", "tools/scrub_garmin_list.py", "tools/usb_import.py", "backend/garmin_sync.py"]
 mypy_path = "tools"
 plugins = ["pydantic.mypy"]
 

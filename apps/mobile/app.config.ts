@@ -32,7 +32,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     predictiveBackGestureEnabled: false,
     googleServicesFile: firebase,
-    permissions: ['USE_BIOMETRIC', 'POST_NOTIFICATIONS'],
+    permissions: [
+      'USE_BIOMETRIC',
+      'POST_NOTIFICATIONS',
+      // Health Connect, read only (OS-607).
+      'android.permission.health.READ_SLEEP',
+      'android.permission.health.READ_RESTING_HEART_RATE',
+      'android.permission.health.READ_HEART_RATE_VARIABILITY',
+      'android.permission.health.READ_OXYGEN_SATURATION',
+      'android.permission.health.READ_RESPIRATORY_RATE',
+      'android.permission.health.READ_STEPS',
+    ],
   },
   plugins: [
     'expo-router',
@@ -44,11 +54,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-background-task',
     ['expo-notifications', { color: '#20c997', defaultChannel: 'default' }],
     '@react-native-google-signin/google-signin',
+    'react-native-health-connect',
     [
       'expo-build-properties',
       {
         android: {
           usesCleartextTraffic: dev,
+          minSdkVersion: 26, // Health Connect
           // WorkManager (background sync) finds its Room database by name: R8 must keep it.
           extraProguardRules: [
             '-keep class * extends androidx.room.RoomDatabase { <init>(); }',

@@ -33,6 +33,8 @@ PUBLIC_PATHS = {
     # Uploads and downloads on the API host, authorised by a signed token in the URL (OS-404, OS-411).
     "/api/direct/uploads/{import_id}/{index}",
     "/api/direct/exports/{export_id}",
+    # The MCP server (OS-709): authorised by a personal token from Settings, not the session.
+    "/api/mcp",
 }
 
 

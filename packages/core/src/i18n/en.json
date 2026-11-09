@@ -798,7 +798,6 @@
   "summary.useTitle": "Use this title",
   "summary.titleUsed": "Title updated",
   "summary.suggested": "Suggested title",
-  "summary.by": "Written by {model}",
   "summary.failed": "The summary could not be written. Try again.",
   "coach.title": "Coach",
   "coach.intro": "Ask about your training. The Coach reads your activities, fitness, records and sleep and answers with your numbers.",

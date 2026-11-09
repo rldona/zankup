@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router';
 
 import { api } from '../api';
 import { t } from '../i18n';
-import { Lockup } from '../Lockup';
+import { Wordmark } from '../Wordmark';
 import { CodeForm, ErrorBox } from '../signin/CodeForm';
 import { passwordStrength } from '../signin/strength';
 import { Waves } from '../signin/Waves';
@@ -63,7 +63,7 @@ export function Setup() {
     <div className="login">
       <section className="lart">
         <Waves />
-        <Lockup size="1.4rem" />
+        <Wordmark height="1.5rem" />
         <div>
           <h2>{t('app.claim')}</h2>
           <p>{t('signIn.panel')}</p>

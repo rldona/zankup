@@ -20,10 +20,11 @@ import { forgetOfflineData, keepOffline, OFFLINE_MAX_AGE, persister, queryClient
 import { readAndSend as readHealthConnect } from '../src/healthConnect';
 import { listenToTaps, registerPush } from '../src/push';
 import { authorisedClient, signOut, storeRefreshToken, unlock, type Session } from '../src/session';
+import { Wordmark } from '../src/Wordmark';
 import { SignIn } from '../src/SignIn';
 import { keys, storage } from '../src/storage';
 import { palette, savedTheme, ThemeContext } from '../src/theme';
-import { Button, Muted, Title } from '../src/ui';
+import { Button, Muted } from '../src/ui';
 import { refreshWidget } from '../src/widget/handler';
 
 void SplashScreen.preventAutoHideAsync();
@@ -114,7 +115,7 @@ export default function Root() {
               <View
                 style={{ flex: 1, backgroundColor: c.bg, padding: 24, justifyContent: 'center', gap: 16 }}
               >
-                <Title>Zankup</Title>
+                <Wordmark />
                 <Muted>{t('mobile.locked')}</Muted>
                 <Button primary onPress={() => void open()}>
                   {t('mobile.unlock')}

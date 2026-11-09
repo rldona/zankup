@@ -366,6 +366,12 @@ against 87 FIT files (distance median 0.995, elevation gain 0.95).
 
 **Goal:** a better mobile experience (background, reliable notifications, Health Connect, widget) reusing `packages/core`.
 
+**Status (9 Nov 2026):** built in one branch, OS-502 to OS-509, and checked on an Android 16 emulator
+(sign-in with password + TOTP, the fingerprint releasing the session, feed, detail with the synced
+cursor, stats, search, settings, opening offline and recovering when back online). Waiting on accounts
+only the owner can create: Firebase (notifications), an Android OAuth client (Google sign-in) and Expo
+plus Google Play (OS-510, internal testing).
+
 The performance proof of concept (OS-501) runs at the start of phase 2. This phase assumes React Native won; if Kotlin did, it is re-planned.
 
 - **OS-502 · Expo project in the monorepo** (M) · depends on OS-501

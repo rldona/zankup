@@ -156,6 +156,7 @@ the API.
 | `WEBAUTHN_RP_ID`, `WEBAUTHN_ORIGINS` | Your domain and origin, for passkeys, Google and e-mail links. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in. |
 | `API_PUBLIC_URL` | The API's own public address (e.g. `https://api.example.com`) when the app reaches it through a proxy: imports and exports then go there directly. Leave it empty when the app and the API share an origin. |
+| `FCM_SERVICE_ACCOUNT` | Notifications in the Android app: the Firebase service account key (the whole JSON). |
 | `VAPID_PRIVATE_KEY` | Push notifications. Optional: without it a key is generated once and kept in `DATA_DIR`. |
 | `ANTHROPIC_API_KEY` | AI features (phase 7). |
 | `POSTGRES_PASSWORD`, `ZANKUP_SITE` | Only for `deploy/compose.yaml`. |

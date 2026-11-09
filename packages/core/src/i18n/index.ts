@@ -23,6 +23,17 @@ export function resolveLocale(preferred: readonly string[]): Locale {
   return DEFAULT_LOCALE;
 }
 
+/**
+ * The plural category of a number. Hermes (the Android app's engine) has no `Intl.PluralRules`: there,
+ * the rule of both supported languages is enough (1 is "one", everything else "other").
+ */
+export function pluralCategory(locale: Locale, count: number): string {
+  if (typeof Intl !== 'undefined' && typeof Intl.PluralRules === 'function') {
+    return new Intl.PluralRules(locale).select(count);
+  }
+  return count === 1 ? 'one' : 'other';
+}
+
 /** Finds the `}` that closes the `{` at `open`. */
 function closing(text: string, open: number): number {
   let depth = 0;
@@ -54,10 +65,7 @@ function plurals(locale: Locale, template: string, values: Record<string, string
       option.lastIndex = close + 1;
     }
     const branch =
-      options.get(`=${count}`) ??
-      options.get(new Intl.PluralRules(locale).select(count)) ??
-      options.get('other') ??
-      '';
+      options.get(`=${count}`) ?? options.get(pluralCategory(locale, count)) ?? options.get('other') ?? '';
     out += template.slice(from, m.index) + branch.replace(/#/g, count.toLocaleString(locale));
     from = end + 1;
     head.lastIndex = end + 1;

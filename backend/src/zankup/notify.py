@@ -50,7 +50,7 @@ from zankup.jobs.queue import enqueue
 
 log = logging.getLogger("zankup.notify")
 
-KINDS = ("activity", "record", "sync_error", "garmin_key", "estimate", "import")
+KINDS = ("activity", "record", "sync_error", "garmin_key", "estimate", "import", "health_reauth")
 DEFAULTS = {
     "activity": True,
     "record": True,
@@ -58,6 +58,7 @@ DEFAULTS = {
     "garmin_key": True,
     "estimate": False,
     "import": True,
+    "health_reauth": True,
 }
 MAX_FAILURES = 5
 TTL_S = 24 * 60 * 60
@@ -75,6 +76,10 @@ TEXTS: dict[str, dict[str, tuple[str, str]]] = {
         "estimate": ("Estimate up", "{label} rose to {value}"),
         "import": ("Import finished", "{created} new activities, {merged} merged"),
         "import_error": ("Import failed", "The import could not finish: open Zankup to see why."),
+        "health_reauth": (
+            "Connect Google Health again",
+            "Google stopped sharing your health data with Zankup: connect it again in Settings.",
+        ),
         "test": ("Notifications work", "This is how Zankup will tell you about new activities."),
     },
     "es": {
@@ -85,6 +90,10 @@ TEXTS: dict[str, dict[str, tuple[str, str]]] = {
         "estimate": ("Estimación al alza", "{label} sube a {value}"),
         "import": ("Importación terminada", "{created} actividades nuevas, {merged} combinadas"),
         "import_error": ("La importación ha fallado", "No se pudo terminar: abre Zankup para ver por qué."),
+        "health_reauth": (
+            "Vuelve a conectar Google Health",
+            "Google ha dejado de compartir tus datos de salud con Zankup: conéctalo de nuevo en Ajustes.",
+        ),
         "test": ("Las notificaciones funcionan", "Así te avisará Zankup de tus nuevas actividades."),
     },
 }
@@ -169,6 +178,8 @@ def message(kind: str, data: dict[str, Any], language: str) -> dict[str, Any]:
         case "garmin_key":
             values = {"date": data.get("date", "")}
             url = "/settings"
+        case "health_reauth":
+            url = "/settings#health"
         case "estimate":
             values = {
                 "label": ESTIMATES.get(data.get("kind", ""), data.get("kind", "")),

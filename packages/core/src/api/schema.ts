@@ -1066,6 +1066,200 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/wellness/days': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Health Days
+     * @description One row per day with health data, one value per metric chosen between sources (OS-605).
+     */
+    get: operations['getHealthDays'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/nights/{day}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Night Detail
+     * @description A night's stages, and how every source recorded it.
+     */
+    get: operations['getHealthNight'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/settings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Health Settings */
+    get: operations['getHealthSettings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/priority': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Set Priority
+     * @description The order of sources per metric; an empty list goes back to the automatic rules.
+     */
+    put: operations['setHealthPriority'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/sync': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Sync Now
+     * @description Fetch new health data from every connected source now.
+     */
+    post: operations['syncHealth'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/sources/{source}/data': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete Data
+     * @description Delete every sleep and daily figure from one source (the connection stays).
+     */
+    delete: operations['deleteHealthData'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/health-connect': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Upload Health Connect
+     * @description What the app read from Health Connect. Upserted: sending the same days again is harmless.
+     */
+    post: operations['uploadHealthConnect'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/google': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Google Disconnect
+     * @description Revoke Zankup's access at Google and forget the tokens. The data already synced stays.
+     */
+    delete: operations['disconnectGoogleHealth'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/google/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Google Start
+     * @description Off to Google to allow read-only access to sleep, health measurements and activity.
+     */
+    get: operations['googleHealthStart'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/wellness/google/callback': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Google Callback */
+    get: operations['googleHealthCallback'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/settings': {
     parameters: {
       query?: never;
@@ -2019,6 +2213,26 @@ export interface components {
       /** Name */
       name: string | null;
     };
+    /** DayUpload */
+    DayUpload: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Resting Hr */
+      resting_hr?: number | null;
+      /** Hrv Ms */
+      hrv_ms?: number | null;
+      /** Spo2 */
+      spo2?: number | null;
+      /** Respiration */
+      respiration?: number | null;
+      /** Steps */
+      steps?: number | null;
+      /** Wear S */
+      wear_s?: number | null;
+    };
     /** DeviceOut */
     DeviceOut: {
       /** Id */
@@ -2386,6 +2600,73 @@ export interface components {
        */
       schema_revision: string | null;
     };
+    /** HealthConnectUpload */
+    HealthConnectUpload: {
+      /** Sleep */
+      sleep?: components['schemas']['SleepUpload'][];
+      /** Days */
+      days?: components['schemas']['DayUpload'][];
+    };
+    /** HealthDay */
+    HealthDay: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      sleep: components['schemas']['Night'] | null;
+      resting_hr: components['schemas']['Value'] | null;
+      hrv: components['schemas']['Value'] | null;
+      spo2: components['schemas']['Value'] | null;
+      respiration: components['schemas']['Value'] | null;
+      steps: components['schemas']['Value'] | null;
+      /** Tsb */
+      tsb: number | null;
+      readiness: components['schemas']['ReadinessOut'] | null;
+    };
+    /** HealthSettings */
+    HealthSettings: {
+      /** Sources */
+      sources: components['schemas']['HealthSourceStatus'][];
+      /**
+       * Priority
+       * @description Empty list: the automatic rules
+       */
+      priority: {
+        [key: string]: ('garmin' | 'google_health' | 'health_connect')[];
+      };
+    };
+    /** HealthSourceStatus */
+    HealthSourceStatus: {
+      /**
+       * Source
+       * @enum {string}
+       */
+      source: 'garmin' | 'google_health' | 'health_connect';
+      /**
+       * Available
+       * @description Configured on this instance (Garmin key, Google client…)
+       */
+      available: boolean;
+      /** Connected */
+      connected: boolean;
+      /**
+       * Needs Reconnect
+       * @default false
+       */
+      needs_reconnect: boolean;
+      /**
+       * Missing
+       * @description Google scopes the person did not grant
+       */
+      missing?: string[];
+      /** Last Sync At */
+      last_sync_at: string | null;
+      /** Nights */
+      nights: number;
+      /** Days */
+      days: number;
+    };
     /** Heatmap */
     Heatmap: {
       /**
@@ -2585,6 +2866,59 @@ export interface components {
       import: components['schemas']['ImportOut'];
       upload: components['schemas']['UploadTarget'];
     };
+    /** Night */
+    Night: {
+      /**
+       * Source
+       * @enum {string}
+       */
+      source: 'garmin' | 'google_health' | 'health_connect';
+      /**
+       * Start Utc
+       * Format: date-time
+       */
+      start_utc: string;
+      /**
+       * End Utc
+       * Format: date-time
+       */
+      end_utc: string;
+      /** Utc Offset S */
+      utc_offset_s: number | null;
+      /** Asleep S */
+      asleep_s: number | null;
+      /** Awake S */
+      awake_s: number | null;
+      /** Light S */
+      light_s: number | null;
+      /** Deep S */
+      deep_s: number | null;
+      /** Rem S */
+      rem_s: number | null;
+      /** Score */
+      score: number | null;
+      /**
+       * Others
+       * @description Other sources that recorded this night
+       */
+      others: ('garmin' | 'google_health' | 'health_connect')[];
+    };
+    /** NightDetail */
+    NightDetail: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      chosen: components['schemas']['Night'];
+      /** Stages */
+      stages: components['schemas']['Stage_'][];
+      /**
+       * Alternatives
+       * @description The same night from the other sources
+       */
+      alternatives: components['schemas']['Night'][];
+    };
     /** Notifications */
     Notifications: {
       /**
@@ -2753,6 +3087,13 @@ export interface components {
       privacy_zones?: components['schemas']['PrivacyZone'][] | null;
       notifications?: components['schemas']['Notifications'] | null;
     };
+    /** PriorityIn */
+    PriorityIn: {
+      /** Priority */
+      priority: {
+        [key: string]: ('garmin' | 'google_health' | 'health_connect')[];
+      };
+    };
     /** PrivacyZone */
     PrivacyZone: {
       /** Id */
@@ -2845,6 +3186,19 @@ export interface components {
        * @description VAPID application server key (base64url)
        */
       public_key: string;
+    };
+    /** ReadinessOut */
+    ReadinessOut: {
+      /** Score */
+      score: number;
+      /** Hrv */
+      hrv: number | null;
+      /** Resting Hr */
+      resting_hr: number | null;
+      /** Sleep */
+      sleep: number | null;
+      /** Form */
+      form: number | null;
     };
     /** RecentRecord */
     RecentRecord: {
@@ -3390,6 +3744,33 @@ export interface components {
       /** Elevation Change M */
       elevation_change_m: number | null;
     };
+    /** SleepUpload */
+    SleepUpload: {
+      /**
+       * Id
+       * @description Health Connect's record id
+       */
+      id: string;
+      /**
+       * Origin
+       * @description The app that wrote it
+       */
+      origin?: string | null;
+      /**
+       * Start
+       * Format: date-time
+       */
+      start: string;
+      /**
+       * End
+       * Format: date-time
+       */
+      end: string;
+      /** Utc Offset S */
+      utc_offset_s?: number | null;
+      /** Stages */
+      stages?: components['schemas']['StageIn'][];
+    };
     /** Source */
     Source: {
       /** Id */
@@ -3462,6 +3843,36 @@ export interface components {
       moving_s: number;
       /** Ascent M */
       ascent_m: number;
+    };
+    /** StageIn */
+    StageIn: {
+      /**
+       * Start
+       * Format: date-time
+       */
+      start: string;
+      /**
+       * End
+       * Format: date-time
+       */
+      end: string;
+      /**
+       * Stage
+       * @enum {string}
+       */
+      stage: 'awake' | 'light' | 'deep' | 'rem';
+    };
+    /** Stage_ */
+    Stage_: {
+      /** Offset S */
+      offset_s: number;
+      /** Duration S */
+      duration_s: number;
+      /**
+       * Stage
+       * @enum {string}
+       */
+      stage: 'awake' | 'light' | 'deep' | 'rem';
     };
     /** StreamsInfo */
     StreamsInfo: {
@@ -3692,6 +4103,18 @@ export interface components {
       input?: unknown;
       /** Context */
       ctx?: Record<string, never>;
+    };
+    /** Value */
+    Value: {
+      /** Value */
+      value: number;
+      /**
+       * Source
+       * @enum {string}
+       */
+      source: 'garmin' | 'google_health' | 'health_connect';
+      /** Others */
+      others: ('garmin' | 'google_health' | 'health_connect')[];
     };
     /**
      * Weather
@@ -5732,6 +6155,276 @@ export interface operations {
         content: {
           'application/json': components['schemas']['SyncStatus'];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getHealthDays: {
+    parameters: {
+      query?: {
+        start?: string | null;
+        /** @description Exclusive */
+        end?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HealthDay'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getHealthNight: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        day: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NightDetail'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getHealthSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HealthSettings'];
+        };
+      };
+    };
+  };
+  setHealthPriority: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PriorityIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HealthSettings'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  syncHealth: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            [key: string]: string[];
+          };
+        };
+      };
+    };
+  };
+  deleteHealthData: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        source: 'garmin' | 'google_health' | 'health_connect';
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  uploadHealthConnect: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['HealthConnectUpload'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            [key: string]: number;
+          };
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  disconnectGoogleHealth: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  googleHealthStart: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      303: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  googleHealthCallback: {
+    parameters: {
+      query?: {
+        code?: string | null;
+        state?: string | null;
+        error?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      303: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

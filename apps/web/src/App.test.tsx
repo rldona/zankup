@@ -276,7 +276,7 @@ describe('app skeleton', () => {
     const [sidebar, tabbar] = await screen.findAllByRole('navigation', { name: 'Main' });
     if (!sidebar || !tabbar) throw new Error('missing navigation');
     const names = (nav: HTMLElement) => Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
-    expect(names(sidebar)).toEqual(['Activities', 'Search', 'Stats', 'Profile', 'Settings']);
+    expect(names(sidebar)).toEqual(['Activities', 'Search', 'Stats', 'Health', 'Profile', 'Settings']);
     expect(names(tabbar)).toEqual(['Feed', 'Search', 'Stats', 'Sync', 'You']);
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Activities');
 

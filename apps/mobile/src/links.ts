@@ -1,0 +1,22 @@
+/** Pure helpers (tested without a phone): instance URLs and where notifications and links lead. */
+
+/** "zankup.example.com" → "https://zankup.example.com", without a trailing slash. */
+export function normaliseUrl(input: string): string {
+  const trimmed = input.trim().replace(/\/+$/, '');
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+/** The app screen for a notification's web path ("/activities/12" → "/activity/12"). */
+export function screenFor(url: unknown): string {
+  if (typeof url !== 'string') return '/';
+  const activity = /^\/activities\/(\d+)/.exec(url);
+  if (activity) return `/activity/${activity[1]}`;
+  if (url.startsWith('/settings')) return '/settings';
+  if (url.startsWith('/profile')) return '/profile';
+  return '/';
+}
+
+/** The web app's address for share links: api.zankup.com → zankup.com; other instances as they are. */
+export function webOrigin(instance: string): string {
+  return instance.replace(/^(https?:\/\/)api\./, '$1');
+}

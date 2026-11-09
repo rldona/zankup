@@ -52,7 +52,7 @@ export function authorisedClient(initial: Session, onSignedOut: () => void): Api
 
   const refresh = async (): Promise<boolean> => {
     const response = await createApiClient(session.baseUrl).POST('/api/auth/refresh', {
-      body: { refresh_token: session.refreshToken },
+      body: { refresh_token: session.refreshToken, rotate: true },
     });
     if (!response.data) {
       await saveSession(null);

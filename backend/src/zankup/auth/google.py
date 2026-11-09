@@ -11,6 +11,14 @@ and `nonce`, asking only for `openid email profile`.
 - `DELETE /api/auth/google` unlinks it, if another strong method remains (password with TOTP, or a
   passkey).
 
+The Android app (OS-503) signs in natively with Credential Manager instead:
+- `GET /api/auth/google/mobile/nonce` gives a nonce and a signed `state` holding it (5 minutes);
+- the app asks Google for an ID token for this instance's (web) client ID with that nonce, and sends it
+  with the state to `POST /api/auth/google/mobile`, which checks it like the callback does and, for the
+  linked user only, returns the app's access and refresh tokens.
+- Google's classic Android SDK (the free sign-in library) cannot set a nonce: without a state the token
+  must have been issued in the last five minutes and is accepted only once.
+
 Each instance has its own OAuth client (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET), with
 `<origin>/api/auth/google/callback` as its redirect URI.
 """
@@ -28,13 +36,13 @@ from urllib.parse import urlencode
 
 import httpx
 import jwt
-from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
 from zankup.auth.deps import AppSettings, CurrentUser, DbSession, current_device, current_user
-from zankup.auth.routes import start_session
+from zankup.auth.routes import AppTokens, start_session
 from zankup.db.models import Passkey, User
 from zankup.next import safe_next
 
@@ -53,6 +61,9 @@ FLOW_TTL = timedelta(minutes=10)
 
 class Providers(BaseModel):
     google: bool
+    google_client_id: str | None = Field(
+        default=None, description="Public: the Android app asks Google for ID tokens for this client"
+    )
 
 
 def _configured(settings: AppSettings) -> tuple[str, str]:
@@ -94,7 +105,8 @@ def _back(settings: AppSettings, path: str) -> RedirectResponse:
 @router.get("/providers", operation_id="authProviders")
 def providers(settings: AppSettings) -> Providers:
     """Which extra sign-in methods this instance offers (public: the sign-in screen asks)."""
-    return Providers(google=bool(settings.google_client_id and settings.google_client_secret))
+    enabled = bool(settings.google_client_id and settings.google_client_secret)
+    return Providers(google=enabled, google_client_id=settings.google_client_id if enabled else None)
 
 
 @router.get("/start", operation_id="googleStart", response_class=RedirectResponse, status_code=303)
@@ -150,7 +162,7 @@ def start(
 
 
 def verify_id_token(
-    token: str, client_id: str, nonce: str, http: httpx.Client | None = None
+    token: str, client_id: str, nonce: str | None, http: httpx.Client | None = None
 ) -> dict[str, Any]:
     """The ID token's claims, after checking signature, issuer, audience, expiry, nonce and that the
     e-mail is verified. Raises ValueError otherwise."""
@@ -168,7 +180,7 @@ def verify_id_token(
         )
     except (StopIteration, KeyError, jwt.PyJWTError, httpx.HTTPError) as error:
         raise ValueError(f"Invalid ID token: {error.__class__.__name__}") from None
-    if claims.get("nonce") != nonce:
+    if nonce is not None and claims.get("nonce") != nonce:
         raise ValueError("Invalid ID token: nonce")
     if claims.get("email_verified") is not True:
         raise ValueError("Invalid ID token: e-mail not verified")
@@ -232,6 +244,80 @@ def callback(
     response = _back(settings, flow["next"])
     start_session(db, linked, response, settings, web=True, remember=True, device_name="Browser (Google)")
     return response
+
+
+FRESH_TOKEN = timedelta(minutes=5)
+_used_tokens: dict[str, float] = {}
+
+
+def _use_once(token: str) -> None:
+    """Refuse an ID token seen before (kept in memory for as long as it could still be fresh)."""
+    now = datetime.now(UTC).timestamp()
+    for digest, seen in list(_used_tokens.items()):
+        if now - seen > FRESH_TOKEN.total_seconds() * 2:
+            del _used_tokens[digest]
+    digest = hashlib.sha256(token.encode()).hexdigest()
+    if digest in _used_tokens:
+        raise ValueError("Invalid ID token: already used")
+    _used_tokens[digest] = now
+
+
+class MobileNonce(BaseModel):
+    nonce: str
+    state: str
+
+
+class MobileSignIn(BaseModel):
+    id_token: str = Field(max_length=8192)
+    state: str | None = Field(
+        default=None, max_length=2048, description="From /mobile/nonce, when the token carries that nonce"
+    )
+    device_name: str = Field(default="Android", max_length=120)
+
+
+@router.get("/mobile/nonce", operation_id="googleMobileNonce")
+def mobile_nonce(settings: AppSettings) -> MobileNonce:
+    """A nonce for the app's native Google sign-in, and the signed state to send back with the token."""
+    _configured(settings)
+    nonce = secrets.token_urlsafe(24)
+    state = jwt.encode(
+        {"purpose": "google-mobile", "nonce": nonce, "exp": datetime.now(UTC) + timedelta(minutes=5)},
+        _key(settings),
+        algorithm="HS256",
+    )
+    return MobileNonce(nonce=nonce, state=state)
+
+
+@router.post("/mobile", operation_id="googleMobileSignIn")
+def mobile_sign_in(body: MobileSignIn, response: Response, db: DbSession, settings: AppSettings) -> AppTokens:
+    """The app's native Google sign-in: tokens for the user linked to that Google account, or 401."""
+    client_id, _ = _configured(settings)
+    rejected = HTTPException(status.HTTP_401_UNAUTHORIZED, "This Google account cannot sign in here")
+    try:
+        nonce = None
+        if body.state is not None:
+            state = jwt.decode(body.state, _key(settings), algorithms=["HS256"])
+            if state.get("purpose") != "google-mobile":
+                raise ValueError("state")
+            nonce = str(state["nonce"])
+        claims = verify_id_token(body.id_token, client_id, nonce)
+        if nonce is None:
+            # Google's classic Android SDK cannot carry a nonce: the token must be fresh and is used once.
+            if datetime.now(UTC).timestamp() - float(claims.get("iat", 0)) > FRESH_TOKEN.total_seconds():
+                raise ValueError("Invalid ID token: not fresh")
+            _use_once(body.id_token)
+    except (jwt.PyJWTError, KeyError, ValueError) as problem:
+        log.warning("Google mobile sign-in rejected", extra={"reason": str(problem)[:200]})
+        raise rejected from None
+    linked = db.scalar(select(User).where(User.google_sub == str(claims["sub"])))
+    if linked is None:
+        log.info("Google mobile sign-in for an account that is not linked")
+        raise rejected
+    tokens = start_session(
+        db, linked, response, settings, web=False, remember=True, device_name=body.device_name
+    )
+    assert isinstance(tokens, AppTokens)
+    return tokens
 
 
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT, operation_id="googleUnlink")

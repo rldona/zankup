@@ -181,7 +181,10 @@ def test_linking_needs_a_session_and_unlinking_another_method(ctx: Ctx, database
 
 
 def test_providers_and_safe_redirects(ctx: Ctx) -> None:
-    assert ctx.anon.get("/api/auth/google/providers").json() == {"google": True}
+    assert ctx.anon.get("/api/auth/google/providers").json() == {
+        "google": True,
+        "google_client_id": CLIENT_ID,
+    }
     start = ctx.anon.get("/api/auth/google/start", params={"next": "https://evil.test"})
     flow = jwt.decode(start.cookies[COOKIE], options={"verify_signature": False})
     assert flow["next"] == "/"

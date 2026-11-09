@@ -176,7 +176,7 @@ function DayActivity({ activity: a, format }: { activity: ActivitySummary; forma
             </Text>
             {details.length > 0 && <Muted>{details.join(' · ')}</Muted>}
           </View>
-          {a.route ? <Thumbnail route={a.route} colour={c.muted} tile={false} /> : null}
+          {a.route ? <Thumbnail route={a.route} colour={c.muted} /> : null}
         </View>
       </Card>
     </Pressable>

@@ -138,6 +138,7 @@ export default function Root() {
                   <Stack.Screen name="stats" options={{ title: t('nav.stats') }} />
                   <Stack.Screen name="sync" options={{ title: t('sync.title') }} />
                   <Stack.Screen name="notifications" options={{ title: t('notifications.title') }} />
+                  <Stack.Screen name="search" options={{ title: t('nav.search') }} />
                   <Stack.Screen name="coach" options={{ title: t('coach.title') }} />
                   <Stack.Screen name="gear" options={{ title: t('gear.title') }} />
                   <Stack.Screen name="import" options={{ title: t('import.title') }} />

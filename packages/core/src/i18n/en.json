@@ -890,5 +890,6 @@
   "notifications.empty": "Nothing new for now. Records, estimates that go up and risky jumps in load show up here.",
   "home.perKg": "{value} W/kg",
   "mobile.biometricLock": "Ask for the fingerprint to open Zankup",
-  "mobile.biometricLockOff": "Zankup opens without the fingerprint: anyone with your unlocked phone can see your data."
+  "mobile.biometricLockOff": "Zankup opens without the fingerprint: anyone with your unlocked phone can see your data.",
+  "nav.goals": "Goals"
 }

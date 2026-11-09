@@ -6,7 +6,7 @@
 import { settingsQuery, THEME_CHOICES, type Locale } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext, useEffect, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
 
 import { AiCard } from '../src/Ai';
 import { useAuth } from '../src/auth';
@@ -16,50 +16,7 @@ import { registerPush, unregisterPush, type PushResult } from '../src/push';
 import { availableBiometrics, instanceUrl, type Biometrics } from '../src/session';
 import { keys, readSync, storage } from '../src/storage';
 import { ThemeContext, useTheme } from '../src/theme';
-import { accent, onAccent, Button, Card, Heading, Muted, Screen } from '../src/ui';
-
-function Choice<T extends string>({
-  options,
-  value,
-  onChange,
-  label,
-}: {
-  options: { value: T; label: string }[];
-  value: T;
-  onChange: (value: T) => void;
-  label: string;
-}) {
-  const c = useTheme();
-  return (
-    <View
-      accessibilityRole="radiogroup"
-      accessibilityLabel={label}
-      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}
-    >
-      {options.map((o) => {
-        const on = o.value === value;
-        return (
-          <Pressable
-            key={o.value}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: on }}
-            onPress={() => onChange(o.value)}
-            style={{
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: on ? 'transparent' : c.line,
-              backgroundColor: on ? accent(c) : c.surface,
-            }}
-          >
-            <Text style={{ color: on ? onAccent(c) : c.fg }}>{o.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
+import { Button, Card, Choice, Heading, Muted, Screen } from '../src/ui';
 
 export default function SettingsScreen() {
   const { api, signOut, rekey } = useAuth();
@@ -83,7 +40,7 @@ export default function SettingsScreen() {
     },
   });
   return (
-    <Screen>
+    <Screen header>
       <Card>
         <Heading>{t('settings.language')}</Heading>
         <Choice

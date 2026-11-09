@@ -15,6 +15,7 @@ import {
   usesPace,
   weekQuery,
   type ActivitySummary,
+  SPORT_ICONS,
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -23,7 +24,7 @@ import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
 
 import { useApi } from './auth';
 import { locale, t } from './i18n';
-import { SportIcon } from './Icon';
+import { Icon, SportIcon } from './Icon';
 import { asSport, useFormat } from './prefs';
 import { useTheme } from './theme';
 import { Card, Empty, Muted, Stat, styles as ui } from './ui';
@@ -99,11 +100,21 @@ function WeekHeader({ format }: { format: Format }) {
                 style={[
                   feedStyles.dot,
                   {
-                    borderColor: d.date === day ? c.accent : c.line,
+                    borderColor: d.date === day ? c.accent : sport ? c[sport] : c.line,
                     backgroundColor: sport ? c[sport] : 'transparent',
                   },
                 ]}
-              />
+              >
+                {sport ? (
+                  <Icon name={SPORT_ICONS[sport]} color="#fff" size={18} />
+                ) : (
+                  <Text
+                    style={{ color: d.date === day ? c.accent : c.muted, fontSize: 12, fontWeight: '600' }}
+                  >
+                    {date.getDate()}
+                  </Text>
+                )}
+              </View>
               <Text style={{ color: d.date === day ? c.accent : c.muted, fontSize: 11 }}>
                 {d.date === day ? t('week.today') : label}
               </Text>
@@ -203,5 +214,12 @@ function Thumbnail({ route, colour }: { route: string; colour: string }) {
 }
 
 const feedStyles = StyleSheet.create({
-  dot: { width: 26, height: 26, borderRadius: 13, borderWidth: 2 },
+  dot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

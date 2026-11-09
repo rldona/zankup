@@ -26,23 +26,14 @@ const contrast = (a: string, b: string) => {
 describe('brand mark', () => {
   it('matches docs/brand/assets/logo-mark.svg, the source of truth', () => {
     const path = attrs('path');
-    const ring = attrs('circle');
-    const arrow = attrs('polygon');
     expect(path.d).toBe(MARK_SHAPES.path.d);
     expect(Number(path['stroke-width'])).toBe(MARK_SHAPES.path.strokeWidth);
-    expect([ring.cx, ring.cy, ring.r].map(Number)).toEqual([
-      MARK_SHAPES.ring.cx,
-      MARK_SHAPES.ring.cy,
-      MARK_SHAPES.ring.r,
-    ]);
-    expect(Number(ring['stroke-width'])).toBe(MARK_SHAPES.ring.strokeWidth);
-    expect(arrow.points).toBe(MARK_SHAPES.arrow.points);
-    expect(Number(arrow['stroke-width'])).toBe(MARK_SHAPES.arrow.strokeWidth);
+    expect(path['stroke-linecap']).toBe('round');
   });
 
   it('is one colour and can be used as a CSS mask', () => {
     const svg = markSvg();
-    expect(svg.match(/currentColor/g)).toHaveLength(4);
+    expect(svg.match(/currentColor/g)).toHaveLength(1);
     expect(markSvg('#fff')).not.toContain('currentColor');
     expect(markMaskUrl()).toMatch(/^url\("data:image\/svg\+xml,%3Csvg/);
   });

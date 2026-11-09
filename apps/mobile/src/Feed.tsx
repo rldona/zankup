@@ -58,7 +58,7 @@ export function Feed() {
           tintColor={c.accent}
         />
       }
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 }}
       ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
     />
   );
@@ -179,7 +179,7 @@ export const ActivityCard = memo(function ActivityCard({
         <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
           <View style={[ui.stats, { flex: 1, justifyContent: 'flex-start', gap: 16 }]}>
             {figures.map(([label, value]) => (
-              <Stat key={label} label={label} value={value} />
+              <Stat key={label} labelFirst label={label} value={value} />
             ))}
           </View>
           {a.route ? <Thumbnail route={a.route} colour={c[sport]} /> : null}
@@ -190,6 +190,7 @@ export const ActivityCard = memo(function ActivityCard({
 });
 
 function Thumbnail({ route, colour }: { route: string; colour: string }) {
+  const c = useTheme();
   const path = useMemo(() => {
     const points = decodePolyline(route);
     if (points.length < 2) return null;
@@ -211,10 +212,20 @@ function Thumbnail({ route, colour }: { route: string; colour: string }) {
     return p.build();
   }, [route]);
   if (!path) return null;
+  // On its own tile, as in the PWA, so the route stands apart from the card.
   return (
-    <Canvas style={{ width: 88, height: 64 }}>
-      <Path path={path} style="stroke" strokeWidth={2} strokeJoin="round" strokeCap="round" color={colour} />
-    </Canvas>
+    <View style={{ width: 88, height: 64, borderRadius: 8, backgroundColor: c.surface2, overflow: 'hidden' }}>
+      <Canvas style={{ width: 88, height: 64 }}>
+        <Path
+          path={path}
+          style="stroke"
+          strokeWidth={2.4}
+          strokeJoin="round"
+          strokeCap="round"
+          color={colour}
+        />
+      </Canvas>
+    </View>
   );
 }
 

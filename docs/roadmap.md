@@ -374,8 +374,9 @@ Play Store release (OS-510) is parked: builds are installed straight on the owne
 
 That first pass stopped short of the PWA: four tabs, a basic detail and settings. Parity comes in blocks
 (OS-511 onwards). Block 1, navigation and the missing screens (OS-511 to OS-515), is built: a Sync
-tab, the You tab as a hub, and Health, Coach, Gear and Import on the phone. Still to come: the full
-activity detail, the full stats and training screens, and the full profile and settings.
+tab, the You tab as a hub, and Health, Coach, Gear and Import on the phone. Block 2, the full activity
+detail (OS-516 to OS-518), is built too. Still to come: the full stats and training screens, and the
+full profile and settings.
 
 The performance proof of concept (OS-501) runs at the start of phase 2. This phase assumes React Native won; if Kotlin did, it is re-planned.
 
@@ -414,6 +415,12 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
 - **OS-514 · Manage gear on the phone** (S) · depends on OS-410 and OS-511
 - **OS-515 · Import files from the phone** (M) · depends on OS-404, OS-406 and OS-511
   - Android's file picker and the same upload in parts as the PWA, read part by part from the file.
+- **OS-516 · Full activity figures and editing on the phone** (M) · depends on OS-504
+  - Every figure of the PWA, device, gear and weather; edit name, description, sport and gear; add and remove photos.
+- **OS-517 · Map coloured by metric and replay on the phone** (M) · depends on OS-504
+  - The route in pieces coloured over the shared ramp, its legend, replay at 10×/30×/100× and saving a section as a segment.
+- **OS-518 · Zones, best efforts, laps, power and strength on the phone** (M) · depends on OS-504
+  - HR and power zones, the power curve, best efforts, laps, splits, route rank, segments, strength sets and the body map (its shapes now live in `packages/core`).
 
 **M5 is done when** the Android app replaces the PWA on your phone, with reliable notifications and background sync.
 

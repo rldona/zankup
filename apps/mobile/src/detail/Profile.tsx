@@ -48,7 +48,7 @@ export function Profile({
     let altStarted = false;
     let hrStarted = false;
     for (let x = 0; x < columns; x++) {
-      const i = indexAtDistance(track.dist, (x / (columns - 1)) * track.totalDist);
+      const i = indexAtDistance(track.x, (x / (columns - 1)) * track.totalX);
       const a = track.alt[i];
       if (a != null) {
         const y = PAD + plotH * (1 - (a - track.altMin) / (track.altMax - track.altMin));
@@ -78,8 +78,10 @@ export function Profile({
     return { altPath: alt.build(), altFill: fill.build(), hrPath: hr.build() };
   }, [track, width, height, plotH]);
 
-  const dist = track.dist;
-  const total = track.totalDist;
+  // Distance, or time when the activity has none: the axis the profile runs along.
+  const dist = track.x;
+  const total = track.totalX;
+  const byTime = track.byTime;
   const indexAtX = (x: number) => {
     'worklet';
     return indexAtDistance(dist, (Math.min(Math.max(x, 0), width) / width) * total);
@@ -131,10 +133,12 @@ export function Profile({
   const readout = useAnimatedProps(() => {
     const i = cursor.value;
     if (i < 0) return { text: ' ', defaultValue: ' ' };
-    const km = (dist[i] / 1000).toFixed(2);
+    const at = byTime
+      ? `${Math.floor(dist[i] / 60)}:${String(Math.floor(dist[i] % 60)).padStart(2, '0')}`
+      : `${(dist[i] / 1000).toFixed(2)} km`;
     const a = alt[i];
     const h = hr[i];
-    const text = `${km} km   ${a == null ? '–' : Math.round(a)} m   ${h == null ? '–' : h} bpm`;
+    const text = `${at}   ${a == null ? '–' : Math.round(a)} m   ${h == null ? '–' : h} bpm`;
     return { text, defaultValue: text };
   });
 

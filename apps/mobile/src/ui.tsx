@@ -34,6 +34,7 @@ export function Screen({
   header = false,
   title,
   toolbar,
+  actions,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -43,13 +44,27 @@ export function Screen({
   title?: string;
   /** Controls that stay put under the title (Stats' period). */
   toolbar?: ReactNode;
+  /** Buttons on the title's right (the calendar on Activities). */
+  actions?: ReactNode;
 }) {
   const c = useTheme();
   return (
     <SafeAreaView edges={header ? [] : ['top']} style={{ flex: 1, backgroundColor: c.bg }}>
       {title ? (
-        <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 }}>
-          <Title>{title}</Title>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 22,
+            paddingHorizontal: 16,
+            paddingTop: 16,
+            paddingBottom: 12,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Title>{title}</Title>
+          </View>
+          {actions}
         </View>
       ) : null}
       {toolbar ? <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}>{toolbar}</View> : null}

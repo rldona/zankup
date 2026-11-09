@@ -2648,3 +2648,17 @@ a.button {
   color: var(--muted);
   font-size: 14px;
 }
+
+/* A health figure's source (Garmin, Google Health, Health Connect) in its panel's top-right corner. */
+.health .panel {
+  position: relative;
+}
+
+svg.source {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 16px;
+  height: 16px;
+  fill: var(--muted);
+}

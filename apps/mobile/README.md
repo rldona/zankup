@@ -12,7 +12,7 @@ the decision behind it are in [docs/architecture.md](../../docs/architecture.md#
 | Background sync (WorkManager)                                                                                       | `src/background.ts`                                                |
 | Notifications (FCM)                                                                                                 | `src/push.ts`; the API sends them (`backend/src/zankup/notify.py`) |
 | Home-screen widget                                                                                                  | `src/widget/`                                                      |
-| Brand lock-up: the mark drawn with Skia from `packages/core`, the wordmark in the bundled Momo Trust Display        | `src/Lockup.tsx`, `assets/fonts/`                                  |
+| Wordmark: ZANKUP as one path from `packages/core`, drawn with Skia (sign-in, lock screen)                           | `src/Wordmark.tsx`                                                 |
 
 ## Run it on the emulator or a phone
 

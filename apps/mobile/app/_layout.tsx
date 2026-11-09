@@ -19,7 +19,7 @@ import { t } from '../src/i18n';
 import { forgetOfflineData, keepOffline, OFFLINE_MAX_AGE, persister, queryClient } from '../src/offline';
 import { listenToTaps, registerPush } from '../src/push';
 import { authorisedClient, signOut, storeRefreshToken, unlock, type Session } from '../src/session';
-import { Lockup } from '../src/Lockup';
+import { Wordmark } from '../src/Wordmark';
 import { SignIn } from '../src/SignIn';
 import { keys, storage } from '../src/storage';
 import { palette, savedTheme, ThemeContext } from '../src/theme';
@@ -29,7 +29,10 @@ import { refreshWidget } from '../src/widget/handler';
 void SplashScreen.preventAutoHideAsync();
 
 type State =
-  { kind: 'starting' } | { kind: 'signed-out' } | { kind: 'locked' } | { kind: 'in'; session: Session };
+  | { kind: 'starting' }
+  | { kind: 'signed-out' }
+  | { kind: 'locked' }
+  | { kind: 'in'; session: Session };
 
 export default function Root() {
   const [choice, setChoiceState] = useState<ThemeChoice>(savedTheme);
@@ -113,7 +116,7 @@ export default function Root() {
               <View
                 style={{ flex: 1, backgroundColor: c.bg, padding: 24, justifyContent: 'center', gap: 16 }}
               >
-                <Lockup />
+                <Wordmark />
                 <Muted>{t('mobile.locked')}</Muted>
                 <Button primary onPress={() => void open()}>
                   {t('mobile.unlock')}

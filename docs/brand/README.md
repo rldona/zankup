@@ -45,22 +45,25 @@ Kept alternatives, not for production: `assets/logo-mark-z.svg` (the earlier mar
 
 ## 3. Wordmark
 
-- Typeface: **Momo Trust Display** (Google Fonts, SIL Open Font License, single weight 400). Chosen over Concert One and Boldonse because it is rounded like the mark and reads best in lower case.
-- No extra letter-spacing. Use the case rules from section 1.
-- Load it only for brand text (wordmark, sign-in claim, splash), not for the interface, which stays on the system font stack defined in `packages/core`:
+**ZANKUP** in capitals, set in Momo Trust Display with the **N drawn as the U turned 180°**: the two letters share one arch, one open upwards and one downwards (`ZA∩KUP`), and the n and u of the mark are the same pair in lower case. Decided on 9 November 2026 from `exploration/zankup/wordmark-n-inverted-u.html`.
+
+![Zankup wordmark](assets/wordmark.svg)
+
+- The wordmark is a vector, `assets/wordmark.svg` (viewBox `0 0 4289 780`, one path, baseline at 765, cap height 750), exported to `packages/core` as `WORDMARK_PATH` and kept identical by a test. The web app draws it as an inline SVG in `currentColor` (`apps/web/src/Wordmark.tsx`); the Android app with Skia (`apps/mobile/src/Wordmark.tsx`). It needs no web font.
+- In the product it goes **alone**: the header and the sign-in, setup, recovery and shared pages show the wordmark, not the mark. The mark is for the app icons, the splash screen and social images.
+- Size it by the cap height: 1 rem in the web header, 1.5 rem on the sign-in panel, 22 px on the phone.
+- Typeface for other brand text (sign-in claim, splash, store listings): **Momo Trust Display** (Google Fonts, SIL Open Font License, single weight 400), chosen over Concert One and Boldonse because it is rounded like the mark. No extra letter-spacing. The interface stays on the system font stack defined in `packages/core`; load the font only where that brand text appears:
 
   ```html
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display&display=swap">
   ```
 
-  For a self-hosted build, download the OFL file from Google Fonts and ship it with the app; keep `system-ui, sans-serif` as the fallback.
-- The Android app bundles the TTF (`apps/mobile/assets/fonts/`, with its OFL) through the `expo-font` config plugin and uses it only in the lock-up (`apps/mobile/src/Lockup.tsx`).
-- There is no outlined (vector) wordmark yet. When one is needed for places without the font (favicons with text, OG images), export it from the font and add it to `assets/`.
-- Under exploration, not decided: drawing the **N as the U turned upside down**, so the two letters rhyme (the same arch, one open upwards and one downwards: `ZA∩KUP`). See `exploration/zankup/wordmark-n-inverted-u.html`.
+  For a self-hosted build, download the OFL file from Google Fonts and ship it with the app; keep `system-ui, sans-serif` as the fallback. The web app currently loads no brand font: the wordmark is a vector and the claim uses the interface font.
+- `Zankup` and `zankup` as plain text follow the case rules in section 1; the inverted N is only for the vector wordmark.
 
 ## 4. Lock-up
 
-Mark on the left, wordmark on the right, baseline-aligned, with the mark's height equal to the wordmark's ascender height and a gap of about half the mark's height. On dark surfaces both are the theme foreground; on the accent both are `accentFg`.
+Only where the mark and the wordmark are needed together (social images, store listings, print): mark on the left, wordmark on the right, baseline-aligned, the mark as high as the capitals and a gap of about half the mark's height. On dark surfaces both are the theme foreground; on the accent both are `accentFg`. The product itself does not use the lock-up (section 3).
 
 ## 5. Colour
 
@@ -81,6 +84,7 @@ All in `docs/brand/assets/`:
 |---|---|
 | `logo-mark.svg` | The mark, black on transparent, source of truth |
 | `logo-mark-z.svg` | The earlier Z mark, kept as an alternative |
+| `wordmark.svg` | ZANKUP with the inverted-U N, one path, source of truth for `packages/core` |
 | `favicon.svg` | 64×64, #06221a mark on #20c997 with 14 px radius |
 | `icon-192.png`, `icon-512.png` | PWA icons, #06221a mark on #20c997, rounded square |
 | `icon-maskable-512.png` | Android maskable icon, mark inside the 80 % safe zone |
@@ -106,7 +110,7 @@ Two pieces of work, tracked separately. Do the rename only after the domain and 
 5. Delete or replace `docs/prototypes/assets/` (the traced mountain and its icons) and the prototype's `.mark` mask URL.
 6. Expo: adaptive icon from the same mark, #06221a on #20c997 (monochrome layer white, Android tints it); splash, white mark on #111.
 
-**Status (9 November 2026):** done for the stride mark. The web app renders it from `packages/core` as a CSS mask (header, sign-in, settings) and ships the icons and manifest; the Android app draws it with Skia from the same geometry in the lock-up (sign-in and lock screen), bundles Momo Trust Display for the wordmark, and takes its launcher icon, adaptive layers and splash from `apps/mobile/assets/`. The prototypes in `docs/prototypes/` keep the traced mountain and are not shipped.
+**Status (9 November 2026):** done for the stride mark. The web app shows the vector wordmark from `packages/core` in the header and on the sign-in, setup, recovery and shared pages, and ships the mark as favicon, PWA icons and manifest; the Android app draws the same wordmark with Skia on sign-in and the lock screen and takes its launcher icon, adaptive layers and splash from `apps/mobile/assets/`. The mark no longer appears inside either app. The prototypes in `docs/prototypes/` keep the traced mountain and are not shipped.
 
 ### 7.2 Rename the product
 

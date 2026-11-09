@@ -1755,32 +1755,13 @@ a.button.block {
   }
 }
 
-/* Brand lock-up (docs/brand/README.md, sections 2-4): one-colour mark as a mask over currentColor, so it
-   takes the theme's foreground; wordmark in the brand typeface, never used for interface text. */
-.lockup {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  font-weight: 400;
-}
-
-.mark {
-  display: inline-block;
-  flex: none;
-  height: 0.8em;
-  aspect-ratio: 120 / 134;
-  background: currentColor;
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: contain;
-}
-
+/* Wordmark (docs/brand/README.md, section 3): one path in currentColor, so it takes the theme's foreground.
+   The height is set inline from the cap height; the width follows the viewBox. */
 .wordmark {
-  font-family: 'Momo Trust Display', system-ui, sans-serif;
-  letter-spacing: 0;
+  display: block;
+  width: auto;
+  flex: none;
+  align-self: flex-start;
 }
 
 /* Sign-in (OS-203), from the prototype: brand panel on the accent with waves, form on the right;

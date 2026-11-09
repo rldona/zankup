@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { Icon, type IconName } from '../Icon';
 import { t } from '../i18n';
-import { Lockup } from '../Lockup';
+import { Wordmark } from '../Wordmark';
 import { useSync } from '../sync';
 import { useOnline } from '../offline';
 import { SyncProgress } from '../SyncProgress';
@@ -53,7 +53,7 @@ export function Shell() {
     <div className="app">
       <aside className="side">
         <Link to="/" className="brand" aria-label="Zankup">
-          <Lockup size="1.15rem" />
+          <Wordmark height="1rem" />
         </Link>
         <nav aria-label={t('nav.main')}>
           {SIDE.map((item) => (
@@ -84,7 +84,7 @@ export function Shell() {
           </button>
         )}
         <Link to="/" className="brand" aria-label="Zankup">
-          <Lockup size="1.05rem" />
+          <Wordmark height="0.9rem" />
         </Link>
         <button
           type="button"

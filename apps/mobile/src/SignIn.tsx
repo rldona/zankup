@@ -19,7 +19,7 @@ import {
   SignInError,
   type Session,
 } from './session';
-import { Lockup } from './Lockup';
+import { Wordmark } from './Wordmark';
 import { Button, Field, Muted, Screen } from './ui';
 
 type Step = 'instance' | 'credentials' | 'code';
@@ -77,7 +77,7 @@ export function SignIn({ onSignedIn }: { onSignedIn: (session: Session) => void 
     <KeyboardAvoidingView behavior="height" style={{ flex: 1 }}>
       <Screen>
         <View style={{ gap: 16, paddingTop: 32 }}>
-          <Lockup />
+          <Wordmark />
           {step === 'instance' && (
             <>
               <Muted>{t('mobile.instanceHelp')}</Muted>

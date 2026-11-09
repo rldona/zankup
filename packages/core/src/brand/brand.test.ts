@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import source from '../../../../docs/brand/assets/logo-mark.svg?raw';
+import wordmarkSource from '../../../../docs/brand/assets/wordmark.svg?raw';
 import { themes, THEMES } from '../tokens';
 import { MARK_SHAPES, markMaskUrl, markSvg } from './mark';
+import { WORDMARK_PATH, WORDMARK_VIEWBOX, wordmarkSvg } from './wordmark';
 
-const attrs = (tag: string) => {
-  const match = source.match(new RegExp(`<${tag}\\b([^>]*)/>`));
+const attrs = (tag: string, from = source) => {
+  const match = from.match(new RegExp(`<${tag}\\b([^>]*)/>`));
   if (!match?.[1]) throw new Error(`no <${tag}> in logo-mark.svg`);
   return Object.fromEntries([...match[1].matchAll(/([a-z-]+)="([^"]*)"/g)].map((m) => [m[1], m[2]]));
 };
@@ -36,6 +38,14 @@ describe('brand mark', () => {
     expect(svg.match(/currentColor/g)).toHaveLength(1);
     expect(markSvg('#fff')).not.toContain('currentColor');
     expect(markMaskUrl()).toMatch(/^url\("data:image\/svg\+xml,%3Csvg/);
+  });
+
+  it('has a wordmark that matches docs/brand/assets/wordmark.svg', () => {
+    const path = attrs('path', wordmarkSource);
+    expect(path.d).toBe(WORDMARK_PATH);
+    expect(wordmarkSource).toContain(`viewBox="0 0 ${WORDMARK_VIEWBOX.width} ${WORDMARK_VIEWBOX.height}"`);
+    expect(wordmarkSvg()).toContain('fill="currentColor"');
+    expect(wordmarkSvg('#fff')).not.toContain('currentColor');
   });
 
   it.each(THEMES)('stays legible on the %s theme (3:1 for graphics, WCAG 1.4.11)', (name) => {

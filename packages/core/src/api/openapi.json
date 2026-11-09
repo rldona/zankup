@@ -3092,7 +3092,7 @@
           "health"
         ],
         "summary": "Delete Data",
-        "description": "Delete every sleep and daily figure from one source (the connection stays).",
+        "description": "Delete every sleep and daily figure from one source. The connection stays, and its next sync\nstarts again from the beginning (30 days).",
         "operationId": "deleteHealthData",
         "parameters": [
           {

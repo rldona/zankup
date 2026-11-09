@@ -374,16 +374,24 @@ class ActivityMetrics(Base):
     user_id: Mapped[int] = _user_fk()
     metrics_version: Mapped[int] = mapped_column(SmallInteger)
     trimp: Mapped[float | None] = mapped_column(Float, comment="Banister TRIMP (relative effort)")
-    hr_zones: Mapped[list[float] | None] = mapped_column(JSONB, comment="Seconds per HR zone")
-    power_zones: Mapped[list[float] | None] = mapped_column(JSONB, comment="Seconds per power zone")
+    hr_zones: Mapped[list[float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Seconds per HR zone"
+    )
+    power_zones: Mapped[list[float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Seconds per power zone"
+    )
     gap_distance_m: Mapped[float | None] = mapped_column(Float, comment="Grade-adjusted distance")
     calories: Mapped[float | None] = mapped_column(Float, comment="Estimated kcal (the device's wins)")
     efficiency: Mapped[float | None] = mapped_column(Float, comment="Speed (m/min) per bpm")
     decoupling: Mapped[float | None] = mapped_column(Float, comment="Pa:HR drift, %")
-    power_curve: Mapped[dict[str, float] | None] = mapped_column(JSONB, comment="Best watts per duration (s)")
-    speed_curve: Mapped[dict[str, float] | None] = mapped_column(JSONB, comment="Best m/s per duration (s)")
+    power_curve: Mapped[dict[str, float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Best watts per duration (s)"
+    )
+    speed_curve: Mapped[dict[str, float] | None] = mapped_column(
+        JSONB(none_as_null=True), comment="Best m/s per duration (s)"
+    )
     hr_curve: Mapped[dict[str, float] | None] = mapped_column(
-        JSONB, comment="Best average HR per duration (s)"
+        JSONB(none_as_null=True), comment="Best average HR per duration (s)"
     )
     route_group: Mapped[int | None] = mapped_column(
         BigInteger, comment="Matched routes (OS-309): the first activity of the group"

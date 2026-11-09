@@ -404,5 +404,9 @@
   "strength.front": "Front",
   "strength.back": "Back",
   "strength.noMuscles": "The watch did not record which exercises these were, so no muscles are marked.",
-  "strength.bodyweight": "Body weight"
+  "strength.bodyweight": "Body weight",
+  "error.title": "Something went wrong",
+  "error.body": "This screen hit an unexpected error. Reloading usually fixes it.",
+  "error.reload": "Reload",
+  "error.home": "Go to activities"
 }

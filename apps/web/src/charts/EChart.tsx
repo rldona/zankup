@@ -60,7 +60,12 @@ export function EChart({
   useEffect(() => {
     if (!chart) return;
     chart.setOption({ animation: !reducedMotion(), ...option }, { notMerge: true });
-    return latest.current?.(chart);
+    const cleanup = latest.current?.(chart);
+    // On unmount the chart may already be disposed (the effect above cleans up first): its events
+    // went with it, and touching it again would throw.
+    return () => {
+      if (!chart.isDisposed()) cleanup?.();
+    };
   }, [chart, option]);
 
   return (

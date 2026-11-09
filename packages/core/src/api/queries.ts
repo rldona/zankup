@@ -237,3 +237,175 @@ export function searchQuery(api: ApiClient, params: SearchParams, limit = 50) {
     getNextPageParam: (last: SearchPage) => last.next_offset ?? undefined,
   };
 }
+
+// --- Phase 3: the engine's tables (nothing is computed when these are read) -------------------------
+
+export type Period = { from?: string; to?: string };
+export type FitnessDay = Json<'/api/stats/fitness', 'get'>[number];
+export type StatsSummary = Json<'/api/stats/summary', 'get'>;
+export type VolumeBucket = Json<'/api/stats/volume', 'get'>[number];
+export type CurvePoint = Json<'/api/stats/curves', 'get'>[number];
+export type Records = Json<'/api/stats/records', 'get'>;
+export type EstimateOut = Json<'/api/stats/estimates', 'get'>[number];
+export type YearLine = Json<'/api/stats/progress', 'get'>[number];
+export type CalendarDay = Json<'/api/stats/calendar', 'get'>[number];
+export type RouteGroup = Json<'/api/routes', 'get'>[number];
+export type RouteDetail = Json<'/api/routes/{group_id}', 'get'>;
+export type SegmentOut = Json<'/api/segments', 'get'>[number];
+export type SegmentDetail = Json<'/api/segments/{segment_id}', 'get'>;
+export type GoalOut = Json<'/api/goals', 'get'>[number];
+export type EventOut = Json<'/api/events', 'get'>[number];
+export type EngineStatus = Json<'/api/engine', 'get'>;
+
+/** Keys under 'activities' are refreshed after a sync and kept offline, like the feed. */
+const stats = (name: string, params: object = {}) => ['activities', 'stats', name, params] as const;
+
+export function fitnessQuery(api: ApiClient, period: Period) {
+  return {
+    queryKey: stats('fitness', period),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/fitness', { params: { query: period }, signal })),
+  };
+}
+
+export function summaryQuery(api: ApiClient, period: Period, sport?: string[]) {
+  return {
+    queryKey: stats('summary', { ...period, sport }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/summary', { params: { query: { ...period, sport } }, signal })),
+  };
+}
+
+export function volumeQuery(
+  api: ApiClient,
+  period: Period,
+  unit: 'day' | 'week' | 'month' | 'year',
+  sport?: string[],
+) {
+  return {
+    queryKey: stats('volume', { ...period, unit, sport }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/volume', { params: { query: { ...period, unit, sport } }, signal })),
+  };
+}
+
+export function curvesQuery(
+  api: ApiClient,
+  kind: 'power' | 'speed' | 'hr',
+  period: Period,
+  sport?: string[],
+) {
+  return {
+    queryKey: stats('curves', { ...period, kind, sport }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/curves', { params: { query: { ...period, kind, sport } }, signal })),
+  };
+}
+
+export function recordsQuery(api: ApiClient, period: Period) {
+  return {
+    queryKey: stats('records', period),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/records', { params: { query: period }, signal })),
+  };
+}
+
+export function estimatesQuery(api: ApiClient) {
+  return {
+    queryKey: stats('estimates'),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/estimates', { signal })),
+  };
+}
+
+export function progressQuery(api: ApiClient, sport?: string[], years = 5) {
+  return {
+    queryKey: stats('progress', { sport, years }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/progress', { params: { query: { sport, years } }, signal })),
+  };
+}
+
+export function efficiencyQuery(api: ApiClient, period: Period, sport = 'run') {
+  return {
+    queryKey: stats('efficiency', { ...period, sport }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/efficiency', { params: { query: { ...period, sport } }, signal })),
+  };
+}
+
+export function calendarQuery(api: ApiClient, period: Period) {
+  return {
+    queryKey: stats('calendar', period),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/calendar', { params: { query: period }, signal })),
+  };
+}
+
+export function heatmapQuery(api: ApiClient, period: Period, sport?: string[]) {
+  return {
+    queryKey: stats('heatmap', { ...period, sport }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/heatmap', { params: { query: { ...period, sport } }, signal })),
+  };
+}
+
+export function yearsQuery(api: ApiClient) {
+  return {
+    queryKey: stats('years'),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/years', { signal })),
+  };
+}
+
+export function routesQuery(api: ApiClient) {
+  return {
+    queryKey: ['activities', 'routes'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/routes', { signal })),
+  };
+}
+
+export function routeQuery(api: ApiClient, id: number) {
+  return {
+    queryKey: ['activities', 'routes', id] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/routes/{group_id}', { params: { path: { group_id: id } }, signal })),
+  };
+}
+
+export function segmentsQuery(api: ApiClient) {
+  return {
+    queryKey: ['activities', 'segments'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/segments', { signal })),
+  };
+}
+
+export function segmentQuery(api: ApiClient, id: number) {
+  return {
+    queryKey: ['activities', 'segments', id] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/segments/{segment_id}', { params: { path: { segment_id: id } }, signal })),
+  };
+}
+
+export function goalsQuery(api: ApiClient) {
+  return {
+    queryKey: ['activities', 'goals'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/goals', { signal })),
+  };
+}
+
+export function eventsQuery(api: ApiClient) {
+  return {
+    queryKey: ['activities', 'events'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/events', { signal })),
+  };
+}
+
+export function engineQuery(api: ApiClient) {
+  return {
+    queryKey: ['engine'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/engine', { signal })),
+  };
+}

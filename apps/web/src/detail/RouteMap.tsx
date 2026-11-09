@@ -14,17 +14,9 @@ import type { GeoJSONSource, LngLatBoundsLike, Map as MapLibre } from 'maplibre-
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '../i18n';
+import { hasWebGL, loadMapLibre } from './maplibre';
 
 const MAX_POINTS = 1500;
-
-function hasWebGL(): boolean {
-  try {
-    const canvas = document.createElement('canvas');
-    return Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'));
-  } catch {
-    return false;
-  }
-}
 
 type Track = { index: number; lonLat: [number, number] }[];
 
@@ -96,15 +88,8 @@ export function RouteMap({
     const element = box.current;
     if (!webgl || !element || track.length < 2) return;
     let disposed = false;
-    void Promise.all([
-      import('maplibre-gl'),
-      import('maplibre-gl/dist/maplibre-gl.css'),
-      // MapLibre looks for its worker next to its own file, which the bundler moves: give it the
-      // worker as Vite builds it.
-      import('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'),
-    ]).then(([maplibre, , worker]) => {
+    void loadMapLibre().then((maplibre) => {
       if (disposed) return;
-      maplibre.setWorkerUrl(worker.default);
       const lons = track.map((p) => p.lonLat[0]);
       const lats = track.map((p) => p.lonLat[1]);
       const bounds: LngLatBoundsLike = [

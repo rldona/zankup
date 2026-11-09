@@ -655,6 +655,401 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/stats/fitness': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Fitness
+     * @description Fitness, fatigue and form per day (OS-303).
+     */
+    get: operations['getFitness'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Summary
+     * @description Totals for a period, by sport, and the same period one year earlier (OS-321).
+     */
+    get: operations['getSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/volume': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Volume
+     * @description Distance, time, elevation and load per day, week, month or year, by sport (OS-308). Empty
+     *     buckets are included, so charts have no holes.
+     */
+    get: operations['getVolume'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/curves': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Curves
+     * @description The best effort for each duration in a period, with the activity it comes from (OS-315).
+     */
+    get: operations['getCurves'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/records': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Records
+     * @description Running records: all time, the period's bests and how each record progressed (OS-304).
+     */
+    get: operations['getRecords'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/estimates': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Estimates
+     * @description Each estimate's latest value, how it was made, the activities behind it and its history (OS-316).
+     */
+    get: operations['getEstimates'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/progress': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Progress
+     * @description Cumulative distance per day of the year, one line per year (OS-322).
+     */
+    get: operations['getProgress'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/efficiency': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Efficiency
+     * @description Aerobic efficiency over time: pace at equal HR getting better (OS-317).
+     */
+    get: operations['getEfficiency'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/calendar': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Calendar
+     * @description Every day of the period with its activities (sized by load) and form (OS-326).
+     */
+    get: operations['getCalendar'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/heatmap': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Heatmap
+     * @description Every route of the period, for the personal heatmap (OS-310).
+     */
+    get: operations['getHeatmap'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/years': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Years
+     * @description Years with activities, newest first: the period selector's options.
+     */
+    get: operations['getYears'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/routes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Routes
+     * @description Routes done more than once, most repeated first.
+     */
+    get: operations['listRoutes'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/routes/{group_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Route */
+    get: operations['getRoute'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/segments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Segments */
+    get: operations['listSegments'];
+    put?: never;
+    /**
+     * Create Segment
+     * @description Save a stretch of an activity as a segment; the engine then finds it in every other one.
+     */
+    post: operations['createSegment'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/segments/{segment_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Segment */
+    get: operations['getSegment'];
+    put?: never;
+    post?: never;
+    /** Delete Segment */
+    delete: operations['deleteSegment'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/goals': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Goals
+     * @description Goals with where they stand this period and the end-of-period projection (OS-318).
+     */
+    get: operations['listGoals'];
+    put?: never;
+    /** Create Goal */
+    post: operations['createGoal'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/goals/{goal_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Goal */
+    delete: operations['deleteGoal'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/events': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Events
+     * @description What the engine noticed, newest first: records, estimates going up, risky ramps (OS-319).
+     */
+    get: operations['listEvents'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/engine': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Engine Status
+     * @description Whether a full recomputation is going on, and how far it is (OS-314).
+     */
+    get: operations['getEngine'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/engine/recompute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Recompute
+     * @description Recompute every metric from the stored series, in the background.
+     */
+    post: operations['recompute'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/week': {
     parameters: {
       query?: never;
@@ -798,7 +1193,64 @@ export interface components {
        * @description Strength sets, rests included; empty for other activities
        */
       sets: components['schemas']['SetOut'][];
+      /** @description Null until the engine has computed it */
+      metrics: components['schemas']['ActivityMetricsOut'] | null;
+      /** @description Matched route, when done more than once */
+      route_group: components['schemas']['RouteInfo'] | null;
+      /**
+       * Segments
+       * @description Your segments this activity went through
+       */
+      segments: components['schemas']['SegmentPass'][];
       streams: components['schemas']['StreamsInfo'] | null;
+    };
+    /**
+     * ActivityMetricsOut
+     * @description What the engine computed for this activity (OS-312).
+     */
+    ActivityMetricsOut: {
+      /**
+       * Trimp
+       * @description Relative effort (Banister TRIMP)
+       */
+      trimp: number | null;
+      /**
+       * Hr Zones
+       * @description Seconds per HR zone, with your zone model
+       */
+      hr_zones: number[] | null;
+      /**
+       * Hr Zone Bounds
+       * @description Lower bound of each HR zone (bpm)
+       */
+      hr_zone_bounds: number[] | null;
+      /** Power Zones */
+      power_zones: number[] | null;
+      /** Power Zone Bounds */
+      power_zone_bounds: number[] | null;
+      /**
+       * Gap Speed
+       * @description Grade-adjusted speed (m/s)
+       */
+      gap_speed: number | null;
+      /**
+       * Calories
+       * @description The device's kcal, or the estimate
+       */
+      calories: number | null;
+      /** Calories Estimated */
+      calories_estimated: boolean;
+      /** Efficiency */
+      efficiency: number | null;
+      /**
+       * Decoupling
+       * @description Pa:HR drift between halves, %
+       */
+      decoupling: number | null;
+      /** Power Curve */
+      power_curve: components['schemas']['Curve'][];
+      /** Speed Curve */
+      speed_curve: components['schemas']['Curve'][];
     };
     /** ActivityPage */
     ActivityPage: {
@@ -942,6 +1394,46 @@ export interface components {
       /** Start Distance M */
       start_distance_m: number;
     };
+    /** Bucket */
+    Bucket: {
+      /**
+       * Start
+       * Format: date
+       */
+      start: string;
+      totals: components['schemas']['Totals'];
+      /** By Sport */
+      by_sport: {
+        [key: string]: components['schemas']['Totals'];
+      };
+    };
+    /** CalendarActivity */
+    CalendarActivity: {
+      /** Id */
+      id: number;
+      /** Sport */
+      sport: string;
+      /** Name */
+      name: string | null;
+      /** Load */
+      load: number | null;
+      /** Distance M */
+      distance_m: number | null;
+      /** Moving S */
+      moving_s: number;
+    };
+    /** CalendarDay */
+    CalendarDay: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Tsb */
+      tsb: number | null;
+      /** Activities */
+      activities: components['schemas']['CalendarActivity'][];
+    };
     /** Challenge */
     Challenge: {
       /**
@@ -952,6 +1444,30 @@ export interface components {
       mfa_required: true;
       /** Challenge */
       challenge: string;
+    };
+    /** Curve */
+    Curve: {
+      /** Duration S */
+      duration_s: number;
+      /** Value */
+      value: number;
+    };
+    /** CurvePoint */
+    CurvePoint: {
+      /** Duration S */
+      duration_s: number;
+      /**
+       * Value
+       * @description Watts, m/s or bpm
+       */
+      value: number;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
     };
     /** Day */
     Day: {
@@ -995,10 +1511,169 @@ export interface components {
        */
       current: boolean;
     };
+    /** EfficiencyPoint */
+    EfficiencyPoint: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Efficiency
+       * @description Speed (m/min) per bpm
+       */
+      efficiency: number;
+      /** Decoupling */
+      decoupling: number | null;
+    };
+    /** EngineStatus */
+    EngineStatus: {
+      /** Running */
+      running: boolean;
+      /** Reason */
+      reason: string | null;
+      /** Done */
+      done: number;
+      /** Total */
+      total: number;
+      /**
+       * Computed
+       * @description Activities computed with the current metrics version
+       */
+      computed: number;
+      /** Activities */
+      activities: number;
+      /** Metrics Version */
+      metrics_version: number;
+    };
+    /** EstimateOut */
+    EstimateOut: {
+      /** Kind */
+      kind: string;
+      /** Value */
+      value: number;
+      /** Method */
+      method: string;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Sources */
+      sources: components['schemas']['Source'][];
+      /**
+       * History
+       * @description Each time it changed
+       */
+      history: components['schemas']['EstimatePoint'][];
+    };
+    /** EstimatePoint */
+    EstimatePoint: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Value */
+      value: number;
+    };
+    /** EventOut */
+    EventOut: {
+      /** Id */
+      id: number;
+      /** Kind */
+      kind: string;
+      /** Payload */
+      payload: {
+        [key: string]: unknown;
+      };
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+    };
+    /** FitnessDay */
+    FitnessDay: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Load */
+      load: number;
+      /**
+       * Ctl
+       * @description Fitness
+       */
+      ctl: number;
+      /**
+       * Atl
+       * @description Fatigue
+       */
+      atl: number;
+      /**
+       * Tsb
+       * @description Form
+       */
+      tsb: number;
+    };
     /** ForgotRequest */
     ForgotRequest: {
       /** Email */
       email: string;
+    };
+    /** GoalCreate */
+    GoalCreate: {
+      /**
+       * Period
+       * @enum {string}
+       */
+      period: 'week' | 'month' | 'year';
+      /**
+       * Metric
+       * @enum {string}
+       */
+      metric: 'distance' | 'time' | 'count';
+      /** Sport */
+      sport?: string | null;
+      /**
+       * Target
+       * @description Metres, seconds or a number of activities
+       */
+      target: number;
+    };
+    /** GoalOut */
+    GoalOut: {
+      /** Id */
+      id: number;
+      /** Period */
+      period: string;
+      /** Metric */
+      metric: string;
+      /** Sport */
+      sport: string | null;
+      /** Target */
+      target: number;
+      /**
+       * Start
+       * Format: date
+       */
+      start: string;
+      /**
+       * End
+       * Format: date
+       */
+      end: string;
+      /** Current */
+      current: number;
+      /**
+       * Projection
+       * @description Where the current pace ends the period
+       */
+      projection: number;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -1025,6 +1700,14 @@ export interface components {
        * @description Alembic revision applied to the database
        */
       schema_revision: string | null;
+    };
+    /** Heatmap */
+    Heatmap: {
+      /**
+       * Routes
+       * @description Encoded polylines (precision 5)
+       */
+      routes: string[];
     };
     /** LapOut */
     LapOut: {
@@ -1159,6 +1842,22 @@ export interface components {
        * @description Highest heart rate recorded in an activity: the zones use it until hr_max is set
        */
       hr_max_estimate: number | null;
+      /**
+       * Zone Model
+       * @description HR zones: share of max HR, of HR reserve, or of LTHR
+       * @enum {string}
+       */
+      zone_model: 'max' | 'reserve' | 'lthr';
+      /**
+       * Lthr
+       * @description Lactate threshold HR set by the user (else the estimate)
+       */
+      lthr: number | null;
+      /**
+       * Ftp
+       * @description FTP set by the user (else the estimate)
+       */
+      ftp: number | null;
     };
     /**
      * PreferencesUpdate
@@ -1175,6 +1874,12 @@ export interface components {
       hr_max?: number | null;
       /** Hr Rest */
       hr_rest?: number | null;
+      /** Zone Model */
+      zone_model?: ('max' | 'reserve' | 'lthr') | null;
+      /** Lthr */
+      lthr?: number | null;
+      /** Ftp */
+      ftp?: number | null;
     };
     /** ProfileSummary */
     ProfileSummary: {
@@ -1263,6 +1968,39 @@ export interface components {
        */
       date: string;
     };
+    /** RecordOut */
+    RecordOut: {
+      /** Distance Key */
+      distance_key: string;
+      /** Distance M */
+      distance_m: number;
+      /** Time S */
+      time_s: number;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+    };
+    /** Records */
+    Records: {
+      /** All Time */
+      all_time: components['schemas']['RecordOut'][];
+      /**
+       * Period
+       * @description Bests of the period asked for
+       */
+      period: components['schemas']['RecordOut'][];
+      /**
+       * Progression
+       * @description Each time a record was beaten
+       */
+      progression: {
+        [key: string]: components['schemas']['RecordOut'][];
+      };
+    };
     /** RefreshRequest */
     RefreshRequest: {
       /** Refresh Token */
@@ -1296,6 +2034,83 @@ export interface components {
        */
       code: string;
     };
+    /** RouteActivity */
+    RouteActivity: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string | null;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Moving S */
+      moving_s: number;
+      /** Distance M */
+      distance_m: number | null;
+      /** Avg Hr */
+      avg_hr: number | null;
+    };
+    /** RouteDetail */
+    RouteDetail: {
+      /**
+       * Id
+       * @description The group's first activity
+       */
+      id: number;
+      /** Sport */
+      sport: string;
+      /** Name */
+      name: string | null;
+      /**
+       * Route
+       * @description Encoded polyline of the first activity
+       */
+      route: string | null;
+      /** Count */
+      count: number;
+      best: components['schemas']['RouteActivity'];
+      latest: components['schemas']['RouteActivity'];
+      /**
+       * Activities
+       * @description Every time, oldest first
+       */
+      activities: components['schemas']['RouteActivity'][];
+    };
+    /** RouteGroup */
+    RouteGroup: {
+      /**
+       * Id
+       * @description The group's first activity
+       */
+      id: number;
+      /** Sport */
+      sport: string;
+      /** Name */
+      name: string | null;
+      /**
+       * Route
+       * @description Encoded polyline of the first activity
+       */
+      route: string | null;
+      /** Count */
+      count: number;
+      best: components['schemas']['RouteActivity'];
+      latest: components['schemas']['RouteActivity'];
+    };
+    /** RouteInfo */
+    RouteInfo: {
+      /** Group */
+      group: number;
+      /** Count */
+      count: number;
+      /**
+       * Rank
+       * @description 1 = the fastest time on this route
+       */
+      rank: number;
+    };
     /** SearchPage */
     SearchPage: {
       /** Items */
@@ -1318,6 +2133,98 @@ export interface components {
       moving_s: number;
       /** Ascent M */
       ascent_m: number;
+    };
+    /** SegmentCreate */
+    SegmentCreate: {
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Start Index
+       * @description Sample index in the activity's series where it starts
+       */
+      start_index: number;
+      /** End Index */
+      end_index: number;
+      /** Name */
+      name: string;
+    };
+    /** SegmentDetail */
+    SegmentDetail: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /**
+       * Track
+       * @description Encoded polyline (precision 6)
+       */
+      track: string;
+      /** Distance M */
+      distance_m: number;
+      /** Ascent M */
+      ascent_m: number | null;
+      /** Efforts */
+      efforts: number;
+      /** Best S */
+      best_s: number | null;
+      /**
+       * History
+       * @description Every effort, oldest first
+       */
+      history: components['schemas']['SegmentEffortOut'][];
+    };
+    /** SegmentEffortOut */
+    SegmentEffortOut: {
+      /** Activity Id */
+      activity_id: number;
+      /** Activity Name */
+      activity_name: string | null;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Elapsed S */
+      elapsed_s: number;
+      /** Avg Hr */
+      avg_hr: number | null;
+      /** Avg Power */
+      avg_power: number | null;
+    };
+    /** SegmentOut */
+    SegmentOut: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /**
+       * Track
+       * @description Encoded polyline (precision 6)
+       */
+      track: string;
+      /** Distance M */
+      distance_m: number;
+      /** Ascent M */
+      ascent_m: number | null;
+      /** Efforts */
+      efforts: number;
+      /** Best S */
+      best_s: number | null;
+    };
+    /** SegmentPass */
+    SegmentPass: {
+      /** Segment Id */
+      segment_id: number;
+      /** Name */
+      name: string;
+      /** Elapsed S */
+      elapsed_s: number;
+      /** Best S */
+      best_s: number;
+      /** Rank */
+      rank: number;
+      /** Count */
+      count: number;
     };
     /**
      * SetOut
@@ -1353,6 +2260,20 @@ export interface components {
     SetupStatus: {
       /** Open */
       open: boolean;
+    };
+    /** Source */
+    Source: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string | null;
+      /** Sport */
+      sport: string;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
     };
     /** SourceStatus */
     SourceStatus: {
@@ -1422,6 +2343,16 @@ export interface components {
       series: string[];
       /** Sample Count */
       sample_count: number;
+    };
+    /** Summary */
+    Summary: {
+      current: components['schemas']['Totals'];
+      /** @description The same span one year earlier */
+      previous: components['schemas']['Totals'];
+      /** By Sport */
+      by_sport: {
+        [key: string]: components['schemas']['Totals'];
+      };
     };
     /** SyncProgress */
     SyncProgress: {
@@ -1509,6 +2440,35 @@ export interface components {
       pending_imports: number;
       /** Error */
       error: string | null;
+    };
+    /** Totals */
+    Totals: {
+      /**
+       * Count
+       * @default 0
+       */
+      count: number;
+      /**
+       * Distance M
+       * @default 0
+       */
+      distance_m: number;
+      /**
+       * Moving S
+       * @default 0
+       */
+      moving_s: number;
+      /**
+       * Ascent M
+       * @default 0
+       */
+      ascent_m: number;
+      /**
+       * Load
+       * @description Sum of relative effort
+       * @default 0
+       */
+      load: number;
     };
     /** TotpConfirm */
     TotpConfirm: {
@@ -1601,6 +2561,16 @@ export interface components {
       moving_s: number;
       /** Ascent M */
       ascent_m: number;
+    };
+    /** YearLine */
+    YearLine: {
+      /** Year */
+      year: number;
+      /**
+       * Cumulative M
+       * @description Distance up to each day of the year (index 0 = 1 Jan)
+       */
+      cumulative_m: number[];
     };
     /** LoginRequest */
     zankup__auth__passkeys__LoginRequest: {
@@ -2716,6 +3686,663 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SourceStatus'][];
+        };
+      };
+    };
+  };
+  getFitness: {
+    parameters: {
+      query?: {
+        from?: string | null;
+        to?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['FitnessDay'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getSummary: {
+    parameters: {
+      query?: {
+        from?: string | null;
+        to?: string | null;
+        /** @description Only these sports */
+        sport?: string[] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Summary'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getVolume: {
+    parameters: {
+      query?: {
+        from?: string | null;
+        to?: string | null;
+        unit?: 'day' | 'week' | 'month' | 'year';
+        /** @description Only these sports */
+        sport?: string[] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Bucket'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getCurves: {
+    parameters: {
+      query?: {
+        kind?: 'power' | 'speed' | 'hr';
+        from?: string | null;
+        to?: string | null;
+        /** @description Only these sports */
+        sport?: string[] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CurvePoint'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getRecords: {
+    parameters: {
+      query?: {
+        from?: string | null;
+        to?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Records'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getEstimates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EstimateOut'][];
+        };
+      };
+    };
+  };
+  getProgress: {
+    parameters: {
+      query?: {
+        /** @description Only these sports */
+        sport?: string[] | null;
+        years?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['YearLine'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getEfficiency: {
+    parameters: {
+      query?: {
+        from?: string | null;
+        to?: string | null;
+        sport?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EfficiencyPoint'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getCalendar: {
+    parameters: {
+      query?: {
+        from?: string | null;
+        to?: string | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalendarDay'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getHeatmap: {
+    parameters: {
+      query?: {
+        from?: string | null;
+        to?: string | null;
+        /** @description Only these sports */
+        sport?: string[] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Heatmap'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getYears: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': number[];
+        };
+      };
+    };
+  };
+  listRoutes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RouteGroup'][];
+        };
+      };
+    };
+  };
+  getRoute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        group_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RouteDetail'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listSegments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SegmentOut'][];
+        };
+      };
+    };
+  };
+  createSegment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SegmentCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SegmentOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getSegment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        segment_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SegmentDetail'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deleteSegment: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        segment_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listGoals: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GoalOut'][];
+        };
+      };
+    };
+  };
+  createGoal: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GoalCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GoalOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deleteGoal: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        goal_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listEvents: {
+    parameters: {
+      query?: {
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EventOut'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getEngine: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EngineStatus'];
+        };
+      };
+    };
+  };
+  recompute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EngineStatus'];
         };
       };
     };

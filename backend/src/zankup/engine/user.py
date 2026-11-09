@@ -83,19 +83,19 @@ def update_estimates(db: Session, user_id: int, today: date) -> dict[str, Estima
 
     p20 = _best(power, 1200)
     if p20:
-        found["ftp"] = (0.95 * p20[0], "95% of your best 20 min power", [p20[1]])
+        found["ftp"] = (0.95 * p20[0], "ftp_20min", [p20[1]])
     else:
         p3, p12 = _best(power, 180), _best(power, 720)
         if p3 and p12:
             estimate = m.ftp({180: p3[0], 720: p12[0]})
             if estimate:
-                found["ftp"] = (estimate.value, "critical power from your best 3 and 12 min", [p3[1], p12[1]])
+                found["ftp"] = (estimate.value, "ftp_critical_power", [p3[1], p12[1]])
 
     h60, h20 = _best(hr_runs, 3600), _best(hr_runs, 1200)
     if h60:
-        found["lthr"] = (h60[0], "average HR of your best 60 min run", [h60[1]])
+        found["lthr"] = (h60[0], "lthr_60min", [h60[1]])
     elif h20:
-        found["lthr"] = (0.95 * h20[0], "95% of the average HR of your best 20 min run", [h20[1]])
+        found["lthr"] = (0.95 * h20[0], "lthr_20min", [h20[1]])
 
     efforts = db.execute(
         select(BestEffort.distance_m, BestEffort.time_s, BestEffort.activity_id)
@@ -112,15 +112,15 @@ def update_estimates(db: Session, user_id: int, today: date) -> dict[str, Estima
         sources = [a for d, (t, a) in best_by_distance.items() if 180 <= t <= 1800]
         found["critical_speed"] = (
             cs.value,
-            "critical speed from your best 3-30 min efforts",
+            "critical_speed",
             sorted(set(sources)),
         )
     usable = [(d, t, a) for d, (t, a) in best_by_distance.items() if d >= 3000]
     if usable:
         d, t, a = max(usable, key=lambda e: m.vdot(e[0], e[1]))
-        found["vdot"] = (m.vdot(d, t), f"VDOT from your best {d / 1000:g} km", [a])
+        found["vdot"] = (m.vdot(d, t), f"vdot:{d / 1000:g}", [a])
         for key, target in m.RACES.items():
-            found[f"race_{key}"] = (m.riegel(d, t, target), f"Riegel from your best {d / 1000:g} km", [a])
+            found[f"race_{key}"] = (m.riegel(d, t, target), f"riegel:{d / 1000:g}", [a])
 
     year = datetime.combine(today - timedelta(days=365), datetime.min.time(), UTC)
     observed = db.execute(
@@ -135,7 +135,7 @@ def update_estimates(db: Session, user_id: int, today: date) -> dict[str, Estima
         .limit(1)
     ).first()
     if observed and observed[0] is not None:
-        found["hr_max"] = (float(observed[0]), "highest HR recorded in the last year", [observed[1]])
+        found["hr_max"] = (float(observed[0]), "hr_max_year", [observed[1]])
 
     for kind, (value, method, sources) in found.items():
         previous = db.scalar(

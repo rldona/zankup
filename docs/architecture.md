@@ -143,7 +143,7 @@ The application is packaged as a container (Dockerfile) so the provider can be c
 | **Importer** | Loose FITs, Garmin ZIP and Strava bulk ZIP for history. Deduplicates by start time and device | Pending |
 | **FIT parser** | FIT → session, laps, 1 Hz streams, device and power | ✅ Logic tested |
 | **Metrics engine** | See "Advanced metrics" | Partial: exact best efforts |
-| **Historical computation engine** | Job queue in Postgres and a worker on Railway. Processes history incrementally, with versioned full recomputation. Produces estimates, curves, progress and events | Pending |
+| **Historical computation engine** | Job queue in Postgres and a worker on Railway. Processes history incrementally, with versioned full recomputation. Produces estimates, curves, progress and events | Done (phase 3): `backend/src/zankup/engine` |
 | **REST API** | FastAPI, OpenAPI generated automatically. Used by the PWA and Android | Pending |
 | **Authentication** | One user per instance: sign-in with password + TOTP, a **passkey** (WebAuthn, bound to the instance's domain; it replaces both password and code because the device checks the fingerprint, face or PIN) or a **Google account** (OpenID Connect, only the linked account). The PWA uses an `httpOnly` session cookie (same origin, thanks to the Vercel proxy). Android uses a short access token and a long refresh token. Devices can be revoked | Password + TOTP and passkeys done (OS-110, OS-405 backend); Google pending |
 | **Sign-up and recovery** | One-time initial sign-up at `/setup`, protected by a **setup code** that the server writes to its logs on every start while there is no account: name, e-mail and password (12+ characters, checked against Have I Been Pwned by k-anonymity), TOTP with a QR code, and 8 single-use recovery codes that replace the TOTP code at sign-in. Sign-up closes for good once TOTP is on, and it takes over the owner account so already-synced activities stay. Recovery by email with a single-use link (30 min) that also requires the TOTP code or a recovery code | Sign-up done (OS-221); recovery pending (OS-222) |
@@ -215,6 +215,14 @@ flowchart LR
 - **Idempotent and reproducible:** running it twice gives the same result, and everything can be regenerated from the original FITs.
 - **Queue in Postgres** (no new services), run by a **worker** on Railway. It is the same container as the API, started in worker mode.
 - **Output events:** "new 5K record", "your estimated FTP rises to 210 W" or "high load ramp this week". They feed notifications and the AI layer.
+
+**As built (phase 3):**
+- Jobs: `metrics_activity` (queued by every import: the activity's metrics, record events and segment efforts), `metrics_user` (one per burst of imports, five seconds later: daily load and form, estimates, matched routes, the ramp event), `metrics_full` (every activity again with an `engine_runs` row for progress, then the user level) and `segment_search` (a new segment against the whole history). `metrics_full` runs on the worker for long jobs.
+- Tables: `activity_metrics` (TRIMP, zones, curves as JSON per duration, GAP distance, estimated calories, efficiency, decoupling, matched route), `daily_load`, `estimates` (one row per kind and day, with the method as a key the app words and the source activities), `events`, `goals`, `segments`, `segment_efforts`, `engine_runs`.
+- Period curves are the maximum, per duration, of the per-activity curves in the period: a few thousand small JSON rows read in milliseconds.
+- `METRICS_VERSION` lives in `zankup.engine`. On start, users with activities the current version has not computed get a full recomputation. Changing max or resting HR, the zone model, LTHR or FTP, or the profile's age, sex or weight, queues one too.
+- Assumptions while a setting is missing: resting HR 60, max HR the highest recorded (else 190), TRIMP coefficients averaged between men and women when sex is not set.
+- Decoupling is pace against HR (Pa:HR) for runs and walks, and power against HR (Pw:HR) for rides with power; it is not computed for rides without power.
 
 ## Charts
 

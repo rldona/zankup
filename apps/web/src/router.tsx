@@ -15,6 +15,14 @@ import { Search } from './routes/Search';
 import { Settings } from './routes/Settings';
 import { Stats } from './routes/Stats';
 import { Sync } from './routes/Sync';
+import {
+  Heatmap,
+  RoutesList,
+  RouteView,
+  SegmentsList,
+  SegmentView,
+  TrainingCalendar,
+} from './routes/Training';
 
 /** Every screen. Public: /sign-in and /setup. Everything else needs a session. */
 const screens: RouteObject[] = [
@@ -27,6 +35,12 @@ const screens: RouteObject[] = [
   },
   { path: 'search', element: <Search /> },
   { path: 'stats', element: <Stats /> },
+  { path: 'stats/calendar', element: <TrainingCalendar /> },
+  { path: 'stats/heatmap', element: <Heatmap /> },
+  { path: 'routes', element: <RoutesList /> },
+  { path: 'routes/:id', element: <RouteView /> },
+  { path: 'segments', element: <SegmentsList /> },
+  { path: 'segments/:id', element: <SegmentView /> },
   { path: 'sync', element: <Sync /> },
   { path: 'settings', element: <Settings /> },
   { path: 'catalogue', element: <Catalogue /> },

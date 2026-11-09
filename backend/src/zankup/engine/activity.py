@@ -66,6 +66,16 @@ def compute(activity: Activity, series: dict[str, list[Any]] | None, who: Athlet
     if t and has(power):
         assert power is not None
         values["power_curve"] = _curve(m.power_curve(t, power))
+        if has(hr):  # Pw:HR: power against HR (speed means little indoors or on hills)
+            assert hr is not None
+            work: list[float | None] = []
+            total = 0.0
+            for i, w in enumerate(power):
+                if i and w is not None:
+                    total += w * max(0.0, min(t[i] - t[i - 1], 30.0))
+                work.append(total)
+            decoupling = m.decoupling(t, work, hr)
+            values["decoupling"] = round(decoupling, 2) if decoupling is not None else None
         if who.ftp:
             values["power_zones"] = [round(s, 1) for s in m.time_in_zones(t, power, m.power_zones(who.ftp))]
     if t and has(dist) and activity.sport in SPEED_SPORTS:
@@ -75,7 +85,7 @@ def compute(activity: Activity, series: dict[str, list[Any]] | None, who: Athlet
             assert alt is not None
             gap = m.gap_distance(dist, alt)
             values["gap_distance_m"] = round(gap, 1) if gap else None
-        if has(hr):
+        if has(hr) and activity.sport in PACE_SPORTS:  # Pa:HR, pace against HR
             assert hr is not None
             decoupling = m.decoupling(t, dist, hr)
             values["decoupling"] = round(decoupling, 2) if decoupling is not None else None

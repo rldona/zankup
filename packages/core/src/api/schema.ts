@@ -1175,7 +1175,8 @@ export interface paths {
     post?: never;
     /**
      * Delete Data
-     * @description Delete every sleep and daily figure from one source (the connection stays).
+     * @description Delete every sleep and daily figure from one source. The connection stays, and its next sync
+     *     starts again from the beginning (30 days).
      */
     delete: operations['deleteHealthData'];
     options?: never;

@@ -44,9 +44,9 @@ negative splits", never a place, and up to three highlights of a few words each.
 SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "suggested_title": {"type": "string", "maxLength": 120},
+        "suggested_title": {"type": "string"},
         "summary": {"type": "string"},
-        "highlights": {"type": "array", "items": {"type": "string"}, "maxItems": 4},
+        "highlights": {"type": "array", "items": {"type": "string"}},
     },
     "required": ["suggested_title", "summary", "highlights"],
     "additionalProperties": False,

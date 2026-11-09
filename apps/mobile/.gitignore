@@ -1,0 +1,6 @@
+android/
+ios/
+.expo/
+google-services.json
+*.keystore
+play-service-account.json

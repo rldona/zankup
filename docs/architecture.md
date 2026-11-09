@@ -349,6 +349,17 @@ The proof of concept is the activity detail with real data from the API, signed 
 - `expo-dev-client` and some Expo packages publish often; the two-week minimum release age sometimes means pinning the SDK patch version a little behind.
 - **Advantages over the PWA:** more reliable notifications and sync, widget, Health Connect, and the door open to iOS or to recording with the phone's GPS.
 
+#### As built (phase 5)
+
+- `apps/mobile`: Expo SDK 58 with Expo Router (tabs: feed, stats, search, you; activity detail and settings as stacked screens). The detail reuses the proof of concept's map (MapLibre) and Skia profile.
+- **Sign-in** (`src/session.ts`): the instance URL is checked against `/api/health`; then Google (the free `@react-native-google-signin` library, `POST /api/auth/google/mobile`) or password + TOTP. Google's classic SDK cannot set a nonce, so the API accepts nonce-less ID tokens only if issued in the last five minutes and only once; `/api/auth/google/mobile/nonce` is ready for Credential Manager.
+- **Fingerprint:** the refresh token is stored with `requireAuthentication` (strong biometrics, keystore-bound; changing the enrolled fingerprints destroys the key). Every keystore write also needs the sensor, so this token is not rotated: the app refreshes with `rotate: false` (it still expires after 90 days unused). Phones with only weak biometrics can use them as an app lock instead (the token is then stored without biometrics).
+- **Offline:** TanStack Query's cache persisted in SQLite (`expo-sqlite/kv-store`) and series in their own SQLite table (the latest 60).
+- **Background sync:** `expo-background-task` every ~30 min refreshes the feed and "This week", keeps the latest series and updates the widget. It can only run when the token is readable without the sensor (weak-biometric lock or no biometrics); with the fingerprint it waits for the next time the app is opened.
+- **Notifications:** the app registers its FCM token on its device row (`PUT /api/notifications/fcm`); `notify.py` sends every notification through FCM HTTP v1 as well as Web Push, with the service account in `FCM_SERVICE_ACCOUNT`.
+- **Widget:** `react-native-android-widget`, the latest activity and today's form from a snapshot kept on the phone; tapping it opens the activity (`zankup://activity/<id>`).
+- **Release:** `eas.json` (APK for internal distribution, AAB for Play's internal track with `eas submit`). CI builds a release APK when the app changes (`.github/workflows/android.yml`).
+
 ### Monorepo structure
 
 ```

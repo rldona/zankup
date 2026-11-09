@@ -1728,6 +1728,127 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/ai/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Ai Status */
+    get: operations['getAiStatus'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/activities/{activity_id}/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Summary */
+    get: operations['getActivitySummary'];
+    put?: never;
+    /**
+     * Create Summary
+     * @description Write (or rewrite) the summary now.
+     */
+    post: operations['createActivitySummary'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/ai/weekly': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Weekly
+     * @description The latest reports, newest first.
+     */
+    get: operations['listWeeklyReports'];
+    put?: never;
+    /**
+     * Create Weekly
+     * @description Write last week's report now, without waiting for Monday's batch.
+     */
+    post: operations['createWeeklyReport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/ai/coach': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Ask Coach
+     * @description Ask the Coach. The answer streams as NDJSON events: `text` pieces, `tool` calls, then `done`
+     *     (or `error`).
+     */
+    post: operations['askCoach'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/ai/tokens': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Tokens */
+    get: operations['listApiTokens'];
+    put?: never;
+    /**
+     * Create Token
+     * @description A new personal token for the MCP server; the token itself is returned only here.
+     */
+    post: operations['createApiToken'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/ai/tokens/{token_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Revoke Token */
+    delete: operations['revokeApiToken'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -2071,6 +2192,129 @@ export interface components {
        */
       photos: number;
     };
+    /** AiBudget */
+    AiBudget: {
+      /**
+       * Month Cost Usd
+       * @description Spent this calendar month, at list prices
+       */
+      month_cost_usd: number;
+      /** Limit Usd */
+      limit_usd: number;
+      /**
+       * Warning
+       * @description Past 80 % of the month's budget
+       */
+      warning: boolean;
+      /**
+       * Exceeded
+       * @description AI features pause until next month
+       */
+      exceeded: boolean;
+    };
+    /**
+     * AiPreferences
+     * @description Which AI features are on (OS-708); `enabled` is the global switch.
+     */
+    AiPreferences: {
+      /**
+       * Enabled
+       * @default true
+       */
+      enabled: boolean;
+      /**
+       * Summaries
+       * @description A summary of each new activity
+       * @default true
+       */
+      summaries: boolean;
+      /**
+       * Weekly
+       * @description Monday's report on the week
+       * @default true
+       */
+      weekly: boolean;
+    };
+    /** AiStatus */
+    AiStatus: {
+      /**
+       * Available
+       * @description This server has an Anthropic key
+       */
+      available: boolean;
+      /**
+       * Enabled
+       * @description The user's global switch
+       */
+      enabled: boolean;
+      /** Summaries */
+      summaries: boolean;
+      /** Weekly */
+      weekly: boolean;
+      /** Model */
+      model: string | null;
+      budget: components['schemas']['AiBudget'] | null;
+      /**
+       * Sends
+       * @description What the model receives, for the explanation in Settings
+       */
+      sends: string[];
+      /** Never Sends */
+      never_sends: string[];
+    };
+    /** ApiTokenCreated */
+    ApiTokenCreated: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /**
+       * Prefix
+       * @description The first characters, to tell tokens apart
+       */
+      prefix: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Last Used At */
+      last_used_at: string | null;
+      /**
+       * Token
+       * @description Shown once: it is not stored
+       */
+      token: string;
+      /**
+       * Url
+       * @description The MCP server's URL
+       */
+      url: string;
+    };
+    /** ApiTokenOut */
+    ApiTokenOut: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /**
+       * Prefix
+       * @description The first characters, to tell tokens apart
+       */
+      prefix: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Last Used At */
+      last_used_at: string | null;
+    };
+    /** ApiTokenRequest */
+    ApiTokenRequest: {
+      /** Name */
+      name: string;
+    };
     /** AppTokens */
     AppTokens: {
       /** Access Token */
@@ -2155,6 +2399,21 @@ export interface components {
       mfa_required: true;
       /** Challenge */
       challenge: string;
+    };
+    /** CoachMessage */
+    CoachMessage: {
+      /**
+       * Role
+       * @enum {string}
+       */
+      role: 'user' | 'assistant';
+      /** Content */
+      content: string;
+    };
+    /** CoachRequest */
+    CoachRequest: {
+      /** Messages */
+      messages: components['schemas']['CoachMessage'][];
     };
     /** Comparison */
     Comparison: {
@@ -2952,6 +3211,17 @@ export interface components {
        * @default true
        */
       import: boolean;
+      /**
+       * Health Reauth
+       * @default true
+       */
+      health_reauth: boolean;
+      /**
+       * Weekly
+       * @description Monday's AI report (OS-704)
+       * @default true
+       */
+      weekly: boolean;
     };
     /**
      * Options
@@ -3062,6 +3332,7 @@ export interface components {
        */
       privacy_zones: components['schemas']['PrivacyZone'][];
       notifications: components['schemas']['Notifications'];
+      ai: components['schemas']['AiPreferences'];
     };
     /**
      * PreferencesUpdate
@@ -3087,6 +3358,7 @@ export interface components {
       /** Privacy Zones */
       privacy_zones?: components['schemas']['PrivacyZone'][] | null;
       notifications?: components['schemas']['Notifications'] | null;
+      ai?: components['schemas']['AiPreferences'] | null;
     };
     /** PriorityIn */
     PriorityIn: {
@@ -3917,6 +4189,26 @@ export interface components {
         [key: string]: components['schemas']['Totals'];
       };
     };
+    /** SummaryOut */
+    SummaryOut: {
+      /** Activity Id */
+      activity_id: number;
+      /** Language */
+      language: string;
+      /** Suggested Title */
+      suggested_title: string;
+      /** Summary */
+      summary: string;
+      /** Highlights */
+      highlights: string[];
+      /** Model */
+      model: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+    };
     /** SyncProgress */
     SyncProgress: {
       /**
@@ -4176,6 +4468,48 @@ export interface components {
       moving_s: number;
       /** Ascent M */
       ascent_m: number;
+    };
+    /** WeeklyOut */
+    WeeklyOut: {
+      /** Id */
+      id: number;
+      /**
+       * Week Start
+       * Format: date
+       */
+      week_start: string;
+      /**
+       * Status
+       * @description pending, done or failed
+       */
+      status: string;
+      /** Language */
+      language: string;
+      /** Headline */
+      headline: string | null;
+      /** Summary */
+      summary: string | null;
+      /** Recommendation */
+      recommendation: string | null;
+      /** Highlights */
+      highlights: string[] | null;
+      /** Error */
+      error: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Finished At */
+      finished_at: string | null;
+    };
+    /** WeeklyRequest */
+    WeeklyRequest: {
+      /**
+       * Week Start
+       * @description A Monday; by default the week that just ended
+       */
+      week_start?: string | null;
     };
     /** YearLine */
     YearLine: {
@@ -7208,6 +7542,256 @@ export interface operations {
         content: {
           'application/json': components['schemas']['Week'];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getAiStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AiStatus'];
+        };
+      };
+    };
+  };
+  getActivitySummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SummaryOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  createActivitySummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SummaryOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listWeeklyReports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WeeklyOut'][];
+        };
+      };
+    };
+  };
+  createWeeklyReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['WeeklyRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WeeklyOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  askCoach: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CoachRequest'];
+      };
+    };
+    responses: {
+      /** @description One JSON event per line */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/x-ndjson': unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listApiTokens: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiTokenOut'][];
+        };
+      };
+    };
+  };
+  createApiToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ApiTokenRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiTokenCreated'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  revokeApiToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

@@ -1,13 +1,14 @@
 /**
  * Settings on the phone: language, theme and units (shared with the account), notifications on this
  * phone (OS-507), Health Connect (OS-607), the biometric option for phones whose face unlock is weak
- * (OS-503), and sign-out.
+ * (OS-503), the AI assistant's switches (OS-708) and sign-out.
  */
 import { settingsQuery, THEME_CHOICES, type Locale } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext, useEffect, useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 
+import { AiCard } from '../src/Ai';
 import { useAuth } from '../src/auth';
 import { ask, available, lastRead, readAndSend, type ReadResult } from '../src/healthConnect';
 import { locale, saveLanguage, t } from '../src/i18n';
@@ -137,6 +138,8 @@ export default function SettingsScreen() {
       </Card>
 
       <HealthConnectCard />
+
+      <AiCard />
 
       <Card>
         <Heading>{t('mobile.security')}</Heading>

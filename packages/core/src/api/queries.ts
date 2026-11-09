@@ -549,3 +549,56 @@ export function healthSettingsQuery(api: ApiClient) {
       unwrap(await api.GET('/api/wellness/settings', { signal })),
   };
 }
+
+// --- AI assistant (phase 7) ------------------------------------------------------------------------
+
+export type AiStatus = Json<'/api/ai/status', 'get'>;
+export type AiPrefs = Preferences['ai'];
+export type ActivityAiSummary = Json<'/api/activities/{activity_id}/summary', 'get'>;
+export type WeeklyReport = Json<'/api/ai/weekly', 'get'>[number];
+export type ApiToken = Json<'/api/ai/tokens', 'get'>[number];
+export type ApiTokenCreated = Created<'/api/ai/tokens'>;
+
+/** Whether this server has a model, the user's switches and this month's spend (OS-706, OS-708). */
+export function aiStatusQuery(api: ApiClient) {
+  return {
+    queryKey: ['ai', 'status'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/ai/status', { signal })),
+    staleTime: 5 * 60_000,
+  };
+}
+
+/** The model's summary of an activity (OS-703), or null while there is none. */
+export function activitySummaryQuery(api: ApiClient, activityId: number) {
+  return {
+    queryKey: ['activity', activityId, 'summary'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }): Promise<ActivityAiSummary | null> => {
+      const result = await api.GET('/api/activities/{activity_id}/summary', {
+        params: { path: { activity_id: activityId } },
+        signal,
+      });
+      if (result.response.status === 404) return null;
+      return unwrap(result);
+    },
+    retry: false,
+  };
+}
+
+/** The weekly reports, newest first (OS-704). */
+export function weeklyReportsQuery(api: ApiClient) {
+  return {
+    queryKey: ['ai', 'weekly'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/ai/weekly', { signal })),
+  };
+}
+
+/** The personal tokens of the MCP server (OS-709). */
+export function apiTokensQuery(api: ApiClient) {
+  return {
+    queryKey: ['ai', 'tokens'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/ai/tokens', { signal })),
+  };
+}

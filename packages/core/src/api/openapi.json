@@ -4648,6 +4648,314 @@
         }
       }
     },
+    "/api/ai/status": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Ai Status",
+        "operationId": "getAiStatus",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{activity_id}/summary": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Get Summary",
+        "operationId": "getActivitySummary",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Create Summary",
+        "description": "Write (or rewrite) the summary now.",
+        "operationId": "createActivitySummary",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/weekly": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "List Weekly",
+        "description": "The latest reports, newest first.",
+        "operationId": "listWeeklyReports",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WeeklyOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listweeklyreports"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Create Weekly",
+        "description": "Write last week's report now, without waiting for Monday's batch.",
+        "operationId": "createWeeklyReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeeklyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/coach": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Ask Coach",
+        "description": "Ask the Coach. The answer streams as NDJSON events: `text` pieces, `tool` calls, then `done`\n(or `error`).",
+        "operationId": "askCoach",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoachRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "One JSON event per line",
+            "content": {
+              "application/x-ndjson": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/tokens": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "List Tokens",
+        "operationId": "listApiTokens",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiTokenOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listapitokens"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Create Token",
+        "description": "A new personal token for the MCP server; the token itself is returned only here.",
+        "operationId": "createApiToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTokenCreated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ai/tokens/{token_id}": {
+      "delete": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Revoke Token",
+        "operationId": "revokeApiToken",
+        "parameters": [
+          {
+            "name": "token_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Token Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health",
@@ -5758,6 +6066,244 @@
         "title": "ActivitySummary",
         "description": "What a feed card needs."
       },
+      "AiBudget": {
+        "properties": {
+          "month_cost_usd": {
+            "type": "number",
+            "title": "Month Cost Usd",
+            "description": "Spent this calendar month, at list prices"
+          },
+          "limit_usd": {
+            "type": "number",
+            "title": "Limit Usd"
+          },
+          "warning": {
+            "type": "boolean",
+            "title": "Warning",
+            "description": "Past 80 % of the month's budget"
+          },
+          "exceeded": {
+            "type": "boolean",
+            "title": "Exceeded",
+            "description": "AI features pause until next month"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month_cost_usd",
+          "limit_usd",
+          "warning",
+          "exceeded"
+        ],
+        "title": "AiBudget"
+      },
+      "AiPreferences": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "summaries": {
+            "type": "boolean",
+            "title": "Summaries",
+            "description": "A summary of each new activity",
+            "default": true
+          },
+          "weekly": {
+            "type": "boolean",
+            "title": "Weekly",
+            "description": "Monday's report on the week",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "AiPreferences",
+        "description": "Which AI features are on (OS-708); `enabled` is the global switch."
+      },
+      "AiStatus": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "description": "This server has an Anthropic key"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "The user's global switch"
+          },
+          "summaries": {
+            "type": "boolean",
+            "title": "Summaries"
+          },
+          "weekly": {
+            "type": "boolean",
+            "title": "Weekly"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "budget": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiBudget"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sends": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sends",
+            "description": "What the model receives, for the explanation in Settings"
+          },
+          "never_sends": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Never Sends"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "enabled",
+          "summaries",
+          "weekly",
+          "model",
+          "budget",
+          "sends",
+          "never_sends"
+        ],
+        "title": "AiStatus"
+      },
+      "ApiTokenCreated": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "description": "The first characters, to tell tokens apart"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token",
+            "description": "Shown once: it is not stored"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "The MCP server's URL"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "last_used_at",
+          "token",
+          "url"
+        ],
+        "title": "ApiTokenCreated"
+      },
+      "ApiTokenOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "description": "The first characters, to tell tokens apart"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "last_used_at"
+        ],
+        "title": "ApiTokenOut"
+      },
+      "ApiTokenRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ApiTokenRequest"
+      },
       "AppTokens": {
         "properties": {
           "access_token": {
@@ -5959,6 +6505,48 @@
           "challenge"
         ],
         "title": "Challenge"
+      },
+      "CoachMessage": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "CoachMessage"
+      },
+      "CoachRequest": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/CoachMessage"
+            },
+            "type": "array",
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "title": "CoachRequest"
       },
       "Comparison": {
         "properties": {
@@ -8206,6 +8794,17 @@
             "type": "boolean",
             "title": "Import",
             "default": true
+          },
+          "health_reauth": {
+            "type": "boolean",
+            "title": "Health Reauth",
+            "default": true
+          },
+          "weekly": {
+            "type": "boolean",
+            "title": "Weekly",
+            "description": "Monday's AI report (OS-704)",
+            "default": true
           }
         },
         "type": "object",
@@ -8469,6 +9068,9 @@
           },
           "notifications": {
             "$ref": "#/components/schemas/Notifications"
+          },
+          "ai": {
+            "$ref": "#/components/schemas/AiPreferences"
           }
         },
         "type": "object",
@@ -8483,7 +9085,8 @@
           "lthr",
           "ftp",
           "privacy_zones",
-          "notifications"
+          "notifications",
+          "ai"
         ],
         "title": "Preferences"
       },
@@ -8627,6 +9230,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/Notifications"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ai": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiPreferences"
               },
               {
                 "type": "null"
@@ -10907,6 +11520,53 @@
         ],
         "title": "Summary"
       },
+      "SummaryOut": {
+        "properties": {
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "suggested_title": {
+            "type": "string",
+            "title": "Suggested Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "highlights": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Highlights"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activity_id",
+          "language",
+          "suggested_title",
+          "summary",
+          "highlights",
+          "model",
+          "created_at"
+        ],
+        "title": "SummaryOut"
+      },
       "SyncProgress": {
         "properties": {
           "since": {
@@ -11491,6 +12151,137 @@
           "ascent_m"
         ],
         "title": "WeekTotals"
+      },
+      "WeeklyOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "week_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Week Start"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "pending, done or failed"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "headline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Headline"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "highlights": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highlights"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "week_start",
+          "status",
+          "language",
+          "headline",
+          "summary",
+          "recommendation",
+          "highlights",
+          "error",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "WeeklyOut"
+      },
+      "WeeklyRequest": {
+        "properties": {
+          "week_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Week Start",
+            "description": "A Monday; by default the week that just ended"
+          }
+        },
+        "type": "object",
+        "title": "WeeklyRequest"
       },
       "YearLine": {
         "properties": {

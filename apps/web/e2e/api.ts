@@ -157,6 +157,19 @@ export async function fakeApi(page: Page) {
     if (!state.signedIn) return json(route, { detail: 'Not signed in' }, 401);
 
     if (path === '/api/auth/me') return json(route, ME);
+    if (path === '/api/ai/status')
+      return json(route, {
+        available: false,
+        enabled: true,
+        summaries: true,
+        weekly: true,
+        model: null,
+        budget: null,
+        sends: [],
+        never_sends: [],
+      });
+    if (path === '/api/ai/tokens') return json(route, []);
+    if (path.endsWith('/summary')) return json(route, { detail: 'No summary yet' }, 404);
     if (path === '/api/auth/logout') {
       state.signedIn = false;
       return route.fulfill({ status: 204 });

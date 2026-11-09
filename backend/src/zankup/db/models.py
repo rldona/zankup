@@ -103,6 +103,9 @@ class UserSettings(Timestamps, Base):
     notifications: Mapped[dict[str, bool] | None] = mapped_column(
         JSONB, comment="Which push notifications to send (OS-402); missing keys use the defaults"
     )
+    ai: Mapped[dict[str, bool] | None] = mapped_column(
+        JSONB, comment="Which AI features are on (OS-708); missing keys use the defaults"
+    )
 
 
 class Device(Timestamps, Base):
@@ -722,3 +725,95 @@ class SourcePriority(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     metric: Mapped[str] = mapped_column(String(20), primary_key=True)
     sources: Mapped[list[str]] = mapped_column(JSONB)
+
+
+# --- AI assistant (phase 7) --------------------------------------------------------------------------
+
+LLM_PURPOSES = ("summary", "weekly", "coach", "eval")
+REPORT_STATUSES = ("pending", "done", "failed")
+
+
+class LlmCall(Base):
+    """One request to the model (OS-701): what for, how many tokens and what it cost."""
+
+    __tablename__ = "llm_calls"
+    __table_args__ = (CheckConstraint(_in("purpose", LLM_PURPOSES), name="purpose"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    purpose: Mapped[str] = mapped_column(String(20))
+    model: Mapped[str] = mapped_column(String(60))
+    input_tokens: Mapped[int] = mapped_column(Integer)
+    output_tokens: Mapped[int] = mapped_column(Integer)
+    cache_read_tokens: Mapped[int] = mapped_column(
+        Integer, server_default="0", comment="Served from the prompt cache"
+    )
+    cache_write_tokens: Mapped[int] = mapped_column(
+        Integer, server_default="0", comment="Written to the prompt cache"
+    )
+    cost_usd: Mapped[float] = mapped_column(
+        Float, comment="At the model's list price; half for the Batch API"
+    )
+    batch: Mapped[bool] = mapped_column(server_default="false", comment="Sent through the Batch API")
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
+
+
+class ActivitySummary(Base):
+    """The model's two or three sentences about an activity (OS-703), in the user's language."""
+
+    __tablename__ = "activity_summaries"
+
+    activity_id: Mapped[int] = mapped_column(
+        ForeignKey("activities.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = _user_fk()
+    language: Mapped[str] = mapped_column(String(5))
+    suggested_title: Mapped[str] = mapped_column(String(120))
+    summary: Mapped[str] = mapped_column(Text)
+    highlights: Mapped[list[str]] = mapped_column(JSONB, server_default="[]")
+    model: Mapped[str] = mapped_column(String(60))
+    metrics_version: Mapped[int] = mapped_column(SmallInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class WeeklyReport(Base):
+    """Monday's report on the week that ended (OS-704), generated through the Batch API."""
+
+    __tablename__ = "weekly_reports"
+    __table_args__ = (
+        UniqueConstraint("user_id", "week_start"),
+        CheckConstraint(_in("status", REPORT_STATUSES), name="status"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    week_start: Mapped[date] = mapped_column(Date, comment="The Monday of the week reported")
+    language: Mapped[str] = mapped_column(String(5))
+    status: Mapped[str] = mapped_column(String(10), server_default="pending")
+    batch_id: Mapped[str | None] = mapped_column(String(80), comment="The Batch API request it waits for")
+    headline: Mapped[str | None] = mapped_column(String(160))
+    summary: Mapped[str | None] = mapped_column(Text)
+    recommendation: Mapped[str | None] = mapped_column(Text)
+    highlights: Mapped[list[str] | None] = mapped_column(JSONB)
+    context: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="The numbers the model was given")
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ApiToken(Base):
+    """A personal token for the read-only MCP server (OS-709). Only its SHA-256 is stored."""
+
+    __tablename__ = "api_tokens"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = _user_fk()
+    name: Mapped[str] = mapped_column(String(120))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    prefix: Mapped[str] = mapped_column(String(12), comment="The first characters, to tell tokens apart")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

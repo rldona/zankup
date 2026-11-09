@@ -91,7 +91,15 @@ class Settings(BaseSettings):
     google_health_webhook_secret: SecretStr | None = Field(
         default=None, description="The subscriber's secret for /api/webhooks/google-health (OS-604)"
     )
+    # AI assistant (phase 7): without a key every AI feature is hidden and the rest works the same.
     anthropic_api_key: SecretStr | None = None
+    ai_model: str = Field(
+        default="claude-haiku-5-5", description="The model behind summaries, reports and the Coach"
+    )
+    ai_monthly_budget_usd: float = Field(
+        default=5.0, gt=0, description="Spending cap per calendar month; AI features pause when it is reached"
+    )
+    weekly_report_hour_utc: int = Field(default=6, ge=0, le=23, description="When Monday's report is queued")
 
     @property
     def is_production(self) -> bool:

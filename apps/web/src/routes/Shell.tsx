@@ -1,6 +1,9 @@
+import { aiStatusQuery } from '@zankup/core';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
+import { api } from '../api';
 import { Icon, type IconName } from '../Icon';
 import { t } from '../i18n';
 import { Wordmark } from '../Wordmark';
@@ -14,6 +17,7 @@ const SIDE: { to: string; icon: IconName; label: Parameters<typeof t>[0] }[] = [
   { to: '/search', icon: 'search', label: 'nav.search' },
   { to: '/stats', icon: 'stats', label: 'nav.stats' },
   { to: '/health', icon: 'health', label: 'nav.health' },
+  { to: '/coach', icon: 'coach', label: 'nav.coach' }, // only when this server has a model (phase 7)
   { to: '/profile', icon: 'profile', label: 'nav.profile' },
   { to: '/settings', icon: 'settings', label: 'nav.settings' },
 ];
@@ -44,11 +48,13 @@ export function Shell() {
   const online = useOnline();
   const sync = useSync();
   const [sheet, setSheet] = useState(false);
+  const ai = useQuery({ ...aiStatusQuery(api), retry: false });
+  const side = SIDE.filter((item) => item.to !== '/coach' || (ai.data?.available && ai.data.enabled));
   const syncNow = () => {
     setSheet(true);
     if (!sync.running) sync.start.mutate(false);
   };
-  const nested = pathname.startsWith('/activities/') || pathname === '/settings';
+  const nested = pathname.startsWith('/activities/') || pathname === '/settings' || pathname === '/coach';
 
   return (
     <div className="app">
@@ -57,7 +63,7 @@ export function Shell() {
           <Wordmark height="1rem" />
         </Link>
         <nav aria-label={t('nav.main')}>
-          {SIDE.map((item) => (
+          {side.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.to === '/'} className={classFor(item.to, pathname)}>
               <Icon name={item.icon} />
               {t(item.label)}

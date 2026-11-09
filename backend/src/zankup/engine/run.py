@@ -75,6 +75,9 @@ def metrics_activity(db: Session, job: Job) -> None:
     record_events(db, activity)
     search_activity(db, activity)
     queue_user(db, activity.user_id)
+    from zankup.ai.summary import maybe_queue_summary
+
+    maybe_queue_summary(db, activity)  # OS-703, once the records are known
 
 
 def metrics_user(db: Session, job: Job) -> None:

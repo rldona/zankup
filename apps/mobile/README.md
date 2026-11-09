@@ -13,6 +13,7 @@ the decision behind it are in [docs/architecture.md](../../docs/architecture.md#
 | Notifications (FCM)                                                                                                 | `src/push.ts`; the API sends them (`backend/src/zankup/notify.py`) |
 | Home-screen widget                                                                                                  | `src/widget/`                                                      |
 | Wordmark: ZANKUP as one path from `packages/core`, drawn with Skia (sign-in, lock screen)                           | `src/Wordmark.tsx`                                                 |
+| AI assistant (phase 7): the summary of an activity and the switches in Settings; the Coach stays in the PWA         | `src/Ai.tsx`                                                       |
 
 ## Run it on the emulator or a phone
 

@@ -7,7 +7,7 @@ import { t } from '../i18n';
 import { disablePush, enablePush, pushState, type PushState } from '../push';
 import { useSaveSettings } from '../settings';
 
-const KINDS = ['activity', 'record', 'sync_error', 'garmin_key', 'estimate', 'import'] as const;
+const KINDS = ['activity', 'record', 'sync_error', 'garmin_key', 'estimate', 'import', 'weekly'] as const;
 
 /** Push notifications (OS-401, OS-402): this browser on or off, which kinds, and a test. */
 export function Notifications() {

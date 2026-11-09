@@ -1,6 +1,7 @@
 """Scheduled work: a Garmin sync every SYNC_INTERVAL_MINUTES (OS-109), the daily backup at
 BACKUP_HOUR_UTC (OS-114), hourly health syncs from Garmin and Google Health (OS-602, OS-603; Google's
-webhooks bring data sooner when set up, OS-604) and pruning of old jobs.
+webhooks bring data sooner when set up, OS-604), Monday's AI report at WEEKLY_REPORT_HOUR_UTC (OS-704)
+and pruning of old jobs.
 
 Not a Railway cron service: it would not see the volume with the original FIT files, so the schedule
 lives next to the worker. Time is cut into slots of the interval, and each slot's sync job has the slot
@@ -39,8 +40,10 @@ class Scheduler:
         garmin_key_expires_on: date | None = None,
         garmin_health: bool = False,
         google_health: bool = False,
+        weekly_hour: int | None = None,
         tick_s: float = TICK_S,
     ) -> None:
+        self.weekly_hour = weekly_hour
         self.garmin_health, self.google_health = garmin_health, google_health
         self.sessions, self.interval, self.owner_email, self.tick_s = sessions, interval, owner_email, tick_s
         self.backup_hour = backup_hour
@@ -99,6 +102,14 @@ class Scheduler:
                 queued.append(kind)
         return queued
 
+    def queue_weekly(self, session: Session, user_id: int, when: datetime) -> int | None:
+        """On Mondays, last week's AI report, due at the weekly hour; one per week (OS-704)."""
+        if self.weekly_hour is None:
+            return None
+        from zankup.ai.weekly import queue_weekly
+
+        return queue_weekly(session, user_id, when, self.weekly_hour)
+
     def tick(self, when: datetime | None = None) -> int | None:
         """Queue this slot's sync and today's backup if they are not queued yet, and prune old finished
         jobs. Returns the id of the sync job queued, if any."""
@@ -117,6 +128,7 @@ class Scheduler:
                 )
             backup_id = self.queue_backup(session, user_id, when)
             health = self.queue_health(session, user_id, when)
+            weekly_id = self.queue_weekly(session, user_id, when)
             self.warn_garmin_key(session, user_id, when)
             pruned = session.execute(
                 delete(Job).where(Job.status.in_(("done", "failed")), Job.finished_at < when - KEEP_FINISHED)
@@ -127,6 +139,8 @@ class Scheduler:
             log.info("Health syncs queued", extra={"sources": health})
         if backup_id is not None:
             log.info("Daily backup queued", extra={"job_id": backup_id})
+        if weekly_id is not None:
+            log.info("Weekly report queued", extra={"job_id": weekly_id})
         if pruned:
             log.info("Old jobs pruned", extra={"count": pruned})
         return job_id
@@ -151,7 +165,7 @@ class Scheduler:
 
 
 def build_scheduler() -> Scheduler | None:
-    """The scheduler, or None when there is nothing to schedule (no Garmin sync and no backups)."""
+    """The scheduler, or None when there is nothing to schedule (no Garmin sync, backups, health or AI)."""
     from zankup.core.config import get_settings
     from zankup.db.session import get_engine
 
@@ -159,7 +173,8 @@ def build_scheduler() -> Scheduler | None:
     syncs = settings.garmin_personal_api_key is not None and settings.sync_interval_minutes > 0
     backups = settings.integrations()["backups"]
     google_health = settings.integrations()["google_health"]
-    if not syncs and not backups and not google_health:
+    ai = settings.integrations()["ai"]
+    if not syncs and not backups and not google_health and not ai:
         return None
     return Scheduler(
         sessionmaker(get_engine(), expire_on_commit=False),
@@ -169,4 +184,5 @@ def build_scheduler() -> Scheduler | None:
         garmin_key_expires_on=settings.garmin_key_expires_on if syncs else None,
         garmin_health=syncs,
         google_health=google_health,
+        weekly_hour=settings.weekly_report_hour_utc if ai else None,
     )

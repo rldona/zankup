@@ -65,7 +65,7 @@ describe('app skeleton', () => {
     mockApi({ '/api/auth/me': signedOut });
     const router = renderAt('/activities/7');
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
-    expect(screen.getByText('Your sports data, from start to finish.')).toBeInTheDocument();
+    expect(screen.getByText('All your sports data together.')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sign-in');
     expect(router.state.location.search).toBe('?next=%2Factivities%2F7');
   });

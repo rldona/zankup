@@ -37,6 +37,7 @@ import { Replay } from '../detail/Replay';
 import { ActivityActions, Meta, Photos } from '../detail/Tools';
 import { RouteMap } from '../detail/RouteMap';
 import { Strength } from '../detail/Strength';
+import { Summary } from '../detail/Summary';
 import { CurveChart } from '../stats/charts';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
@@ -106,6 +107,7 @@ function Detail({ activity }: { activity: ActivityDetail }) {
       </header>
 
       <Kpis activity={activity} format={format} pace={pace} />
+      <Summary activityId={activity.id} name={activity.name} />
 
       {activity.streams && !series && <p className="state">{t('activity.loadingSeries')}</p>}
       {series && (

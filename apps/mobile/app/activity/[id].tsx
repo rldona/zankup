@@ -18,6 +18,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
+import { SummaryCard } from '../../src/Ai';
 import { useApi } from '../../src/auth';
 import { Profile } from '../../src/detail/Profile';
 import { RouteMap } from '../../src/detail/RouteMap';
@@ -142,6 +143,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             <Stat key={label} label={label} value={value} />
           ))}
         </View>
+        <SummaryCard activityId={a.id} />
         {track && track.n > 1 && (
           <Card>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

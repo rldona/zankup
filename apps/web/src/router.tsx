@@ -11,6 +11,7 @@ import { Setup } from './routes/Setup';
 import { Shell } from './routes/Shell';
 import { SignIn } from './routes/SignIn';
 import { Catalogue } from './routes/Catalogue';
+import { Coach } from './routes/Coach';
 import { ForgotPassword, ResetPassword } from './routes/Recover';
 import { Search } from './routes/Search';
 import { Settings } from './routes/Settings';
@@ -42,6 +43,7 @@ const screens: RouteObject[] = [
   { path: 'stats/calendar', element: <TrainingCalendar /> },
   { path: 'stats/heatmap', element: <Heatmap /> },
   { path: 'health', element: <Health /> },
+  { path: 'coach', element: <Coach /> },
   { path: 'routes', element: <RoutesList /> },
   { path: 'routes/:id', element: <RouteView /> },
   { path: 'segments', element: <SegmentsList /> },

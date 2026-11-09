@@ -15,6 +15,7 @@ type Changes = Partial<
     | 'ftp'
     | 'privacy_zones'
     | 'notifications'
+    | 'ai'
   >
 >;
 

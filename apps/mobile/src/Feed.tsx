@@ -83,6 +83,8 @@ function WeekHeader({ format }: { format: Format }) {
           const date = new Date(`${d.date}T12:00:00`);
           const label = date.toLocaleDateString(locale, { weekday: 'narrow' });
           const sport = first ? asSport(first.sport) : null;
+          // Another activity that day: a dot in its sport's colour on the circle's top right.
+          const second = d.activities[1] ? asSport(d.activities[1].sport) : null;
           return (
             <Pressable
               key={d.date}
@@ -114,6 +116,9 @@ function WeekHeader({ format }: { format: Format }) {
                     {date.getDate()}
                   </Text>
                 )}
+                {second ? (
+                  <View style={[feedStyles.more, { backgroundColor: c[second], borderColor: c.surface }]} />
+                ) : null}
               </View>
               <Text style={{ color: d.date === day ? c.accent : c.muted, fontSize: 11 }}>
                 {d.date === day ? t('week.today') : label}
@@ -123,10 +128,10 @@ function WeekHeader({ format }: { format: Format }) {
         })}
       </View>
       <View style={ui.stats}>
-        <Stat label={t('feed.title')} value={String(totals.count)} />
-        <Stat label={t('feed.stat.distance')} value={format.distance(totals.distance_m)} />
-        <Stat label={t('feed.stat.time')} value={formatHoursMinutes(totals.moving_s)} />
-        <Stat label={t('feed.stat.ascent')} value={format.elevation(totals.ascent_m)} />
+        <Stat labelFirst label={t('feed.title')} value={String(totals.count)} />
+        <Stat labelFirst label={t('feed.stat.distance')} value={format.distance(totals.distance_m)} />
+        <Stat labelFirst label={t('feed.stat.time')} value={formatHoursMinutes(totals.moving_s)} />
+        <Stat labelFirst label={t('feed.stat.ascent')} value={format.elevation(totals.ascent_m)} />
       </View>
     </Card>
   );
@@ -221,5 +226,14 @@ const feedStyles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  more: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
   },
 });

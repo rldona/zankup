@@ -21,10 +21,7 @@ function Frame({ children }: { children: ReactNode }) {
         </div>
       </section>
       <section className="lform">
-        <div className="lcard">
-          {children}
-          <div className="lfoot">{t('signIn.footer')}</div>
-        </div>
+        <div className="lcard">{children}</div>
       </section>
     </div>
   );

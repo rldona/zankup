@@ -1,6 +1,6 @@
 {
   "app.name": "Zankup",
-  "app.claim": "All your sports data together.",
+  "app.claim": "Your sports and health data together.",
   "api.checking": "Checking API…",
   "api.connected": "API connected · v{version}",
   "api.degraded": "API connected · database unavailable",

@@ -9,9 +9,9 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 
-import { useApi } from '../../src/auth';
-import { Icon, type IconName } from '../../src/Icon';
-import { locale, t } from '../../src/i18n';
+import { useApi } from '../src/auth';
+import { Icon, type IconName } from '../src/Icon';
+import { locale, t } from '../src/i18n';
 import {
   CompareWithStrava,
   Curves,
@@ -22,9 +22,9 @@ import {
   Records,
   Summary,
   Volume,
-} from '../../src/stats/Sections';
-import { useTheme } from '../../src/theme';
-import { Card, Choice, Heading, MenuRow, Muted, Screen } from '../../src/ui';
+} from '../src/stats/Sections';
+import { useTheme } from '../src/theme';
+import { Card, Choice, Heading, MenuRow, Muted, Screen } from '../src/ui';
 
 const LINKS: [IconName, MessageKey, string][] = [
   ['summarize', 'review.monthLink', '/review/month'],
@@ -59,7 +59,7 @@ export default function StatsScreen() {
 
   return (
     <Screen
-      title={t('nav.stats')}
+      header
       toolbar={
         <>
           <Choice

@@ -4,10 +4,10 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { Text, View } from 'react-native';
 
-import { locale, t } from '../../src/i18n';
-import { active, useSync } from '../../src/sync';
-import { useTheme } from '../../src/theme';
-import { Badge, Body, Button, Card, Heading, Muted, ProgressBar, Screen } from '../../src/ui';
+import { locale, t } from '../src/i18n';
+import { active, useSync } from '../src/sync';
+import { useTheme } from '../src/theme';
+import { Badge, Body, Button, Card, Heading, Muted, ProgressBar, Screen } from '../src/ui';
 
 export default function SyncScreen() {
   const { runs, latest, running, start, refetch } = useSync();
@@ -18,7 +18,7 @@ export default function SyncScreen() {
     }, [refetch]),
   );
   return (
-    <Screen title={t('sync.title')}>
+    <Screen header>
       <Muted>{t('sync.auto')}</Muted>
       <Button primary onPress={() => start.mutate(false)} disabled={running || start.isPending}>
         {t('sync.now')}

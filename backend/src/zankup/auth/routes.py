@@ -56,6 +56,7 @@ class Me(BaseModel):
     display_name: str | None
     totp_enabled: bool
     google_linked: bool = False
+    avatar_url: str | None = Field(default=None, description="The linked Google account's photo")
     location: str | None = None
     birth_date: date | None = None
     sex: Literal["female", "male", "other"] | None = None
@@ -129,6 +130,7 @@ def _me(user: User) -> Me:
         display_name=user.display_name,
         totp_enabled=user.totp_enabled_at is not None,
         google_linked=user.google_sub is not None,
+        avatar_url=user.avatar_url,
         location=user.location,
         birth_date=user.birth_date,
         sex=user.sex,

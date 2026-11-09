@@ -7,9 +7,9 @@ export * from './material';
 export const SPORT_ICONS: Record<Sport, MaterialIcon> = {
   run: 'directions_run',
   ride: 'directions_bike',
-  strength: 'fitness_center',
+  strength: 'exercise',
   walk: 'directions_walk',
   row: 'rowing',
   swim: 'pool',
-  other: 'exercise',
+  other: 'sports',
 };

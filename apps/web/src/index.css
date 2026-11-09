@@ -886,6 +886,10 @@ select {
   flex: none;
 }
 
+img.avatar {
+  object-fit: cover;
+}
+
 .page.profile {
   max-width: 980px;
 }

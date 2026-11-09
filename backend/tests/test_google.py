@@ -188,3 +188,23 @@ def test_providers_and_safe_redirects(ctx: Ctx) -> None:
     start = ctx.anon.get("/api/auth/google/start", params={"next": "https://evil.test"})
     flow = jwt.decode(start.cookies[COOKIE], options={"verify_signature": False})
     assert flow["next"] == "/"
+
+
+def test_google_brings_the_photo_and_a_missing_name(ctx: Ctx, database: str) -> None:
+    ctx.claims.update({"picture": "https://lh3.googleusercontent.com/a/photo", "name": "Ana López García"})
+    with Session(create_engine(database)) as db:
+        user = db.get(User, ctx.user_id)
+        assert user is not None
+        user.display_name = None
+        db.commit()
+    go_through_google(ctx, ctx.signed_in, "link")
+    me = ctx.signed_in.get("/api/auth/me").json()
+    assert me["avatar_url"] == "https://lh3.googleusercontent.com/a/photo"
+    assert me["display_name"] == "Ana López García"
+
+    # Later sign-ins keep the photo fresh but never replace a name the person chose.
+    ctx.signed_in.patch("/api/auth/me", json={"display_name": "Ana"})
+    ctx.claims["picture"] = "https://lh3.googleusercontent.com/a/new"
+    go_through_google(ctx, ctx.anon)
+    me = ctx.anon.get("/api/auth/me").json()
+    assert me["avatar_url"] == "https://lh3.googleusercontent.com/a/new" and me["display_name"] == "Ana"

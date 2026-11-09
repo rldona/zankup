@@ -3032,6 +3032,11 @@ export interface components {
        * @default false
        */
       google_linked: boolean;
+      /**
+       * Avatar Url
+       * @description The linked Google account's photo
+       */
+      avatar_url?: string | null;
       /** Location */
       location?: string | null;
       /** Birth Date */

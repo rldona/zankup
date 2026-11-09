@@ -16,6 +16,7 @@ import {
   formatDuration,
   type FitnessDay,
   type MessageKey,
+  stravaComparisonQuery,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -25,7 +26,14 @@ import { api } from '../api';
 import { Sparkline } from '../charts/static';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
-import { CurveChart, FitnessChart, ProgressChart, ProgressionChart, VolumeChart } from '../stats/charts';
+import {
+  ComparisonChart,
+  CurveChart,
+  FitnessChart,
+  ProgressChart,
+  ProgressionChart,
+  VolumeChart,
+} from '../stats/charts';
 import { effortName } from '../stats/format';
 import { EstimatesPanel, EventsList, GoalsPanel } from '../stats/panels';
 import { useResolvedTheme } from '../theme';
@@ -127,7 +135,11 @@ export function Stats() {
 
       <Efficiency range={range} />
 
+      <CompareWithStrava theme={theme} />
+
       <nav className="panel statlinks" aria-label={t('stats.links')}>
+        <Link to="/review/month">{t('review.monthLink')} ›</Link>
+        <Link to="/review/year">{t('review.yearLink')} ›</Link>
         <Link to="/stats/calendar">{t('stats.calendar')} ›</Link>
         <Link to="/stats/heatmap">{t('stats.heatmap')} ›</Link>
         <Link to="/routes">{t('stats.routes')} ›</Link>
@@ -453,6 +465,87 @@ function Efficiency({ range }: { range: { from: string; to: string } }) {
       </div>
       <SparklineRow values={values} />
       <p className="note">{t('stats.efficiencyNote')}</p>
+    </section>
+  );
+}
+
+const COMPARED = ['effort', 'grade_adjusted_distance', 'calories'] as const;
+
+/** How our metrics compare with what Strava computed, for people who imported an export (OS-323). */
+function CompareWithStrava({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
+  const comparison = useQuery(stravaComparisonQuery(api));
+  const [metric, setMetric] = useState<(typeof COMPARED)[number]>('effort');
+  const data = comparison.data;
+  if (!data || data.metrics.every((m) => m.count < 3)) return null;
+  const current = data.metrics.find((m) => m.metric === metric);
+  const number = (v: number | null | undefined, digits = 2) =>
+    v == null ? '–' : v.toLocaleString(locale, { maximumFractionDigits: digits });
+  return (
+    <section className="panel">
+      <div className="ph">
+        <h2>{t('compare.title')}</h2>
+        <div className="seg" role="group" aria-label={t('compare.metric')}>
+          {COMPARED.map((m) => (
+            <button key={m} type="button" aria-pressed={m === metric} onClick={() => setMetric(m)}>
+              {t(`compare.${m}`)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="note">{t('compare.help')}</p>
+      {current && current.count >= 3 ? (
+        <>
+          <dl className="kpis num">
+            <div className="kpi">
+              <dd>{current.count}</dd>
+              <dt>{t('compare.count')}</dt>
+            </div>
+            <div className="kpi">
+              <dd>{number(current.r2, 3)}</dd>
+              <dt>R²</dt>
+            </div>
+            <div className="kpi">
+              <dd>{number(current.mae, 1)}</dd>
+              <dt>{t('compare.mae')}</dt>
+            </div>
+            <div className="kpi">
+              <dd>{number(current.ratio, 3)}</dd>
+              <dt>{t('compare.ratio')}</dt>
+            </div>
+          </dl>
+          <ComparisonChart
+            points={current.points}
+            theme={theme}
+            label={t('compare.chart', { metric: t(`compare.${metric}`) })}
+          />
+          <h3>{t('compare.largest')}</h3>
+          <ul className="rows">
+            {current.largest.map((p) => (
+              <li key={p.activity_id}>
+                <Link to={`/activities/${p.activity_id}`}>
+                  {t('compare.activity', { id: p.activity_id })}
+                </Link>
+                <span className="num">
+                  Zankup {number(p.ours, 0)} · Strava {number(p.strava, 0)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="state">{t('compare.notEnough')}</p>
+      )}
+      {metric === 'effort' && data.effort_scale && (
+        <details>
+          <summary>{t('compare.scale')}</summary>
+          <p className="note">
+            {t('compare.scaleHelp', { r2: number(data.effort_scale.r2, 3), count: data.effort_scale.count })}
+          </p>
+          <p className="num">
+            {data.effort_scale.coefficients.map((c, i) => `Z${i + 1}: ${number(c, 3)}`).join(' · ')}
+          </p>
+        </details>
+      )}
     </section>
   );
 }

@@ -3,7 +3,7 @@
  * theme (generated from the tokens). Imported dynamically, so it stays out of the first load.
  */
 import { chartTheme, themes, THEMES } from '@zankup/core';
-import { BarChart, LineChart } from 'echarts/charts';
+import { BarChart, LineChart, ScatterChart } from 'echarts/charts';
 import {
   BrushComponent,
   GridComponent,
@@ -18,6 +18,7 @@ import { SVGRenderer } from 'echarts/renderers';
 echarts.use([
   LineChart,
   BarChart,
+  ScatterChart, // the comparison with Strava (OS-323)
   GridComponent,
   TooltipComponent,
   MarkAreaComponent,

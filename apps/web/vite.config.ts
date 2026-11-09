@@ -32,6 +32,8 @@ const pwa = VitePWA({
   injectRegister: 'script-defer',
   workbox: {
     globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+    globIgnores: ['push-sw.js'],
+    importScripts: ['/push-sw.js'], // push notifications (OS-401)
     maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // MapLibre and its worker
     navigateFallback: '/index.html',
     navigateFallbackDenylist: [/^\/api\//],

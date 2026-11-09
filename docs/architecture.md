@@ -125,11 +125,13 @@ The application is packaged as a container (Dockerfile) so the provider can be c
 |---|---|---|
 | **PWA** | Static project (Vite build), connected to the repository | **Only `main` deploys** (`git.deploymentEnabled`): previews cost build minutes, and every PR is already built and tested end to end in CI |
 | **API proxy** | `vercel.json` → `rewrites: [{ "source": "/api/:path*", "destination": "https://<api>.up.railway.app/api/:path*" }]` | The PWA calls `/api/...` on its own origin: **no CORS**, `httpOnly` and `SameSite=Strict` cookies, and it also works on previews |
-| **Variables** | `VITE_VAPID_PUBLIC_KEY` (public) | No secrets on Vercel: they all live on Railway |
+| **Variables** | None | No secrets on Vercel: they all live on Railway. The VAPID public key is fetched from the API |
 
 **Why the proxy instead of calling Railway directly:** if each part were on a different domain, CORS would be needed, cookies would be cross-site (which browsers block more and more) and Vercel previews would not have a fixed origin. With rewrites, the browser only talks to Vercel.
 
 **Cost of the proxy:** Vercel limits the duration of proxied requests, so sync progress is polled every 2 s (`GET /api/sync/{id}`) instead of keeping an SSE connection open. The Android app talks to Railway directly, with tokens.
+
+**Large files skip the proxy (phase 4):** imports (a Strava export is hundreds of megabytes) and data exports go straight to the API host (`API_PUBLIC_URL`, e.g. `https://api.zankup.com`). The app asks for them through the proxy as usual and gets a short-lived signed URL; the bytes then travel browser ↔ Railway, in 4 MB parts for uploads, without cookies (CORS allows only the app's origins, `GET` and `PUT`). This avoids the proxy's request size limit and Vercel's data transfer bill. Without `API_PUBLIC_URL` the same URLs go through the proxy, which still works.
 
 **Alternative if ever needed:** a custom domain with `app.` on Vercel and `api.` on Railway. They count as the same site for cookies, so `SameSite=Lax` with CORS restricted to `app.` would work.
 
@@ -223,6 +225,21 @@ flowchart LR
 - `METRICS_VERSION` lives in `zankup.engine`. On start, users with activities the current version has not computed get a full recomputation. Changing max or resting HR, the zone model, LTHR or FTP, or the profile's age, sex or weight, queues one too.
 - Assumptions while a setting is missing: resting HR 60, max HR the highest recorded (else 190), TRIMP coefficients averaged between men and women when sex is not set.
 - Decoupling is pace against HR (Pa:HR) for runs and walks, and power against HR (Pw:HR) for rides with power; it is not computed for rides without power.
+
+## History, privacy and sharing (phase 4, as built)
+
+- **Imports** (`importer.py`, `api/transfers.py`): an upload is a FIT, TCX or GPX (gzipped or not) or a ZIP. A ZIP with `activities.csv` is a Strava export; any other is searched for activity files, including nested ZIPs (Garmin's export). The `import_upload` job runs on the long-jobs worker, one transaction per activity, recording progress on `imports`; an interrupted import resumes where it was.
+  - Strava rows match an activity Garmin already has by start time (±2 min): Garmin's FIT stays and gets Strava's name, description, gear, photos and weather. Otherwise the file is imported (`source = 'strava'`), or, without a file, the activity is created from the CSV totals. Strava's Relative Effort, calories and grade-adjusted distance are kept in `activities.strava` as references (OS-323).
+  - When Garmin later sends an activity that came from Strava or a file, Garmin's FIT takes it over (`ingest.py`).
+  - TCX/GPX distance comes from smoothed positions when the file has none (no best efforts from it); elevation gain from smoothed altitude with a 1 m hysteresis (`fit/xml.py`).
+- **Edits** (`PATCH /api/activities/{id}`) never touch the original: edited fields are listed in `edited_fields`, and reprocessing and imports keep them.
+- **Gear** (`gear`, `activities.gear_id`): mileage is the sum of its activities plus `initial_m`; shoes warn at 800 km by default. New activities from the sync get the default gear of their sport; imports keep Strava's (or none).
+- **Photos** (`photos`, `photos.py`): re-encoded on arrival (upright, at most 2048 px, JPEG) without any metadata, so no photo can reveal where it was taken; a 480 px thumbnail for the feed. Stored under `DATA_DIR/photos`.
+- **Privacy zones** (`settings.privacy_zones`, `privacy.py`): circles of 100 m to 5 km (+60 m so a route does not trace the edge). Anything shareable drops the points inside and splits the route there. Imported from Strava's `privacy_zones.csv` when none are set.
+- **Sharing** (`share_links`, `api/sharing.py`): `/s/<token>`, 32 random bytes of which only the SHA-256 is stored, expiring after 1–365 days or when revoked. It shows the summary, splits, an elevation profile, photos and, if chosen, the trimmed route; never HR series, the file, the device or the time of day. Share images are drawn in the browser from the same trimmed data.
+- **Notifications** (`push_subscriptions`, `notify.py`): Web Push implemented with `cryptography` (aes128gcm, RFC 8291) and `pyjwt` (VAPID, RFC 8292). The VAPID key is `VAPID_PRIVATE_KEY` or one generated once on the data volume. Kinds: new activity and record (only for recent activities, never a backfill), sync failing (the third failure in a row), Garmin key expiring (14 days before), estimate up (off by default) and import finished. Each is a `push` job, in the user's language; dead subscriptions are dropped.
+- **Export** (`exporter.py`): a ZIP with every original, the series, photos and JSON for everything else, kept seven days under `DATA_DIR/exports`.
+- **Review** (`GET /api/stats/review`): a month or a year from the precomputed tables. **Comparison with Strava** (`GET /api/stats/strava-comparison`): R², mean absolute error and ratio for effort, calories and grade-adjusted distance, plus an optional effort scale fitted to the person's own data.
 
 ## Charts
 

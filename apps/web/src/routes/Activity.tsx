@@ -33,6 +33,8 @@ import { Link, useParams } from 'react-router';
 import { api } from '../api';
 import { ZoneBar } from '../charts/static';
 import { Profile } from '../detail/Profile';
+import { Replay } from '../detail/Replay';
+import { ActivityActions, Meta, Photos } from '../detail/Tools';
 import { RouteMap } from '../detail/RouteMap';
 import { Strength } from '../detail/Strength';
 import { CurveChart } from '../stats/charts';
@@ -98,7 +100,9 @@ function Detail({ activity }: { activity: ActivityDetail }) {
             {formatActivityDate(localStart(activity.start_utc, activity.timezone), locale)}
             {activity.device ? ` · ${activity.device}` : ''}
           </p>
+          <Meta activity={activity} />
         </div>
+        <ActivityActions activity={activity} />
       </header>
 
       <Kpis activity={activity} format={format} pace={pace} />
@@ -114,6 +118,8 @@ function Detail({ activity }: { activity: ActivityDetail }) {
           activityId={activity.id}
         />
       )}
+
+      <Photos activityId={activity.id} photos={activity.photo_list ?? []} />
 
       {/* Kept offline before sets existed, an activity may come without them. */}
       {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
@@ -146,6 +152,9 @@ function Detail({ activity }: { activity: ActivityDetail }) {
             {' · '}
             <a href={`/api/activities/${activity.id}/fit`} download>
               {t('activity.download')}
+              {activity.original_format && activity.original_format !== 'fit'
+                ? ` (${activity.original_format.toUpperCase()})`
+                : ''}
             </a>
           </>
         )}
@@ -277,6 +286,7 @@ function RoutePanel({
           </div>
         )}
       </div>
+      {hasMap && <Replay series={series} index={hover} onIndex={setHover} />}
       {hasMap && (
         <RouteMap
           series={series}

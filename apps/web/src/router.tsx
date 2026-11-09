@@ -13,6 +13,9 @@ import { Catalogue } from './routes/Catalogue';
 import { ForgotPassword, ResetPassword } from './routes/Recover';
 import { Search } from './routes/Search';
 import { Settings } from './routes/Settings';
+import { Gear, Import } from './routes/Library';
+import { Review } from './routes/Review';
+import { Shared } from './routes/Shared';
 import { Stats } from './routes/Stats';
 import { Sync } from './routes/Sync';
 import {
@@ -24,7 +27,7 @@ import {
   TrainingCalendar,
 } from './routes/Training';
 
-/** Every screen. Public: /sign-in and /setup. Everything else needs a session. */
+/** Every screen. Public: sign-in, setup, password recovery and shared activities (/s/…). */
 const screens: RouteObject[] = [
   {
     element: <Feed />,
@@ -43,6 +46,10 @@ const screens: RouteObject[] = [
   { path: 'segments/:id', element: <SegmentView /> },
   { path: 'sync', element: <Sync /> },
   { path: 'settings', element: <Settings /> },
+  { path: 'settings/import', element: <Import /> },
+  { path: 'gear', element: <Gear /> },
+  { path: 'review/:period', element: <Review /> },
+  { path: 'review/:period/:value', element: <Review /> },
   { path: 'catalogue', element: <Catalogue /> },
   { path: 'profile', element: <Profile /> },
   { path: '*', element: <NotFound /> },
@@ -56,6 +63,7 @@ export const routes: RouteObject[] = [
       { path: '/setup', element: <Setup /> },
       { path: '/forgot', element: <ForgotPassword /> },
       { path: '/reset-password', element: <ResetPassword /> },
+      { path: '/s/:token', element: <Shared /> }, // a shared activity: no session (OS-408)
       {
         element: <RequireSession />,
         children: [

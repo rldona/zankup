@@ -145,7 +145,7 @@ the API.
 | `ENVIRONMENT` | `production` on a server (JSON logs, no API docs, secure cookies). |
 | `LOG_LEVEL`, `LOG_FORMAT` | Logging: `INFO` and `json` in production. |
 | `DATABASE_URL` | Postgres. The compose file sets it from `POSTGRES_PASSWORD`. |
-| `DATA_DIR` | Where the original FIT files are kept (`/data`). |
+| `DATA_DIR` | The volume (`/data`): original activity files, photos, uploads being imported, exports and the generated VAPID key. |
 | `OWNER_EMAIL` | Placeholder account the sync uses before sign-up; sign-up takes it over. |
 | `RUN_WORKER` | Run the background worker inside the API (`true`). |
 | `SYNC_INTERVAL_MINUTES` | Automatic Garmin sync every N minutes (15); 0 turns it off. |
@@ -155,6 +155,8 @@ the API.
 | `PG_DUMP_COMMAND`, `PG_RESTORE_COMMAND` | Backup tools; the image has the right ones. |
 | `WEBAUTHN_RP_ID`, `WEBAUTHN_ORIGINS` | Your domain and origin, for passkeys, Google and e-mail links. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in. |
+| `API_PUBLIC_URL` | The API's own public address (e.g. `https://api.example.com`) when the app reaches it through a proxy: imports and exports then go there directly. Leave it empty when the app and the API share an origin. |
+| `VAPID_PRIVATE_KEY` | Push notifications. Optional: without it a key is generated once and kept in `DATA_DIR`. |
 | `ANTHROPIC_API_KEY` | AI features (phase 7). |
 | `POSTGRES_PASSWORD`, `ZANKUP_SITE` | Only for `deploy/compose.yaml`. |
 | `RAILWAY_API_TOKEN`, `VERCEL_TOKEN` | Only for scripting the cloud setup; never needed by the app. |

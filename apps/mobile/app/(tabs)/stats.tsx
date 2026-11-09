@@ -24,7 +24,7 @@ import {
   Volume,
 } from '../../src/stats/Sections';
 import { useTheme } from '../../src/theme';
-import { Card, Choice, Heading, MenuRow, Muted, Screen, Title } from '../../src/ui';
+import { Card, Choice, Heading, MenuRow, Muted, Screen } from '../../src/ui';
 
 const LINKS: [IconName, MessageKey, string][] = [
   ['summarize', 'review.monthLink', '/review/month'],
@@ -58,34 +58,39 @@ export default function StatsScreen() {
   }, [year, today]);
 
   return (
-    <Screen>
-      <Title>{t('nav.stats')}</Title>
-      <Choice
-        scroll
-        label={t('stats.period')}
-        value={year ?? choice}
-        onChange={setChoice}
-        options={[
-          { value: 'last12', label: t('stats.period.last12') },
-          { value: 'all', label: t('stats.period.all') },
-          ...(years.data ?? []).map((y) => ({ value: String(y), label: String(y) })),
-        ]}
-      />
-      {months.length > 0 && year && (
-        <Choice
-          scroll
-          label={t('search.date')}
-          value={choice}
-          onChange={setChoice}
-          options={[
-            { value: year, label: '—' },
-            ...months.map((m) => ({
-              value: m,
-              label: new Date(`${m}-15T12:00:00`).toLocaleDateString(locale, { month: 'short' }),
-            })),
-          ]}
-        />
-      )}
+    <Screen
+      title={t('nav.stats')}
+      toolbar={
+        <>
+          <Choice
+            scroll
+            label={t('stats.period')}
+            value={year ?? choice}
+            onChange={setChoice}
+            options={[
+              { value: 'last12', label: t('stats.period.last12') },
+              { value: 'all', label: t('stats.period.all') },
+              ...(years.data ?? []).map((y) => ({ value: String(y), label: String(y) })),
+            ]}
+          />
+          {months.length > 0 && year && (
+            <Choice
+              scroll
+              label={t('search.date')}
+              value={choice}
+              onChange={setChoice}
+              options={[
+                { value: year, label: '—' },
+                ...months.map((m) => ({
+                  value: m,
+                  label: new Date(`${m}-15T12:00:00`).toLocaleDateString(locale, { month: 'short' }),
+                })),
+              ]}
+            />
+          )}
+        </>
+      }
+    >
       {engine.data?.running && (
         <Muted accessibilityRole="alert">
           {t('stats.recomputing', { done: engine.data.done, total: engine.data.total })}

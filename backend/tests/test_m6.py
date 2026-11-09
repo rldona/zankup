@@ -53,11 +53,22 @@ def use(context: Ctx, settings: Any) -> None:
 
 def test_sleep_score_rewards_duration_efficiency_and_deep_sleep() -> None:
     eight_hours = 8 * 3600
-    assert sleep_score(eight_hours, eight_hours + 1200, 6000, 6000) == 100
+    assert sleep_score(eight_hours, eight_hours + 1200, 6000, 6400) == 100
     assert sleep_score(5 * 3600, 6 * 3600, 2000, 2000) < 60
     assert sleep_score(None, 3600, None, None) is None
     # Without stages, duration and efficiency share the score.
     assert sleep_score(eight_hours, eight_hours, None, None) == 100
+
+
+def test_a_short_night_with_little_deep_sleep_is_not_rewarded_by_rem() -> None:
+    # A real night (9 Nov 2026) that Google Health scored 63: 5 h 56 min asleep, 30 min awake,
+    # 1 h 46 min REM, 3 h 33 min light and so 37 min deep. The old formula gave it 80.
+    asleep, deep, rem = 356 * 60, 37 * 60, 106 * 60
+    score = sleep_score(asleep, asleep + 30 * 60, deep, rem)
+    assert score is not None and 60 <= score <= 68
+    # With the same deep + REM in all, plenty of REM no longer makes up for little deep sleep.
+    balanced = sleep_score(asleep, asleep + 30 * 60, 72 * 60, 71 * 60)
+    assert balanced is not None and balanced > score
 
 
 def test_a_sleep_is_stored_once_with_its_stage_totals(ctx: Ctx) -> None:  # noqa: F811
@@ -659,3 +670,24 @@ def test_garmin_resting_hr_from_a_barely_worn_day_is_left_out() -> None:
         {"calendarDate": "2026-09-01", "restingHeartRate": 52, "heartRateValues": worn}
     )
     assert day is not None and day.resting_hr == 52
+
+
+def test_the_migration_recomputes_scores_with_the_same_formula() -> None:
+    import importlib.util
+    from pathlib import Path
+
+    import zankup.db.migrations as migrations
+
+    path = Path(migrations.__path__[0]) / "versions" / "20261109_7c3e91d2a4b6_sleep_score_v2.py"
+    spec = importlib.util.spec_from_file_location("sleep_score_v2", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    for asleep, in_bed, deep, rem in [
+        (356 * 60, 386 * 60, 37 * 60, 106 * 60),
+        (28800, 30000, 6000, 6400),
+        (18000, 21600, None, None),
+        (25000, 27000, 0, 0),
+        (None, 3600, None, None),
+    ]:
+        assert module.score(asleep, in_bed, deep, rem) == sleep_score(asleep, in_bed, deep, rem)

@@ -238,7 +238,10 @@ function PasswordStep({
         if (isErrorWithCode(failure) && failure.code === statusCodes.SIGN_IN_CANCELLED) return;
         throw failure instanceof SignInError ? failure : new SignInError(t('mobile.googleFailed'));
       } finally {
-        await GoogleSignin.signOut().catch(() => undefined); // pick the account again next time
+        // The API takes each Google token once (this free SDK cannot carry a nonce), and Google keeps
+        // handing back the same one for about an hour: revoking clears it, so the next sign-in gets a
+        // fresh token and picks the account again.
+        await GoogleSignin.revokeAccess().catch(() => GoogleSignin.signOut().catch(() => undefined));
       }
     });
 

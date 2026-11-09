@@ -5,12 +5,12 @@
  */
 import { activitySummaryQuery, aiStatusQuery, settingsQuery, type AiPrefs } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Switch, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { useAuth } from './auth';
 import { t } from './i18n';
 import { useTheme } from './theme';
-import { Body, Button, Card, Heading, Muted } from './ui';
+import { Body, Button, Card, Heading, Muted, SwitchRow } from './ui';
 
 export function SummaryCard({ activityId }: { activityId: number }) {
   const { api } = useAuth();
@@ -69,26 +69,6 @@ export function SummaryCard({ activityId }: { activityId: number }) {
   );
 }
 
-function Row({
-  label,
-  value,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  value: boolean;
-  onChange: (on: boolean) => void;
-  disabled?: boolean;
-}) {
-  const c = useTheme();
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-      <Text style={{ color: c.fg, flex: 1 }}>{label}</Text>
-      <Switch accessibilityLabel={label} value={value} onValueChange={onChange} disabled={disabled} />
-    </View>
-  );
-}
-
 export function AiCard() {
   const { api } = useAuth();
   const queryClient = useQueryClient();
@@ -108,14 +88,14 @@ export function AiCard() {
     <Card>
       <Heading>{t('ai.title')}</Heading>
       <Muted>{t('ai.help', { model: info.model ?? '' })}</Muted>
-      <Row label={t('ai.enabled')} value={prefs.enabled} onChange={(on) => set({ enabled: on })} />
-      <Row
+      <SwitchRow label={t('ai.enabled')} value={prefs.enabled} onChange={(on) => set({ enabled: on })} />
+      <SwitchRow
         label={t('ai.summaries')}
         value={prefs.summaries}
         disabled={!prefs.enabled}
         onChange={(on) => set({ summaries: on })}
       />
-      <Row
+      <SwitchRow
         label={t('ai.weekly')}
         value={prefs.weekly}
         disabled={!prefs.enabled}

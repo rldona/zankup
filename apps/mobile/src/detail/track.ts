@@ -2,7 +2,7 @@
  * Streams → what the detail screen draws: plain typed arrays, so the gesture worklets on the UI thread
  * can read them without crossing to JS.
  */
-import type { ApiPaths } from '@zankup/core';
+import { RAMP, type ApiPaths } from '@zankup/core';
 
 export type Streams =
   ApiPaths['/api/activities/{activity_id}/streams']['get']['responses'][200]['content']['application/json'];
@@ -16,6 +16,10 @@ export type Track = {
   lon: (number | null)[];
   lat: (number | null)[];
   totalDist: number;
+  /** What the profile runs along: distance, or time when the activity has none (strength, indoor). */
+  x: number[];
+  totalX: number;
+  byTime: boolean;
   altMin: number;
   altMax: number;
   hrMin: number;
@@ -46,6 +50,7 @@ export function buildTrack(s: Streams): Track {
   };
   const [altMin, altMax] = range(alt);
   const [hrMin, hrMax] = range(hr);
+  const byTime = (dist[n - 1] ?? 0) <= 0;
   const lat = s.lat ?? new Array<null>(n).fill(null);
   const lon = s.lon ?? new Array<null>(n).fill(null);
   return {
@@ -57,6 +62,9 @@ export function buildTrack(s: Streams): Track {
     lat,
     lon,
     totalDist: dist[n - 1] ?? 0,
+    x: byTime ? s.t : dist,
+    totalX: (byTime ? s.t[n - 1] : dist[n - 1]) ?? 0,
+    byTime,
     altMin,
     altMax,
     hrMin,
@@ -132,4 +140,67 @@ export function positionAt(track: Track, index: number): [number, number] | null
     }
   }
   return null;
+}
+
+/** At most this many pieces of line on the map: enough detail, little work for MapLibre. */
+const MAX_PIECES = 400;
+
+/**
+ * The route as consecutive pieces, each a few samples long and carrying the mean value it is
+ * coloured by (`v`, left out where the metric is missing: MapLibre on the phone cannot compare with
+ * null). Pieces share their ends, so the line has no gaps, and are long enough that the map's
+ * simplification never drops them.
+ */
+export function colouredSegments(
+  track: Track,
+  values: (number | null)[] | null | undefined,
+): GeoJSON.FeatureCollection<GeoJSON.LineString> {
+  const points: number[] = [];
+  for (let i = 0; i < track.n; i++) if (track.lon[i] != null && track.lat[i] != null) points.push(i);
+  const size = Math.max(1, Math.ceil((points.length - 1) / MAX_PIECES));
+  const features: GeoJSON.Feature<GeoJSON.LineString>[] = [];
+  for (let start = 0; start < points.length - 1; start += size) {
+    const piece = points.slice(start, Math.min(points.length, start + size + 1));
+    let sum = 0;
+    let count = 0;
+    for (const i of piece.slice(1)) {
+      const v = values?.[i];
+      if (v != null) {
+        sum += v;
+        count++;
+      }
+    }
+    features.push({
+      type: 'Feature',
+      properties: count ? { v: sum / count } : {},
+      geometry: {
+        type: 'LineString',
+        coordinates: piece.map((i) => [track.lon[i] as number, track.lat[i] as number]),
+      },
+    });
+  }
+  return { type: 'FeatureCollection', features };
+}
+
+/** The ramp's colours spread over `[lo, hi]`, the sport's colour where a piece has no value. */
+export function rampExpression([lo, hi]: [number, number], fallback: string, ramp: readonly string[] = RAMP) {
+  const step = (hi - lo) / (ramp.length - 1);
+  return [
+    'case',
+    ['has', 'v'],
+    ['interpolate', ['linear'], ['get', 'v'], ...ramp.flatMap((c, i) => [lo + i * step, c])],
+    fallback,
+  ] as unknown as string;
+}
+
+/** The sample at time `seconds` (the last one not after it). */
+export function indexAt(times: number[], seconds: number): number {
+  let lo = 0;
+  let hi = times.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if ((times[mid] ?? 0) <= seconds) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
 }

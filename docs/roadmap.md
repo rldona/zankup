@@ -369,8 +369,16 @@ against 87 FIT files (distance median 0.995, elevation gain 0.95).
 **Status (9 Nov 2026):** built in one branch, OS-502 to OS-509, and checked on an Android 16 emulator
 (sign-in with password + TOTP, the fingerprint releasing the session, feed, detail with the synced
 cursor, stats, search, settings, opening offline and recovering when back online). Waiting on accounts
-only the owner can create: Firebase (notifications), an Android OAuth client (Google sign-in) and Expo
-plus Google Play (OS-510, internal testing).
+only the owner can create: Firebase (notifications) and an Android OAuth client (Google sign-in). The
+Play Store release (OS-510) is parked: builds are installed straight on the owner's phone.
+
+That first pass stopped short of the PWA: four tabs, a basic detail and settings. Parity comes in blocks
+(OS-511 onwards). Block 1, navigation and the missing screens (OS-511 to OS-515), is built: a Sync
+tab, the You tab as a hub, and Health, Coach, Gear and Import on the phone. Block 2, the full activity
+detail (OS-516 to OS-518), and block 3, the full stats, training screens and reviews (OS-519 to
+OS-521), are built too, and so is block 4, the full settings and profile (OS-522 and OS-523): the
+app now covers everything the PWA does, except creating passkeys, linking Google and connecting
+Google Health, which need the browser.
 
 The performance proof of concept (OS-501) runs at the start of phase 2. This phase assumes React Native won; if Kotlin did, it is re-planned.
 
@@ -398,8 +406,31 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
 - **OS-508 · Stats, search and profile** (M) · depends on OS-311, OS-219, OS-218 and OS-504
 - **OS-509 · Home-screen widget** (M) · depends on OS-505
   - Latest activity and today's form, with `react-native-android-widget` or an Expo module in Kotlin.
-- **OS-510 · Play Store internal testing release** (S) · depends on OS-504…OS-507
-  - With EAS Submit.
+- **OS-510 · Play Store internal testing release** (S) · depends on OS-504…OS-507 · **parked**
+  - With EAS Submit. Parked on 9 Nov 2026: debug or release builds are installed on the phone instead.
+- **OS-511 · Navigation on par with the PWA** (S) · depends on OS-504
+  - A Sync tab (sync now, whole history, progress, latest runs) and the You tab as a hub to Health, Coach, Gear, Import and Settings.
+- **OS-512 · Health dashboard on the phone** (M) · depends on OS-606 and OS-511
+  - Last night with its hypnogram, today's figures with their sources and the 30/90/365-day trends, drawn with Skia.
+- **OS-513 · Coach and weekly report on the phone** (M) · depends on OS-704, OS-705 and OS-511
+  - The NDJSON stream read with `expo/fetch`; links to activities open their detail.
+- **OS-514 · Manage gear on the phone** (S) · depends on OS-410 and OS-511
+- **OS-515 · Import files from the phone** (M) · depends on OS-404, OS-406 and OS-511
+  - Android's file picker and the same upload in parts as the PWA, read part by part from the file.
+- **OS-516 · Full activity figures and editing on the phone** (M) · depends on OS-504
+  - Every figure of the PWA, device, gear and weather; edit name, description, sport and gear; add and remove photos.
+- **OS-517 · Map coloured by metric and replay on the phone** (M) · depends on OS-504
+  - The route in pieces coloured over the shared ramp, its legend, replay at 10×/30×/100× and saving a section as a segment.
+- **OS-518 · Zones, best efforts, laps, power and strength on the phone** (M) · depends on OS-504
+  - HR and power zones, the power curve, best efforts, laps, splits, route rank, segments, strength sets and the body map (its shapes now live in `packages/core`).
+- **OS-519 · Full stats on the phone** (L) · depends on OS-508
+  - Period picker, "Now" (form, load, goals, events, estimates with method and sources), summary, fitness, volume by sport, curves, records with progression, year over year, efficiency and the comparison with Strava.
+- **OS-520 · Training calendar, heatmap, routes and segments on the phone** (M) · depends on OS-519
+- **OS-521 · Month and year in review on the phone** (S) · depends on OS-519
+- **OS-522 · Full settings on the phone** (M) · depends on OS-508
+  - A section per screen: general, heart rate and zones (with recomputing), notifications by kind and a test, the AI assistant and MCP tokens, privacy zones on a map, health sources (priority, deleting a source's data), exporting your data, Garmin and the signed-in devices.
+- **OS-523 · Full profile on the phone** (M) · depends on OS-508
+  - Editing who you are, the year's numbers, by sport this year and all time, records, physical data, goals you can add and delete, estimates, and the account (sign-in methods, passkeys listed and removed, Google unlinked).
 
 **M5 is done when** the Android app replaces the PWA on your phone, with reliable notifications and background sync.
 

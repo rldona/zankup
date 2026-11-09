@@ -1,134 +1,105 @@
 /**
- * Stats (OS-508): today's form, last night's sleep and readiness (OS-606), the last 28 days against the same span a year before, the estimates
- * and predictions, and the records. All read from what the engine precomputed.
+ * Stats (OS-508, OS-519), as in the PWA: the period (last 12 months, all time, a year or one of its
+ * months), the engine's progress while it recomputes, "Now", then everything for the period, and the
+ * way to the calendar, heatmap, routes, segments, reviews and health. All read from what the engine
+ * precomputed.
  */
-import {
-  estimatesQuery,
-  fitnessQuery,
-  formatDuration,
-  formatHoursMinutes,
-  healthDaysQuery,
-  recordsQuery,
-  summaryQuery,
-} from '@zankup/core';
+import { engineQuery, periodOf, yearsQuery } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
 
 import { useApi } from '../../src/auth';
-import { effortName, ESTIMATE_ORDER, estimateName, estimateValue, RACES } from '../../src/estimates';
-import { t } from '../../src/i18n';
-import { useFormat } from '../../src/prefs';
-import { useTheme } from '../../src/theme';
-import { Card, Heading, Muted, Screen, Stat, styles as ui, Title } from '../../src/ui';
-
-const iso = (d: Date) => d.toISOString().slice(0, 10);
+import { locale, t } from '../../src/i18n';
+import {
+  CompareWithStrava,
+  Curves,
+  Efficiency,
+  Fitness,
+  Now,
+  Progress,
+  Records,
+  Summary,
+  Volume,
+} from '../../src/stats/Sections';
+import { Card, Choice, Heading, MenuRow, Muted, Screen, Title } from '../../src/ui';
 
 export default function StatsScreen() {
   const api = useApi();
-  const c = useTheme();
-  const format = useFormat();
-  const now = new Date();
-  const period = {
-    from: iso(new Date(now.getTime() - 28 * 86_400_000)),
-    to: iso(new Date(now.getTime() + 86_400_000)),
-  };
-  const fitness = useQuery(fitnessQuery(api, { from: iso(new Date(now.getTime() - 3 * 86_400_000)) }));
-  const summary = useQuery(summaryQuery(api, period));
-  const estimates = useQuery(estimatesQuery(api));
-  const records = useQuery(recordsQuery(api, period));
-  const health = useQuery(healthDaysQuery(api, iso(new Date(now.getTime() - 3 * 86_400_000)), period.to));
-  const today = health.data?.at(-1);
-  const night = [...(health.data ?? [])].reverse().find((d) => d.sleep)?.sleep;
-  const form = fitness.data?.at(-1);
-  const current = summary.data?.current;
-  const previous = summary.data?.previous;
-  const change = (a: number, b: number) =>
-    b ? `${a >= b ? '+' : ''}${Math.round(((a - b) / b) * 100)} %` : '';
-  const byKind = new Map((estimates.data ?? []).map((e) => [e.kind, e]));
+  const [choice, setChoice] = useState('last12');
+  const [today] = useState(() => new Date());
+  const years = useQuery(yearsQuery(api));
+  const first = years.data?.at(-1) ?? today.getFullYear();
+  const period = useMemo(() => periodOf(choice, today, first), [choice, today, first]);
+  const range = { from: period.from, to: period.to };
+  const engine = useQuery({
+    ...engineQuery(api),
+    refetchInterval: (q) => (q.state.data?.running ? 3000 : false),
+  });
+  const year = /^\d{4}/.test(choice) ? choice.slice(0, 4) : null;
+  const months = useMemo(() => {
+    if (!year) return [];
+    const y = Number(year);
+    const last = y === today.getFullYear() ? today.getMonth() : 11;
+    return Array.from({ length: last + 1 }, (_, i) => `${y}-${String(i + 1).padStart(2, '0')}`);
+  }, [year, today]);
+
   return (
     <Screen>
       <Title>{t('nav.stats')}</Title>
-      {form && (
-        <Card>
-          <Heading>{t('stats.now')}</Heading>
-          <View style={ui.stats}>
-            <Stat label={t('stats.ctl')} value={form.ctl.toFixed(0)} />
-            <Stat label={t('stats.atl')} value={form.atl.toFixed(0)} />
-            <Stat label={t('stats.tsb')} value={`${form.tsb > 0 ? '+' : ''}${form.tsb.toFixed(0)}`} />
-          </View>
-        </Card>
+      <Choice
+        scroll
+        label={t('stats.period')}
+        value={year ?? choice}
+        onChange={setChoice}
+        options={[
+          { value: 'last12', label: t('stats.period.last12') },
+          { value: 'all', label: t('stats.period.all') },
+          ...(years.data ?? []).map((y) => ({ value: String(y), label: String(y) })),
+        ]}
+      />
+      {months.length > 0 && year && (
+        <Choice
+          scroll
+          label={t('search.date')}
+          value={choice}
+          onChange={setChoice}
+          options={[
+            { value: year, label: '—' },
+            ...months.map((m) => ({
+              value: m,
+              label: new Date(`${m}-15T12:00:00`).toLocaleDateString(locale, { month: 'short' }),
+            })),
+          ]}
+        />
       )}
-      {(night || today?.readiness) && (
-        <Card>
-          <Heading>{t('nav.health')}</Heading>
-          <View style={ui.stats}>
-            {today?.readiness && <Stat label={t('health.readiness')} value={String(today.readiness.score)} />}
-            {night && <Stat label={t('health.score')} value={String(night.score ?? '–')} />}
-            {night?.asleep_s != null && (
-              <Stat label={t('health.asleep')} value={formatHoursMinutes(night.asleep_s)} />
-            )}
-            {today?.hrv && <Stat label={t('health.hrv')} value={`${today.hrv.value.toFixed(0)} ms`} />}
-            {today?.resting_hr && (
-              <Stat label={t('health.restingHr')} value={`${today.resting_hr.value.toFixed(0)} bpm`} />
-            )}
-          </View>
-        </Card>
+      {engine.data?.running && (
+        <Muted accessibilityRole="alert">
+          {t('stats.recomputing', { done: engine.data.done, total: engine.data.total })}
+        </Muted>
       )}
-      {current && (
-        <Card>
-          <Heading>{t('mobile.last28')}</Heading>
-          <View style={ui.stats}>
-            <Stat label={t('feed.title')} value={String(current.count)} />
-            <Stat label={t('feed.stat.distance')} value={format.distance(current.distance_m)} />
-            <Stat label={t('feed.stat.time')} value={formatHoursMinutes(current.moving_s)} />
-            <Stat label={t('feed.stat.ascent')} value={format.elevation(current.ascent_m)} />
-          </View>
-          {previous && previous.distance_m > 0 && (
-            <Muted>
-              {t('mobile.vsLastYear', { change: change(current.distance_m, previous.distance_m) })}
-            </Muted>
-          )}
-        </Card>
-      )}
-      {byKind.size > 0 && (
-        <Card>
-          <Heading>{t('stats.estimates')}</Heading>
-          {[...ESTIMATE_ORDER, ...RACES].map((kind) => {
-            const e = byKind.get(kind);
-            if (!e) return null;
-            return (
-              <View
-                key={kind}
-                style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
-              >
-                <Text style={{ color: c.fg }}>{estimateName(kind)}</Text>
-                <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-                  {estimateValue(kind, e.value, format)}
-                </Text>
-              </View>
-            );
-          })}
-        </Card>
-      )}
-      {(records.data?.all_time.length ?? 0) > 0 && (
-        <Card>
-          <Heading>{t('stats.records')}</Heading>
-          {records.data?.all_time.map((r) => (
-            <Pressable
-              key={r.distance_key}
-              accessibilityRole="link"
-              onPress={() => router.push(`/activity/${r.activity_id}`)}
-              style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
-            >
-              <Text style={{ color: c.fg }}>{effortName(r.distance_key)}</Text>
-              <Text style={{ color: c.accent, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-                {formatDuration(r.time_s)}
-              </Text>
-            </Pressable>
-          ))}
-        </Card>
-      )}
+
+      <Now />
+
+      <Summary range={range} />
+      <Fitness range={range} />
+      <Volume range={range} unit={period.unit} />
+      <Curves range={range} />
+      <Records range={range} />
+      <Progress selected={Number(year) || today.getFullYear()} />
+      <Efficiency range={range} />
+      <CompareWithStrava />
+
+      <Heading>{t('stats.links')}</Heading>
+      <Card style={{ paddingVertical: 0, gap: 0 }}>
+        <MenuRow label={t('review.monthLink')} onPress={() => router.push('/review/month')} />
+        <MenuRow label={t('review.yearLink')} onPress={() => router.push('/review/year')} />
+        <MenuRow label={t('nav.health')} onPress={() => router.push('/health')} />
+        <MenuRow label={t('stats.calendar')} onPress={() => router.push('/calendar')} />
+        <MenuRow label={t('stats.heatmap')} onPress={() => router.push('/heatmap')} />
+        <MenuRow label={t('stats.routes')} onPress={() => router.push('/routes')} />
+        <MenuRow label={t('stats.segments')} onPress={() => router.push('/segments')} last />
+      </Card>
     </Screen>
   );
 }

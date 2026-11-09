@@ -23,6 +23,7 @@ import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
 
 import { useApi } from './auth';
 import { locale, t } from './i18n';
+import { SportIcon } from './Icon';
 import { asSport, useFormat } from './prefs';
 import { useTheme } from './theme';
 import { Card, Empty, Muted, Stat, styles as ui } from './ui';
@@ -151,7 +152,7 @@ export const ActivityCard = memo(function ActivityCard({
     >
       <Card>
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-          <View style={[feedStyles.sport, { backgroundColor: c[sport] }]} />
+          <SportIcon sport={sport} />
           <View style={{ flex: 1 }}>
             <Text numberOfLines={1} style={{ color: c.fg, fontWeight: '700', fontSize: 16 }}>
               {a.name ?? t(`sport.${sport}`)}
@@ -203,5 +204,4 @@ function Thumbnail({ route, colour }: { route: string; colour: string }) {
 
 const feedStyles = StyleSheet.create({
   dot: { width: 26, height: 26, borderRadius: 13, borderWidth: 2 },
-  sport: { width: 10, height: 36, borderRadius: 5 },
 });

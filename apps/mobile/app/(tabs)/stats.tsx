@@ -4,12 +4,13 @@
  * way to the calendar, heatmap, routes, segments, reviews and health. All read from what the engine
  * precomputed.
  */
-import { engineQuery, periodOf, yearsQuery } from '@zankup/core';
+import { engineQuery, periodOf, yearsQuery, type MessageKey } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 
 import { useApi } from '../../src/auth';
+import { Icon, type IconName } from '../../src/Icon';
 import { locale, t } from '../../src/i18n';
 import {
   CompareWithStrava,
@@ -22,10 +23,22 @@ import {
   Summary,
   Volume,
 } from '../../src/stats/Sections';
+import { useTheme } from '../../src/theme';
 import { Card, Choice, Heading, MenuRow, Muted, Screen, Title } from '../../src/ui';
+
+const LINKS: [IconName, MessageKey, string][] = [
+  ['summarize', 'review.monthLink', '/review/month'],
+  ['trophy', 'review.yearLink', '/review/year'],
+  ['monitor_heart', 'nav.health', '/health'],
+  ['calendar_month', 'stats.calendar', '/calendar'],
+  ['layers', 'stats.heatmap', '/heatmap'],
+  ['route', 'stats.routes', '/routes'],
+  ['timeline', 'stats.segments', '/segments'],
+];
 
 export default function StatsScreen() {
   const api = useApi();
+  const c = useTheme();
   const [choice, setChoice] = useState('last12');
   const [today] = useState(() => new Date());
   const years = useQuery(yearsQuery(api));
@@ -92,13 +105,15 @@ export default function StatsScreen() {
 
       <Heading>{t('stats.links')}</Heading>
       <Card style={{ paddingVertical: 0, gap: 0 }}>
-        <MenuRow label={t('review.monthLink')} onPress={() => router.push('/review/month')} />
-        <MenuRow label={t('review.yearLink')} onPress={() => router.push('/review/year')} />
-        <MenuRow label={t('nav.health')} onPress={() => router.push('/health')} />
-        <MenuRow label={t('stats.calendar')} onPress={() => router.push('/calendar')} />
-        <MenuRow label={t('stats.heatmap')} onPress={() => router.push('/heatmap')} />
-        <MenuRow label={t('stats.routes')} onPress={() => router.push('/routes')} />
-        <MenuRow label={t('stats.segments')} onPress={() => router.push('/segments')} last />
+        {LINKS.map(([icon, label, href], i) => (
+          <MenuRow
+            key={href}
+            icon={<Icon name={icon} color={c.fg} />}
+            label={t(label)}
+            onPress={() => router.push(href as never)}
+            last={i === LINKS.length - 1}
+          />
+        ))}
       </Card>
     </Screen>
   );

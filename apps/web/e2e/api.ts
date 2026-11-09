@@ -120,6 +120,18 @@ export async function fakeApi(page: Page) {
       hr_max: 190,
       hr_rest: 50,
       hr_max_estimate: 188,
+      zone_model: 'max',
+      lthr: null,
+      ftp: null,
+      privacy_zones: [{ id: 'home', name: 'Home', lat: 40.4, lon: -3.7, radius_m: 400 }],
+      notifications: {
+        activity: true,
+        record: true,
+        sync_error: true,
+        garmin_key: true,
+        estimate: false,
+        import: true,
+      },
     },
   };
   const json = (route: Route, body: unknown, status = 200) =>
@@ -331,6 +343,78 @@ export async function fakeApi(page: Page) {
         computed: 2,
         activities: 2,
         metrics_version: 2,
+      });
+    // Phase 4 (OS-401 to OS-414).
+    if (path === '/api/gear')
+      return json(route, [
+        {
+          id: 1,
+          kind: 'shoe',
+          name: 'Trainers',
+          brand: null,
+          model: null,
+          sports: ['run'],
+          initial_m: 0,
+          limit_m: 800000,
+          retired: false,
+          distance_m: 420000,
+          activities: 40,
+          moving_s: 140000,
+          first_used: '2026-01-01T08:00:00Z',
+          last_used: '2026-11-08T08:00:00Z',
+          over_limit: false,
+        },
+      ]);
+    if (path === '/api/imports') return json(route, []);
+    if (path === '/api/exports') return json(route, []);
+    if (path === '/api/activities/7/shares') return json(route, []);
+    if (path === '/api/stats/strava-comparison') return json(route, { metrics: [], effort_scale: null });
+    if (path === '/api/stats/review')
+      return json(route, {
+        period: 'month',
+        start: '2026-11-01',
+        end: '2026-12-01',
+        totals: { count: 2, distance_m: 37400, moving_s: 6000, ascent_m: 348, load: 150 },
+        previous: { count: 1, distance_m: 30000, moving_s: 5000, ascent_m: 200, load: 100 },
+        by_sport: { run: { count: 1, distance_m: 5400, moving_s: 1800, ascent_m: 48, load: 50 } },
+        active_days: 2,
+        longest_streak: 1,
+        longest: { id: 7, name: 'Morning run', sport: 'run', day: '2026-11-08', distance_m: 5400,
+                   moving_s: 1800, ascent_m: 48, load: 50 }, // prettier-ignore
+        hardest: null,
+        hilliest: null,
+        records: [],
+        gear: [],
+        buckets: Array.from({ length: 30 }, (_, i) => ({
+          start: `2026-11-${String(i + 1).padStart(2, '0')}`,
+          distance_m: i === 7 ? 5400 : 0,
+          moving_s: 0,
+          count: i === 7 ? 1 : 0,
+        })),
+        photos: 0,
+      });
+    if (path === '/api/public/shares/demo')
+      return json(route, {
+        name: 'Morning run',
+        sport: 'run',
+        sub_sport: null,
+        day: '2026-11-08',
+        athlete: 'Runner',
+        duration_s: 1900,
+        moving_s: 1800,
+        distance_m: 5400,
+        ascent_m: 48,
+        avg_hr: 145,
+        avg_power: null,
+        route: [STREAMS.lat.slice(20).map((lat, i) => [lat, STREAMS.lon[i + 20] ?? 0])],
+        profile: STREAMS.dist.map((d, i) => ({
+          distance_m: d,
+          altitude_m: STREAMS.alt[i] ?? null,
+          speed: 3,
+        })),
+        splits: [{ distance_m: 1000, time_s: 330, elevation_change_m: 4 }],
+        photos: [],
+        expires_at: '2026-11-15T08:00:00Z',
       });
     return json(route, { detail: 'Not Found' }, 404);
   });

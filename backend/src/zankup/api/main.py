@@ -6,16 +6,24 @@ from contextlib import asynccontextmanager
 from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy import Engine
 
 from zankup import __version__
 from zankup.api.activities import router as activities_router
+from zankup.api.library import router as library_router
+from zankup.api.notifications import router as notifications_router
 from zankup.api.preferences import router as preferences_router
 from zankup.api.profile import router as profile_router
+from zankup.api.review import router as review_router
+from zankup.api.sharing import public as sharing_public
+from zankup.api.sharing import router as sharing_router
 from zankup.api.stats import router as stats_router
 from zankup.api.sync import router as sync_router
 from zankup.api.training import router as training_router
+from zankup.api.transfers import direct as transfers_direct
+from zankup.api.transfers import router as transfers_router
 from zankup.api.week import router as week_router
 from zankup.auth.google import router as google_router
 from zankup.auth.passkeys import router as passkeys_router
@@ -93,13 +101,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(password_router)
     app.include_router(google_router)
     app.include_router(setup_router)
+    app.include_router(library_router)  # before activities: PATCH /api/activities/{id}
     app.include_router(activities_router)
+    app.include_router(sharing_router)
+    app.include_router(sharing_public)
+    app.include_router(transfers_router)
+    app.include_router(transfers_direct)
+    app.include_router(notifications_router)
+    app.include_router(review_router)
     app.include_router(sync_router)
     app.include_router(preferences_router)
     app.include_router(profile_router)
     app.include_router(stats_router)
     app.include_router(training_router)
     app.include_router(week_router)
+
+    # Uploads and downloads go straight to the API host (api/transfers.py): the app's origins may call
+    # those paths from the browser. Never with cookies, which keep working only through the proxy.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.rstrip("/") for o in settings.webauthn_origins],
+        allow_methods=["GET", "PUT"],
+        allow_headers=["Content-Type"],
+        allow_credentials=False,
+        max_age=3600,
+    )
 
     @app.get("/api/health", operation_id="getHealth")
     def health(engine: Annotated[Engine, Depends(get_engine)]) -> Health:

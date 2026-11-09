@@ -132,5 +132,11 @@ def notify_sync_outcome(session: Session, user_id: int, send: Sender | None) -> 
         log.warning("Sync alert", extra={"subject": alert[0]})
         if send is not None:
             send(*alert)
+        latest = _finished(session, user_id, 1)
+        if latest and latest[0].status == "error":  # the failure streak, not the recovery
+            from zankup.notify import notify
+
+            notify(session, user_id, "sync_error", {"error": (latest[0].error or "")[:200]},
+                   key=f"sync_error:{latest[0].id}")  # fmt: skip
     except Exception:
         log.exception("Could not send the sync alert")

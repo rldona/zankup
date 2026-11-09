@@ -62,6 +62,8 @@ class ActivitySummary(BaseModel):
     avg_power: int | None
     has_gps: bool
     route: str | None = Field(description="Simplified route as an encoded polyline (precision 5)")
+    photo: int | None = Field(default=None, description="First photo, for the card's thumbnail")
+    photos: int = 0
 
 
 class ActivityPage(BaseModel):
@@ -175,8 +177,38 @@ class StreamsInfo(BaseModel):
     sample_count: int
 
 
+class GearRef(BaseModel):
+    id: int
+    name: str
+    kind: str
+
+
+class Weather(BaseModel):
+    """As Strava recorded it (OS-406)."""
+
+    condition: str | None = None
+    temperature: float | None = None
+    apparent_temperature: float | None = None
+    humidity: float | None = None
+    wind_speed: float | None = None
+    wind_direction: float | None = None
+
+
+class PhotoRef(BaseModel):
+    id: int
+    width: int
+    height: int
+    caption: str | None
+
+
 class ActivityDetail(ActivitySummary):
     description: str | None
+    gear: GearRef | None
+    photo_list: list[PhotoRef]
+    weather: Weather | None
+    edited_fields: list[str] = Field(description="Edited by the user: imports and reprocessing keep them")
+    original_format: str | None = Field(description="fit, tcx or gpx; null without an original file")
+    strava_id: str | None
     descent_m: float | None
     max_hr: int | None
     normalized_power: int | None
@@ -249,6 +281,27 @@ def _summary_fields(activity: Activity) -> dict[str, Any]:
         "has_gps": activity.has_gps,
         "route": activity.route_simplified,
     }
+
+
+def _summaries(db: DbSession, activities: list[Activity]) -> list[ActivitySummary]:
+    """Feed cards, with each activity's first photo."""
+    from zankup.db.models import Photo
+
+    ids = [a.id for a in activities]
+    photos: dict[int, tuple[int, int]] = {}
+    if ids:
+        for activity_id, first, count in db.execute(
+            select(Photo.activity_id, func.min(Photo.id), func.count())
+            .where(Photo.activity_id.in_(ids))
+            .group_by(Photo.activity_id)
+        ):
+            photos[activity_id] = (first, count)
+    return [
+        ActivitySummary(
+            **_summary_fields(a), photo=photos.get(a.id, (None, 0))[0], photos=photos.get(a.id, (None, 0))[1]
+        )
+        for a in activities
+    ]
 
 
 def _curve_out(curve: dict[str, float] | None) -> list[Curve]:
@@ -359,7 +412,7 @@ def list_activities(
     rows = list(db.scalars(query))
     page, more = rows[:limit], len(rows) > limit
     return ActivityPage(
-        items=[ActivitySummary(**_summary_fields(a)) for a in page],
+        items=_summaries(db, page),
         next_cursor=encode_cursor(page[-1]) if more else None,
     )
 
@@ -472,7 +525,7 @@ def search_activities(
     )
     more = len(rows) > limit
     return SearchPage(
-        items=[ActivitySummary(**_summary_fields(a)) for a in rows[:limit]],
+        items=_summaries(db, rows[:limit]),
         totals=SearchTotals(count=totals[0], distance_m=totals[1], moving_s=totals[2], ascent_m=totals[3]),
         next_offset=offset + limit if more else None,
     )
@@ -521,9 +574,26 @@ def get_activity(activity_id: int, db: DbSession, user: CurrentUser) -> Activity
     stream = db.execute(
         select(Stream.series, Stream.sample_count).where(Stream.activity_id == activity.id)
     ).one_or_none()
+    from zankup.db.models import Gear, Photo
+
+    gear = db.get(Gear, activity.gear_id) if activity.gear_id else None
+    photo_rows = db.scalars(
+        select(Photo).where(Photo.activity_id == activity.id).order_by(Photo.position, Photo.id)
+    )
+    photo_list = [PhotoRef(id=p.id, width=p.width, height=p.height, caption=p.caption) for p in photo_rows]
+    weather = (activity.strava or {}).get("weather")
     return ActivityDetail(
         **_summary_fields(activity),
+        photo=photo_list[0].id if photo_list else None,
+        photos=len(photo_list),
         description=activity.description,
+        gear=GearRef(id=gear.id, name=gear.name, kind=gear.kind) if gear else None,
+        photo_list=photo_list,
+        weather=Weather.model_validate(weather) if isinstance(weather, dict) else None,
+        edited_fields=activity.edited_fields or [],
+        original_format=(activity.fit_path.rsplit(".", 1)[-1] if activity.fit_path else None),
+        strava_id=(activity.strava or {}).get("id")
+        or (activity.external_id if activity.source == "strava" else None),
         descent_m=activity.descent_m,
         max_hr=activity.max_hr,
         normalized_power=activity.normalized_power,
@@ -585,10 +655,11 @@ def get_activity_fit(
     if activity.fit_path is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "This activity has no original file")
     etag = f'"{activity.fit_sha256}"'
+    fmt = activity.fit_path.rsplit(".", 1)[-1]
     headers = {
         "ETag": etag,
         "Cache-Control": "private, max-age=31536000, immutable",  # originals never change
-        "Content-Disposition": f'attachment; filename="zankup-{activity.id}.fit"',
+        "Content-Disposition": f'attachment; filename="zankup-{activity.id}.{fmt}"',
     }
     if _not_modified(request, etag):
         return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers=headers)
@@ -599,4 +670,5 @@ def get_activity_fit(
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, "The original file is unavailable"
         ) from None
-    return Response(data, media_type=FIT_MEDIA_TYPE, headers=headers)
+    media = {"tcx": "application/vnd.garmin.tcx+xml", "gpx": "application/gpx+xml"}.get(fmt, FIT_MEDIA_TYPE)
+    return Response(data, media_type=media, headers=headers)

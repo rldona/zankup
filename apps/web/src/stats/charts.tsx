@@ -335,3 +335,45 @@ export function ProgressionChart({
     />
   );
 }
+
+/** Ours against Strava's for one metric (OS-323): each point opens its activity. */
+export function ComparisonChart({
+  points,
+  theme,
+  label,
+}: {
+  points: { activity_id: number; ours: number; strava: number }[];
+  theme: ThemeName;
+  label: string;
+}) {
+  const c = palette(theme);
+  const open = useOpenActivity();
+  const option = useMemo(() => {
+    const max = Math.max(...points.flatMap((p) => [p.ours, p.strava]), 1);
+    return {
+      grid: { left: 48, right: 16, top: 16, bottom: 36 },
+      tooltip: {
+        trigger: 'item',
+        formatter: (p: { data: { value: number[] } }) =>
+          `Strava ${p.data.value[0]} · Zankup ${p.data.value[1]}`,
+      },
+      xAxis: { type: 'value', name: 'Strava', nameLocation: 'middle', nameGap: 24, max },
+      yAxis: { type: 'value', name: 'Zankup', max },
+      series: [
+        {
+          type: 'scatter',
+          symbolSize: 6,
+          itemStyle: { color: c.accent, opacity: 0.6 },
+          data: points.map((p) => ({ value: [p.strava, p.ours], activityId: p.activity_id })),
+          markLine: {
+            silent: true,
+            symbol: 'none',
+            lineStyle: { color: c.muted, type: 'dashed' },
+            data: [[{ coord: [0, 0] }, { coord: [max, max] }]],
+          },
+        },
+      ],
+    };
+  }, [points, c.accent, c.muted]);
+  return <EChart option={option} theme={theme} summary={label} height={240} onReady={open} />;
+}

@@ -15,10 +15,11 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../../src/auth';
 import { Chart } from '../../src/charts';
+import { Icon } from '../../src/Icon';
 import { locale, t } from '../../src/i18n';
 import { useTheme } from '../../src/theme';
 import { Button, Card, Choice, Heading, Loading, Muted, Screen, styles as ui } from '../../src/ui';
@@ -67,16 +68,29 @@ export default function HealthScreen() {
   const nights = list.filter((d) => d.sleep);
 
   return (
-    <Screen title={t('nav.health')}>
+    <Screen
+      title={t('nav.health')}
+      actions={
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('health.sync')}
+          accessibilityState={{ busy: sync.isPending }}
+          disabled={sync.isPending}
+          hitSlop={10}
+          onPress={() => sync.mutate()}
+          style={{ opacity: sync.isPending ? 0.4 : 1 }}
+        >
+          <Icon name="sync" color={c.fg} size={26} />
+        </Pressable>
+      }
+    >
       <Choice
         label={t('stats.period')}
         value={period}
         onChange={setPeriod}
         options={PERIODS.map((p) => ({ value: p, label: t(`health.period.${p}`) }))}
       />
-      <Button disabled={sync.isPending} onPress={() => sync.mutate()}>
-        {sync.isSuccess ? t('health.syncQueued') : t('health.sync')}
-      </Button>
+      {sync.isSuccess && <Muted accessibilityRole="alert">{t('health.syncQueued')}</Muted>}
 
       {days.isPending && <Loading />}
       {days.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}

@@ -146,6 +146,7 @@ export async function passkeyStep(baseUrl: string): Promise<Session | null> {
     credential = await Passkey.get(options.data.options as unknown as PasskeyGetRequest);
   } catch (error) {
     if (passkeyCancelled(error, true)) return null;
+    console.warn('Passkey sign-in failed', JSON.stringify(error));
     throw new SignInError(t('signIn.error.passkey'));
   }
   const { data, response } = await answer(
@@ -172,6 +173,7 @@ export async function addPasskey(api: ApiClient): Promise<boolean> {
     credential = await Passkey.create(data.options as unknown as PasskeyCreateRequest);
   } catch (error) {
     if (passkeyCancelled(error)) return false;
+    console.warn('Passkey creation failed', JSON.stringify(error));
     throw new SignInError(t('profile.passkeyFailed'));
   }
   const done = await api.POST('/api/auth/passkeys/register', {

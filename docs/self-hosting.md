@@ -1,6 +1,6 @@
 # Self-hosting Zankup
 
-Zankup is one person's sports data on their own instance. This guide takes you from nothing to a
+Zankup is one person's sports and health data, together, on their own instance. This guide takes you from nothing to a
 working instance with your Garmin history, in under an hour. There are two ways:
 
 - **Your own server** (a VPS, a home server, a Raspberry Pi 4/5 with 4 GB): one `docker compose`

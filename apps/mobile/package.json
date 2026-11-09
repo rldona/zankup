@@ -6,6 +6,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
+    "dev:android": "adb reverse tcp:8000 tcp:8000 && ZANKUP_DEV=1 expo run:android --variant debug",
+    "dev": "adb reverse tcp:8000 tcp:8000 && adb reverse tcp:8081 tcp:8081 && ZANKUP_DEV=1 expo start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",

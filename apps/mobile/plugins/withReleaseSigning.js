@@ -3,8 +3,12 @@
  * `assetlinks.json` trust the app by this key's SHA-256, so it must never be the public debug key.
  *
  * The key is described by a properties file (storeFile, storePassword, keyAlias, keyPassword):
- * `ZANKUP_SIGNING` or `~/.config/zankup/android/signing.properties`. Without it, release builds keep
- * the debug key, and passkeys do not work in them.
+ * `ZANKUP_SIGNING` or `~/.config/zankup/android/signing.properties`. Without it, builds keep the debug
+ * key, and passkeys and Google sign-in do not work in them.
+ *
+ * Debug builds (`pnpm dev:android`, JavaScript served by Metro with Fast Refresh) are signed with the
+ * same key: they install over the release build without losing the session, and passkeys and Google
+ * keep working while developing.
  */
 const { existsSync } = require('node:fs');
 const { homedir } = require('node:os');
@@ -36,6 +40,10 @@ module.exports = function withReleaseSigning(config) {
     gradle = gradle.replace(/signingConfigs\s*\{/, (match) => `${match}${release}`);
     gradle = gradle.replace(
       /(buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?)signingConfig signingConfigs\.debug/,
+      '$1signingConfig signingConfigs.release',
+    );
+    gradle = gradle.replace(
+      /(buildTypes\s*\{\s*debug\s*\{\s*)signingConfig signingConfigs\.debug/,
       '$1signingConfig signingConfigs.release',
     );
     mod.modResults.contents = gradle;

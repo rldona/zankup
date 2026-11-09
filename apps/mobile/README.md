@@ -17,7 +17,21 @@ the decision behind it are in [docs/architecture.md](../../docs/architecture.md#
 | Wordmark: ZANKUP as one path from `packages/core`, drawn with Skia (sign-in, lock screen)                                                                                                                                                                                                                                        | `src/Wordmark.tsx`                                                                                                         |
 | AI assistant (phase 7): the summary of an activity, the switches in Settings, the weekly report and the Coach (streamed with `expo/fetch`)                                                                                                                                                                                       | `src/Ai.tsx`, `app/coach.tsx`, `src/coach.ts`                                                                              |
 
-## Run it on the emulator or a phone
+## Develop on a phone (Fast Refresh)
+
+The quick loop: a debug build installed once, with the JavaScript served by Metro from this computer. Saving a
+file shows the change on the phone in a second or two, keeping the screen you are on. Works over USB or
+`adb` over Wi-Fi.
+
+```bash
+pnpm dev:android   # first time, or after a native change: builds and installs the debug app, starts Metro
+pnpm dev           # afterwards: only Metro (and the adb reverse of the API and Metro ports)
+```
+
+Only native changes need `pnpm dev:android` again: a new native library, `modules/`, `plugins/`, icons,
+splash or `app.config.ts`. The debug build is signed with the same key as the release build (below), so it
+installs over it without losing the session and passkeys and Google sign-in keep working. It needs Metro
+running: for everyday use away from the computer, install the release build again.
 
 Needs the Android SDK (`ANDROID_HOME`) and the API running locally (`make api`).
 

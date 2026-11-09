@@ -47,6 +47,45 @@ Either way you need the same accounts and keys. Get them first.
 
 Google needs fixed redirect URLs, so it does not work on preview deployments.
 
+### Google Health: Fitbit Air and other Google devices (optional)
+
+Sleep with stages, HRV, resting heart rate, SpO₂, respiration and steps, read-only. It uses the same
+OAuth client as Google sign-in.
+
+1. In the same Google Cloud project, **APIs & Services → Library → Google Health API → Enable**.
+2. **OAuth consent screen → Data access → Add or remove scopes**: add
+   `…/auth/googlehealth.sleep.readonly`, `…/auth/googlehealth.health_metrics_and_measurements.readonly`
+   and `…/auth/googlehealth.activity_and_fitness.readonly`.
+3. In the OAuth client, add a second redirect URI: `https://your.domain/api/wellness/google/callback`.
+4. Set `GOOGLE_HEALTH_ENABLED=true` and restart. **Settings → Health → Connect Google Health.**
+
+While the app is in **Testing** mode, Google makes the refresh token expire after **7 days**: Zankup then
+sends a notification and Settings shows **Connect again**. Publishing the app removes the limit, but
+health scopes need Google's verification. The Android app's **Health Connect** reading avoids Google's
+OAuth altogether, if the Google Health app on your phone writes there.
+
+**Webhooks (optional).** Without them Zankup asks Google every hour; with them, minutes after the watch
+syncs. Pick a long random secret, set it as `GOOGLE_HEALTH_WEBHOOK_SECRET`, restart, and create the
+subscriber with your project **number** and a token of an account that owns the project:
+
+```bash
+curl -X POST "https://health.googleapis.com/v4/projects/PROJECT_NUMBER/subscribers?subscriberId=zankup" \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "Content-Type: application/json" \
+  -d '{"endpointUri": "https://api.your.domain/api/webhooks/google-health",
+       "subscriberConfigs": [{"dataTypes": ["sleep", "daily-resting-heart-rate",
+         "daily-heart-rate-variability", "daily-oxygen-saturation", "daily-respiratory-rate", "steps"],
+         "subscriptionCreatePolicy": "AUTOMATIC"}],
+       "endpointAuthorization": {"secret": "THE_SAME_SECRET"}}'
+```
+
+Google checks the endpoint right away (once with the secret, once without). Every notification is
+also signed; Zankup verifies the signature with Google's published keys before queuing a sync.
+
+### Garmin health data
+
+With the Personal API key, Zankup also brings sleep, HRV (on watches that measure it), resting heart
+rate, SpO₂, respiration and steps every hour. Nothing to set up.
+
 ## 2a. Your own server
 
 Requirements: Docker with Compose, ports 80 and 443 open (for HTTPS), and a DNS `A` record from your
@@ -149,12 +188,14 @@ the API.
 | `OWNER_EMAIL` | Placeholder account the sync uses before sign-up; sign-up takes it over. |
 | `RUN_WORKER` | Run the background worker inside the API (`true`). |
 | `SYNC_INTERVAL_MINUTES` | Automatic Garmin sync every N minutes (15); 0 turns it off. |
-| `JWT_SECRET` | Signs sessions and encrypts TOTP keys. Required; never change it. |
+| `JWT_SECRET` | Signs sessions and encrypts TOTP keys and Google Health's token. Required; never change it. |
 | `RESEND_API_KEY`, `ALERT_EMAIL`, `ALERT_FROM` | E-mail: password recovery and sync/backup alerts. |
 | `BACKUP_S3_*`, `BACKUP_DIR`, `BACKUP_KEEP_DAYS`, `BACKUP_HOUR_UTC` | Daily backups. |
 | `PG_DUMP_COMMAND`, `PG_RESTORE_COMMAND` | Backup tools; the image has the right ones. |
 | `WEBAUTHN_RP_ID`, `WEBAUTHN_ORIGINS` | Your domain and origin, for passkeys, Google and e-mail links. |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in (and Google Health, with the same client). |
+| `GOOGLE_HEALTH_ENABLED` | `true` offers connecting Google Health in Settings → Health. |
+| `GOOGLE_HEALTH_WEBHOOK_SECRET` | Google Health's new-data notifications (optional; the hourly sync works without). |
 | `API_PUBLIC_URL` | The API's own public address (e.g. `https://api.example.com`) when the app reaches it through a proxy: imports and exports then go there directly. Leave it empty when the app and the API share an origin. |
 | `FCM_SERVICE_ACCOUNT` | Notifications in the Android app: the Firebase service account key (the whole JSON). |
 | `VAPID_PRIVATE_KEY` | Push notifications. Optional: without it a key is generated once and kept in `DATA_DIR`. |

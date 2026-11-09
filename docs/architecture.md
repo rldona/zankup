@@ -383,6 +383,19 @@ What is shared is the logic, not the visual components: the web uses the DOM (EC
 - **To check before building:** in "Testing" mode, Google OAuth apps issue refresh tokens that expire after 7 days, and health scopes may require Google's verification. If that is not viable for personal use, the alternative is reading **Health Connect** from the Android app (phase 5), where the Google Health app also writes.
 - **Multiple sources:** every data point stores its source. Configurable priority rules decide what is shown when Garmin and Fitbit measure the same thing (for example, sleep from the Fitbit Air and activities from Garmin).
 
+### As built (phase 6)
+
+- **Model** (`zankup.db.models`): `sleep_sessions` (one row per sleep and source: times, offset, stage totals, Zankup's score and a compact stage list), `daily_health` (one row per day and source: resting HR, HRV as overnight RMSSD, SpO₂, respiration, steps and `wear_s`, the time the source measured heart rate) and `source_priority` (the person's order of sources per metric). Every row keeps its source and the source's own id, so syncing again only updates.
+- **Sources** (`zankup.health`):
+  - **Garmin** (`garmin.py`): the Personal API's `dailySleep`, `dailyHeartRate`, HRV and steps endpoints, hourly (`sync_garmin_health` job), fetching the last two days again.
+  - **Google Health** (`google.py`): OAuth with PKCE and three read-only scopes; the refresh token encrypted with AES-GCM under a key derived from `JWT_SECRET` (`crypto.py`); incremental sync of sleep, the daily types, the steps roll-up and an hourly heart-rate roll-up for wear time (`sync_google_health` job, hourly and on webhooks). A refused refresh token marks the source "connect again" and notifies.
+  - **Webhooks** (`webhooks.py`): `POST /api/webhooks/google-health` checks the subscriber secret and the Tink ECDSA signature against Google's keyset, then queues a sync for the user it names.
+  - **Health Connect** (the Android app, `src/healthConnect.ts`): reads the same six types with read-only permissions and sends them to `POST /api/wellness/health-connect`, on demand and when the app opens (at most hourly).
+- **Choosing between sources** (`resolve.py`) happens at read time, so nothing is deleted and a change of preference applies to the whole history: the person's order if set, otherwise sleep with stages (then the longest), overnight values from the source of that night's sleep, and resting HR and steps from the source worn longest.
+- **Readiness** (0–100): last night's HRV and resting HR as z-scores against the person's previous 60 days (at least 7 values), the sleep score and the form (TSB), weighted 35/20/25/20; parts without data are left out.
+- **Clients:** the PWA's **Health** screen (last night with its hypnogram, today's figures with their source, trends of sleep, HRV and resting HR, readiness against form) and **Settings → Health** (sources, connecting Google Health, the preferred source per metric, deleting one source's data). The app shows last night and readiness in Stats.
+- **API:** `/api/wellness/*` (`/api/health` is the service's health check).
+
 ## AI layer (small LLM via API)
 
 - **Model:** **Claude Haiku 5.5** (`claude-haiku-5-5`) with the official Python SDK `anthropic`. It costs $0.10 per million input tokens and $0.50 per million output tokens (prompts up to 100K tokens). An activity summary (about 3K input tokens and 300 output) costs about $0.0005: **cents per month** for one user.

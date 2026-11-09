@@ -133,6 +133,43 @@ class SetOut(BaseModel):
     category: str | None = Field(description="FIT exercise category, e.g. squat; null when unknown")
 
 
+class Curve(BaseModel):
+    duration_s: int
+    value: float
+
+
+class ActivityMetricsOut(BaseModel):
+    """What the engine computed for this activity (OS-312)."""
+
+    trimp: float | None = Field(description="Relative effort (Banister TRIMP)")
+    hr_zones: list[float] | None = Field(description="Seconds per HR zone, with your zone model")
+    hr_zone_bounds: list[float] | None = Field(description="Lower bound of each HR zone (bpm)")
+    power_zones: list[float] | None
+    power_zone_bounds: list[float] | None
+    gap_speed: float | None = Field(description="Grade-adjusted speed (m/s)")
+    calories: float | None = Field(description="The device's kcal, or the estimate")
+    calories_estimated: bool
+    efficiency: float | None
+    decoupling: float | None = Field(description="Pa:HR drift between halves, %")
+    power_curve: list[Curve]
+    speed_curve: list[Curve]
+
+
+class RouteInfo(BaseModel):
+    group: int
+    count: int
+    rank: int = Field(description="1 = the fastest time on this route")
+
+
+class SegmentPass(BaseModel):
+    segment_id: int
+    name: str
+    elapsed_s: float
+    best_s: float
+    rank: int
+    count: int
+
+
 class StreamsInfo(BaseModel):
     series: list[str] = Field(description="Series present, always including t")
     sample_count: int
@@ -153,6 +190,9 @@ class ActivityDetail(ActivitySummary):
     splits: list[SplitOut]
     best_efforts: list[BestEffortOut]
     sets: list[SetOut] = Field(description="Strength sets, rests included; empty for other activities")
+    metrics: ActivityMetricsOut | None = Field(description="Null until the engine has computed it")
+    route_group: RouteInfo | None = Field(description="Matched route, when done more than once")
+    segments: list[SegmentPass] = Field(description="Your segments this activity went through")
     streams: StreamsInfo | None
 
 
@@ -209,6 +249,77 @@ def _summary_fields(activity: Activity) -> dict[str, Any]:
         "has_gps": activity.has_gps,
         "route": activity.route_simplified,
     }
+
+
+def _curve_out(curve: dict[str, float] | None) -> list[Curve]:
+    return sorted(
+        (Curve(duration_s=int(k), value=v) for k, v in (curve or {}).items()), key=lambda c: c.duration_s
+    )
+
+
+def _engine_fields(db: DbSession, activity: Activity) -> dict[str, Any]:
+    """Metrics, matched route and segments from the engine's tables (nothing is computed here)."""
+    import zankup_metrics as m
+    from zankup.db.models import ActivityMetrics, Segment, SegmentEffort
+    from zankup.engine.athlete import athlete
+
+    metrics = db.get(ActivityMetrics, activity.id)
+    out: dict[str, Any] = {"metrics": None, "route_group": None, "segments": []}
+    if metrics is None:
+        return out
+    who = athlete(db, activity.user_id)
+    moving = activity.moving_s or activity.duration_s
+    out["metrics"] = ActivityMetricsOut(
+        trimp=metrics.trimp,
+        hr_zones=metrics.hr_zones,
+        hr_zone_bounds=[round(b) for b in m.hr_zones(who.zone_method, who.hr_max, who.hr_rest, who.lthr)]
+        if metrics.hr_zones
+        else None,
+        power_zones=metrics.power_zones,
+        power_zone_bounds=[round(b) for b in m.power_zones(who.ftp)]
+        if metrics.power_zones and who.ftp
+        else None,
+        gap_speed=metrics.gap_distance_m / moving if metrics.gap_distance_m and moving else None,
+        calories=activity.calories if activity.calories is not None else metrics.calories,
+        calories_estimated=activity.calories is None and metrics.calories is not None,
+        efficiency=metrics.efficiency,
+        decoupling=metrics.decoupling,
+        power_curve=_curve_out(metrics.power_curve),
+        speed_curve=_curve_out(metrics.speed_curve),
+    )
+    if metrics.route_group is not None:
+        times = list(
+            db.execute(
+                select(Activity.id, Activity.moving_s, Activity.duration_s)
+                .join(ActivityMetrics, ActivityMetrics.activity_id == Activity.id)
+                .where(
+                    ActivityMetrics.route_group == metrics.route_group, Activity.user_id == activity.user_id
+                )
+            ).all()
+        )
+        if len(times) > 1:
+            ordered = sorted(times, key=lambda r: r.moving_s or r.duration_s)
+            rank = next(i for i, r in enumerate(ordered, start=1) if r.id == activity.id)
+            out["route_group"] = RouteInfo(group=metrics.route_group, count=len(times), rank=rank)
+    for effort, segment in db.execute(
+        select(SegmentEffort, Segment)
+        .join(Segment, Segment.id == SegmentEffort.segment_id)
+        .where(SegmentEffort.activity_id == activity.id)
+    ).all():
+        others = sorted(
+            db.scalars(select(SegmentEffort.elapsed_s).where(SegmentEffort.segment_id == segment.id))
+        )
+        out["segments"].append(
+            SegmentPass(
+                segment_id=segment.id,
+                name=segment.name,
+                elapsed_s=effort.elapsed_s,
+                best_s=others[0],
+                rank=others.index(effort.elapsed_s) + 1,
+                count=len(others),
+            )
+        )
+    return out
 
 
 def _own_activity(db: DbSession, user: CurrentUser, activity_id: int) -> Activity:
@@ -426,6 +537,7 @@ def get_activity(activity_id: int, db: DbSession, user: CurrentUser) -> Activity
         splits=[SplitOut.model_validate(split) for split in activity.splits or []],
         best_efforts=[BestEffortOut.model_validate(e, from_attributes=True) for e in efforts],
         sets=[SetOut.model_validate(s) for s in activity.sets or []],
+        **_engine_fields(db, activity),
         streams=StreamsInfo(series=stream.series, sample_count=stream.sample_count) if stream else None,
     )
 

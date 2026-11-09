@@ -259,6 +259,7 @@ def me(user: CurrentUser) -> Me:
 @router.patch("/me", operation_id="updateMe")
 def update_me(body: ProfileUpdate, user: CurrentUser, db: DbSession) -> Me:
     """Edit the profile (OS-218): name, location, date of birth, sex, weight and height."""
+    before = (user.birth_date, user.sex, user.weight_kg)
     for name in body.model_fields_set:
         value = getattr(body, name)
         if name == "display_name":
@@ -268,6 +269,10 @@ def update_me(body: ProfileUpdate, user: CurrentUser, db: DbSession) -> Me:
         if name == "birth_date" and value is not None and not date(1900, 1, 1) <= value <= date.today():
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "That date of birth is not possible")
         setattr(user, name, value.strip() or None if isinstance(value, str) else value)
+    if before != (user.birth_date, user.sex, user.weight_kg):
+        from zankup.engine.run import queue_full
+
+        queue_full(db, user.id, "profile changed (age, sex or weight)")  # effort and calories use them
     db.commit()
     return _me(user)
 

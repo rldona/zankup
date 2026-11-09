@@ -18,7 +18,7 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 
 import { t } from './i18n';
-import { normaliseUrl } from './links';
+import { keyInvalidated, normaliseUrl } from './links';
 import { keys, readSync, storage } from './storage';
 
 const TOKEN = 'zankup.refresh';
@@ -138,7 +138,10 @@ export async function unlock(): Promise<Unlock> {
       authenticationPrompt: t('mobile.unlockPrompt'),
     });
   } catch (error) {
-    if (/cancel/i.test(String(error))) return { cancelled: true };
+    // Only a key Android invalidated (fingerprints changed) is gone for good. Anything else (the
+    // prompt cancelled, timed out, locked out, shown with the screen off) leaves the token where it is:
+    // the lock screen offers to try again instead of signing out.
+    if (!keyInvalidated(error)) return { cancelled: true };
     await forget();
     return { signedOut: true };
   }

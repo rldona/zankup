@@ -174,18 +174,24 @@ export function Choice<T extends string>({
   value,
   onChange,
   label,
+  scroll,
 }: {
   options: { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
   label: string;
+  /** One row that scrolls sideways, for long lists (years). */
+  scroll?: boolean;
 }) {
   const c = useTheme();
+  const Wrapper = (scroll ? ScrollView : View) as typeof View;
   return (
-    <View
+    <Wrapper
       accessibilityRole="radiogroup"
       accessibilityLabel={label}
-      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}
+      {...(scroll
+        ? { horizontal: true, showsHorizontalScrollIndicator: false, contentContainerStyle: { gap: 6 } }
+        : { style: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 } })}
     >
       {options.map((o) => {
         const on = o.value === value;
@@ -208,7 +214,7 @@ export function Choice<T extends string>({
           </Pressable>
         );
       })}
-    </View>
+    </Wrapper>
   );
 }
 

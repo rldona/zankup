@@ -1,4 +1,4 @@
-/** Pure helpers (tested without a phone): instance URLs and where notifications and links lead. */
+/** Pure helpers (tested without a phone): instance URLs, where notifications and links lead, keystore errors. */
 
 /** "zankup.example.com" → "https://zankup.example.com", without a trailing slash. */
 export function normaliseUrl(input: string): string {
@@ -22,4 +22,9 @@ export function screenFor(url: unknown): string {
 /** The web app's address for share links: api.zankup.com → zankup.com; other instances as they are. */
 export function webOrigin(instance: string): string {
   return instance.replace(/^(https?:\/\/)api\./, '$1');
+}
+
+/** Whether reading the session failed because Android invalidated its key (fingerprints changed). */
+export function keyInvalidated(error: unknown): boolean {
+  return /invalidated/i.test(String(error));
 }

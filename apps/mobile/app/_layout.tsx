@@ -138,6 +138,13 @@ export default function Root() {
                   <Stack.Screen name="coach" options={{ title: t('coach.title') }} />
                   <Stack.Screen name="gear" options={{ title: t('gear.title') }} />
                   <Stack.Screen name="import" options={{ title: t('import.title') }} />
+                  <Stack.Screen name="calendar" options={{ title: t('calendar.title') }} />
+                  <Stack.Screen name="heatmap" options={{ title: t('heatmap.title') }} />
+                  <Stack.Screen name="routes/index" options={{ title: t('routes.title') }} />
+                  <Stack.Screen name="routes/[id]" options={{ title: '' }} />
+                  <Stack.Screen name="segments/index" options={{ title: t('segments.title') }} />
+                  <Stack.Screen name="segments/[id]" options={{ title: '' }} />
+                  <Stack.Screen name="review/[period]" options={{ title: '' }} />
                 </Stack>
               </AuthContext.Provider>
             )}

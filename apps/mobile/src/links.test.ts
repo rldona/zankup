@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normaliseUrl, screenFor, webOrigin } from './links';
+import { keyInvalidated, normaliseUrl, screenFor, webOrigin } from './links';
 
 describe('links', () => {
   it('normalises the instance address', () => {
@@ -26,5 +26,17 @@ describe('links', () => {
   it('shares links on the web app, not on the API host', () => {
     expect(webOrigin('https://api.zankup.com')).toBe('https://zankup.com');
     expect(webOrigin('https://zankup.example.com')).toBe('https://zankup.example.com');
+  });
+
+  it('signs out only when Android invalidated the key', () => {
+    expect(
+      keyInvalidated(
+        new Error(
+          'android.security.keystore.KeyPermanentlyInvalidatedException: Key permanently invalidated',
+        ),
+      ),
+    ).toBe(true);
+    expect(keyInvalidated(new Error('User canceled the authentication'))).toBe(false);
+    expect(keyInvalidated(new Error('Too many attempts. Try again later.'))).toBe(false);
   });
 });

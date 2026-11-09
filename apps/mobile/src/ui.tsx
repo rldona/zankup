@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  Switch,
   StyleSheet,
   Text,
   TextInput,
@@ -280,6 +281,41 @@ export function MenuRow({
       </View>
       <Text style={{ color: c.muted, fontSize: 20 }}>›</Text>
     </Pressable>
+  );
+}
+
+/** A label with a switch, for one setting that is on or off. */
+export function SwitchRow({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (on: boolean) => void;
+  disabled?: boolean;
+}) {
+  const c = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <Text style={{ color: c.fg, flex: 1 }}>{label}</Text>
+      <Switch accessibilityLabel={label} value={value} onValueChange={onChange} disabled={disabled} />
+    </View>
+  );
+}
+
+/** A row of a list: a title, a note under it and what can be done with it on the right. */
+export function ListRow({ title, note, children }: { title: string; note?: string; children?: ReactNode }) {
+  const c = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 }}>
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: c.fg, fontWeight: '600' }}>{title}</Text>
+        {note ? <Muted>{note}</Muted> : null}
+      </View>
+      {children}
+    </View>
   );
 }
 

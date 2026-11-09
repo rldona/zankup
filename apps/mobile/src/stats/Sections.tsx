@@ -226,7 +226,7 @@ function Events() {
   );
 }
 
-function Estimates() {
+export function Estimates() {
   const api = useApi();
   const c = useTheme();
   const format = useFormat();

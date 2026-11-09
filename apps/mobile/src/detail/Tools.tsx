@@ -46,7 +46,7 @@ export function metaLine(activity: ActivityDetail, units: 'metric' | 'imperial')
 }
 
 /** A full-screen sheet with a title and a close button. */
-function Sheet({
+export function Sheet({
   title,
   onClose,
   children,

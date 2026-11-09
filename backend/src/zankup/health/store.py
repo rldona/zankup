@@ -54,22 +54,30 @@ def _clamp(x: float) -> float:
     return max(0.0, min(1.0, x))
 
 
+SCORE_WEIGHTS = {"duration": 0.5, "efficiency": 0.2, "deep": 0.15, "rem": 0.15}
+
+
 def sleep_score(asleep_s: int | None, in_bed_s: int, deep_s: int | None, rem_s: int | None) -> int | None:
     """Zankup's sleep score, 0 to 100, computed the same way for every source.
 
-    - Duration (half): 3 h or less is 0, 7.5 h or more is full marks.
-    - Efficiency (a quarter): time asleep over time in bed, from 70 % (0) to 95 % (full).
-    - Restorative sleep (a quarter): deep + REM over time asleep, full at 40 %. Without stages the
-      other two parts share the whole score.
+    Close to Fitbit's and Garmin's, which weigh duration most and do not let one stage make up for
+    another (Google Health's API does not give out its own score):
+    - Duration (half): 4 h or less is 0, 8 h or more is full marks.
+    - Efficiency (a fifth): time asleep over time in bed, from 70 % (0) to 95 % (full).
+    - Deep sleep and REM (15 % each), each against its usual share of the night: 20 % deep and
+      22 % REM give full marks. Without stages, duration and efficiency share the whole score.
     """
     if not asleep_s or in_bed_s <= 0:
         return None
-    duration = _clamp((asleep_s / 3600 - 3) / 4.5)
-    efficiency = _clamp((asleep_s / in_bed_s - 0.70) / 0.25)
-    parts = [(duration, 0.5), (efficiency, 0.25)]
+    parts = {
+        "duration": _clamp((asleep_s / 3600 - 4) / 4),
+        "efficiency": _clamp((asleep_s / in_bed_s - 0.70) / 0.25),
+    }
     if deep_s is not None and rem_s is not None and (deep_s or rem_s):
-        parts.append((_clamp((deep_s + rem_s) / asleep_s / 0.40), 0.25))
-    return round(100 * sum(v * w for v, w in parts) / sum(w for _, w in parts))
+        parts["deep"] = _clamp(deep_s / asleep_s / 0.20)
+        parts["rem"] = _clamp(rem_s / asleep_s / 0.22)
+    total = sum(SCORE_WEIGHTS[k] for k in parts)
+    return round(100 * sum(v * SCORE_WEIGHTS[k] for k, v in parts.items()) / total)
 
 
 def night_of(end: datetime, utc_offset_s: int | None) -> date:

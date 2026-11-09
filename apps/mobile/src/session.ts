@@ -105,10 +105,14 @@ export async function googleStep(baseUrl: string, idToken: string): Promise<Sess
   return keep(baseUrl, data);
 }
 
-/** Whether the passkey sheet was dismissed: not an error worth showing. */
-export function passkeyCancelled(error: unknown): boolean {
+/**
+ * Whether the passkey sheet was dismissed, which is not worth an error. Signing in also stays quiet
+ * when there is no passkey to offer (the sheet already said so); anything else, such as Android
+ * refusing a domain whose assetlinks.json does not name this app, is shown.
+ */
+export function passkeyCancelled(error: unknown, signingIn = false): boolean {
   const code = (error as { error?: string } | undefined)?.error;
-  return code === 'UserCancelled' || code === 'NoCredentials';
+  return code === 'UserCancelled' || (signingIn && code === 'NoCredentials');
 }
 
 export const passkeysSupported = () => Passkey.isSupported();
@@ -125,7 +129,7 @@ export async function passkeyStep(baseUrl: string): Promise<Session | null> {
   try {
     credential = await Passkey.get(options.data.options as unknown as PasskeyGetRequest);
   } catch (error) {
-    if (passkeyCancelled(error)) return null;
+    if (passkeyCancelled(error, true)) return null;
     throw new SignInError(t('signIn.error.passkey'));
   }
   const { data, response } = await answer(

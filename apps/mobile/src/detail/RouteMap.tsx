@@ -1,12 +1,14 @@
 /**
  * MapLibre map with the route, the selected section and the cursor. Tiles from OpenFreeMap (no key).
+ * The route can be coloured by a metric (OS-517): short pieces of line, each carrying its value,
+ * painted over the shared ramp from the 2nd to the 98th percentile, as in the PWA.
  * The cursor is its own small component so that following the finger re-renders only one source.
  */
 import { Camera, GeoJSONSource, Layer, Map } from '@maplibre/maplibre-react-native';
 import { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { lineFeature, positionAt, type Track } from './track';
+import { colouredSegments, lineFeature, positionAt, rampExpression, type Track } from './track';
 
 const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron';
 const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark';
@@ -18,6 +20,9 @@ type Props = {
   section: [number, number] | null;
   dark: boolean;
   colors: { route: string; section: string; cursor: string };
+  /** One value per sample to colour the route by, and the range the ramp spans. */
+  values?: (number | null)[] | null;
+  range?: [number, number] | null;
   onReady?: () => void;
 };
 
@@ -28,9 +33,15 @@ export const RouteMap = memo(function RouteMap({
   section,
   dark,
   colors,
+  values,
+  range,
   onReady,
 }: Props) {
-  const route = useMemo(() => lineFeature(track), [track]);
+  const coloured = !!values && !!range;
+  const route = useMemo(
+    () => (coloured ? colouredSegments(track, values) : lineFeature(track)),
+    [track, values, coloured],
+  );
   const bounds = useMemo<[number, number, number, number] | undefined>(
     () => (bbox && bbox.length === 4 ? [bbox[1], bbox[0], bbox[3], bbox[2]] : undefined),
     [bbox],
@@ -50,12 +61,15 @@ export const RouteMap = memo(function RouteMap({
       {bounds && (
         <Camera initialViewState={{ bounds, padding: { top: 32, right: 32, bottom: 32, left: 32 } }} />
       )}
-      <GeoJSONSource id="route" data={route}>
+      <GeoJSONSource id="route" data={route} tolerance={0}>
         <Layer
           type="line"
           id="route-line"
           layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{ 'line-color': colors.route, 'line-width': 3.5 }}
+          paint={{
+            'line-color': coloured && range ? rampExpression(range, colors.route) : colors.route,
+            'line-width': 3.5,
+          }}
         />
       </GeoJSONSource>
       <SectionLine track={track} section={section} color={colors.section} />

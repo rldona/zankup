@@ -491,6 +491,7 @@
   "activity.segmentsTitle": "Segmentos",
   "activity.segmentRank": "N.º {rank} de {count} · mejor {best}",
   "activity.powerCurve": "Curva de potencia",
+  "activity.thisActivity": "Esta actividad",
   "activity.powerZones": "Zonas de potencia",
   "goals.title": "Objetivos",
   "goals.empty": "Aún no hay objetivos.",

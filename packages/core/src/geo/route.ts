@@ -65,3 +65,29 @@ export function routeThumbnail(encoded: string | null | undefined, width = 88, h
     )
     .join(' ');
 }
+
+/**
+ * The lines a map of many routes should open on: those within 40 km of the median centre, so a few
+ * far-away ones (virtual rides abroad) are still drawn but do not zoom the map out to the world.
+ * Points are [lon, lat].
+ */
+export function focusLines(lines: [number, number][][]): [number, number][][] {
+  const centres = lines
+    .filter((l) => l.length)
+    .map(
+      (l) =>
+        [l.reduce((s, p) => s + p[0], 0) / l.length, l.reduce((s, p) => s + p[1], 0) / l.length] as const,
+    );
+  if (centres.length < 3) return lines;
+  const median = (v: number[]) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)] ?? 0;
+  const lon = median(centres.map((c) => c[0]));
+  const lat = median(centres.map((c) => c[1]));
+  const near = lines.filter((l, i) => {
+    const c = centres[i];
+    if (!c || !l.length) return false;
+    const dx = (c[0] - lon) * 111 * Math.cos((lat * Math.PI) / 180);
+    const dy = (c[1] - lat) * 111;
+    return Math.hypot(dx, dy) <= 40;
+  });
+  return near.length ? near : lines;
+}

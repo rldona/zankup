@@ -13,17 +13,32 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { dynamicAccent, useTheme, type Palette } from './theme';
+import { dynamicAccent, dynamicOnAccent, useTheme, type Palette } from './theme';
 
+const scheme = (c: Palette) => (c.scheme === 'dark' ? 'dark' : 'light');
+
+/** The accent for filled controls: Material You's when the theme follows the phone. */
 export function accent(c: Palette) {
-  return c.dynamic ? dynamicAccent : c.accent;
+  return c.dynamic ? dynamicAccent[scheme(c)] : c.accent;
+}
+
+/** Text on `accent()`. */
+export function onAccent(c: Palette) {
+  return c.dynamic ? dynamicOnAccent[scheme(c)] : c.accentFg;
 }
 
 export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
   const c = useTheme();
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: c.bg }}>
-      {scroll ? <ScrollView contentContainerStyle={styles.page}>{children}</ScrollView> : children}
+      {scroll ? (
+        // "handled": a tap on a button works at once, even with the keyboard open.
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
+          {children}
+        </ScrollView>
+      ) : (
+        children
+      )}
     </SafeAreaView>
   );
 }
@@ -107,7 +122,7 @@ export function Button({
         },
       ]}
     >
-      <Text style={{ color: primary ? c.accentFg : c.fg, fontWeight: '600', fontSize: 15 }}>{children}</Text>
+      <Text style={{ color: primary ? onAccent(c) : c.fg, fontWeight: '600', fontSize: 15 }}>{children}</Text>
     </Pressable>
   );
 }

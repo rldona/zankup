@@ -10,7 +10,7 @@ import { ActivityCard } from '../../src/Feed';
 import { t } from '../../src/i18n';
 import { useFormat } from '../../src/prefs';
 import { useTheme } from '../../src/theme';
-import { accent, Empty, Muted, Screen, styles as ui } from '../../src/ui';
+import { accent, onAccent, Empty, Muted, Screen, styles as ui } from '../../src/ui';
 
 export default function SearchScreen() {
   const api = useApi();
@@ -59,7 +59,7 @@ export default function SearchScreen() {
                   backgroundColor: on ? accent(c) : c.surface,
                 }}
               >
-                <Text style={{ color: on ? c.accentFg : c.fg }}>{s ? t(`sport.${s}`) : t('feed.all')}</Text>
+                <Text style={{ color: on ? onAccent(c) : c.fg }}>{s ? t(`sport.${s}`) : t('feed.all')}</Text>
               </Pressable>
             );
           })}
@@ -70,6 +70,7 @@ export default function SearchScreen() {
         data={items}
         keyExtractor={(a) => String(a.id)}
         renderItem={({ item }) => <ActivityCard activity={item} format={format} />}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={results.isFetched ? <Empty>{t('search.none')}</Empty> : null}
         onEndReached={() =>
           results.hasNextPage && !results.isFetchingNextPage && void results.fetchNextPage()

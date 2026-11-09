@@ -28,7 +28,18 @@ import { asSport, useFormat } from '../../src/prefs';
 import { webOrigin } from '../../src/links';
 import { accessToken, instanceUrl } from '../../src/session';
 import { useTheme } from '../../src/theme';
-import { accent, Button, Card, Empty, Heading, Loading, Muted, Stat, styles as ui } from '../../src/ui';
+import {
+  accent,
+  onAccent,
+  Button,
+  Card,
+  Empty,
+  Heading,
+  Loading,
+  Muted,
+  Stat,
+  styles as ui,
+} from '../../src/ui';
 
 export default function ActivityScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
@@ -146,7 +157,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
                   backgroundColor: selecting ? accent(c) : c.surface2,
                 }}
               >
-                <Text style={{ color: selecting ? c.accentFg : c.fg, fontWeight: '600' }}>
+                <Text style={{ color: selecting ? onAccent(c) : c.fg, fontWeight: '600' }}>
                   {t('mobile.selectSection')}
                 </Text>
               </Pressable>

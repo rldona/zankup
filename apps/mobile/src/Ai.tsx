@@ -1,0 +1,127 @@
+/**
+ * The AI assistant on the phone (phase 7): the summary of an activity (OS-703) and the switches in
+ * Settings (OS-708). The Coach itself lives in the PWA; the phone opens it from the weekly report's
+ * notification.
+ */
+import { activitySummaryQuery, aiStatusQuery, settingsQuery, type AiPrefs } from '@zankup/core';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Switch, Text, View } from 'react-native';
+
+import { useAuth } from './auth';
+import { t } from './i18n';
+import { useTheme } from './theme';
+import { Body, Button, Card, Heading, Muted } from './ui';
+
+export function SummaryCard({ activityId }: { activityId: number }) {
+  const { api } = useAuth();
+  const c = useTheme();
+  const queryClient = useQueryClient();
+  const status = useQuery({ ...aiStatusQuery(api), retry: false });
+  const summary = useQuery(activitySummaryQuery(api, activityId));
+  const write = useMutation({
+    mutationFn: async () => {
+      const { data } = await api.POST('/api/activities/{activity_id}/summary', {
+        params: { path: { activity_id: activityId } },
+      });
+      if (!data) throw new Error('summary');
+      return data;
+    },
+    onSuccess: (data) => queryClient.setQueryData(activitySummaryQuery(api, activityId).queryKey, data),
+  });
+  const can = status.data?.available && status.data.enabled && status.data.summaries;
+  const row = summary.data;
+  if (!row && !can) return null;
+  return (
+    <Card>
+      <Heading>{t('summary.title')}</Heading>
+      {row && (
+        <>
+          <Body>{row.summary}</Body>
+          {row.highlights.length > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {row.highlights.map((item) => (
+                <Text
+                  key={item}
+                  style={{
+                    color: c.fg,
+                    fontSize: 13,
+                    paddingHorizontal: 10,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                    backgroundColor: c.surface2,
+                  }}
+                >
+                  {item}
+                </Text>
+              ))}
+            </View>
+          )}
+          <Muted>{t('summary.by', { model: row.model })}</Muted>
+        </>
+      )}
+      {can && (
+        <Button onPress={() => write.mutate()} disabled={write.isPending}>
+          {write.isPending ? t('coach.thinking') : row ? t('summary.regenerate') : t('summary.generate')}
+        </Button>
+      )}
+      {write.isError && <Muted accessibilityRole="alert">{t('summary.failed')}</Muted>}
+    </Card>
+  );
+}
+
+function Row({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (on: boolean) => void;
+  disabled?: boolean;
+}) {
+  const c = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <Text style={{ color: c.fg, flex: 1 }}>{label}</Text>
+      <Switch accessibilityLabel={label} value={value} onValueChange={onChange} disabled={disabled} />
+    </View>
+  );
+}
+
+export function AiCard() {
+  const { api } = useAuth();
+  const queryClient = useQueryClient();
+  const status = useQuery({ ...aiStatusQuery(api), retry: false });
+  const settings = useQuery(settingsQuery(api));
+  const save = useMutation({
+    mutationFn: async (ai: AiPrefs) => {
+      const { data } = await api.PATCH('/api/settings', { body: { ai } });
+      if (data) queryClient.setQueryData(settingsQuery(api).queryKey, data);
+    },
+  });
+  const prefs = settings.data?.ai;
+  const info = status.data;
+  if (!info?.available || !prefs) return null;
+  const set = (changes: Partial<AiPrefs>) => save.mutate({ ...prefs, ...changes });
+  return (
+    <Card>
+      <Heading>{t('ai.title')}</Heading>
+      <Muted>{t('ai.help', { model: info.model ?? '' })}</Muted>
+      <Row label={t('ai.enabled')} value={prefs.enabled} onChange={(on) => set({ enabled: on })} />
+      <Row
+        label={t('ai.summaries')}
+        value={prefs.summaries}
+        disabled={!prefs.enabled}
+        onChange={(on) => set({ summaries: on })}
+      />
+      <Row
+        label={t('ai.weekly')}
+        value={prefs.weekly}
+        disabled={!prefs.enabled}
+        onChange={(on) => set({ weekly: on })}
+      />
+      {info.budget?.exceeded && <Muted>{t('ai.budgetExceeded')}</Muted>}
+    </Card>
+  );
+}

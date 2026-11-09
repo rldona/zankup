@@ -2512,3 +2512,137 @@ a.button {
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+
+/* AI assistant (phase 7): the summary card (OS-703), the Coach and the weekly report (OS-704, OS-705),
+   and the Settings sections (OS-708, OS-709). */
+.highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 10px 0 0;
+  list-style: none;
+}
+
+.highlights li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--fg);
+  font-size: 13px;
+}
+
+.summary .suggested {
+  margin-top: 10px;
+}
+
+.weekly h3 {
+  margin: 4px 0 8px;
+  font-size: 17px;
+}
+
+.weekly .recommendation {
+  margin: 10px 0 0;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat .intro p {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestions button {
+  border-radius: 999px;
+}
+
+.turns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.turns li {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  line-height: 1.45;
+}
+
+.turns li p,
+.turns li ul {
+  margin: 0;
+}
+
+.turns li p + p,
+.turns li p + ul,
+.turns li ul + p {
+  margin-top: 8px;
+}
+
+.turns li.user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-bottom-right-radius: 4px;
+}
+
+.turns li.assistant {
+  align-self: flex-start;
+  background: var(--surface-2);
+  border-bottom-left-radius: 4px;
+}
+
+.turns li.working {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.composer textarea {
+  flex: 1 1 240px;
+  min-height: 48px;
+}
+
+.chat .disclaimer {
+  margin: 0;
+  font-size: 12px;
+}
+
+.aiprivacy {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px 24px;
+  margin-top: 12px;
+}
+
+.aiprivacy h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.aiprivacy ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}

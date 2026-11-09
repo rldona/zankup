@@ -29,10 +29,7 @@ import { refreshWidget } from '../src/widget/handler';
 void SplashScreen.preventAutoHideAsync();
 
 type State =
-  | { kind: 'starting' }
-  | { kind: 'signed-out' }
-  | { kind: 'locked' }
-  | { kind: 'in'; session: Session };
+  { kind: 'starting' } | { kind: 'signed-out' } | { kind: 'locked' } | { kind: 'in'; session: Session };
 
 export default function Root() {
   const [choice, setChoiceState] = useState<ThemeChoice>(savedTheme);

@@ -45,6 +45,8 @@ Rules:
 
 Kept alternatives, not for production: `assets/logo-mark-z4.svg` (same Z without the ring), `assets/logo-mark-flat.svg` and `assets/logo-mark-sharp.svg` (flat terminals).
 
+Under exploration, not decided: a symbol built from the letters, the way Strava's chevron comes from its a's. The n and u of Momo Trust Display (the n is exactly the u turned 180°) composed as a wave, as chain links, as a padlock, as an open ring: see `exploration/zankup/mark-nu.html`.
+
 ## 3. Wordmark
 
 - Typeface: **Momo Trust Display** (Google Fonts, SIL Open Font License, single weight 400). Chosen over Concert One and Boldonse because it is rounded like the mark and reads best in lower case.
@@ -134,4 +136,4 @@ The old volume (`opensport_pgdata`) can be removed with `docker volume rm opensp
 
 ## 8. Exploration
 
-The decision trail is in `exploration/`: `mountain/` holds the first logo round (mountain and switchback trail, candidate N1), `zankup/` holds the Z rounds, the fusion with the start ring, the wordmark comparisons, and `wordmark-n-inverted-u.*`: the wordmark built from the Momo Trust Display outlines with the N replaced by the U turned 180° (and, as a second column, flipped vertically), in the three cases, in the lock-up and at small sizes, plus one vector SVG per case (`wordmark-n-inverted-u-{caps,title,lower}.svg`). Each `comparison-*.png` is a rendered sheet; the matching `.html` regenerates it in a browser. The working page with every naming check (domains via registry RDAP, PyPI, npm, GitHub, app stores) lives outside the repo.
+The decision trail is in `exploration/`: `mountain/` holds the first logo round (mountain and switchback trail, candidate N1), `zankup/` holds the Z rounds, the fusion with the start ring, the wordmark comparisons, and `wordmark-n-inverted-u.*`: the wordmark built from the Momo Trust Display outlines with the N replaced by the U turned 180° (and, as a second column, flipped vertically), in the three cases, in the lock-up and at small sizes, plus one vector SVG per case (`wordmark-n-inverted-u-{caps,title,lower}.svg`). `mark-nu.*` is the symbol round built from the same two letters: six compositions of the n and u (rising and falling wave, links, padlock, open ring, ligature), each as a symbol, as an app icon, at 16 to 32 px and in the lock-up, with one SVG per candidate (`mark-nu-*.svg`). Each `comparison-*.png` is a rendered sheet; the matching `.html` regenerates it in a browser. The working page with every naming check (domains via registry RDAP, PyPI, npm, GitHub, app stores) lives outside the repo.

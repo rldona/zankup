@@ -182,4 +182,7 @@ def ingest_fit(
             "samples": len(parsed.streams),
         },
     )
+    from zankup.engine.run import queue_activity
+
+    queue_activity(session, user_id, activity.id)  # the engine takes it from here (OS-313)
     return IngestResult(activity.id, created=existing is None, reprocessed=existing is not None)

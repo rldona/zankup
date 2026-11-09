@@ -13,7 +13,9 @@ from zankup import __version__
 from zankup.api.activities import router as activities_router
 from zankup.api.preferences import router as preferences_router
 from zankup.api.profile import router as profile_router
+from zankup.api.stats import router as stats_router
 from zankup.api.sync import router as sync_router
+from zankup.api.training import router as training_router
 from zankup.api.week import router as week_router
 from zankup.auth.google import router as google_router
 from zankup.auth.passkeys import router as passkeys_router
@@ -62,10 +64,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         workers = []
         scheduler = None
         if settings.run_worker:
+            from zankup.engine.run import ensure_current
             from zankup.jobs.scheduler import build_scheduler
             from zankup.jobs.worker import build_workers
 
             workers = build_workers()
+            ensure_current(workers[0].sessions)  # a new METRICS_VERSION recomputes in the background
             for worker in workers:
                 worker.start_thread()  # threads with their own DB connections: requests never wait for jobs
             scheduler = build_scheduler()
@@ -93,6 +97,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(sync_router)
     app.include_router(preferences_router)
     app.include_router(profile_router)
+    app.include_router(stats_router)
+    app.include_router(training_router)
     app.include_router(week_router)
 
     @app.get("/api/health", operation_id="getHealth")

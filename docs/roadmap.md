@@ -256,6 +256,10 @@ metrics engine (phase 3), gear, and importing and exporting (phase 4).
 
 ## Phase 3 · Advanced metrics → **M3**
 
+**Status (9 Nov 2026):** done except OS-323, which compares with the Relative Effort and calories of
+a Strava export and so waits for the Strava import (OS-406, phase 4). Built in one branch: metrics
+in `packages/metrics` 0.2.0, the engine in `backend/src/zankup/engine`, the stats API and screens.
+
 **Goal:** the "Premium" metrics, computed with your settings and free for everyone. The algorithms are implemented in `packages/metrics` (MIT), tested against reference values and documented one by one (formula, inputs and limits), so the package is useful on its own. The **historical computation engine** "cooks" the whole history in the background: estimates, curves, progress and events (see [architecture.md](architecture.md#historical-computation-engine-cooking-the-data)).
 
 - **OS-313 · Incremental computation engine** (L) · depends on OS-115 and OS-107

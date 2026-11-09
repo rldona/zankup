@@ -1685,6 +1685,1218 @@
         }
       }
     },
+    "/api/stats/fitness": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Fitness",
+        "description": "Fitness, fatigue and form per day (OS-303).",
+        "operationId": "getFitness",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FitnessDay"
+                  },
+                  "title": "Response Getfitness"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/summary": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Summary",
+        "description": "Totals for a period, by sport, and the same period one year earlier (OS-321).",
+        "operationId": "getSummary",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports",
+              "title": "Sport"
+            },
+            "description": "Only these sports"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Summary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/volume": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Volume",
+        "description": "Distance, time, elevation and load per day, week, month or year, by sport (OS-308). Empty\nbuckets are included, so charts have no holes.",
+        "operationId": "getVolume",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "unit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ],
+              "type": "string",
+              "default": "week",
+              "title": "Unit"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports",
+              "title": "Sport"
+            },
+            "description": "Only these sports"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Bucket"
+                  },
+                  "title": "Response Getvolume"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/curves": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Curves",
+        "description": "The best effort for each duration in a period, with the activity it comes from (OS-315).",
+        "operationId": "getCurves",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "power",
+                "speed",
+                "hr"
+              ],
+              "type": "string",
+              "default": "power",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports",
+              "title": "Sport"
+            },
+            "description": "Only these sports"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CurvePoint"
+                  },
+                  "title": "Response Getcurves"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/records": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Records",
+        "description": "Running records: all time, the period's bests and how each record progressed (OS-304).",
+        "operationId": "getRecords",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/estimates": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Estimates",
+        "description": "Each estimate's latest value, how it was made, the activities behind it and its history (OS-316).",
+        "operationId": "getEstimates",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EstimateOut"
+                  },
+                  "type": "array",
+                  "title": "Response Getestimates"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/progress": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Progress",
+        "description": "Cumulative distance per day of the year, one line per year (OS-322).",
+        "operationId": "getProgress",
+        "parameters": [
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports",
+              "title": "Sport"
+            },
+            "description": "Only these sports"
+          },
+          {
+            "name": "years",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 5,
+              "title": "Years"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/YearLine"
+                  },
+                  "title": "Response Getprogress"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/efficiency": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Efficiency",
+        "description": "Aerobic efficiency over time: pace at equal HR getting better (OS-317).",
+        "operationId": "getEfficiency",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "run",
+              "title": "Sport"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EfficiencyPoint"
+                  },
+                  "title": "Response Getefficiency"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/calendar": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Calendar",
+        "description": "Every day of the period with its activities (sized by load) and form (OS-326).",
+        "operationId": "getCalendar",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarDay"
+                  },
+                  "title": "Response Getcalendar"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/heatmap": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Heatmap",
+        "description": "Every route of the period, for the personal heatmap (OS-310).",
+        "operationId": "getHeatmap",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports",
+              "title": "Sport"
+            },
+            "description": "Only these sports"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Heatmap"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/years": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Years",
+        "description": "Years with activities, newest first: the period selector's options.",
+        "operationId": "getYears",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array",
+                  "title": "Response Getyears"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "List Routes",
+        "description": "Routes done more than once, most repeated first.",
+        "operationId": "listRoutes",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RouteGroup"
+                  },
+                  "type": "array",
+                  "title": "Response Listroutes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes/{group_id}": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Get Route",
+        "operationId": "getRoute",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/segments": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "List Segments",
+        "operationId": "listSegments",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SegmentOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listsegments"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Create Segment",
+        "description": "Save a stretch of an activity as a segment; the engine then finds it in every other one.",
+        "operationId": "createSegment",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SegmentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SegmentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/segments/{segment_id}": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Get Segment",
+        "operationId": "getSegment",
+        "parameters": [
+          {
+            "name": "segment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Segment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SegmentDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Delete Segment",
+        "operationId": "deleteSegment",
+        "parameters": [
+          {
+            "name": "segment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Segment Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/goals": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "List Goals",
+        "description": "Goals with where they stand this period and the end-of-period projection (OS-318).",
+        "operationId": "listGoals",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GoalOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listgoals"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Create Goal",
+        "operationId": "createGoal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/goals/{goal_id}": {
+      "delete": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Delete Goal",
+        "operationId": "deleteGoal",
+        "parameters": [
+          {
+            "name": "goal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Goal Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "List Events",
+        "description": "What the engine noticed, newest first: records, estimates going up, risky ramps (OS-319).",
+        "operationId": "listEvents",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventOut"
+                  },
+                  "title": "Response Listevents"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/engine": {
+      "get": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Engine Status",
+        "description": "Whether a full recomputation is going on, and how far it is (OS-314).",
+        "operationId": "getEngine",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/engine/recompute": {
+      "post": {
+        "tags": [
+          "training"
+        ],
+        "summary": "Recompute",
+        "description": "Recompute every metric from the stored series, in the background.",
+        "operationId": "recompute",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngineStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/week": {
       "get": {
         "tags": [
@@ -2058,6 +3270,36 @@
             "title": "Sets",
             "description": "Strength sets, rests included; empty for other activities"
           },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityMetricsOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null until the engine has computed it"
+          },
+          "route_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RouteInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Matched route, when done more than once"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/SegmentPass"
+            },
+            "type": "array",
+            "title": "Segments",
+            "description": "Your segments this activity went through"
+          },
           "streams": {
             "anyOf": [
               {
@@ -2100,9 +3342,168 @@
           "splits",
           "best_efforts",
           "sets",
+          "metrics",
+          "route_group",
+          "segments",
           "streams"
         ],
         "title": "ActivityDetail"
+      },
+      "ActivityMetricsOut": {
+        "properties": {
+          "trimp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trimp",
+            "description": "Relative effort (Banister TRIMP)"
+          },
+          "hr_zones": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Zones",
+            "description": "Seconds per HR zone, with your zone model"
+          },
+          "hr_zone_bounds": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hr Zone Bounds",
+            "description": "Lower bound of each HR zone (bpm)"
+          },
+          "power_zones": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power Zones"
+          },
+          "power_zone_bounds": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power Zone Bounds"
+          },
+          "gap_speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gap Speed",
+            "description": "Grade-adjusted speed (m/s)"
+          },
+          "calories": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calories",
+            "description": "The device's kcal, or the estimate"
+          },
+          "calories_estimated": {
+            "type": "boolean",
+            "title": "Calories Estimated"
+          },
+          "efficiency": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Efficiency"
+          },
+          "decoupling": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decoupling",
+            "description": "Pa:HR drift between halves, %"
+          },
+          "power_curve": {
+            "items": {
+              "$ref": "#/components/schemas/Curve"
+            },
+            "type": "array",
+            "title": "Power Curve"
+          },
+          "speed_curve": {
+            "items": {
+              "$ref": "#/components/schemas/Curve"
+            },
+            "type": "array",
+            "title": "Speed Curve"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trimp",
+          "hr_zones",
+          "hr_zone_bounds",
+          "power_zones",
+          "power_zone_bounds",
+          "gap_speed",
+          "calories",
+          "calories_estimated",
+          "efficiency",
+          "decoupling",
+          "power_curve",
+          "speed_curve"
+        ],
+        "title": "ActivityMetricsOut",
+        "description": "What the engine computed for this activity (OS-312)."
       },
       "ActivityPage": {
         "properties": {
@@ -2562,6 +3963,125 @@
         ],
         "title": "BestEffortOut"
       },
+      "Bucket": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/Totals"
+          },
+          "by_sport": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Totals"
+            },
+            "type": "object",
+            "title": "By Sport"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "totals",
+          "by_sport"
+        ],
+        "title": "Bucket"
+      },
+      "CalendarActivity": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "load": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Load"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sport",
+          "name",
+          "load",
+          "distance_m",
+          "moving_s"
+        ],
+        "title": "CalendarActivity"
+      },
+      "CalendarDay": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "tsb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tsb"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarActivity"
+            },
+            "type": "array",
+            "title": "Activities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "tsb",
+          "activities"
+        ],
+        "title": "CalendarDay"
+      },
       "Challenge": {
         "properties": {
           "mfa_required": {
@@ -2580,6 +4100,54 @@
           "challenge"
         ],
         "title": "Challenge"
+      },
+      "Curve": {
+        "properties": {
+          "duration_s": {
+            "type": "integer",
+            "title": "Duration S"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "duration_s",
+          "value"
+        ],
+        "title": "Curve"
+      },
+      "CurvePoint": {
+        "properties": {
+          "duration_s": {
+            "type": "integer",
+            "title": "Duration S"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value",
+            "description": "Watts, m/s or bpm"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          }
+        },
+        "type": "object",
+        "required": [
+          "duration_s",
+          "value",
+          "activity_id",
+          "day"
+        ],
+        "title": "CurvePoint"
       },
       "Day": {
         "properties": {
@@ -2694,6 +4262,226 @@
         ],
         "title": "DeviceOut"
       },
+      "EfficiencyPoint": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "efficiency": {
+            "type": "number",
+            "title": "Efficiency",
+            "description": "Speed (m/min) per bpm"
+          },
+          "decoupling": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decoupling"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "activity_id",
+          "efficiency",
+          "decoupling"
+        ],
+        "title": "EfficiencyPoint"
+      },
+      "EngineStatus": {
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "title": "Running"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "done": {
+            "type": "integer",
+            "title": "Done"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "computed": {
+            "type": "integer",
+            "title": "Computed",
+            "description": "Activities computed with the current metrics version"
+          },
+          "activities": {
+            "type": "integer",
+            "title": "Activities"
+          },
+          "metrics_version": {
+            "type": "integer",
+            "title": "Metrics Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "running",
+          "reason",
+          "done",
+          "total",
+          "computed",
+          "activities",
+          "metrics_version"
+        ],
+        "title": "EngineStatus"
+      },
+      "EstimateOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/EstimatePoint"
+            },
+            "type": "array",
+            "title": "History",
+            "description": "Each time it changed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "value",
+          "method",
+          "day",
+          "sources",
+          "history"
+        ],
+        "title": "EstimateOut"
+      },
+      "EstimatePoint": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "value"
+        ],
+        "title": "EstimatePoint"
+      },
+      "EventOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "payload",
+          "created_at"
+        ],
+        "title": "EventOut"
+      },
+      "FitnessDay": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "load": {
+            "type": "number",
+            "title": "Load"
+          },
+          "ctl": {
+            "type": "number",
+            "title": "Ctl",
+            "description": "Fitness"
+          },
+          "atl": {
+            "type": "number",
+            "title": "Atl",
+            "description": "Fatigue"
+          },
+          "tsb": {
+            "type": "number",
+            "title": "Tsb",
+            "description": "Form"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "load",
+          "ctl",
+          "atl",
+          "tsb"
+        ],
+        "title": "FitnessDay"
+      },
       "ForgotRequest": {
         "properties": {
           "email": {
@@ -2707,6 +4495,115 @@
           "email"
         ],
         "title": "ForgotRequest"
+      },
+      "GoalCreate": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "week",
+              "month",
+              "year"
+            ],
+            "title": "Period"
+          },
+          "metric": {
+            "type": "string",
+            "enum": [
+              "distance",
+              "time",
+              "count"
+            ],
+            "title": "Metric"
+          },
+          "sport": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sport"
+          },
+          "target": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Target",
+            "description": "Metres, seconds or a number of activities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period",
+          "metric",
+          "target"
+        ],
+        "title": "GoalCreate"
+      },
+      "GoalOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "sport": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sport"
+          },
+          "target": {
+            "type": "number",
+            "title": "Target"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "current": {
+            "type": "number",
+            "title": "Current"
+          },
+          "projection": {
+            "type": "number",
+            "title": "Projection",
+            "description": "Where the current pace ends the period"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "period",
+          "metric",
+          "sport",
+          "target",
+          "start",
+          "end",
+          "current",
+          "projection"
+        ],
+        "title": "GoalOut"
       },
       "HTTPValidationError": {
         "properties": {
@@ -2765,6 +4662,23 @@
           "schema_revision"
         ],
         "title": "Health"
+      },
+      "Heatmap": {
+        "properties": {
+          "routes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Routes",
+            "description": "Encoded polylines (precision 5)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "routes"
+        ],
+        "title": "Heatmap"
       },
       "LapOut": {
         "properties": {
@@ -3132,6 +5046,40 @@
             ],
             "title": "Hr Max Estimate",
             "description": "Highest heart rate recorded in an activity: the zones use it until hr_max is set"
+          },
+          "zone_model": {
+            "type": "string",
+            "enum": [
+              "max",
+              "reserve",
+              "lthr"
+            ],
+            "title": "Zone Model",
+            "description": "HR zones: share of max HR, of HR reserve, or of LTHR"
+          },
+          "lthr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lthr",
+            "description": "Lactate threshold HR set by the user (else the estimate)"
+          },
+          "ftp": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ftp",
+            "description": "FTP set by the user (else the estimate)"
           }
         },
         "type": "object",
@@ -3141,7 +5089,10 @@
           "units",
           "hr_max",
           "hr_rest",
-          "hr_max_estimate"
+          "hr_max_estimate",
+          "zone_model",
+          "lthr",
+          "ftp"
         ],
         "title": "Preferences"
       },
@@ -3223,6 +5174,48 @@
               }
             ],
             "title": "Hr Rest"
+          },
+          "zone_model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "max",
+                  "reserve",
+                  "lthr"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Model"
+          },
+          "lthr": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 220.0,
+                "minimum": 80.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lthr"
+          },
+          "ftp": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 600.0,
+                "minimum": 30.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ftp"
           }
         },
         "type": "object",
@@ -3468,6 +5461,77 @@
         ],
         "title": "Record"
       },
+      "RecordOut": {
+        "properties": {
+          "distance_key": {
+            "type": "string",
+            "title": "Distance Key"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "time_s": {
+            "type": "number",
+            "title": "Time S"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_key",
+          "distance_m",
+          "time_s",
+          "activity_id",
+          "day"
+        ],
+        "title": "RecordOut"
+      },
+      "Records": {
+        "properties": {
+          "all_time": {
+            "items": {
+              "$ref": "#/components/schemas/RecordOut"
+            },
+            "type": "array",
+            "title": "All Time"
+          },
+          "period": {
+            "items": {
+              "$ref": "#/components/schemas/RecordOut"
+            },
+            "type": "array",
+            "title": "Period",
+            "description": "Bests of the period asked for"
+          },
+          "progression": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/RecordOut"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Progression",
+            "description": "Each time a record was beaten"
+          }
+        },
+        "type": "object",
+        "required": [
+          "all_time",
+          "period",
+          "progression"
+        ],
+        "title": "Records"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -3528,6 +5592,213 @@
           "password"
         ],
         "title": "ResetRequest"
+      },
+      "RouteActivity": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "day",
+          "moving_s",
+          "distance_m",
+          "avg_hr"
+        ],
+        "title": "RouteActivity"
+      },
+      "RouteDetail": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "The group's first activity"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route",
+            "description": "Encoded polyline of the first activity"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "best": {
+            "$ref": "#/components/schemas/RouteActivity"
+          },
+          "latest": {
+            "$ref": "#/components/schemas/RouteActivity"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/RouteActivity"
+            },
+            "type": "array",
+            "title": "Activities",
+            "description": "Every time, oldest first"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sport",
+          "name",
+          "route",
+          "count",
+          "best",
+          "latest",
+          "activities"
+        ],
+        "title": "RouteDetail"
+      },
+      "RouteGroup": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "The group's first activity"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route",
+            "description": "Encoded polyline of the first activity"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "best": {
+            "$ref": "#/components/schemas/RouteActivity"
+          },
+          "latest": {
+            "$ref": "#/components/schemas/RouteActivity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sport",
+          "name",
+          "route",
+          "count",
+          "best",
+          "latest"
+        ],
+        "title": "RouteGroup"
+      },
+      "RouteInfo": {
+        "properties": {
+          "group": {
+            "type": "integer",
+            "title": "Group"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank",
+            "description": "1 = the fastest time on this route"
+          }
+        },
+        "type": "object",
+        "required": [
+          "group",
+          "count",
+          "rank"
+        ],
+        "title": "RouteInfo"
       },
       "SearchPage": {
         "properties": {
@@ -3590,6 +5861,262 @@
           "ascent_m"
         ],
         "title": "SearchTotals"
+      },
+      "SegmentCreate": {
+        "properties": {
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "start_index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Start Index",
+            "description": "Sample index in the activity's series where it starts"
+          },
+          "end_index": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "End Index"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activity_id",
+          "start_index",
+          "end_index",
+          "name"
+        ],
+        "title": "SegmentCreate"
+      },
+      "SegmentDetail": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "track": {
+            "type": "string",
+            "title": "Track",
+            "description": "Encoded polyline (precision 6)"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "ascent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascent M"
+          },
+          "efforts": {
+            "type": "integer",
+            "title": "Efforts"
+          },
+          "best_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best S"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/SegmentEffortOut"
+            },
+            "type": "array",
+            "title": "History",
+            "description": "Every effort, oldest first"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "track",
+          "distance_m",
+          "ascent_m",
+          "efforts",
+          "best_s",
+          "history"
+        ],
+        "title": "SegmentDetail"
+      },
+      "SegmentEffortOut": {
+        "properties": {
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "activity_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Name"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "elapsed_s": {
+            "type": "number",
+            "title": "Elapsed S"
+          },
+          "avg_hr": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Hr"
+          },
+          "avg_power": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Power"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activity_id",
+          "activity_name",
+          "day",
+          "elapsed_s",
+          "avg_hr",
+          "avg_power"
+        ],
+        "title": "SegmentEffortOut"
+      },
+      "SegmentOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "track": {
+            "type": "string",
+            "title": "Track",
+            "description": "Encoded polyline (precision 6)"
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M"
+          },
+          "ascent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascent M"
+          },
+          "efforts": {
+            "type": "integer",
+            "title": "Efforts"
+          },
+          "best_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best S"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "track",
+          "distance_m",
+          "ascent_m",
+          "efforts",
+          "best_s"
+        ],
+        "title": "SegmentOut"
+      },
+      "SegmentPass": {
+        "properties": {
+          "segment_id": {
+            "type": "integer",
+            "title": "Segment Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "elapsed_s": {
+            "type": "number",
+            "title": "Elapsed S"
+          },
+          "best_s": {
+            "type": "number",
+            "title": "Best S"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "segment_id",
+          "name",
+          "elapsed_s",
+          "best_s",
+          "rank",
+          "count"
+        ],
+        "title": "SegmentPass"
       },
       "SetOut": {
         "properties": {
@@ -3685,6 +6212,42 @@
           "open"
         ],
         "title": "SetupStatus"
+      },
+      "Source": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sport",
+          "day"
+        ],
+        "title": "Source"
       },
       "SourceStatus": {
         "properties": {
@@ -3862,6 +6425,31 @@
           "sample_count"
         ],
         "title": "StreamsInfo"
+      },
+      "Summary": {
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/Totals"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/Totals",
+            "description": "The same span one year earlier"
+          },
+          "by_sport": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Totals"
+            },
+            "type": "object",
+            "title": "By Sport"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current",
+          "previous",
+          "by_sport"
+        ],
+        "title": "Summary"
       },
       "SyncProgress": {
         "properties": {
@@ -4060,6 +6648,38 @@
         ],
         "title": "SyncStatus"
       },
+      "Totals": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0
+          },
+          "distance_m": {
+            "type": "number",
+            "title": "Distance M",
+            "default": 0
+          },
+          "moving_s": {
+            "type": "number",
+            "title": "Moving S",
+            "default": 0
+          },
+          "ascent_m": {
+            "type": "number",
+            "title": "Ascent M",
+            "default": 0
+          },
+          "load": {
+            "type": "number",
+            "title": "Load",
+            "description": "Sum of relative effort",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "Totals"
+      },
       "TotpConfirm": {
         "properties": {
           "setup_token": {
@@ -4255,6 +6875,28 @@
           "ascent_m"
         ],
         "title": "WeekTotals"
+      },
+      "YearLine": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "cumulative_m": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Cumulative M",
+            "description": "Distance up to each day of the year (index 0 = 1 Jan)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "year",
+          "cumulative_m"
+        ],
+        "title": "YearLine"
       },
       "zankup__auth__passkeys__LoginRequest": {
         "properties": {

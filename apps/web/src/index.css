@@ -1402,6 +1402,223 @@ a.button.block {
   fill: var(--strength);
 }
 
+/* Stats, calendar, routes and segments (phase 3). */
+.page.stats,
+.page.calendar,
+.page.wide {
+  max-width: 1180px;
+}
+
+.statshead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.statshead h1 {
+  margin: 0;
+}
+
+.statshead .month {
+  display: inline-block;
+  min-width: 140px;
+  text-align: center;
+}
+
+.statshead .month::first-letter {
+  text-transform: uppercase;
+}
+
+.estimate h3,
+.goal h3 {
+  margin: 0 0 4px;
+}
+
+.estimate .spark {
+  margin: 4px 0;
+}
+
+.goal {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.ring {
+  width: 74px;
+  height: 74px;
+  flex: none;
+}
+
+.ring circle {
+  fill: none;
+  stroke-width: 8;
+}
+
+.ring .track {
+  stroke: var(--surface-2);
+}
+
+.ring .fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+
+.ring text {
+  fill: var(--fg);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.goalform {
+  align-items: end;
+}
+
+.statlinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.statlinks a,
+.routeinfo a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.calgrid {
+  display: grid;
+  gap: 4px;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.calrow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(90px, 0.9fr);
+  gap: 4px;
+}
+
+.calrow.head span {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.calday {
+  position: relative;
+  min-height: 84px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.calday.out {
+  background: var(--surface-2);
+  border-style: dashed;
+}
+
+.calday.sel {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.dnum {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tsb {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* The sign is in the number; the dot repeats it in colour. */
+.tsb::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.tsb.pos::before {
+  background: var(--form-positive);
+}
+
+.tsb.neg::before {
+  background: var(--form-negative);
+}
+
+.bubbles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.bubble {
+  display: block;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sport) 75%, transparent);
+  border: 1px solid var(--sport);
+}
+
+.calweek {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+}
+
+.routerow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--fg);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.routerow > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.savesegment {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .calrow {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calweek {
+    display: none;
+  }
+
+  .calday {
+    min-height: 56px;
+  }
+}
+
 /* Chart catalogue (OS-215): each block is drawn in its own theme. */
 .cat {
   background: var(--surface);

@@ -74,7 +74,7 @@ def test_the_sync_job_runs_a_sync_and_queues_imports(
     processed = 0
     while worker.run_once():
         processed += 1
-    assert processed == 4  # the sync, then the three imports it queued
+    assert processed == 7  # the sync, the three imports it queued and their metrics
     with sessions() as session:
         assert session.scalar(select(func.count()).select_from(Activity)) == 3
         run = session.scalars(select(SyncRun)).one()

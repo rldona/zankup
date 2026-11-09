@@ -1,6 +1,7 @@
 import {
   ApiError,
   activityQuery,
+  curvesQuery,
   availableMetrics,
   formatActivityDate,
   formatDuration,
@@ -25,15 +26,16 @@ import {
   type ThemeName,
   themes,
 } from '@zankup/core';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 
 import { api } from '../api';
 import { ZoneBar } from '../charts/static';
 import { Profile } from '../detail/Profile';
 import { RouteMap } from '../detail/RouteMap';
 import { Strength } from '../detail/Strength';
+import { CurveChart } from '../stats/charts';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { SportIcon } from '../SportIcon';
@@ -102,13 +104,32 @@ function Detail({ activity }: { activity: ActivityDetail }) {
       <Kpis activity={activity} format={format} pace={pace} />
 
       {activity.streams && !series && <p className="state">{t('activity.loadingSeries')}</p>}
-      {series && <RoutePanel series={series} sport={sport} pace={pace} format={format} units={prefs.units} />}
+      {series && (
+        <RoutePanel
+          series={series}
+          sport={sport}
+          pace={pace}
+          format={format}
+          units={prefs.units}
+          activityId={activity.id}
+        />
+      )}
 
       {/* Kept offline before sets existed, an activity may come without them. */}
       {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
       {series?.hr?.some((v) => v != null) && (
-        <Zones series={series} hrMax={prefs.hrMax} estimated={prefs.hrMaxEstimated} />
+        <Zones
+          series={series}
+          hrMax={prefs.hrMax}
+          estimated={prefs.hrMaxEstimated}
+          engine={
+            activity.metrics?.hr_zones && activity.metrics.hr_zone_bounds
+              ? { seconds: activity.metrics.hr_zones, bounds: activity.metrics.hr_zone_bounds }
+              : null
+          }
+        />
       )}
+      <EngineExtras activity={activity} />
       <BestEfforts activity={activity} format={format} />
       <Laps activity={activity} format={format} pace={pace} />
       <Splits activity={activity} format={format} pace={pace} />
@@ -156,7 +177,21 @@ function Kpis({ activity: a, format, pace }: { activity: ActivityDetail; format:
   if (a.max_hr) items.push(['activity.maxHr', `${a.max_hr} bpm`]);
   if (a.avg_power) items.push(['activity.power', `${a.avg_power} W`]);
   if (a.normalized_power) items.push(['activity.np', `${a.normalized_power} W`]);
-  if (a.calories) items.push(['activity.calories', `${a.calories.toLocaleString(locale)} kcal`]);
+  const metrics = a.metrics ?? null;
+  if (metrics?.trimp != null)
+    items.push(['activity.effort', Math.round(metrics.trimp).toLocaleString(locale)]);
+  if (pace && metrics?.gap_speed) items.push(['activity.gap', format.pace(metrics.gap_speed)]);
+  const kcal = a.calories ?? metrics?.calories;
+  if (kcal)
+    items.push([
+      'activity.calories',
+      `${Math.round(kcal).toLocaleString(locale)} kcal${a.calories == null ? ` (${t('activity.estimated')})` : ''}`,
+    ]);
+  if (metrics?.decoupling != null)
+    items.push([
+      'activity.decoupling',
+      `${metrics.decoupling.toLocaleString(locale, { maximumFractionDigits: 1 })} %`,
+    ]);
   if (a.training_effect)
     items.push(['activity.te', a.training_effect.toLocaleString(locale, { maximumFractionDigits: 1 })]);
   return (
@@ -177,12 +212,14 @@ function RoutePanel({
   pace,
   format,
   units,
+  activityId,
 }: {
   series: Series;
   sport: Sport;
   pace: boolean;
   format: Format;
   units: 'metric' | 'imperial';
+  activityId: number;
 }) {
   const theme = useResolvedTheme();
   const metrics = useMemo(() => availableMetrics(series), [series]);
@@ -270,6 +307,7 @@ function RoutePanel({
         format={format}
         pace={pace}
         onClear={() => setSection(null)}
+        activityId={activityId}
       />
     </section>
   );
@@ -286,6 +324,7 @@ function Readout({
   format,
   pace,
   onClear,
+  activityId,
 }: {
   series: Series;
   hover: number | null;
@@ -293,6 +332,7 @@ function Readout({
   format: Format;
   pace: boolean;
   onClear: () => void;
+  activityId: number;
 }) {
   if (section) {
     const s = sectionStats(series, section[0], section[1]);
@@ -312,6 +352,7 @@ function Readout({
         <button type="button" className="link" onClick={onClear}>
           {t('activity.clearSection')}
         </button>
+        {series.lat?.some((v) => v != null) && <SaveSegment activityId={activityId} section={section} />}
       </div>
     );
   }
@@ -337,8 +378,18 @@ function Readout({
   );
 }
 
-function Zones({ series, hrMax, estimated }: { series: Series; hrMax: number | null; estimated: boolean }) {
-  if (!hrMax) {
+function Zones({
+  series,
+  hrMax,
+  estimated,
+  engine,
+}: {
+  series: Series;
+  hrMax: number | null;
+  estimated: boolean;
+  engine: { seconds: number[]; bounds: number[] } | null;
+}) {
+  if (!hrMax && !engine) {
     return (
       <section className="panel">
         <div className="ph">
@@ -348,9 +399,10 @@ function Zones({ series, hrMax, estimated }: { series: Series; hrMax: number | n
       </section>
     );
   }
-  const seconds = timeInZones(series, hrMax);
+  // The engine's zones follow your zone model (OS-301); without them, share of max HR here.
+  const seconds = engine?.seconds ?? timeInZones(series, hrMax ?? 190);
   const total = seconds.reduce((a, b) => a + b, 0) || 1;
-  const limits = zoneLimits(hrMax);
+  const limits = engine?.bounds ?? zoneLimits(hrMax ?? 190);
   return (
     <section className="panel zones">
       <div className="ph">
@@ -374,14 +426,16 @@ function Zones({ series, hrMax, estimated }: { series: Series; hrMax: number | n
           ))}
         </tbody>
       </table>
-      <p className="note">
-        {t('activity.zonesNote', {
-          low: Math.round((ZONE_SHARES[0] ?? 0) * 100),
-          high: Math.round((ZONE_SHARES.at(-1) ?? 0) * 100),
-          hrMax,
-        })}
-        {estimated && ` ${t('activity.zonesEstimate', { hrMax })}`}
-      </p>
+      {!engine && hrMax && (
+        <p className="note">
+          {t('activity.zonesNote', {
+            low: Math.round((ZONE_SHARES[0] ?? 0) * 100),
+            high: Math.round((ZONE_SHARES.at(-1) ?? 0) * 100),
+            hrMax,
+          })}
+          {estimated && ` ${t('activity.zonesEstimate', { hrMax })}`}
+        </p>
+      )}
     </section>
   );
 }
@@ -506,5 +560,151 @@ function Splits({ activity, format, pace }: { activity: ActivityDetail; format: 
         </tbody>
       </table>
     </section>
+  );
+}
+
+/** Save the selected section as a personal segment (OS-325). */
+function SaveSegment({ activityId, section }: { activityId: number; section: [number, number] }) {
+  const [name, setName] = useState('');
+  const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const save = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await api.POST('/api/segments', {
+        body: { activity_id: activityId, start_index: section[0], end_index: section[1], name: name.trim() },
+      });
+      if (!data)
+        throw new Error(String((error as { detail?: unknown } | undefined)?.detail ?? t('common.error')));
+      return data;
+    },
+    onSuccess: () => {
+      setOpen(false);
+      setName('');
+      void queryClient.invalidateQueries({ queryKey: ['activities', 'segments'] });
+    },
+  });
+  if (!open)
+    return (
+      <>
+        <button type="button" className="link" onClick={() => setOpen(true)}>
+          {t('segments.save')}
+        </button>
+        {save.isSuccess && <span className="note">{t('segments.saved')}</span>}
+      </>
+    );
+  return (
+    <form
+      className="savesegment"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (name.trim()) save.mutate();
+      }}
+    >
+      <input
+        aria-label={t('segments.name')}
+        placeholder={t('segments.name')}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        maxLength={120}
+        autoFocus
+      />
+      <button type="submit" className="primary" disabled={save.isPending}>
+        {t('settings.save')}
+      </button>
+      {save.isError && <span className="note">{save.error.message}</span>}
+    </form>
+  );
+}
+
+/** What the engine adds (OS-312): power zones and curve, the matched route and the segments. */
+function EngineExtras({ activity }: { activity: ActivityDetail }) {
+  const theme = useResolvedTheme();
+  const metrics = activity.metrics;
+  const allTime = useQuery({
+    ...curvesQuery(api, 'power', { from: '2000-01-01' }),
+    enabled: Boolean(metrics?.power_curve.length),
+  });
+  if (!metrics && !activity.route_group && !activity.segments?.length) return null;
+  const powerZones = metrics?.power_zones;
+  const bounds = metrics?.power_zone_bounds;
+  const curve = (metrics?.power_curve ?? []).map((c) => ({
+    duration_s: c.duration_s,
+    value: c.value,
+    activity_id: activity.id,
+    day: activity.start_utc.slice(0, 10),
+  }));
+  return (
+    <>
+      {activity.route_group && (
+        <p className="note routeinfo">
+          <Link to={`/routes/${activity.route_group.group}`}>
+            {t('activity.routeRank', { count: activity.route_group.count, rank: activity.route_group.rank })}{' '}
+            ›
+          </Link>
+        </p>
+      )}
+      {(activity.segments ?? []).length > 0 && (
+        <section className="panel">
+          <div className="ph">
+            <h2>{t('activity.segmentsTitle')}</h2>
+          </div>
+          <ul className="rows">
+            {(activity.segments ?? []).map((s) => (
+              <li key={s.segment_id}>
+                <Link to={`/segments/${s.segment_id}`}>
+                  <b>{s.name}</b>
+                </Link>
+                <span className="num">
+                  {formatDuration(s.elapsed_s)} · {s.rank === 1 ? '🏆 ' : ''}
+                  {t('activity.segmentRank', {
+                    rank: s.rank,
+                    count: s.count,
+                    best: formatDuration(s.best_s),
+                  })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {curve.length > 0 && allTime.data && (
+        <section className="panel">
+          <div className="ph">
+            <h2>{t('activity.powerCurve')}</h2>
+          </div>
+          <CurveChart
+            period={curve}
+            allTime={allTime.data}
+            theme={theme}
+            format={(v) => `${Math.round(v)} W`}
+            colour={themes[theme].ride}
+          />
+        </section>
+      )}
+      {powerZones && bounds && (
+        <section className="panel zones">
+          <div className="ph">
+            <h2>{t('activity.powerZones')}</h2>
+          </div>
+          <table className="num">
+            <tbody>
+              {powerZones.map((sec, i) => (
+                <tr key={i}>
+                  <th scope="row">Z{i + 1}</th>
+                  <td className="track">
+                    <i style={{ width: `${(sec / (powerZones.reduce((a, b) => a + b, 0) || 1)) * 100}%` }} />
+                  </td>
+                  <td className="muted">
+                    {bounds[i]}
+                    {i < bounds.length - 1 ? `–${(bounds[i + 1] ?? 0) - 1}` : '+'} W
+                  </td>
+                  <td>{formatDuration(sec)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+    </>
   );
 }

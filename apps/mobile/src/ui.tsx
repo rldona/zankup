@@ -92,12 +92,27 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
   );
 }
 
-export function Stat({ label, value }: { label: string; value: string }) {
+export function Stat({
+  label,
+  value,
+  labelFirst,
+}: {
+  label: string;
+  value: string;
+  /** The label above the figure instead of under it (the week's numbers above the feed). */
+  labelFirst?: boolean;
+}) {
   const c = useTheme();
+  const caption = (
+    <Text style={[styles.statLabel, { color: c.muted }, labelFirst && { marginTop: 0, marginBottom: 2 }]}>
+      {label}
+    </Text>
+  );
   return (
     <View style={styles.stat}>
+      {labelFirst && caption}
       <Text style={[styles.statValue, { color: c.fg }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: c.muted }]}>{label}</Text>
+      {!labelFirst && caption}
     </View>
   );
 }

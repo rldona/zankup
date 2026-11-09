@@ -1,4 +1,5 @@
 export * from './mark';
+export * from './wordmark';
 
 /** Typeface for brand text only (wordmark, sign-in claim, splash); the interface uses the system stack. */
 export const BRAND_FONT_FAMILY = "'Momo Trust Display', system-ui, sans-serif";

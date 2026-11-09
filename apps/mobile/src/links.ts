@@ -6,6 +6,27 @@ export function normaliseUrl(input: string): string {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
+/** The settings screens, and the web page's anchors that lead to each. */
+export const SETTINGS_SECTIONS = [
+  'general',
+  'heart',
+  'notifications',
+  'ai',
+  'privacy',
+  'health',
+  'data',
+  'account',
+] as const;
+export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+
+const SECTION_OF: Record<string, SettingsSection> = {
+  ...Object.fromEntries(SETTINGS_SECTIONS.map((s) => [s, s])),
+  mcp: 'ai',
+  zones: 'heart',
+  garmin: 'account',
+  sessions: 'account',
+};
+
 /** The app screen for a notification's web path ("/activities/12" → "/activity/12"). */
 export function screenFor(url: unknown): string {
   if (typeof url !== 'string') return '/';
@@ -14,7 +35,11 @@ export function screenFor(url: unknown): string {
   if (url.startsWith('/settings/import')) return '/import';
   for (const screen of ['/coach', '/health', '/sync', '/gear'])
     if (url === screen || url.startsWith(`${screen}?`) || url.startsWith(`${screen}#`)) return screen;
-  if (url.startsWith('/settings')) return '/settings';
+  if (url.startsWith('/settings')) {
+    const section = /#([a-z]+)/.exec(url)?.[1];
+    const target = section && SECTION_OF[section];
+    return target ? `/settings/${target}` : '/settings';
+  }
   if (url.startsWith('/profile')) return '/profile';
   return '/';
 }

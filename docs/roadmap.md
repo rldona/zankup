@@ -376,7 +376,9 @@ That first pass stopped short of the PWA: four tabs, a basic detail and settings
 (OS-511 onwards). Block 1, navigation and the missing screens (OS-511 to OS-515), is built: a Sync
 tab, the You tab as a hub, and Health, Coach, Gear and Import on the phone. Block 2, the full activity
 detail (OS-516 to OS-518), and block 3, the full stats, training screens and reviews (OS-519 to
-OS-521), are built too. Still to come: the full profile and settings.
+OS-521), are built too, and so is block 4, the full settings and profile (OS-522 and OS-523): the
+app now covers everything the PWA does, except creating passkeys, linking Google and connecting
+Google Health, which need the browser.
 
 The performance proof of concept (OS-501) runs at the start of phase 2. This phase assumes React Native won; if Kotlin did, it is re-planned.
 
@@ -425,6 +427,10 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
   - Period picker, "Now" (form, load, goals, events, estimates with method and sources), summary, fitness, volume by sport, curves, records with progression, year over year, efficiency and the comparison with Strava.
 - **OS-520 · Training calendar, heatmap, routes and segments on the phone** (M) · depends on OS-519
 - **OS-521 · Month and year in review on the phone** (S) · depends on OS-519
+- **OS-522 · Full settings on the phone** (M) · depends on OS-508
+  - A section per screen: general, heart rate and zones (with recomputing), notifications by kind and a test, the AI assistant and MCP tokens, privacy zones on a map, health sources (priority, deleting a source's data), exporting your data, Garmin and the signed-in devices.
+- **OS-523 · Full profile on the phone** (M) · depends on OS-508
+  - Editing who you are, the year's numbers, by sport this year and all time, records, physical data, goals you can add and delete, estimates, and the account (sign-in methods, passkeys listed and removed, Google unlinked).
 
 **M5 is done when** the Android app replaces the PWA on your phone, with reliable notifications and background sync.
 

@@ -2,6 +2,7 @@ import type { Sport } from '../domain/sports';
 import type { MaterialIcon } from './material';
 
 export * from './material';
+export * from './sources';
 
 /** The icon of each sport Zankup groups activities into, shared by the PWA and the Android app. */
 export const SPORT_ICONS: Record<Sport, MaterialIcon> = {

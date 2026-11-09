@@ -135,7 +135,11 @@ describe('phase 6: health', () => {
     mockApi();
     renderAt('/health');
     expect(await screen.findByRole('heading', { name: 'Last night' })).toBeInTheDocument();
-    expect(screen.getByText(/November 8 · From Google Health · also recorded by Garmin/)).toBeInTheDocument();
+    expect(screen.getAllByText(/November 8/).length).toBeGreaterThan(0);
+    // The source is a mark in the corner, named in full for screen readers.
+    expect(
+      screen.getAllByRole('img', { name: /From Google Health · also recorded by Garmin/ })[0],
+    ).toBeInTheDocument();
     expect(await screen.findByRole('img', { name: 'Sleep stages through the night' })).toBeInTheDocument();
     expect(screen.getByText('86')).toBeInTheDocument();
     const readiness = screen.getByRole('heading', { name: 'Readiness' }).closest('article');

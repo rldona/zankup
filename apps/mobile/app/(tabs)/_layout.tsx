@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MATERIAL_ICONS } from '@zankup/core';
 
@@ -20,11 +21,21 @@ const filled = (icon: IconName): IconName =>
 
 export default function TabsLayout() {
   const c = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: c.surface, borderTopColor: c.line },
+        // Taller than the default, with room above the icons and above the system's gesture bar.
+        tabBarStyle: {
+          backgroundColor: c.surface,
+          borderTopColor: c.line,
+          height: 76 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: insets.bottom + 16,
+        },
+        tabBarLabelStyle: { fontSize: 12, marginTop: 4 },
+        tabBarIconStyle: { width: 28, height: 28 },
         tabBarActiveTintColor: c.accent,
         tabBarInactiveTintColor: c.muted,
       }}
@@ -36,7 +47,7 @@ export default function TabsLayout() {
           options={{
             title: t(tab.label),
             tabBarIcon: ({ color, focused }) => (
-              <Icon name={focused ? filled(tab.icon) : tab.icon} color={color} />
+              <Icon name={focused ? filled(tab.icon) : tab.icon} color={color} size={28} />
             ),
           }}
         />

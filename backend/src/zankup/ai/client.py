@@ -226,6 +226,9 @@ class Llm:
         except anthropic.RateLimitError as error:
             raise LlmError("the model is rate limited; try again later") from error
         except anthropic.APIStatusError as error:
+            # The reason (an invalid schema, an unknown model…) only reaches the logs, not the person.
+            reason = str(error.message)[:300]
+            log.warning("Model request rejected", extra={"status": error.status_code, "reason": reason})
             raise LlmError(f"the model answered {error.status_code}") from error
         except anthropic.APIConnectionError as error:
             raise LlmError("could not reach the model") from error

@@ -115,7 +115,6 @@ function PasswordStep({
   return (
     <>
       <h1>{t('signIn.welcome')}</h1>
-      <div className="sub">{t('signIn.sub')}</div>
       <ErrorBox message={error} />
       <form onSubmit={(e) => void submit(e)} noValidate>
         <label className="fld">
@@ -230,8 +229,7 @@ function GoogleButton() {
       href={`/api/auth/google/start?mode=login&next=${encodeURIComponent(next)}`}
     >
       <svg viewBox={`0 0 ${GOOGLE_G.size} ${GOOGLE_G.size}`} width="18" height="18" aria-hidden="true">
-        <path d={GOOGLE_G.ring.d} fill="none" stroke="currentColor" strokeWidth={GOOGLE_G.ring.strokeWidth} />
-        <path d={GOOGLE_G.bar.d} fill="currentColor" />
+        <path d={GOOGLE_G.d} fill="currentColor" />
       </svg>
       {t('signIn.google')}
     </a>

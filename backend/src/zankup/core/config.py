@@ -16,7 +16,10 @@ Environment = Literal["development", "test", "production"]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # Values pasted into a dashboard often carry a stray space (" claude-haiku-5-5"): trim them.
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", str_strip_whitespace=True
+    )
 
     environment: Environment = "development"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"

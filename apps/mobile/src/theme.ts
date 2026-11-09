@@ -21,8 +21,18 @@ export function palette(choice: ThemeChoice, scheme: 'light' | 'dark'): Palette 
   return { ...commonTokens, ...themes[name], name, dynamic: choice === 'system' };
 }
 
-/** Android's dynamic accent (Material You), usable as a colour value in styles. */
-export const dynamicAccent = PlatformColor('@android:color/system_accent1_500');
+/**
+ * Android's dynamic colours (Material You), as Material pairs them: primary and "on primary" are
+ * accent1 600 and 0 in light, 200 and 800 in dark, so text on a primary button is always readable.
+ */
+export const dynamicAccent = {
+  light: PlatformColor('@android:color/system_accent1_600'),
+  dark: PlatformColor('@android:color/system_accent1_200'),
+};
+export const dynamicOnAccent = {
+  light: PlatformColor('@android:color/system_accent1_0'),
+  dark: PlatformColor('@android:color/system_accent1_800'),
+};
 
 export const ThemeContext = createContext<{ choice: ThemeChoice; setChoice: (c: ThemeChoice) => void }>({
   choice: 'system',

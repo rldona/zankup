@@ -13,7 +13,7 @@ import { registerPush, unregisterPush, type PushResult } from '../src/push';
 import { availableBiometrics, instanceUrl, type Biometrics } from '../src/session';
 import { keys, readSync, storage } from '../src/storage';
 import { ThemeContext, useTheme } from '../src/theme';
-import { accent, Button, Card, Heading, Muted, Screen } from '../src/ui';
+import { accent, onAccent, Button, Card, Heading, Muted, Screen } from '../src/ui';
 
 function Choice<T extends string>({
   options,
@@ -50,7 +50,7 @@ function Choice<T extends string>({
               backgroundColor: on ? accent(c) : c.surface,
             }}
           >
-            <Text style={{ color: on ? c.accentFg : c.fg }}>{o.label}</Text>
+            <Text style={{ color: on ? onAccent(c) : c.fg }}>{o.label}</Text>
           </Pressable>
         );
       })}

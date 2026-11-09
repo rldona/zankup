@@ -890,5 +890,6 @@
   "notifications.empty": "Nada nuevo por ahora. Aquí aparecen los récords, las estimaciones que mejoran y los saltos de carga arriesgados.",
   "home.perKg": "{value} W/kg",
   "mobile.biometricLock": "Pedir la huella para abrir Zankup",
-  "mobile.biometricLockOff": "Zankup se abre sin huella: cualquiera con tu teléfono desbloqueado puede ver tus datos."
+  "mobile.biometricLockOff": "Zankup se abre sin huella: cualquiera con tu teléfono desbloqueado puede ver tus datos.",
+  "nav.goals": "Objetivos"
 }

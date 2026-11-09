@@ -173,6 +173,7 @@ INTERFACE = [
 FILLED = [
     "home",
     "cards_stack",
+    "flag",
     "list",
     "search",
     "sync",

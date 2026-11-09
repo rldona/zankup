@@ -11,12 +11,12 @@ import { useState } from 'react';
 import { useApi } from '../../src/auth';
 import { Icon } from '../../src/Icon';
 import { t } from '../../src/i18n';
-import { Account, EditProfile, Goals, Header, Summary, YearNumbers } from '../../src/profile/Sections';
+import { Account, EditProfile, Header, Summary, YearNumbers } from '../../src/profile/Sections';
 import { Estimates } from '../../src/stats/Sections';
 import { useTheme } from '../../src/theme';
 import { Card, Choice, Loading, MenuRow, Screen } from '../../src/ui';
 
-const TABS = ['summary', 'goals', 'estimates', 'account'] as const;
+const TABS = ['summary', 'estimates', 'account'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function ProfileScreen() {
@@ -71,7 +71,6 @@ export default function ProfileScreen() {
         options={TABS.map((name) => ({ value: name, label: t(`profile.tab.${name}`) }))}
       />
       {tab === 'summary' && (summary.data ? <Summary me={me.data} summary={summary.data} /> : <Loading />)}
-      {tab === 'goals' && <Goals />}
       {tab === 'estimates' && <Estimates />}
       {tab === 'account' && <Account me={me.data} />}
     </Screen>

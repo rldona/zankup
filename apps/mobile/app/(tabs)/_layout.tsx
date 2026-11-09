@@ -10,8 +10,8 @@ import { useTheme } from '../../src/theme';
 const TABS: { name: string; icon: IconName; label: Parameters<typeof t>[0] }[] = [
   { name: 'index', icon: 'home', label: 'nav.home' },
   { name: 'activities', icon: 'cards_stack', label: 'nav.feed' },
-  { name: 'search', icon: 'search', label: 'nav.search' },
   { name: 'health', icon: 'favorite', label: 'nav.health' },
+  { name: 'goals', icon: 'flag', label: 'nav.goals' },
   { name: 'profile', icon: 'person', label: 'nav.you' },
 ];
 

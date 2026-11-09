@@ -35,7 +35,7 @@ Built on the Momo Trust Display lower case: stems to the x-height, semicircular 
 
 Rules:
 
-- One colour only. The mark takes the foreground colour of the theme it sits on (`fg` on surfaces, `accentFg` on the accent). Render it as a CSS mask over `currentColor`, as the web app's `.mark` class does, or as an inline SVG with `currentColor`.
+- One colour only. The mark takes the foreground colour of the theme it sits on (`fg` on surfaces, `accentFg` on the accent). Render it as a CSS mask over `currentColor`, as the web app's `.mark` class does, or as an inline SVG with `currentColor`. The Android app draws the same path with Skia (`apps/mobile/src/Lockup.tsx`), from the geometry exported by `packages/core`.
 - Minimum size 16 px high. At that size the counters close to slits; the silhouette still reads as the wave.
 - Clear space: at least the stroke width (30/134 of the height) on every side.
 - Do not rotate, mirror, outline, add gradients or shadows, change the stroke weight, flatten the terminals, separate the two arches or add a third.
@@ -54,6 +54,7 @@ Kept alternatives, not for production: `assets/logo-mark-z.svg` (the earlier mar
   ```
 
   For a self-hosted build, download the OFL file from Google Fonts and ship it with the app; keep `system-ui, sans-serif` as the fallback.
+- The Android app bundles the TTF (`apps/mobile/assets/fonts/`, with its OFL) through the `expo-font` config plugin and uses it only in the lock-up (`apps/mobile/src/Lockup.tsx`).
 - There is no outlined (vector) wordmark yet. When one is needed for places without the font (favicons with text, OG images), export it from the font and add it to `assets/`.
 - Under exploration, not decided: drawing the **N as the U turned upside down**, so the two letters rhyme (the same arch, one open upwards and one downwards: `ZA∩KUP`). See `exploration/zankup/wordmark-n-inverted-u.html`.
 
@@ -104,6 +105,8 @@ Two pieces of work, tracked separately. Do the rename only after the domain and 
 4. Check legibility at 16 px in every theme in `tokens.json` (light, dark, oled, and any high-contrast theme).
 5. Delete or replace `docs/prototypes/assets/` (the traced mountain and its icons) and the prototype's `.mark` mask URL.
 6. Expo: adaptive icon from the same mark, #06221a on #20c997 (monochrome layer white, Android tints it); splash, white mark on #111.
+
+**Status (9 November 2026):** done for the stride mark. The web app renders it from `packages/core` as a CSS mask (header, sign-in, settings) and ships the icons and manifest; the Android app draws it with Skia from the same geometry in the lock-up (sign-in and lock screen), bundles Momo Trust Display for the wordmark, and takes its launcher icon, adaptive layers and splash from `apps/mobile/assets/`. The prototypes in `docs/prototypes/` keep the traced mountain and are not shipped.
 
 ### 7.2 Rename the product
 

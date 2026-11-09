@@ -36,6 +36,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
+    ['expo-font', { fonts: ['./assets/fonts/MomoTrustDisplay-Regular.ttf'] }],
     '@maplibre/maplibre-react-native',
     'expo-secure-store',
     'expo-local-authentication',

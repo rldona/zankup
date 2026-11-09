@@ -1,4 +1,4 @@
-import { queryKeys, setupStatusQuery, type Me } from '@zankup/core';
+import { queryKeys, setupStatusQuery, type Me, passwordStrength } from '@zankup/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -7,7 +7,7 @@ import { api } from '../api';
 import { t } from '../i18n';
 import { Wordmark } from '../Wordmark';
 import { CodeForm, ErrorBox } from '../signin/CodeForm';
-import { passwordStrength } from '../signin/strength';
+import { deviceName } from '../signin/device';
 import { Waves } from '../signin/Waves';
 
 type Totp = { setup_token: string; secret: string; uri: string; qr_svg: string };
@@ -202,7 +202,7 @@ function TotpStep({
   const verify = async (code: string): Promise<string | null> => {
     try {
       const { data, error, response } = await api.POST('/api/setup/totp', {
-        body: { setup_token: totp.setup_token, code },
+        body: { setup_token: totp.setup_token, code, client: 'web', device_name: deviceName() },
       });
       if (data) {
         onDone(data.me, data.recovery_codes);

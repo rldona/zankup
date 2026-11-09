@@ -17,7 +17,8 @@ The Android app (OS-503) signs in natively with Credential Manager instead:
   with the state to `POST /api/auth/google/mobile`, which checks it like the callback does and, for the
   linked user only, returns the app's access and refresh tokens.
 - Google's classic Android SDK (the free sign-in library) cannot set a nonce: without a state the token
-  must have been issued in the last five minutes and is accepted only once.
+  must have been issued in the last five minutes and is accepted only once. The app no longer uses it
+  (it returned the same cached token on the next sign-in), but older builds still can.
 
 Each instance has its own OAuth client (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET), with
 `<origin>/api/auth/google/callback` as its redirect URI.

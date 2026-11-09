@@ -468,7 +468,8 @@ export interface paths {
     put?: never;
     /**
      * Setup Totp
-     * @description Step 2: a code from the app turns two-step verification on, closes sign-up and signs in.
+     * @description Step 2: a code from the app turns two-step verification on, closes sign-up and signs in: a
+     *     browser session (cookie), or tokens for the Android app (OS-525).
      */
     post: operations['setupTotp'];
     delete?: never;
@@ -3913,6 +3914,8 @@ export interface components {
       me: components['schemas']['Me'];
       /** Recovery Codes */
       recovery_codes: string[];
+      /** @description For the Android app: its session */
+      tokens?: components['schemas']['AppTokens'] | null;
     };
     /** SetupStatus */
     SetupStatus: {
@@ -4336,6 +4339,17 @@ export interface components {
       setup_token: string;
       /** Code */
       code: string;
+      /**
+       * Client
+       * @default web
+       * @enum {string}
+       */
+      client: 'web' | 'android';
+      /**
+       * Device Name
+       * @default Browser
+       */
+      device_name: string;
     };
     /** TotpRequest */
     TotpRequest: {

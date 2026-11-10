@@ -132,8 +132,10 @@ export function GoalChart({
   const labelEvery = points.length > 12 ? 5 : 1;
 
   const shown = points.slice(0, past);
-  const line = shown.map((p, i) => `${i ? 'L' : 'M'}${x(i)} ${y(p.done)}`).join('');
-  const area = shown.length ? `${line}L${x(shown.length - 1)} ${bottom}L${x(0)} ${bottom}Z` : '';
+  // The line starts from zero at the very start of the period, where the dashed diagonal starts.
+  const line = shown.length ? `M0 ${y(0)}${shown.map((p, i) => `L${x(i)} ${y(p.done)}`).join('')}` : '';
+  // No fill while nothing is done: a shape with no height breaks the whole canvas.
+  const area = shown.some((p) => p.done > 0) ? `${line}L${x(shown.length - 1)} ${bottom}L0 ${bottom}Z` : '';
   const colour = String(c.accent);
 
   const pick = (px: number) => {

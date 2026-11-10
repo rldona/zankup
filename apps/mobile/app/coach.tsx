@@ -38,10 +38,7 @@ const TOOL_LABELS: Record<string, Parameters<typeof t>[0]> = {
   estimates: 'coach.tool.estimates',
 };
 // Two examples, short and different: performance and recovery.
-const SUGGESTIONS = [
-  'coach.suggestion.1',
-  'coach.suggestion.3',
-] as const;
+const SUGGESTIONS = ['coach.suggestion.1', 'coach.suggestion.3'] as const;
 
 const day = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
@@ -164,10 +161,22 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
   // "New conversation" in the header as soon as there is one; while answering it stops first.
   const navigation = useNavigation();
   const hasTurns = turns.length > 0;
+  // What the coach can and cannot do, behind an (i) in the header instead of a line under the chat.
+  const [about, setAbout] = useState(false);
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: hasTurns
-        ? () => (
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('coach.about')}
+            accessibilityState={{ expanded: about }}
+            hitSlop={10}
+            onPress={() => setAbout(!about)}
+          >
+            <Icon name="info" color={c.fg} />
+          </Pressable>
+          {hasTurns && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('coach.clear')}
@@ -179,10 +188,11 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
             >
               <Icon name="add_comment" color={c.fg} />
             </Pressable>
-          )
-        : undefined,
+          )}
+        </View>
+      ),
     });
-  }, [navigation, hasTurns, c.fg]);
+  }, [navigation, hasTurns, c.fg, about]);
 
   const ask = async (question: string) => {
     const history: Turn[] = [...turns, { role: 'user', content: question }];
@@ -236,6 +246,29 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
 
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: c.bg }}>
+      {about && (
+        // The tooltip under the (i): a tap on it closes it.
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('coach.disclaimer')}
+          onPress={() => setAbout(false)}
+          style={{
+            position: 'absolute',
+            top: 6,
+            right: 12,
+            left: 64,
+            zIndex: 10,
+            elevation: 6,
+            backgroundColor: c.surface2,
+            borderColor: c.line,
+            borderWidth: 1,
+            borderRadius: 12,
+            padding: 12,
+          }}
+        >
+          <Text style={{ color: c.fg, fontSize: 14 }}>{t('coach.disclaimer')}</Text>
+        </Pressable>
+      )}
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }} keyboardVerticalOffset={90}>
         <ScrollView
           ref={scroll}
@@ -289,7 +322,6 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
             )}
             {working && <Muted>{working}</Muted>}
           </View>
-          <Muted>{t('coach.disclaimer')}</Muted>
         </ScrollView>
         {!budgetSpent && (
           <View
@@ -315,14 +347,24 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
                 style={[
                   ui.input,
                   {
+                    // Taller and edged in the theme's colour, so the place to ask stands out.
                     color: c.fg,
                     backgroundColor: c.surface,
-                    borderColor: c.line,
-                    maxHeight: 120,
+                    borderColor: `${String(c.accent)}99`,
+                    borderWidth: 1.5,
+                    borderRadius: 16,
+                    fontSize: 17,
+                    minHeight: 56,
+                    maxHeight: 140,
+                    paddingVertical: 15,
+                    paddingLeft: 46,
                     paddingRight: 52,
                   },
                 ]}
               />
+              <View pointerEvents="none" style={{ position: 'absolute', left: 14, top: 16 }}>
+                <Icon name="wand_stars" color={String(c.accent)} size={22} />
+              </View>
               {(busy || draft.trim()) && (
                 <Pressable
                   accessibilityRole="button"

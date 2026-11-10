@@ -12,8 +12,8 @@ import {
   type MaterialIcon,
   type Sport,
 } from '@zankup/core';
-import type { ColorValue } from 'react-native';
-import { View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Easing, View, type ColorValue } from 'react-native';
 
 import { useTheme } from './theme';
 
@@ -94,5 +94,39 @@ export function SourceIcon({
         transform={[{ scale }, { translateX: -x }, { translateY: -y }]}
       />
     </Canvas>
+  );
+}
+
+/** An icon that turns while `spinning` (sync in progress), and rests otherwise. */
+export function SpinningIcon({
+  name,
+  color,
+  size = 24,
+  spinning,
+}: {
+  name: IconName;
+  color: ColorValue;
+  size?: number;
+  spinning: boolean;
+}) {
+  const [turn] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (!spinning) {
+      turn.stopAnimation();
+      turn.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.timing(turn, { toValue: 1, duration: 1000, easing: Easing.linear, useNativeDriver: true }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [spinning, turn]);
+  // Sync arrows turn anticlockwise, like the icon's arrows.
+  const rotate = turn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-360deg'] });
+  return (
+    <Animated.View style={{ transform: [{ rotate }] }}>
+      <Icon name={name} color={color} size={size} />
+    </Animated.View>
   );
 }

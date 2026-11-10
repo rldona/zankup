@@ -6,13 +6,12 @@
 import {
   formatDuration,
   formatHoursMinutes,
-  gearQuery,
   goalsQuery,
   passkeysQuery,
   providersQuery,
   queryKeys,
-  sourcesQuery,
   SPORTS,
+  type GoalOut,
   type Me,
   type MessageKey,
   type ProfileSummary,
@@ -24,26 +23,24 @@ import { Alert, Image, Pressable, Text, View } from 'react-native';
 
 import { useApi, useAuth } from '../auth';
 import { Sheet } from '../detail/Tools';
-import { ageOn, goalTarget, initials, validDate } from './helpers';
+import { GoalsSkeleton } from '../Skeleton';
+import { Icon } from '../Icon';
+import {
+  ageOn,
+  fromDayMonthYear,
+  goalInput,
+  goalTarget,
+  initials,
+  toDayMonthYear,
+  typeDayMonthYear,
+} from './helpers';
 import { effortName } from '../estimates';
 import { locale, t } from '../i18n';
 import { asSport, useFormat, useHrMax } from '../prefs';
 import { addPasskey, passkeysSupported, SignInError } from '../session';
 import { GoalCard } from '../stats/Sections';
 import { useTheme } from '../theme';
-import {
-  Badge,
-  Button,
-  Card,
-  Choice,
-  Field,
-  Heading,
-  ListRow,
-  MenuRow,
-  Muted,
-  ProgressBar,
-  styles as ui,
-} from '../ui';
+import { Button, Card, Choice, Field, Heading, ListRow, Muted, styles as ui } from '../ui';
 
 type Format = ReturnType<typeof useFormat>;
 
@@ -52,7 +49,7 @@ const day = (iso: string) =>
 
 // --- the header ------------------------------------------------------------------------------------
 
-export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSummary; onEdit: () => void }) {
+export function Header({ me, onEdit }: { me: Me; onEdit: () => void }) {
   const c = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -87,50 +84,19 @@ export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSumma
         >
           {me.display_name ?? me.email}
         </Text>
-        {[me.location, summary?.device].some(Boolean) && (
-          <Muted>{[me.location, summary?.device].filter(Boolean).join(' · ')}</Muted>
-        )}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          {summary && <Badge tone="good">{t('profile.streak', { count: summary.streak_weeks })}</Badge>}
-          <Pressable accessibilityRole="button" onPress={onEdit} hitSlop={12}>
-            <Text style={{ color: c.accent, fontWeight: '600' }}>{t('profile.edit')}</Text>
-          </Pressable>
-        </View>
+        {/* Only where you are: the watch belongs to each activity, Garmin to Account. */}
+        {me.location ? <Muted>{me.location}</Muted> : null}
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('profile.edit')}
+        onPress={onEdit}
+        hitSlop={12}
+        style={{ alignSelf: 'flex-start', paddingTop: 6 }}
+      >
+        <Icon name="edit_square" color={c.fg} size={24} />
+      </Pressable>
     </View>
-  );
-}
-
-export function YearNumbers({ summary }: { summary: ProfileSummary }) {
-  const c = useTheme();
-  const format = useFormat();
-  const total = summary.this_year.reduce(
-    (sum, s) => ({
-      count: sum.count + s.count,
-      distance: sum.distance + s.distance_m,
-      time: sum.time + s.moving_s,
-      ascent: sum.ascent + s.ascent_m,
-    }),
-    { count: 0, distance: 0, time: 0, ascent: 0 },
-  );
-  const figures: [string, string][] = [
-    [t('feed.title'), total.count.toLocaleString(locale)],
-    [t('feed.stat.distance'), format.distance(total.distance)],
-    [t('feed.stat.time'), formatHoursMinutes(total.time)],
-    [t('feed.stat.ascent'), format.elevation(total.ascent)],
-  ];
-  return (
-    <Card>
-      <Heading>{t('profile.year', { year: summary.year })}</Heading>
-      <View style={ui.stats}>
-        {figures.map(([label, value]) => (
-          <View key={label} style={ui.stat}>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 20 }]}>{value}</Text>
-            <Text style={[ui.statLabel, { color: c.muted }]}>{label}</Text>
-          </View>
-        ))}
-      </View>
-    </Card>
   );
 }
 
@@ -143,19 +109,21 @@ export function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
   const [form, setForm] = useState({
     display_name: me.display_name ?? '',
     location: me.location ?? '',
-    birth_date: me.birth_date ?? '',
+    // Shown and typed as DD/MM/YYYY; sent as YYYY-MM-DD.
+    birth_date: me.birth_date ? toDayMonthYear(me.birth_date) : '',
     sex: me.sex ?? '',
     weight_kg: me.weight_kg?.toString() ?? '',
     height_cm: me.height_cm?.toString() ?? '',
   });
   const save = useMutation({
     mutationFn: async () => {
-      if (form.birth_date && !validDate(form.birth_date)) throw new Error(t('mobile.invalidDate'));
+      const birth = form.birth_date ? fromDayMonthYear(form.birth_date) : null;
+      if (form.birth_date && !birth) throw new Error(t('mobile.invalidDate'));
       const { data, error } = await api.PATCH('/api/auth/me', {
         body: {
           ...(form.display_name.trim() ? { display_name: form.display_name.trim() } : {}),
           location: form.location.trim() || null,
-          birth_date: form.birth_date || null,
+          birth_date: birth,
           sex: (form.sex || null) as Me['sex'],
           weight_kg: form.weight_kg ? Number(form.weight_kg.replace(',', '.')) : null,
           height_cm: form.height_cm ? Number(form.height_cm) : null,
@@ -174,15 +142,27 @@ export function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
     onChangeText: (value: string) => setForm({ ...form, [name]: value }),
   });
   return (
-    <Sheet title={t('profile.edit')} onClose={onDone}>
+    <Sheet
+      title={t('profile.edit')}
+      onClose={onDone}
+      footer={
+        <>
+          <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
+            {t('settings.save')}
+          </Button>
+          <Button onPress={onDone}>{t('profile.cancel')}</Button>
+        </>
+      }
+    >
       <Field label={t('profile.name')} autoComplete="name" maxLength={120} {...field('display_name')} />
       <Field label={t('profile.location')} maxLength={120} {...field('location')} />
       <Field
         label={t('profile.birth')}
         placeholder={t('mobile.dateFormat')}
-        keyboardType="numbers-and-punctuation"
+        keyboardType="number-pad"
         maxLength={10}
-        {...field('birth_date')}
+        value={form.birth_date}
+        onChangeText={(text) => setForm({ ...form, birth_date: typeDayMonthYear(text) })}
       />
       <Text style={{ color: c.fg, fontWeight: '600' }}>{t('profile.sex')}</Text>
       <Choice
@@ -199,10 +179,6 @@ export function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
       <Field label={t('profile.weight')} keyboardType="decimal-pad" {...field('weight_kg')} />
       <Field label={t('profile.height')} keyboardType="number-pad" {...field('height_cm')} />
       {save.isError && <Muted accessibilityRole="alert">{save.error.message || t('common.error')}</Muted>}
-      <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
-        {t('settings.save')}
-      </Button>
-      <Button onPress={onDone}>{t('profile.cancel')}</Button>
     </Sheet>
   );
 }
@@ -248,6 +224,19 @@ export function Summary({ me, summary }: { me: Me; summary: ProfileSummary }) {
   if (hrMax) physical.push(['settings.hrMax', `${hrMax} bpm`]);
   return (
     <>
+      {physical.length > 0 && (
+        <Card>
+          <Heading>{t('profile.physical')}</Heading>
+          <View style={ui.stats}>
+            {physical.map(([label, value]) => (
+              <View key={label} style={ui.stat}>
+                <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
+                <Text style={[ui.statLabel, { color: c.muted }]}>{t(label)}</Text>
+              </View>
+            ))}
+          </View>
+        </Card>
+      )}
       {summary.this_year.length > 0 && (
         <Card>
           <Heading>{t('profile.byYear')}</Heading>
@@ -281,54 +270,7 @@ export function Summary({ me, summary }: { me: Me; summary: ProfileSummary }) {
           </Pressable>
         ))}
       </Card>
-      {physical.length > 0 && (
-        <Card>
-          <Heading>{t('profile.physical')}</Heading>
-          <View style={ui.stats}>
-            {physical.map(([label, value]) => (
-              <View key={label} style={ui.stat}>
-                <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
-                <Text style={[ui.statLabel, { color: c.muted }]}>{t(label)}</Text>
-              </View>
-            ))}
-          </View>
-        </Card>
-      )}
-      <GearCard format={format} />
     </>
-  );
-}
-
-function GearCard({ format }: { format: Format }) {
-  const api = useApi();
-  const c = useTheme();
-  const gear = useQuery(gearQuery(api));
-  const active = (gear.data ?? []).filter((g) => !g.retired);
-  if (!active.length) return null;
-  return (
-    <Pressable accessibilityRole="link" onPress={() => router.push('/gear')}>
-      <Card>
-        <Heading>{t('gear.title')}</Heading>
-        {active.map((g) => (
-          <View key={g.id} style={{ gap: 4, paddingVertical: 4 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ color: c.fg, fontWeight: '600' }}>{g.name}</Text>
-              <Text style={{ color: g.over_limit ? c.zone5 : c.fg, fontVariant: ['tabular-nums'] }}>
-                {format.distance(g.distance_m)}
-              </Text>
-            </View>
-            {g.limit_m ? (
-              <ProgressBar
-                value={g.distance_m}
-                max={g.limit_m}
-                color={g.over_limit ? c.zone5 : c.accent}
-                label={g.name}
-              />
-            ) : null}
-          </View>
-        ))}
-      </Card>
-    </Pressable>
   );
 }
 
@@ -338,12 +280,13 @@ const goalName = (g: { period: string; sport: string | null }) =>
 // --- goals -----------------------------------------------------------------------------------------
 
 /** The goals; with `withForm`, the form to add one under them (the modal on the Goals tab does without). */
-export function Goals({ withForm = true }: { withForm?: boolean }) {
+export function Goals({ withForm = true, editing = false }: { withForm?: boolean; editing?: boolean }) {
   const api = useApi();
   const c = useTheme();
   const format = useFormat();
   const queryClient = useQueryClient();
   const goals = useQuery(goalsQuery(api));
+  const [changing, setChanging] = useState<GoalOut | null>(null);
   const refresh = () => void queryClient.invalidateQueries({ queryKey: goalsQuery(api).queryKey });
   const remove = useMutation({
     mutationFn: async (id: number) => {
@@ -351,45 +294,106 @@ export function Goals({ withForm = true }: { withForm?: boolean }) {
     },
     onSuccess: refresh,
   });
-  if (!goals.data) return null;
+  if (!goals.data) return <GoalsSkeleton />;
   return (
     <>
       {goals.data.length === 0 && <Muted>{t('goals.empty')}</Muted>}
       {goals.data.map((g) => (
         <GoalCard key={g.id} goal={g} format={format}>
-          <Pressable
-            accessibilityRole="button"
-            disabled={remove.isPending}
-            onPress={() =>
-              Alert.alert(goalName(g), undefined, [
-                { text: t('common.cancel'), style: 'cancel' },
-                { text: t('goals.delete'), style: 'destructive', onPress: () => remove.mutate(g.id) },
-              ])
-            }
-          >
-            <Text style={{ color: c.accent, fontWeight: '600' }}>{t('goals.delete')}</Text>
-          </Pressable>
+          {editing && (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Button
+                icon={<Icon name="edit_square" color={c.fg} size={18} />}
+                onPress={() => setChanging(g)}
+              >
+                {t('goals.edit')}
+              </Button>
+              <Button
+                icon={<Icon name="delete" color={c.fg} size={18} />}
+                disabled={remove.isPending}
+                onPress={() =>
+                  Alert.alert(goalName(g), undefined, [
+                    { text: t('common.cancel'), style: 'cancel' },
+                    { text: t('goals.delete'), style: 'destructive', onPress: () => remove.mutate(g.id) },
+                  ])
+                }
+              >
+                {t('goals.delete')}
+              </Button>
+            </View>
+          )}
         </GoalCard>
       ))}
       {withForm && <GoalForm unit={format.unit} onDone={refresh} />}
+      {changing && (
+        <GoalForm
+          bare
+          goal={changing}
+          unit={format.unit}
+          onCancel={() => setChanging(null)}
+          onDone={() => {
+            refresh();
+            setChanging(null);
+          }}
+        />
+      )}
     </>
   );
 }
 
-/** Adding a goal; `bare` drops its card and heading, for a sheet that has its own title. */
-export function GoalForm({ unit, onDone, bare }: { unit: string; onDone: () => void; bare?: boolean }) {
+type Metric = 'distance' | 'time' | 'count';
+
+/**
+ * Adding a goal, or changing one (`goal`); `bare` drops its card and heading, for a sheet that has its
+ * own title. Strength has no distance, so it measures time or a number of sessions.
+ */
+export function GoalForm({
+  unit,
+  onDone,
+  bare,
+  onCancel,
+  goal,
+}: {
+  unit: string;
+  onDone: () => void;
+  bare?: boolean;
+  /** In a sheet: Cancel and Add (or Save) go to its fixed footer. */
+  onCancel?: () => void;
+  goal?: GoalOut;
+}) {
   const api = useApi();
-  const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
-  const [metric, setMetric] = useState<'distance' | 'time' | 'count'>('distance');
-  const [sport, setSport] = useState('');
-  const [target, setTarget] = useState('');
+  const [period, setPeriod] = useState<'week' | 'month' | 'year'>(
+    (goal?.period as 'week' | 'month' | 'year' | undefined) ?? 'week',
+  );
+  const [metric, setMetric] = useState<Metric>((goal?.metric as Metric | undefined) ?? 'distance');
+  const [sport, setSport] = useState(goal?.sport ?? '');
+  const [target, setTarget] = useState(
+    goal ? String(Math.round(goalInput(goal.metric as Metric, goal.target, unit) * 100) / 100) : '',
+  );
   const value = Number(target.replace(',', '.'));
+  const metrics: Metric[] = sport === 'strength' ? ['time', 'count'] : ['distance', 'time', 'count'];
+  const chooseSport = (next: string) => {
+    setSport(next);
+    if (next === 'strength' && metric === 'distance') setMetric('time');
+  };
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await api.POST('/api/goals', {
-        body: { period, metric, sport: sport || null, target: goalTarget(metric, value, unit) },
-      });
+      const body = { period, metric, sport: sport || null, target: goalTarget(metric, value, unit) };
+      if (!goal) {
+        const { error } = await api.POST('/api/goals', { body });
+        if (error) throw new Error('goal');
+        return;
+      }
+      const path = { params: { path: { goal_id: goal.id } } };
+      const { error, response } = await api.PATCH('/api/goals/{goal_id}', { ...path, body });
+      // A server without PATCH yet (older than this app): the goal is replaced instead.
+      if (response.status === 405) {
+        const created = await api.POST('/api/goals', { body });
+        if (created.error) throw new Error('goal');
+        await api.DELETE('/api/goals/{goal_id}', path);
+        return;
+      }
       if (error) throw new Error('goal');
     },
     onSuccess: () => {
@@ -397,7 +401,7 @@ export function GoalForm({ unit, onDone, bare }: { unit: string; onDone: () => v
       onDone();
     },
   });
-  return (
+  const form = (
     <Card style={bare ? { borderWidth: 0, padding: 0, backgroundColor: 'transparent' } : undefined}>
       {!bare && <Heading>{t('goals.add')}</Heading>}
       <Muted>{t('stats.period')}</Muted>
@@ -410,26 +414,22 @@ export function GoalForm({ unit, onDone, bare }: { unit: string; onDone: () => v
           label: t(`goals.period.${p}`),
         }))}
       />
+      <Muted>{t('feed.sports')}</Muted>
+      <Choice
+        label={t('feed.sports')}
+        value={sport}
+        onChange={chooseSport}
+        options={[
+          { value: '', label: t('goals.allSports') },
+          ...SPORTS.filter((s) => s !== 'other').map((s) => ({ value: s as string, label: t(`sport.${s}`) })),
+        ]}
+      />
       <Muted>{t('goals.measure')}</Muted>
       <Choice
         label={t('goals.measure')}
         value={metric}
         onChange={setMetric}
-        options={(['distance', 'time', 'count'] as const).map((m) => ({
-          value: m,
-          label: t(`goals.metric.${m}`),
-        }))}
-      />
-      <Muted>{t('feed.sports')}</Muted>
-      <Choice
-        scroll
-        label={t('feed.sports')}
-        value={sport}
-        onChange={setSport}
-        options={[
-          { value: '', label: t('goals.allSports') },
-          ...SPORTS.filter((s) => s !== 'other').map((s) => ({ value: s as string, label: t(`sport.${s}`) })),
-        ]}
+        options={metrics.map((m) => ({ value: m, label: t(`goals.metric.${m}`) }))}
       />
       <Field
         label={`${t('goals.target')} (${metric === 'distance' ? unit : metric === 'time' ? 'h' : '#'})`}
@@ -437,22 +437,39 @@ export function GoalForm({ unit, onDone, bare }: { unit: string; onDone: () => v
         value={target}
         onChangeText={setTarget}
       />
-      <Button primary disabled={!(value > 0) || save.isPending} onPress={() => save.mutate()}>
-        {t('goals.add')}
-      </Button>
+      {!onCancel && (
+        <Button primary disabled={!(value > 0) || save.isPending} onPress={() => save.mutate()}>
+          {goal ? t('settings.save') : t('goals.add')}
+        </Button>
+      )}
       {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
     </Card>
+  );
+  if (!onCancel) return form;
+  return (
+    <Sheet
+      title={goal ? t('goals.editTitle') : t('goals.add')}
+      onClose={onCancel}
+      footer={
+        <>
+          <Button primary disabled={!(value > 0) || save.isPending} onPress={() => save.mutate()}>
+            {goal ? t('settings.save') : t('goals.add')}
+          </Button>
+          <Button onPress={onCancel}>{t('common.cancel')}</Button>
+        </>
+      }
+    >
+      {form}
+    </Sheet>
   );
 }
 
 // --- the account -----------------------------------------------------------------------------------
 
 export function Account({ me }: { me: Me }) {
-  const { api, signOut } = useAuth();
+  const { api } = useAuth();
   const c = useTheme();
   const queryClient = useQueryClient();
-  const sources = useQuery(sourcesQuery(api));
-  const garmin = sources.data?.find((s) => s.kind === 'garmin');
   const providers = useQuery({ ...providersQuery(api), retry: false });
   const unlink = useMutation({
     mutationFn: async () => {
@@ -490,17 +507,6 @@ export function Account({ me }: { me: Me }) {
         )}
       </Card>
       <Passkeys />
-      <Card style={{ paddingVertical: 0, gap: 0 }}>
-        {garmin && (
-          <MenuRow
-            label={t('settings.garmin')}
-            note={garmin.configured ? t('settings.garminOn') : t('settings.garminOff')}
-            onPress={() => router.push('/settings/account')}
-          />
-        )}
-        <MenuRow label={t('settings.sessions')} onPress={() => router.push('/settings/account')} last />
-      </Card>
-      <Button onPress={() => void signOut()}>{t('nav.signOut')}</Button>
     </>
   );
 }

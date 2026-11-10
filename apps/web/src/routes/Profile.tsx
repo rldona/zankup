@@ -103,7 +103,7 @@ function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSummary; onE
       )}
       <div className="grow">
         <h1>{me.display_name ?? me.email}</h1>
-        <p className="note">{[me.location, summary?.device].filter(Boolean).join(' · ')}</p>
+        {me.location && <p className="note">{me.location}</p>}
         {summary && (
           <span className="badge streak">{t('profile.streak', { count: summary.streak_weeks })}</span>
         )}

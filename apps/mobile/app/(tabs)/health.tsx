@@ -7,6 +7,7 @@ import {
   formatHoursMinutes,
   healthDaysQuery,
   healthNightQuery,
+  relativeDay,
   type HealthDay,
   type HealthNight,
   type HealthSourceName,
@@ -18,11 +19,14 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../../src/auth';
+import { HealthSkeleton } from '../../src/Skeleton';
 import { Chart } from '../../src/charts';
-import { Icon, SourceIcon } from '../../src/Icon';
+import { lastRead, readAndSend } from '../../src/healthConnect';
+import { Icon, SourceIcon, SpinningIcon } from '../../src/Icon';
+import { MenuButton } from '../../src/Menu';
 import { locale, t } from '../../src/i18n';
 import { useTheme } from '../../src/theme';
-import { Button, Card, Choice, Heading, Loading, Muted, Screen, styles as ui } from '../../src/ui';
+import { Button, Card, Heading, Muted, Screen, styles as ui } from '../../src/ui';
 
 const PERIODS = ['30', '90', '365'] as const;
 type Period = (typeof PERIODS)[number];
@@ -37,6 +41,15 @@ const shortDay = (day: string) =>
   new Date(`${day}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 const longDay = (day: string) =>
   new Date(`${day}T12:00:00`).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** "Today, …" only when it is today; "Yesterday, …"; otherwise the date. */
+function dayTitle(day: string): string {
+  const when = relativeDay(day, isoDay(new Date()));
+  if (when === 'today') return t('health.today', { day: longDay(day) });
+  if (when === 'yesterday') return t('health.yesterday', { day: longDay(day) });
+  const text = longDay(day);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 const sourceName = (source: HealthSourceName) => t(`health.source.${source}` as MessageKey);
 const from = (source: HealthSourceName, others: HealthSourceName[]) =>
@@ -67,42 +80,76 @@ export default function HealthScreen() {
     return { start: isoDay(start), end: isoDay(end) };
   }, [period]);
   const days = useQuery(healthDaysQuery(api, range.start, range.end));
+  // Sync: the server fetches Garmin and Google Health in the background, and this phone sends what
+  // Health Connect has (when it was connected). The icon turns until the figures have been reloaded.
   const sync = useMutation({
-    mutationFn: async () => (await api.POST('/api/wellness/sync')).data,
-    onSuccess: () => setTimeout(() => void queryClient.invalidateQueries({ queryKey: ['wellness'] }), 8000),
+    mutationFn: async () => {
+      await api.POST('/api/wellness/sync');
+      if (lastRead()) await readAndSend(api, true).catch(() => null);
+      await new Promise((resolve) => setTimeout(resolve, 8000));
+      await queryClient.refetchQueries({ queryKey: ['wellness'] });
+    },
   });
 
   const list = days.data ?? [];
   const lastNight = [...list].reverse().find((d) => d.sleep);
   const latest = list.at(-1);
   const nights = list.filter((d) => d.sleep);
+  // The charts run over the whole period chosen, a gap where a day has no data, so a year shows where
+  // the history starts instead of stretching the last weeks across the width.
+  const span = useMemo(() => {
+    const byDay = new Map((days.data ?? []).map((d) => [d.day, d]));
+    const out: HealthDay[] = [];
+    const day = new Date(`${range.start}T00:00:00Z`);
+    const last = new Date(`${range.end}T00:00:00Z`);
+    for (; day < last; day.setUTCDate(day.getUTCDate() + 1)) {
+      const key = day.toISOString().slice(0, 10);
+      out.push(byDay.get(key) ?? ({ day: key } as HealthDay));
+    }
+    return out;
+  }, [days.data, range]);
 
   return (
     <Screen
       title={t('nav.health')}
+      busy={sync.isPending}
       actions={
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('health.sync')}
-          accessibilityState={{ busy: sync.isPending }}
-          disabled={sync.isPending}
-          hitSlop={10}
-          onPress={() => sync.mutate()}
-          style={{ opacity: sync.isPending ? 0.4 : 1 }}
-        >
-          <Icon name="sync" color={c.fg} size={26} />
-        </Pressable>
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('health.sync')}
+            accessibilityState={{ busy: sync.isPending }}
+            disabled={sync.isPending}
+            hitSlop={10}
+            onPress={() => sync.mutate()}
+          >
+            <SpinningIcon
+              name="sync"
+              color={sync.isPending ? c.accent : c.fg}
+              size={26}
+              spinning={sync.isPending}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('health.settings')}
+            hitSlop={10}
+            onPress={() => router.push('/settings/health')}
+          >
+            <Icon name="settings" color={c.fg} size={24} />
+          </Pressable>
+          <MenuButton
+            label={t('stats.period')}
+            value={period}
+            onChange={setPeriod}
+            options={PERIODS.map((p) => ({ value: p, label: t(`health.period.${p}`) }))}
+          />
+        </>
       }
     >
-      <Choice
-        label={t('stats.period')}
-        value={period}
-        onChange={setPeriod}
-        options={PERIODS.map((p) => ({ value: p, label: t(`health.period.${p}`) }))}
-      />
-      {sync.isSuccess && <Muted accessibilityRole="alert">{t('health.syncQueued')}</Muted>}
+      {sync.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
 
-      {days.isPending && <Loading />}
+      {days.isPending && <HealthSkeleton />}
       {days.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
       {days.isSuccess && list.length === 0 && (
         <Card>
@@ -119,7 +166,7 @@ export default function HealthScreen() {
           <Heading>{t('health.sleep')}</Heading>
           <Card>
             <Chart
-              days={nights.map((d) => shortDay(d.day))}
+              days={span.map((d) => shortDay(d.day))}
               label={t('health.sleepSummary', {
                 hours: one(hours(nights.at(-1)?.sleep?.asleep_s)),
                 score: nights.at(-1)?.sleep?.score ?? '–',
@@ -131,25 +178,25 @@ export default function HealthScreen() {
                     {
                       label: t('health.stage.deep'),
                       color: c.sleepDeep,
-                      values: nights.map((d) => hours(d.sleep?.deep_s)),
+                      values: span.map((d) => hours(d.sleep?.deep_s)),
                     },
                     {
                       label: t('health.stage.rem'),
                       color: c.sleepRem,
-                      values: nights.map((d) => hours(d.sleep?.rem_s)),
+                      values: span.map((d) => hours(d.sleep?.rem_s)),
                     },
                     {
                       label: t('health.stage.light'),
                       color: c.sleepLight,
                       // A night without stages shows its whole sleep as light, as in the PWA.
-                      values: nights.map((d) =>
+                      values: span.map((d) =>
                         d.sleep?.deep_s != null ? hours(d.sleep.light_s) : hours(d.sleep?.asleep_s),
                       ),
                     },
                     {
                       label: t('health.stage.awake'),
                       color: c.sleepAwake,
-                      values: nights.map((d) => hours(d.sleep?.awake_s)),
+                      values: span.map((d) => hours(d.sleep?.awake_s)),
                     },
                   ],
                 },
@@ -157,7 +204,7 @@ export default function HealthScreen() {
                   kind: 'line',
                   label: t('health.score'),
                   color: c.fg,
-                  values: nights.map((d) => d.sleep?.score),
+                  values: span.map((d) => d.sleep?.score),
                   domain: [0, 100],
                 },
               ]}
@@ -170,20 +217,20 @@ export default function HealthScreen() {
           <Heading>{t('health.heart')}</Heading>
           <Card>
             <Chart
-              days={list.map((d) => shortDay(d.day))}
+              days={span.map((d) => shortDay(d.day))}
               label={`${t('health.hrv')} ${latest?.hrv?.value.toFixed(0) ?? '–'} ms, ${t('health.restingHr')} ${latest?.resting_hr?.value.toFixed(0) ?? '–'} bpm`}
               layers={[
                 {
                   kind: 'line',
                   label: `${t('health.hrv')} (ms)`,
                   color: c.hrv,
-                  values: list.map((d) => d.hrv?.value),
+                  values: span.map((d) => d.hrv?.value),
                 },
                 {
                   kind: 'line',
                   label: `${t('health.restingHr')} (bpm)`,
                   color: c.zone5,
-                  values: list.map((d) => d.resting_hr?.value),
+                  values: span.map((d) => d.resting_hr?.value),
                 },
               ]}
             />
@@ -191,7 +238,7 @@ export default function HealthScreen() {
           <Heading>{t('health.readinessAndForm')}</Heading>
           <Card>
             <Chart
-              days={list.map((d) => shortDay(d.day))}
+              days={span.map((d) => shortDay(d.day))}
               label={
                 latest?.readiness
                   ? `${t('health.readiness')} ${latest.readiness.score}`
@@ -204,12 +251,12 @@ export default function HealthScreen() {
                     {
                       label: t('stats.tsb'),
                       color: c.formPositive,
-                      values: list.map((d) => ((d.tsb ?? 0) >= 0 ? d.tsb : null)),
+                      values: span.map((d) => ((d.tsb ?? 0) >= 0 ? d.tsb : null)),
                     },
                     {
                       label: `${t('stats.tsb')} < 0`,
                       color: c.formNegative,
-                      values: list.map((d) => ((d.tsb ?? 0) < 0 ? d.tsb : null)),
+                      values: span.map((d) => ((d.tsb ?? 0) < 0 ? d.tsb : null)),
                     },
                   ],
                 },
@@ -217,7 +264,7 @@ export default function HealthScreen() {
                   kind: 'line',
                   label: t('health.readiness'),
                   color: c.accent,
-                  values: list.map((d) => d.readiness?.score),
+                  values: span.map((d) => d.readiness?.score),
                   domain: [0, 100],
                 },
               ]}
@@ -244,7 +291,11 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
   } as const;
   return (
     <>
-      <Heading>{t('health.lastNight')}</Heading>
+      <Heading first>
+        {relativeDay(day.day, isoDay(new Date())) === 'today'
+          ? t('health.lastNight')
+          : t('health.nightOf', { day: longDay(day.day) })}
+      </Heading>
       <Card>
         <View style={{ flexDirection: 'row', gap: 24 }}>
           <View>
@@ -329,7 +380,7 @@ function Today({ day }: { day: HealthDay }) {
   add('health.steps', day.steps, (n) => n.toLocaleString(locale));
   return (
     <>
-      <Heading>{t('health.today', { day: longDay(day.day) })}</Heading>
+      <Heading>{dayTitle(day.day)}</Heading>
       <Card>
         <Text style={{ color: c.fg, fontWeight: '600' }}>{t('health.readiness')}</Text>
         <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>{r ? r.score : '–'}</Text>

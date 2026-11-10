@@ -7,6 +7,7 @@ import { decodePolyline, focusLines } from '@zankup/core';
 import { useMemo } from 'react';
 import { View } from 'react-native';
 
+import { useMapCover } from './MapCover';
 import { useTheme } from './theme';
 
 const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron';
@@ -64,6 +65,7 @@ export function TrackMap({
     }),
     [lines],
   );
+  const { cover, reveal } = useMapCover(c.scheme === 'dark');
   if (!bounds) return null;
   return (
     <View style={{ height, borderRadius: 16, overflow: 'hidden' }}>
@@ -76,6 +78,7 @@ export function TrackMap({
         scaleBar={false}
         touchRotate={false}
         touchPitch={false}
+        onDidFinishLoadingStyle={reveal}
       >
         <Camera initialViewState={{ bounds, padding: { top: 24, right: 24, bottom: 24, left: 24 } }} />
         <GeoJSONSource id="tracks" data={data} tolerance={0}>
@@ -95,6 +98,7 @@ export function TrackMap({
           />
         </GeoJSONSource>
       </Map>
+      {cover}
     </View>
   );
 }

@@ -1164,6 +1164,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/wellness/history': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Import History
+     * @description Bring the last year of health data from Garmin and Google Health, beyond the 30 days the first
+     *     sync fetched. It runs in the background; a source that is not connected is skipped.
+     */
+    post: operations['importHealthHistory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/wellness/sources/{source}/data': {
     parameters: {
       query?: never;
@@ -1649,7 +1670,11 @@ export interface paths {
     delete: operations['deleteGoal'];
     options?: never;
     head?: never;
-    patch?: never;
+    /**
+     * Update Goal
+     * @description Change a goal: its period, measure, sport and target, all at once.
+     */
+    patch: operations['updateGoal'];
     trace?: never;
   };
   '/api/events': {
@@ -6660,6 +6685,28 @@ export interface operations {
       };
     };
   };
+  importHealthHistory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            [key: string]: string[];
+          };
+        };
+      };
+    };
+  };
   deleteHealthData: {
     parameters: {
       query?: never;
@@ -7458,6 +7505,41 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  updateGoal: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        goal_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GoalCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GoalOut'];
+        };
       };
       /** @description Validation Error */
       422: {

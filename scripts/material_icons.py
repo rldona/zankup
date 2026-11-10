@@ -139,6 +139,7 @@ INTERFACE = [
     "close",
     "add",
     "edit",
+    "edit_square",
     "delete",
     "check",
     "more_vert",

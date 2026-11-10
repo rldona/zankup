@@ -4,14 +4,17 @@
  */
 import { gearQuery, SPORTS, type GearOut } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { useNavigation } from 'expo-router';
+import { useLayoutEffect, useState } from 'react';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
 
 import { useApi } from '../src/auth';
+import { Sheet } from '../src/detail/Tools';
+import { Icon } from '../src/Icon';
 import { locale, t } from '../src/i18n';
 import { useFormat } from '../src/prefs';
 import { useTheme } from '../src/theme';
-import { Badge, Button, Card, Choice, Field, Heading, Muted, ProgressBar, Screen } from '../src/ui';
+import { Badge, Button, Card, Choice, Field, Muted, ProgressBar, Screen } from '../src/ui';
 
 type Kind = 'shoe' | 'bike' | 'other';
 
@@ -32,20 +35,26 @@ export default function GearScreen() {
   const [editing, setEditing] = useState<GearOut | 'new' | null>(null);
   const list = gear.data ?? [];
   const sorted = [...list.filter((g) => !g.retired), ...list.filter((g) => g.retired)];
-
-  if (editing)
-    return (
-      <Screen header>
-        <GearForm gear={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />
-      </Screen>
-    );
+  // Adding gear is the + in the header, while the list shows.
+  const navigation = useNavigation();
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('gear.add')}
+          hitSlop={10}
+          onPress={() => setEditing('new')}
+        >
+          <Icon name="add" color={c.fg} size={28} />
+        </Pressable>
+      ),
+    });
+  }, [navigation, c.fg]);
 
   return (
     <Screen header>
       <Muted>{t('gear.help')}</Muted>
-      <Button primary onPress={() => setEditing('new')}>
-        {t('gear.add')}
-      </Button>
       {gear.data && list.length === 0 && <Muted>{t('gear.empty')}</Muted>}
       {sorted.map((g) => (
         <Card key={g.id} style={g.retired ? { opacity: 0.6 } : undefined}>
@@ -76,6 +85,8 @@ export default function GearScreen() {
           <Button onPress={() => setEditing(g)}>{t('activity.edit')}</Button>
         </Card>
       ))}
+      {/* Adding or editing opens over the list: Back closes the sheet and leaves you on the list. */}
+      {editing && <GearForm gear={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />}
     </Screen>
   );
 }
@@ -128,8 +139,18 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
       { text: t('gear.delete'), style: 'destructive', onPress: () => save.mutate({ remove: true }) },
     ]);
   return (
-    <>
-      <Heading>{gear ? gear.name : t('gear.add')}</Heading>
+    <Sheet
+      title={gear ? gear.name : t('gear.add')}
+      onClose={onDone}
+      footer={
+        <>
+          <Button primary disabled={save.isPending || !name.trim()} onPress={() => save.mutate({})}>
+            {t('settings.save')}
+          </Button>
+          <Button onPress={onDone}>{t('common.cancel')}</Button>
+        </>
+      }
+    >
       <Field label={t('activity.name')} value={name} onChangeText={setName} maxLength={120} />
       <Text style={{ color: c.fg, fontWeight: '600' }}>{t('gear.kindLabel')}</Text>
       <Choice
@@ -155,9 +176,6 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
           </View>
         ))}
       </Card>
-      <Button primary disabled={save.isPending || !name.trim()} onPress={() => save.mutate({})}>
-        {t('settings.save')}
-      </Button>
       {gear && (
         <Button disabled={save.isPending} onPress={() => save.mutate({ retired: !gear.retired })}>
           {gear.retired ? t('gear.unretire') : t('gear.retire')}
@@ -168,8 +186,7 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
           {t('gear.delete')}
         </Button>
       )}
-      <Button onPress={onDone}>{t('common.cancel')}</Button>
       {save.isError && <Muted accessibilityRole="alert">{save.error.message}</Muted>}
-    </>
+    </Sheet>
   );
 }

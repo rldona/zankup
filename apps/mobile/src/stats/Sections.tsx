@@ -658,7 +658,7 @@ export function Efficiency({ range }: { range: Range }) {
       <Chart
         legendGap={18}
         days={[]}
-        height={60}
+        height={120}
         label={t('stats.efficiency')}
         layers={[{ kind: 'line', label: t('stats.efficiency'), color: c.run, values, hideLegend: true }]}
       />

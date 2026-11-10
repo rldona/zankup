@@ -148,10 +148,15 @@ def sync_google_health(sessions: sessionmaker[Session], settings: Settings) -> H
     from datetime import date
 
     from zankup.health.google import sync
+    from zankup.instance_keys import effective
 
-    def handle(_: Session, job: Job) -> None:
+    def handle(session: Session, job: Job) -> None:
+        current = effective(settings, session)
+        if not current.integrations()["google_health"]:
+            log.info("Google Health sync skipped: turned off", extra={"job_id": job.id})
+            return
         since = job.payload.get("since")
-        sync(sessions, settings, job.user_id, since=date.fromisoformat(since) if since else None)
+        sync(sessions, current, job.user_id, since=date.fromisoformat(since) if since else None)
 
     return handle
 
@@ -159,14 +164,16 @@ def sync_google_health(sessions: sessionmaker[Session], settings: Settings) -> H
 def backup(settings: Settings, alert: Sender | None = None) -> Handler:
     """The daily backup (OS-114). On its last failed attempt it e-mails the owner."""
     from zankup.backup import backup_store, run_backup
+    from zankup.instance_keys import effective
 
-    def handle(_: Session, job: Job) -> None:
-        store = backup_store(settings)
+    def handle(session: Session, job: Job) -> None:
+        current = effective(settings, session)  # S3 and keep-days saved from the apps apply at once
+        store = backup_store(current)
         if store is None:
             log.info("Backup skipped: not configured", extra={"job_id": job.id})
             return
         try:
-            run_backup(settings, store)
+            run_backup(current, store)
         except Exception as error:
             if job.attempts >= job.max_attempts and alert is not None:
                 try:
@@ -210,7 +217,8 @@ def default_handlers(
         handlers["sync_garmin_health"] = _with_garmin_key(
             settings, lambda key: sync_garmin_health(sessions, key)
         )
-    if sessions is not None and settings is not None and settings.integrations()["google_health"]:
+    if sessions is not None and settings is not None:
+        # Registered always: Google Health can be turned on from the apps; the job checks at run time.
         handlers["sync_google_health"] = sync_google_health(sessions, settings)
     if settings is not None:
         handlers["backup"] = backup(settings, alert)

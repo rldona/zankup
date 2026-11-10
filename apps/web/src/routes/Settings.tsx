@@ -25,6 +25,7 @@ import { PrivacyZones } from '../settings/Privacy';
 import { ExportData } from './Library';
 import { useSaveSettings } from '../settings';
 import { useSetTheme, useThemeChoice } from '../theme';
+import { AlertSettings, BackupSettings, GoogleHealthSwitch, SyncInterval } from '../settings/Instance';
 import { ServiceKeyForm } from '../settings/ServiceKey';
 
 // The "System" preview is half light, half dark: the two themes the device can pick between.
@@ -53,11 +54,14 @@ export function Settings() {
       <HeartRate />
       <Zones />
       <Notifications />
+      <AlertSettings />
       <Ai />
       <Mcp />
       <PrivacyZones />
       <YourData />
+      <BackupSettings />
       <Garmin />
+      <GoogleHealthSwitch />
       <HealthSources />
       <Sessions />
     </section>
@@ -276,6 +280,7 @@ function Garmin() {
             : t('settings.never')}
           {garmin.last_error && ` ${t('settings.lastError', { error: garmin.last_error })}`}
         </p>
+        <SyncInterval />
         <p className="note">{t('keys.garminHelp')}</p>
         <ServiceKeyForm name="garmin" />
       </div>

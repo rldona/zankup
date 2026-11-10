@@ -132,17 +132,20 @@ function Weekly() {
           </Pressable>
         </>
       )}
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => write.mutate()}
-        disabled={write.isPending}
-        hitSlop={8}
-        style={{ alignSelf: 'center', paddingTop: 6, opacity: write.isPending ? 0.5 : 1 }}
-      >
-        <Text style={{ color: c.muted, fontSize: 13, textDecorationLine: 'underline' }}>
-          {write.isPending ? t('coach.thinking') : t('weekly.generate')}
-        </Text>
-      </Pressable>
+      {/* Writing it by hand only when there is none yet; Monday's comes on its own. */}
+      {!latest && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => write.mutate()}
+          disabled={write.isPending}
+          hitSlop={8}
+          style={{ alignSelf: 'center', paddingTop: 6, opacity: write.isPending ? 0.5 : 1 }}
+        >
+          <Text style={{ color: c.muted, fontSize: 13, textDecorationLine: 'underline' }}>
+            {write.isPending ? t('coach.thinking') : t('weekly.generate')}
+          </Text>
+        </Pressable>
+      )}
       {write.isError && <Muted accessibilityRole="alert">{t('weekly.failed')}</Muted>}
     </Card>
   );
@@ -283,7 +286,9 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
           {budgetSpent && <Muted accessibilityRole="alert">{t('coach.budget')}</Muted>}
           {turns.length === 0 && !budgetSpent && (
             <>
-              <Body>{t('coach.intro')}</Body>
+              <Text style={{ color: c.fg, fontWeight: '600', marginTop: 4 }}>
+                {t('coach.suggestionsTitle')}
+              </Text>
               <View style={{ gap: 8 }}>
                 {SUGGESTIONS.map((key) => (
                   <Pressable

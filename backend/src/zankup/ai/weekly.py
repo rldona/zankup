@@ -42,10 +42,10 @@ h:mm."""
 SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "headline": {"type": "string", "maxLength": 160},
+        "headline": {"type": "string"},
         "summary": {"type": "string"},
         "recommendation": {"type": "string"},
-        "highlights": {"type": "array", "items": {"type": "string"}, "maxItems": 4},
+        "highlights": {"type": "array", "items": {"type": "string"}},
     },
     "required": ["headline", "summary", "recommendation", "highlights"],
     "additionalProperties": False,

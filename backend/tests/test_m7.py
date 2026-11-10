@@ -821,3 +821,27 @@ def test_the_evaluation_spots_invented_numbers() -> None:
     cases = load_cases()
     assert len(cases) == 46 and {c.language for c in cases} == {"en", "es"}
     assert all(c.question for c in cases if c.kind == "coach")
+
+
+def test_structured_output_schemas_use_only_what_the_api_accepts() -> None:
+    """Structured outputs reject length and count limits: a schema with them failed every summary (400)."""
+    from zankup.ai import summary, weekly
+
+    unsupported = {"maxItems", "minLength", "maxLength", "minimum", "maximum", "pattern"}
+
+    def keys(node: object) -> set[str]:
+        if isinstance(node, dict):
+            return set(node) | {k for v in node.values() for k in keys(v)}
+        if isinstance(node, list):
+            return {k for v in node for k in keys(v)}
+        return set()
+
+    for schema in (summary.SCHEMA, weekly.SCHEMA):
+        assert not keys(schema) & unsupported
+
+
+def test_a_stray_space_around_the_model_is_trimmed(monkeypatch: pytest.MonkeyPatch) -> None:
+    from zankup.core.config import Settings
+
+    monkeypatch.setenv("AI_MODEL", " claude-haiku-5-5 ")
+    assert Settings().ai_model == "claude-haiku-5-5"

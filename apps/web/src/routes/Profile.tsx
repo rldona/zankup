@@ -26,7 +26,7 @@ import { usePrefs } from '../prefs';
 import { deviceName } from '../signin/device';
 import { attestationJson, creationOptions, passkeysSupported } from '../signin/webauthn';
 import { SportIcon } from '../SportIcon';
-import { EstimatesPanel, GoalsPanel } from '../stats/panels';
+import { EstimatesPanel } from '../stats/panels';
 import { Menu } from '../ui';
 import { CardSkeleton, PageSkeleton, Pulse } from '../Skeleton';
 
@@ -90,7 +90,7 @@ export function Profile() {
       </div>
       <div role="tabpanel">
         {tab === 'summary' && <Summary me={me.data} summary={summary.data} />}
-        {tab === 'goals' && <GoalsPanel editable />}
+        {tab === 'goals' && <Navigate to="/goals" replace />}
         {tab === 'estimates' && <ProfileEstimates />}
         {tab === 'gear' && <Navigate to="/gear" replace />}
         {tab === 'account' && <Account me={me.data} />}

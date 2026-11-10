@@ -172,7 +172,10 @@ describe('phase 3 screens', () => {
     expect(router.state.location.search).toBe('?period=2025');
   });
 
-  it('goals: add one in Profile → Goals', async () => {
+  it("goals: add one from Goals (You's old Goals tab leads there)", async () => {
+    HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
+      this.setAttribute('open', '');
+    };
     let goals: object[] = [];
     const calls = mockApi({
       'GET /api/goals': () => Response.json(goals),
@@ -204,9 +207,12 @@ describe('phase 3 screens', () => {
           device: null,
         }),
     });
-    renderAt('/profile?tab=goals');
-    await userEvent.type(await screen.findByRole('spinbutton', { name: /Target/ }), '40');
-    await userEvent.click(screen.getByRole('button', { name: 'Add goal' }));
+    const router = renderAt('/profile?tab=goals');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/goals'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add goal' }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /Target/ }), '40');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Add goal' }));
     expect(await screen.findByText('On track: about 70.00 km by the end')).toBeInTheDocument();
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
       period: 'week',

@@ -248,6 +248,8 @@
   "profile.since": "Since {date}",
   "profile.records": "Records",
   "profile.physical": "Physical data",
+  "profile.showPhysical": "Show the physical data",
+  "profile.hidePhysical": "Hide the physical data",
   "profile.age": "Age",
   "profile.years": "{count} years",
   "profile.gearSoon": "Shoes and bikes with their distance and wear arrive with the metrics engine (phase 3).",

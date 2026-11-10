@@ -69,6 +69,7 @@ class User(Timestamps, Base):
     google_sub: Mapped[str | None] = mapped_column(
         String(255), unique=True, comment="Linked Google account (OS-220): only this one can sign in"
     )
+    avatar_url: Mapped[str | None] = mapped_column(String(500), comment="Linked Google photo")
     # Profile (OS-218): optional, used by the metrics engine (age, weight) and shown on the profile.
     location: Mapped[str | None] = mapped_column(String(120))
     birth_date: Mapped[date | None] = mapped_column(Date)

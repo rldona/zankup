@@ -5,12 +5,12 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-import { useApi } from '../../src/auth';
-import { ActivityCard } from '../../src/Feed';
-import { t } from '../../src/i18n';
-import { useFormat } from '../../src/prefs';
-import { useTheme } from '../../src/theme';
-import { accent, onAccent, Empty, Muted, Screen, styles as ui } from '../../src/ui';
+import { useApi } from '../src/auth';
+import { ActivityCard } from '../src/Feed';
+import { t } from '../src/i18n';
+import { useFormat } from '../src/prefs';
+import { useTheme } from '../src/theme';
+import { accent, onAccent, Empty, Muted, Screen, styles as ui } from '../src/ui';
 
 export default function SearchScreen() {
   const api = useApi();
@@ -31,8 +31,8 @@ export default function SearchScreen() {
   const items = results.data?.pages.flatMap((p) => p.items) ?? [];
   const totals = results.data?.pages[0]?.totals;
   return (
-    <Screen scroll={false}>
-      <View style={{ padding: 16, gap: 10 }}>
+    <Screen scroll={false} header>
+      <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 16, gap: 10 }}>
         <TextInput
           value={text}
           onChangeText={setText}

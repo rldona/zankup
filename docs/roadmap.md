@@ -175,7 +175,7 @@ metrics engine (phase 3), gear, and importing and exporting (phase 4).
   - Map (light or dark style) and charts adapted to each theme.
   - *Done when:* switching themes leaves no hard-coded colour visible and every theme passes WCAG AA contrast in CI.
 - **OS-203 · Sign-in screen** (M) · depends on OS-110 and OS-201
-  - Prototype design: on desktop, a brand panel on the left with the claim "Your sports data, from start to finish." and, as a second line, "Sync with Garmin, import your Strava history and follow your form without depending on anyone" and gentle animated waves (Canvas 2D, no library, still with `prefers-reduced-motion`), and the form on the right; on mobile, a single column. Links to "Create your account" (OS-221) and "Forgot it?" (OS-222).
+  - Prototype design: on desktop, a brand panel on the left with the claim "Your sports and health data together." and, as a second line, "Sync with Garmin, import your Strava history and follow your form without depending on anyone" and gentle animated waves (Canvas 2D, no library, still with `prefers-reduced-motion`), and the form on the right; on mobile, a single column. Links to "Create your account" (OS-221) and "Forgot it?" (OS-222).
   - Step 1: email and password (show/hide, "remember this device for 30 days"). Step 2: 6-digit TOTP code with auto-advance, pasting the whole code and a link to use a recovery code. "Continue with Google" (OS-220). "Sign in with a passkey" (OS-405).
   - Clear errors that never reveal whether the email or the password was wrong, rate limiting with increasing delays and the right `autocomplete` values (`username`, `current-password`, `one-time-code`) for password managers.
   - **The sign-in screen shows no user data** (no numbers or routes): it is the only thing visible without a session.
@@ -437,6 +437,8 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
   - Account, two-step verification opened in the authenticator app on the same phone, recovery codes and loading the history. `POST /api/setup/totp` takes `client: "android"` and returns the app's tokens.
 - **OS-526 · Passkeys on the phone** (M) · depends on OS-405 and OS-503
   - Signing in and adding one with `react-native-passkey`. Release builds are signed with the owner's own key, published in `/.well-known/assetlinks.json` on the relying party's domain, whose `android:apk-key-hash` origin goes in `WEBAUTHN_ORIGINS`.
+- **OS-527 · Home and the phone's navigation** (M) · depends on OS-511
+  - Tabs: Home, Activities, Health, Goals and You. Home with This week, the last day with activities, the last seven days and the metrics; Sync, the Coach, Search and Notifications in its header; Material Symbols as the icon set.
 
 **M5 is done when** the Android app replaces the PWA on your phone, with reliable notifications and background sync.
 

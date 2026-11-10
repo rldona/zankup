@@ -8,7 +8,7 @@ import { createApiClient } from '@zankup/core';
 import { useEffect, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Pressable, Text, View } from 'react-native';
 
-import { Icon } from './Icon';
+import { GoogleIcon, Icon } from './Icon';
 import { t } from './i18n';
 import {
   checkInstance,
@@ -102,7 +102,6 @@ export function SignIn({ onSignedIn }: { onSignedIn: (session: Session) => void 
         <View style={{ gap: 16, paddingTop: 24 }}>
           <Brand />
           {card}
-          <Muted style={{ textAlign: 'center' }}>{t('signIn.footer')}</Muted>
         </View>
       </Screen>
     </KeyboardAvoidingView>
@@ -114,10 +113,9 @@ function Brand() {
   return (
     <View style={{ gap: 10, paddingBottom: 8 }}>
       <Wordmark />
-      <Text style={{ color: c.fg, fontSize: 24, fontWeight: '700', letterSpacing: -0.3 }}>
+      <Text style={{ color: c.fg, fontSize: 20, fontWeight: '400', letterSpacing: -0.2 }}>
         {t('app.claim')}
       </Text>
-      <Muted>{t('signIn.panel')}</Muted>
     </View>
   );
 }
@@ -233,7 +231,7 @@ function PasswordStep({
 
   return (
     <>
-      <Title title={t('signIn.welcome')} sub={t('signIn.sub')} />
+      <Title title={t('signIn.welcome')} />
       <ErrorBox message={error} />
       <Field
         label={t('signIn.email')}
@@ -286,7 +284,13 @@ function PasswordStep({
         </Pressable>
       )}
       {googleClient && (
-        <Button disabled={busy !== null} onPress={() => void google()}>
+        <Button
+          primary
+          disabled={busy !== null}
+          onPress={() => void google()}
+          icon={<GoogleIcon color="#fff" />}
+          labelColor="#fff"
+        >
           {t('signIn.google')}
         </Button>
       )}
@@ -294,7 +298,6 @@ function PasswordStep({
         <Muted style={{ flex: 1 }}>{baseUrl.replace(/^https?:\/\//, '')}</Muted>
         <LinkButton onPress={onChangeInstance}>{t('mobile.changeInstance')}</LinkButton>
       </View>
-      <Muted>{t('mobile.fingerprintNote')}</Muted>
     </>
   );
 }

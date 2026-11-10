@@ -101,6 +101,12 @@ svg.i {
   stroke-linejoin: round;
 }
 
+/* Material Symbols are filled shapes, not strokes. */
+svg.i.m {
+  fill: currentColor;
+  stroke: none;
+}
+
 .app {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
@@ -878,6 +884,10 @@ select {
   font-weight: 700;
   font-size: 22px;
   flex: none;
+}
+
+img.avatar {
+  object-fit: cover;
 }
 
 .page.profile {
@@ -1796,7 +1806,7 @@ a.button.block {
 }
 
 .lart h2 {
-  font-size: 30px;
+  font-size: 24px;
   line-height: 1.15;
   margin: 0 0 10px;
   max-width: 420px;
@@ -1986,11 +1996,22 @@ button:disabled {
   min-width: 0;
 }
 
-.lfoot {
-  margin-top: 26px;
-  font-size: 12px;
-  color: var(--muted);
-  text-align: center;
+/* "Continue with Google": the same button as "Sign in", with Google's G and the label in white. */
+a.button.google {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
 }
 
 .spin {
@@ -2019,7 +2040,7 @@ button:disabled {
   }
 
   .lart h2 {
-    font-size: 22px;
+    font-size: 20px;
     margin-top: 18px;
   }
 
@@ -2626,4 +2647,18 @@ a.button {
   padding-left: 18px;
   color: var(--muted);
   font-size: 14px;
+}
+
+/* A health figure's source (Garmin, Google Health, Health Connect) in its panel's top-right corner. */
+.health .panel {
+  position: relative;
+}
+
+svg.source {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 16px;
+  height: 16px;
+  fill: var(--muted);
 }

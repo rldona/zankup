@@ -6,8 +6,8 @@
 import { aiStatusQuery, weeklyReportsQuery, type WeeklyReport } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetch } from 'expo/fetch';
-import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { router, useNavigation } from 'expo-router';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -20,6 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useApi } from '../src/auth';
+import { Icon } from '../src/Icon';
 import { blocks, pieces, readEvents } from '../src/coach';
 import { locale, t } from '../src/i18n';
 import { accessToken, instanceUrl } from '../src/session';
@@ -116,6 +117,28 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
   const abort = useRef<AbortController | null>(null);
   const scroll = useRef<ScrollViewInstance>(null);
   useEffect(() => () => abort.current?.abort(), []);
+  // "New conversation" in the header as soon as there is one; while answering it stops first.
+  const navigation = useNavigation();
+  const hasTurns = turns.length > 0;
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: hasTurns
+        ? () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('coach.clear')}
+              hitSlop={10}
+              onPress={() => {
+                abort.current?.abort();
+                setTurns([]);
+              }}
+            >
+              <Icon name="add_comment" color={c.fg} />
+            </Pressable>
+          )
+        : undefined,
+    });
+  }, [navigation, hasTurns, c.fg]);
 
   const ask = async (question: string) => {
     const history: Turn[] = [...turns, { role: 'user', content: question }];
@@ -232,28 +255,49 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
               alignItems: 'flex-end',
             }}
           >
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder={t('coach.placeholder')}
-              accessibilityLabel={t('coach.placeholder')}
-              placeholderTextColor={c.muted}
-              multiline
-              maxLength={4000}
-              style={[
-                ui.input,
-                { flex: 1, color: c.fg, backgroundColor: c.surface, borderColor: c.line, maxHeight: 120 },
-              ]}
-            />
-            {busy ? (
-              <Button onPress={() => abort.current?.abort()}>{t('coach.stop')}</Button>
-            ) : turns.length > 0 && !draft.trim() ? (
-              <Button onPress={() => setTurns([])}>{t('coach.clear')}</Button>
-            ) : (
-              <Button primary disabled={!draft.trim()} onPress={() => void ask(draft.trim())}>
-                {t('coach.send')}
-              </Button>
-            )}
+            {/* The whole width for the question; send (or stop, while answering) sits inside it. */}
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder={t('coach.placeholder')}
+                accessibilityLabel={t('coach.placeholder')}
+                placeholderTextColor={c.muted}
+                multiline
+                maxLength={4000}
+                style={[
+                  ui.input,
+                  {
+                    color: c.fg,
+                    backgroundColor: c.surface,
+                    borderColor: c.line,
+                    maxHeight: 120,
+                    paddingRight: 52,
+                  },
+                ]}
+              />
+              {(busy || draft.trim()) && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={busy ? t('coach.stop') : t('coach.send')}
+                  hitSlop={8}
+                  onPress={() => (busy ? abort.current?.abort() : void ask(draft.trim()))}
+                  style={{
+                    position: 'absolute',
+                    right: 6,
+                    bottom: 6,
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: busy ? c.surface2 : accent(c),
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name={busy ? 'stop' : 'send'} color={busy ? c.fg : onAccent(c)} size={20} />
+                </Pressable>
+              )}
+            </View>
           </View>
         )}
       </KeyboardAvoidingView>

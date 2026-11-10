@@ -15,6 +15,7 @@ import {
   usesPace,
   weekQuery,
   type ActivitySummary,
+  SPORT_ICONS,
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -23,6 +24,7 @@ import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
 
 import { useApi } from './auth';
 import { locale, t } from './i18n';
+import { Icon, SportIcon } from './Icon';
 import { asSport, useFormat } from './prefs';
 import { useTheme } from './theme';
 import { Card, Empty, Muted, Stat, styles as ui } from './ui';
@@ -45,7 +47,6 @@ export function Feed() {
       data={items}
       keyExtractor={(a) => String(a.id)}
       renderItem={({ item }) => <ActivityCard activity={item} format={format} />}
-      ListHeaderComponent={<WeekHeader format={format} />}
       ListEmptyComponent={feed.isFetched ? <Empty>{t('feed.empty')}</Empty> : null}
       onEndReached={() => feed.hasNextPage && !feed.isFetchingNextPage && void feed.fetchNextPage()}
       onEndReachedThreshold={0.5}
@@ -56,13 +57,14 @@ export function Feed() {
           tintColor={c.accent}
         />
       }
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 32 }}
       ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
     />
   );
 }
 
-function WeekHeader({ format }: { format: Format }) {
+/** "This week" (OS-217): the seven days with what was done on each, the streak and the week's numbers. */
+export function WeekHeader({ format }: { format: Format }) {
   const api = useApi();
   const c = useTheme();
   const day = today();
@@ -70,7 +72,7 @@ function WeekHeader({ format }: { format: Format }) {
   if (!week.data) return <View style={{ height: 8 }} />;
   const { days, this_week: totals, streak_weeks: streak } = week.data;
   return (
-    <Card style={{ marginBottom: 14 }}>
+    <Card>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={[ui.heading, { color: c.fg, marginTop: 0 }]}>{t('week.title')}</Text>
         <Muted>{t('week.streak', { count: streak })}</Muted>
@@ -81,6 +83,8 @@ function WeekHeader({ format }: { format: Format }) {
           const date = new Date(`${d.date}T12:00:00`);
           const label = date.toLocaleDateString(locale, { weekday: 'narrow' });
           const sport = first ? asSport(first.sport) : null;
+          // Another activity that day: a dot in its sport's colour on the circle's top right.
+          const second = d.activities[1] ? asSport(d.activities[1].sport) : null;
           return (
             <Pressable
               key={d.date}
@@ -98,11 +102,24 @@ function WeekHeader({ format }: { format: Format }) {
                 style={[
                   feedStyles.dot,
                   {
-                    borderColor: d.date === day ? c.accent : c.line,
+                    borderColor: d.date === day ? c.accent : sport ? c[sport] : c.line,
                     backgroundColor: sport ? c[sport] : 'transparent',
                   },
                 ]}
-              />
+              >
+                {sport ? (
+                  <Icon name={SPORT_ICONS[sport]} color="#fff" size={18} />
+                ) : (
+                  <Text
+                    style={{ color: d.date === day ? c.accent : c.muted, fontSize: 12, fontWeight: '600' }}
+                  >
+                    {date.getDate()}
+                  </Text>
+                )}
+                {second ? (
+                  <View style={[feedStyles.more, { backgroundColor: c[second], borderColor: c.surface }]} />
+                ) : null}
+              </View>
               <Text style={{ color: d.date === day ? c.accent : c.muted, fontSize: 11 }}>
                 {d.date === day ? t('week.today') : label}
               </Text>
@@ -111,10 +128,10 @@ function WeekHeader({ format }: { format: Format }) {
         })}
       </View>
       <View style={ui.stats}>
-        <Stat label={t('feed.title')} value={String(totals.count)} />
-        <Stat label={t('feed.stat.distance')} value={format.distance(totals.distance_m)} />
-        <Stat label={t('feed.stat.time')} value={formatHoursMinutes(totals.moving_s)} />
-        <Stat label={t('feed.stat.ascent')} value={format.elevation(totals.ascent_m)} />
+        <Stat labelFirst label={t('feed.title')} value={String(totals.count)} />
+        <Stat labelFirst label={t('feed.stat.distance')} value={format.distance(totals.distance_m)} />
+        <Stat labelFirst label={t('feed.stat.time')} value={formatHoursMinutes(totals.moving_s)} />
+        <Stat labelFirst label={t('feed.stat.ascent')} value={format.elevation(totals.ascent_m)} />
       </View>
     </Card>
   );
@@ -151,7 +168,7 @@ export const ActivityCard = memo(function ActivityCard({
     >
       <Card>
         <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-          <View style={[feedStyles.sport, { backgroundColor: c[sport] }]} />
+          <SportIcon sport={sport} />
           <View style={{ flex: 1 }}>
             <Text numberOfLines={1} style={{ color: c.fg, fontWeight: '700', fontSize: 16 }}>
               {a.name ?? t(`sport.${sport}`)}
@@ -162,7 +179,7 @@ export const ActivityCard = memo(function ActivityCard({
         <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
           <View style={[ui.stats, { flex: 1, justifyContent: 'flex-start', gap: 16 }]}>
             {figures.map(([label, value]) => (
-              <Stat key={label} label={label} value={value} />
+              <Stat key={label} labelFirst label={label} value={value} />
             ))}
           </View>
           {a.route ? <Thumbnail route={a.route} colour={c[sport]} /> : null}
@@ -172,7 +189,9 @@ export const ActivityCard = memo(function ActivityCard({
   );
 });
 
-function Thumbnail({ route, colour }: { route: string; colour: string }) {
+/** A route drawn small, on its own tile (or bare, with `tile` false). */
+export function Thumbnail({ route, colour, tile = true }: { route: string; colour: string; tile?: boolean }) {
+  const c = useTheme();
   const path = useMemo(() => {
     const points = decodePolyline(route);
     if (points.length < 2) return null;
@@ -194,14 +213,47 @@ function Thumbnail({ route, colour }: { route: string; colour: string }) {
     return p.build();
   }, [route]);
   if (!path) return null;
+  // On its own tile, as in the PWA, so the route stands apart from the card.
   return (
-    <Canvas style={{ width: 88, height: 64 }}>
-      <Path path={path} style="stroke" strokeWidth={2} strokeJoin="round" strokeCap="round" color={colour} />
-    </Canvas>
+    <View
+      style={{
+        width: 88,
+        height: 64,
+        borderRadius: 8,
+        backgroundColor: tile ? c.surface2 : 'transparent',
+        overflow: 'hidden',
+      }}
+    >
+      <Canvas style={{ width: 88, height: 64 }}>
+        <Path
+          path={path}
+          style="stroke"
+          strokeWidth={2.4}
+          strokeJoin="round"
+          strokeCap="round"
+          color={colour}
+        />
+      </Canvas>
+    </View>
   );
 }
 
 const feedStyles = StyleSheet.create({
-  dot: { width: 26, height: 26, borderRadius: 13, borderWidth: 2 },
-  sport: { width: 10, height: 36, borderRadius: 5 },
+  dot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  more: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+  },
 });

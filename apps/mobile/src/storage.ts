@@ -9,6 +9,8 @@ export const keys = {
   language: 'zankup.language',
   theme: 'zankup.theme',
   weakBiometrics: 'zankup.weakBiometrics',
+  /** "0" when the person turned the fingerprint lock off. */
+  biometricLock: 'zankup.biometricLock',
   queryCache: 'zankup.queryCache',
 } as const;
 

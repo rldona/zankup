@@ -15,13 +15,14 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { useApi } from '../src/auth';
-import { Chart } from '../src/charts';
-import { locale, t } from '../src/i18n';
-import { useTheme } from '../src/theme';
-import { Button, Card, Choice, Heading, Loading, Muted, Screen, styles as ui } from '../src/ui';
+import { useApi } from '../../src/auth';
+import { Chart } from '../../src/charts';
+import { Icon, SourceIcon } from '../../src/Icon';
+import { locale, t } from '../../src/i18n';
+import { useTheme } from '../../src/theme';
+import { Button, Card, Choice, Heading, Loading, Muted, Screen, styles as ui } from '../../src/ui';
 
 const PERIODS = ['30', '90', '365'] as const;
 type Period = (typeof PERIODS)[number];
@@ -42,6 +43,16 @@ const from = (source: HealthSourceName, others: HealthSourceName[]) =>
   others.length
     ? t('health.fromAlso', { source: sourceName(source), others: others.map(sourceName).join(', ') })
     : t('health.from', { source: sourceName(source) });
+
+/** Where a figure comes from: the source's mark in the widget's top-right corner (the full text for screen readers). */
+function Corner({ source, label }: { source: HealthSourceName; label: string }) {
+  const c = useTheme();
+  return (
+    <View accessible accessibilityLabel={label} style={{ position: 'absolute', top: 14, right: 14 }}>
+      <SourceIcon source={source} color={c.muted} />
+    </View>
+  );
+}
 
 export default function HealthScreen() {
   const api = useApi();
@@ -67,16 +78,29 @@ export default function HealthScreen() {
   const nights = list.filter((d) => d.sleep);
 
   return (
-    <Screen header>
+    <Screen
+      title={t('nav.health')}
+      actions={
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('health.sync')}
+          accessibilityState={{ busy: sync.isPending }}
+          disabled={sync.isPending}
+          hitSlop={10}
+          onPress={() => sync.mutate()}
+          style={{ opacity: sync.isPending ? 0.4 : 1 }}
+        >
+          <Icon name="sync" color={c.fg} size={26} />
+        </Pressable>
+      }
+    >
       <Choice
         label={t('stats.period')}
         value={period}
         onChange={setPeriod}
         options={PERIODS.map((p) => ({ value: p, label: t(`health.period.${p}`) }))}
       />
-      <Button disabled={sync.isPending} onPress={() => sync.mutate()}>
-        {sync.isSuccess ? t('health.syncQueued') : t('health.sync')}
-      </Button>
+      {sync.isSuccess && <Muted accessibilityRole="alert">{t('health.syncQueued')}</Muted>}
 
       {days.isPending && <Loading />}
       {days.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
@@ -251,9 +275,8 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
             ) : null;
           })}
         </View>
-        <Muted>
-          {longDay(day.day)} · {from(sleep.source, sleep.others)}
-        </Muted>
+        <Muted>{longDay(day.day)}</Muted>
+        <Corner source={sleep.source} label={from(sleep.source, sleep.others)} />
       </Card>
     </>
   );
@@ -331,7 +354,7 @@ function Today({ day }: { day: HealthDay }) {
           <Card key={tile.key} style={{ flexBasis: '46%', flexGrow: 1 }}>
             <Text style={{ color: c.muted, fontSize: 12, textTransform: 'uppercase' }}>{t(tile.key)}</Text>
             <Text style={[ui.statValue, { color: c.fg, fontSize: 22 }]}>{tile.value}</Text>
-            {tile.source && <Muted>{from(...tile.source)}</Muted>}
+            {tile.source && <Corner source={tile.source[0]} label={from(...tile.source)} />}
           </Card>
         ))}
       </View>

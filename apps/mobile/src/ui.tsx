@@ -1,7 +1,8 @@
 /** Small building blocks shared by the screens, drawn with the theme's tokens. */
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
-  ActivityIndicator,
+  Animated,
+  Easing,
   Pressable,
   ScrollView,
   Switch,
@@ -14,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PageSkeleton } from './Skeleton';
 import { dynamicAccent, dynamicOnAccent, useTheme, type Palette } from './theme';
 
 const scheme = (c: Palette) => (c.scheme === 'dark' ? 'dark' : 'light');
@@ -35,6 +37,7 @@ export function Screen({
   title,
   toolbar,
   actions,
+  busy = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -46,6 +49,8 @@ export function Screen({
   toolbar?: ReactNode;
   /** Buttons on the title's right (the calendar on Activities). */
   actions?: ReactNode;
+  /** Something is updating (a sync): a thin bar moves under the header, as Google Health does. */
+  busy?: boolean;
 }) {
   const c = useTheme();
   return (
@@ -58,12 +63,13 @@ export function Screen({
           {actions}
         </View>
       ) : null}
+      {title ? <BusyBar busy={busy} /> : null}
       {toolbar ? <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}>{toolbar}</View> : null}
       {scroll ? (
         // "handled": a tap on a button works at once, even with the keyboard open.
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[styles.page, title ? { paddingTop: 4 } : null]}
+          contentContainerStyle={[styles.page, title ? { paddingTop: 12 } : null]}
         >
           {children}
         </ScrollView>
@@ -79,9 +85,10 @@ export function Title({ children }: { children: ReactNode }) {
   return <Text style={[styles.title, { color: c.fg }]}>{children}</Text>;
 }
 
-export function Heading({ children }: { children: ReactNode }) {
+export function Heading({ children, first }: { children: ReactNode; first?: boolean }) {
   const c = useTheme();
-  return <Text style={[styles.heading, { color: c.fg }]}>{children}</Text>;
+  // `first`: the screen's first heading, right under a fixed title, without the gap above sections.
+  return <Text style={[styles.heading, { color: c.fg }, first && { marginTop: 0 }]}>{children}</Text>;
 }
 
 export function Muted({
@@ -201,11 +208,12 @@ export function Field({ label, ...props }: TextInputProps & { label: string }) {
   );
 }
 
+/** While a screen's data loads: the shape of its cards, pulsing (see Skeleton). */
 export function Loading() {
   const c = useTheme();
   return (
-    <View style={[styles.centered, { backgroundColor: c.bg }]}>
-      <ActivityIndicator color={c.accent} />
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <PageSkeleton />
     </View>
   );
 }
@@ -265,6 +273,51 @@ export function Choice<T extends string>({
         );
       })}
     </Wrapper>
+  );
+}
+
+/** An indeterminate bar for "updating": a segment sliding across, or 3 px of nothing when idle. */
+export function BusyBar({ busy }: { busy: boolean }) {
+  const c = useTheme();
+  const [x] = useState(() => new Animated.Value(0));
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    if (!busy) {
+      x.stopAnimation();
+      x.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.timing(x, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [busy, x]);
+  const translateX = x.interpolate({ inputRange: [0, 1], outputRange: [-width * 0.4, width] });
+  return (
+    <View
+      accessibilityRole="progressbar"
+      accessibilityState={{ busy }}
+      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+      style={{ height: 3, overflow: 'hidden', backgroundColor: busy ? c.line : 'transparent' }}
+    >
+      {busy && (
+        <Animated.View
+          style={{
+            width: '40%',
+            height: 3,
+            borderRadius: 2,
+            backgroundColor: accent(c),
+            transform: [{ translateX }],
+          }}
+        />
+      )}
+    </View>
   );
 }
 

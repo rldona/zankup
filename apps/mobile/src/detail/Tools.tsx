@@ -8,11 +8,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { fetch } from 'expo/fetch';
 import { File } from 'expo-file-system';
-import { useEffect, useRef, useState } from 'react';
+import { Children, Fragment, isValidElement, useEffect, useRef, useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useApi } from '../auth';
+import { Icon } from '../Icon';
 import { t } from '../i18n';
 import { accessToken, instanceUrl } from '../session';
 import { useTheme } from '../theme';
@@ -30,7 +31,6 @@ function useRefreshActivity(id: number) {
 /** Gear and weather, as under the PWA's title. */
 export function metaLine(activity: ActivityDetail, units: 'metric' | 'imperial'): string {
   const parts: string[] = [];
-  if (activity.gear) parts.push(activity.gear.name);
   const w = activity.weather;
   if (w) {
     const bits = [
@@ -50,10 +50,13 @@ export function Sheet({
   title,
   onClose,
   children,
+  footer,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** The sheet's main actions (Save, Cancel), fixed at the bottom while the content scrolls. */
+  footer?: React.ReactNode;
 }) {
   const c = useTheme();
   return (
@@ -68,6 +71,28 @@ export function Sheet({
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ui.page}>
           {children}
         </ScrollView>
+        {footer ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              padding: 16,
+              gap: 12,
+              borderTopWidth: 1,
+              borderColor: c.line,
+              backgroundColor: c.bg,
+            }}
+          >
+            {Children.toArray(
+              isValidElement<{ children?: React.ReactNode }>(footer) && footer.type === Fragment
+                ? footer.props.children
+                : footer,
+            ).map((child, i) => (
+              <View key={i} style={{ flex: 1 }}>
+                {child}
+              </View>
+            ))}
+          </View>
+        ) : null}
       </SafeAreaView>
     </Modal>
   );
@@ -97,7 +122,18 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
   });
   const choices = (gear.data ?? []).filter((g) => !g.retired || g.id === activity.gear?.id);
   return (
-    <Sheet title={t('activity.edit')} onClose={onClose}>
+    <Sheet
+      title={t('activity.edit')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
+            {t('settings.save')}
+          </Button>
+          <Button onPress={onClose}>{t('common.cancel')}</Button>
+        </>
+      }
+    >
       <Field label={t('activity.name')} value={name} onChangeText={setName} maxLength={255} />
       <Field
         label={t('activity.description')}
@@ -132,18 +168,21 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
           ...choices.map((g) => ({ value: String(g.id), label: g.name })),
         ]}
       />
+      <Text style={{ color: c.fg, fontWeight: '600' }}>{t('photos.title')}</Text>
+      <Photos activity={activity} editable />
       <Muted>{t('activity.editNote')}</Muted>
-      <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
-        {t('settings.save')}
-      </Button>
       {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
     </Sheet>
   );
 }
 
-/** The activity's photos, opening one full size to remove it, and adding new ones from the phone. */
-export function Photos({ activity }: { activity: ActivityDetail }) {
+/**
+ * The activity's photos, each opening full size. Editing the activity (`editable`) adds new ones from
+ * the phone and removes them.
+ */
+export function Photos({ activity, editable = false }: { activity: ActivityDetail; editable?: boolean }) {
   const api = useApi();
+  const c = useTheme();
   const refresh = useRefreshActivity(activity.id);
   const [open, setOpen] = useState<number | null>(null);
   const base = instanceUrl();
@@ -210,9 +249,15 @@ export function Photos({ activity }: { activity: ActivityDetail }) {
           ))}
         </ScrollView>
       )}
-      <Button disabled={add.isPending} onPress={() => void choose()}>
-        {add.isPending ? t('photos.uploading') : t('photos.add')}
-      </Button>
+      {editable && (
+        <Button
+          icon={<Icon name="photo_camera" color={c.fg} size={20} />}
+          disabled={add.isPending}
+          onPress={() => void choose()}
+        >
+          {add.isPending ? t('photos.uploading') : t('photos.add')}
+        </Button>
+      )}
       {add.isError && <Muted accessibilityRole="alert">{t('photos.error')}</Muted>}
       {current && (
         <Sheet title={current.caption ?? t('photos.title')} onClose={() => setOpen(null)}>
@@ -224,30 +269,40 @@ export function Photos({ activity }: { activity: ActivityDetail }) {
               aspectRatio: current.width && current.height ? current.width / current.height : 1,
             }}
           />
-          <Button
-            disabled={remove.isPending}
-            onPress={() =>
-              Alert.alert(t('photos.remove'), '', [
-                { text: t('common.cancel'), style: 'cancel' },
-                { text: t('photos.remove'), style: 'destructive', onPress: () => remove.mutate(current.id) },
-              ])
-            }
-          >
-            {t('photos.remove')}
-          </Button>
+          {editable && (
+            <Button
+              disabled={remove.isPending}
+              onPress={() =>
+                Alert.alert(t('photos.remove'), '', [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  {
+                    text: t('photos.remove'),
+                    style: 'destructive',
+                    onPress: () => remove.mutate(current.id),
+                  },
+                ])
+              }
+            >
+              {t('photos.remove')}
+            </Button>
+          )}
         </Sheet>
       )}
     </>
   );
 }
 
-const SPEEDS = [10, 30, 100] as const;
+export const SPEEDS = [10, 30, 100] as const;
+export type ReplaySpeed = (typeof SPEEDS)[number];
 
-/** Replay (OS-414 on the phone): moves the shared cursor along the activity at 10× to 100×. */
-export function Replay({ times, onIndex }: { times: number[]; onIndex: (index: number) => void }) {
+/**
+ * Replay (OS-414 on the phone): moves the shared cursor along the activity at 10× to 100×. A hook, so
+ * the play button can sit on the map and the speed in the map's options.
+ */
+export function useReplay(times: number[], onIndex: (index: number) => void) {
   const total = times[times.length - 1] ?? 0;
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(30);
+  const [speed, setSpeed] = useState<ReplaySpeed>(30);
   const position = useRef(0);
   const report = useRef(onIndex);
   useEffect(() => {
@@ -268,28 +323,11 @@ export function Replay({ times, onIndex }: { times: number[]; onIndex: (index: n
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
   }, [playing, speed, times, total]);
-  return (
-    <View
-      accessibilityRole="toolbar"
-      accessibilityLabel={t('replay.title')}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
-    >
-      <Button
-        onPress={() => {
-          if (!playing && position.current >= total) position.current = 0;
-          setPlaying(!playing);
-        }}
-      >
-        {playing ? t('replay.pause') : t('replay.play')}
-      </Button>
-      <Choice
-        label={t('replay.speed')}
-        value={String(speed)}
-        onChange={(v) => setSpeed(Number(v) as (typeof SPEEDS)[number])}
-        options={SPEEDS.map((s) => ({ value: String(s), label: `${s}×` }))}
-      />
-    </View>
-  );
+  const toggle = () => {
+    if (!playing && position.current >= total) position.current = 0;
+    setPlaying(!playing);
+  };
+  return { playing, toggle, speed, setSpeed };
 }
 
 /** Save the selected section as a personal segment (OS-325). */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildTrack, colouredSegments, indexAt, rampExpression } from './track';
+import { buildTrack, gradientExpression, indexAt, rampColour } from './track';
 
 const track = buildTrack({
   t: [0, 10, 20, 30],
@@ -10,38 +10,44 @@ const track = buildTrack({
 } as never);
 
 describe('track', () => {
-  it('colours pieces that join across GPS gaps, without a value where the metric is missing', () => {
-    const { features } = colouredSegments(track, [1, 2, 3, null]);
-    expect(features).toHaveLength(2);
-    expect(features[0]?.properties).toEqual({ v: 2 });
-    expect(features[1]?.properties).toEqual({});
-    expect(features[1]?.geometry.coordinates).toEqual([
-      [-3.001, 40.001],
-      [-3.003, 40.003],
-    ]);
+  it('blends the ramp between its stops', () => {
+    expect(rampColour(0, ['#000000', '#ffffff'])).toBe('#000000');
+    expect(rampColour(0.5, ['#000000', '#ffffff'])).toBe('#808080');
+    expect(rampColour(2, ['#000000', '#ff0000', '#ffffff'])).toBe('#ffffff');
   });
 
-  it('keeps long routes to a few hundred pieces that share their ends', () => {
+  it('colours the route along its length, the fallback where the metric is missing', () => {
+    const expression = gradientExpression(track, [100, 200, 150, null], [100, 200], '#123456', [
+      '#000000',
+      '#ffffff',
+    ]) as unknown[];
+    expect(expression.slice(0, 3)).toEqual(['interpolate', ['linear'], ['line-progress']]);
+    const stops = expression.slice(3);
+    // The second point is a third of the way: the gap jumps twice as far.
+    expect(stops.filter((_, k) => k % 2 === 1)).toEqual(['#000000', '#ffffff', '#123456']);
+    expect(stops[0]).toBe(0);
+    expect(stops[2] as number).toBeCloseTo(1 / 3, 2);
+    expect(stops[4]).toBe(1);
+  });
+
+  it('keeps long routes to a few hundred rising stops', () => {
     const n = 5000;
     const long = buildTrack({
       t: Array.from({ length: n }, (_, i) => i),
       lat: Array.from({ length: n }, (_, i) => 40 + i / 1e4),
       lon: Array.from({ length: n }, () => -3),
     } as never);
-    const { features } = colouredSegments(
-      long,
-      Array.from({ length: n }, (_, i) => i),
-    );
-    expect(features.length).toBeLessThanOrEqual(400);
-    for (let k = 1; k < features.length; k++)
-      expect(features[k]?.geometry.coordinates[0]).toEqual(features[k - 1]?.geometry.coordinates.at(-1));
-  });
-
-  it('spreads the ramp over the range, the fallback where there is no value', () => {
-    const expression = rampExpression([100, 200], '#000', ['#a', '#b', '#c']) as unknown as unknown[];
-    expect(expression[1]).toEqual(['has', 'v']);
-    expect(expression[3]).toBe('#000');
-    expect(expression[2]).toEqual(['interpolate', ['linear'], ['get', 'v'], 100, '#a', 150, '#b', 200, '#c']);
+    const stops = (
+      gradientExpression(
+        long,
+        Array.from({ length: n }, (_, i) => i),
+        [0, n],
+        '#000',
+      ) as unknown[]
+    ).slice(3);
+    expect(stops.length / 2).toBeLessThanOrEqual(240);
+    for (let k = 2; k < stops.length; k += 2)
+      expect(stops[k] as number).toBeGreaterThan(stops[k - 2] as number);
   });
 
   it('finds the sample at a time', () => {

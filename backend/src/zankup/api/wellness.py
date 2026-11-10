@@ -268,6 +268,39 @@ def sync_now(db: DbSession, user: CurrentUser, settings: AppSettings) -> dict[st
     return {"queued": queued}
 
 
+HISTORY_DAYS = 365
+
+
+@router.post("/history", operation_id="importHealthHistory", status_code=202)
+def import_history(db: DbSession, user: CurrentUser, settings: AppSettings) -> dict[str, list[str]]:
+    """Bring the last year of health data from Garmin and Google Health, beyond the 30 days the first
+    sync fetched. It runs in the background; a source that is not connected is skipped."""
+    since = (datetime.now(UTC).date() - timedelta(days=HISTORY_DAYS)).isoformat()
+    day = datetime.now(UTC).strftime("%Y%m%d")
+    queued = []
+    garmin = db.scalar(select(Source).where(Source.user_id == user.id, Source.kind == "garmin"))
+    if garmin is not None and settings.integrations()["garmin"]:
+        enqueue(
+            db,
+            "sync_garmin_health",
+            user_id=user.id,
+            payload={"since": since},
+            dedupe_key=f"history:garmin_health:{user.id}:{day}",
+        )
+        queued.append("garmin")
+    if google_health.source_row(db, user.id) is not None and settings.integrations()["google_health"]:
+        enqueue(
+            db,
+            "sync_google_health",
+            user_id=user.id,
+            payload={"since": since},
+            dedupe_key=f"history:google_health:{user.id}:{day}",
+        )
+        queued.append("google_health")
+    db.commit()
+    return {"queued": queued}
+
+
 @router.delete("/sources/{source}/data", operation_id="deleteHealthData", status_code=204)
 def delete_data(source: HealthSource, db: DbSession, user: CurrentUser) -> None:
     """Delete every sleep and daily figure from one source. The connection stays, and its next sync

@@ -1,14 +1,16 @@
 /**
  * MapLibre map with the route, the selected section and the cursor. Tiles from OpenFreeMap (no key).
- * The route can be coloured by a metric (OS-517): short pieces of line, each carrying its value,
- * painted over the shared ramp from the 2nd to the 98th percentile, as in the PWA.
+ * The route can be coloured by a metric (OS-517): one line with a gradient along it, painted over the
+ * shared ramp from the 2nd to the 98th percentile, as in the PWA. Switching the metric only restyles
+ * the line; its geometry is sent to the map once.
  * The cursor is its own small component so that following the finger re-renders only one source.
  */
 import { Camera, GeoJSONSource, Layer, Map } from '@maplibre/maplibre-react-native';
 import { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { colouredSegments, lineFeature, positionAt, rampExpression, type Track } from './track';
+import { useMapCover } from '../MapCover';
+import { gradientExpression, lineFeature, positionAt, type Track } from './track';
 
 const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron';
 const STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark';
@@ -37,44 +39,51 @@ export const RouteMap = memo(function RouteMap({
   range,
   onReady,
 }: Props) {
-  const coloured = !!values && !!range;
-  const route = useMemo(
-    () => (coloured ? colouredSegments(track, values) : lineFeature(track)),
-    [track, values, coloured],
+  const route = useMemo(() => lineFeature(track), [track]);
+  const gradient = useMemo(
+    () => (values && range ? gradientExpression(track, values, range, colors.route) : null),
+    [track, values, range, colors.route],
   );
   const bounds = useMemo<[number, number, number, number] | undefined>(
     () => (bbox && bbox.length === 4 ? [bbox[1], bbox[0], bbox[3], bbox[2]] : undefined),
     [bbox],
   );
+  const { cover, reveal } = useMapCover(dark);
   return (
-    <Map
-      style={StyleSheet.absoluteFill}
-      mapStyle={dark ? STYLE_DARK : STYLE_LIGHT}
-      attribution
-      logo={false}
-      compass={false}
-      scaleBar={false}
-      touchRotate={false}
-      touchPitch={false}
-      onDidFinishLoadingMap={onReady}
-    >
-      {bounds && (
-        <Camera initialViewState={{ bounds, padding: { top: 32, right: 32, bottom: 32, left: 32 } }} />
-      )}
-      <GeoJSONSource id="route" data={route} tolerance={0}>
-        <Layer
-          type="line"
-          id="route-line"
-          layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{
-            'line-color': coloured && range ? rampExpression(range, colors.route) : colors.route,
-            'line-width': 3.5,
-          }}
-        />
-      </GeoJSONSource>
-      <SectionLine track={track} section={section} color={colors.section} />
-      <CursorPoint track={track} cursor={cursor} color={colors.cursor} />
-    </Map>
+    <>
+      <Map
+        style={StyleSheet.absoluteFill}
+        mapStyle={dark ? STYLE_DARK : STYLE_LIGHT}
+        attribution
+        logo={false}
+        compass={false}
+        scaleBar={false}
+        touchRotate={false}
+        touchPitch={false}
+        onDidFinishLoadingStyle={reveal}
+        onDidFinishLoadingMap={onReady}
+      >
+        {bounds && (
+          <Camera initialViewState={{ bounds, padding: { top: 40, right: 60, bottom: 64, left: 40 } }} />
+        )}
+        <GeoJSONSource id="route" data={route} tolerance={0} lineMetrics>
+          <Layer
+            type="line"
+            id="route-line"
+            layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+            paint={
+              gradient
+                ? // A plain array built at runtime: the style spec's expression type is too strict to type it.
+                  { 'line-gradient': gradient as never, 'line-width': 3.5 }
+                : { 'line-color': colors.route, 'line-width': 3.5 }
+            }
+          />
+        </GeoJSONSource>
+        <SectionLine track={track} section={section} color={colors.section} />
+        <CursorPoint track={track} cursor={cursor} color={colors.cursor} />
+      </Map>
+      {cover}
+    </>
   );
 });
 

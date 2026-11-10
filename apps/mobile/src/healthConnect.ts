@@ -79,17 +79,19 @@ async function all<T extends RecordType>(type: T, startTime: string, endTime: st
 
 export type ReadResult = { nights: number; days: number };
 
-/** Reads from Health Connect and sends it to the instance. `force` ignores the hourly limit. */
-export async function readAndSend(api: ApiClient, force = false): Promise<ReadResult | null> {
+/**
+ * Reads from Health Connect and sends it to the instance. `force` ignores the hourly limit; `since`
+ * reads from that moment instead of where the last read stopped.
+ */
+export async function readAndSend(api: ApiClient, force = false, since?: Date): Promise<ReadResult | null> {
   if (!(await available())) return null;
   const allowed = await granted();
   if (allowed.size === 0) return null;
   const last = lastRead();
   if (!force && last && Date.now() - new Date(last).getTime() < EVERY_MS) return null;
   const now = new Date();
-  const start = new Date(
-    last ? new Date(last).getTime() - OVERLAP_MS : now.getTime() - FIRST_DAYS * 86_400_000,
-  );
+  const start =
+    since ?? new Date(last ? new Date(last).getTime() - OVERLAP_MS : now.getTime() - FIRST_DAYS * 86_400_000);
   const [from, to] = [start.toISOString(), now.toISOString()];
   // Steps are summed per local day: start at midnight, or the first day would be a partial count.
   const midnight = new Date(start);
@@ -140,4 +142,16 @@ export async function readAndSend(api: ApiClient, force = false): Promise<ReadRe
   }
   await storage.setItem(LAST, now.toISOString());
   return { nights: sleep.length, days: days.length };
+}
+
+const HISTORY_DAYS = 365;
+
+/**
+ * The last year from Health Connect. Beyond the 30 days before the read permissions were given it
+ * needs the history permission, asked for here; without it Health Connect returns what it allows.
+ */
+export async function readHistory(api: ApiClient): Promise<ReadResult | null> {
+  if (!(await available())) return null;
+  await requestPermission([{ accessType: 'read', recordType: 'ReadHealthDataHistory' }]).catch(() => null);
+  return readAndSend(api, true, new Date(Date.now() - HISTORY_DAYS * 86_400_000));
 }

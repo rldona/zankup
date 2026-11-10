@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Text, View } from 'react-native';
 
 import { useAuth } from './auth';
+import { Icon } from './Icon';
 import { t } from './i18n';
 import { useTheme } from './theme';
 import { Body, Button, Card, Heading, Muted, SwitchRow } from './ui';
@@ -31,10 +32,30 @@ export function SummaryCard({ activityId }: { activityId: number }) {
   const can = status.data?.available && status.data.enabled && status.data.summaries;
   const row = summary.data;
   if (!row && !can) return null;
+  const wand = (
+    <View
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: c.accentSoft,
+      }}
+    >
+      <Icon name="wand_stars" color={String(c.accent)} size={20} />
+    </View>
+  );
   return (
     <Card>
-      <Heading>{t('summary.title')}</Heading>
-      {row && (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        {wand}
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: c.fg, fontSize: 17, fontWeight: '700' }}>{t('summary.aiTitle')}</Text>
+          <Text style={{ color: c.muted, fontSize: 13 }}>{t('summary.aiSubtitle')}</Text>
+        </View>
+      </View>
+      {row ? (
         <>
           <Body>{row.summary}</Body>
           {row.highlights.length > 0 && (
@@ -57,11 +78,18 @@ export function SummaryCard({ activityId }: { activityId: number }) {
             </View>
           )}
         </>
-      )}
-      {can && (
-        <Button onPress={() => write.mutate()} disabled={write.isPending}>
-          {write.isPending ? t('coach.thinking') : row ? t('summary.regenerate') : t('summary.generate')}
-        </Button>
+      ) : (
+        <>
+          <Muted>{t('summary.pitch')}</Muted>
+          <Button
+            primary
+            icon={<Icon name="wand_stars" color={String(c.accentFg)} size={20} />}
+            onPress={() => write.mutate()}
+            disabled={write.isPending}
+          >
+            {write.isPending ? t('summary.writing') : t('summary.write')}
+          </Button>
+        </>
       )}
       {write.isError && <Muted accessibilityRole="alert">{t('summary.failed')}</Muted>}
     </Card>

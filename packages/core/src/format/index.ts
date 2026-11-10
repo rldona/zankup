@@ -116,3 +116,11 @@ export function formatters(options: FormatOptions) {
     unit,
   };
 }
+
+/** "today", "yesterday" or "other" for a day ("2026-11-09") against today, both in the person's time zone. */
+export function relativeDay(day: string, today: string): 'today' | 'yesterday' | 'other' {
+  if (day === today) return 'today';
+  const [y = 1970, m = 1, d = 1] = today.split('-').map(Number);
+  const before = new Date(Date.UTC(y, m - 1, d - 1)).toISOString().slice(0, 10);
+  return day === before ? 'yesterday' : 'other';
+}

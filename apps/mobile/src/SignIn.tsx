@@ -6,7 +6,7 @@
  */
 import { createApiClient } from '@zankup/core';
 import { useEffect, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { GoogleIcon, Icon } from './Icon';
 import { t } from './i18n';
@@ -97,14 +97,12 @@ export function SignIn({ onSignedIn }: { onSignedIn: (session: Session) => void 
     );
 
   return (
-    <KeyboardAvoidingView behavior="height" style={{ flex: 1 }}>
-      <Screen>
-        <View style={{ gap: 16, paddingTop: 24 }}>
-          <Brand />
-          {card}
-        </View>
-      </Screen>
-    </KeyboardAvoidingView>
+    <Screen>
+      <View style={{ gap: 16, paddingTop: 24 }}>
+        <Brand />
+        {card}
+      </View>
+    </Screen>
   );
 }
 

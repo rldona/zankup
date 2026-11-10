@@ -943,5 +943,7 @@
   "keys.remove": "Quitar",
   "keys.garminHelp": "La Personal API key de Garmin Connect. Zankup la prueba antes de guardarla, la guarda cifrada y no la vuelve a mostrar.",
   "keys.anthropic": "Clave de Anthropic",
-  "keys.anthropicHelp": "Zankup Coach usa la API de Anthropic para los resúmenes, el informe semanal y el chat; el gasto va a tu cuenta (console.anthropic.com). Se prueba antes de guardarla, se guarda cifrada y no se vuelve a mostrar."
+  "keys.anthropicHelp": "Zankup Coach usa la API de Anthropic para los resúmenes, el informe semanal y el chat; el gasto va a tu cuenta (console.anthropic.com). Se prueba antes de guardarla, se guarda cifrada y no se vuelve a mostrar.",
+  "common.copy": "Copiar",
+  "common.copied": "Copiado"
 }

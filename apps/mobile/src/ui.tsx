@@ -1,8 +1,10 @@
 /** Small building blocks shared by the screens, drawn with the theme's tokens. */
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import {
   Animated,
+  Dimensions,
   Easing,
+  Keyboard,
   Pressable,
   ScrollView,
   Switch,
@@ -53,6 +55,7 @@ export function Screen({
   busy?: boolean;
 }) {
   const c = useTheme();
+  const keyboard = useFieldAboveKeyboard();
   return (
     <SafeAreaView edges={header ? [] : ['top']} style={{ flex: 1, backgroundColor: c.bg }}>
       {title ? (
@@ -68,6 +71,7 @@ export function Screen({
       {scroll ? (
         // "handled": a tap on a button works at once, even with the keyboard open.
         <ScrollView
+          {...keyboard}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[styles.page, title ? { paddingTop: 12 } : null]}
         >
@@ -76,8 +80,77 @@ export function Screen({
       ) : (
         children
       )}
+      <KeyboardSpace />
     </SafeAreaView>
   );
+}
+
+/**
+ * Room for the keyboard at the bottom of a screen or a sheet. The app draws edge to edge, so Android
+ * no longer shrinks the window for the keyboard (adjustResize is ignored): this grows by as much of
+ * the keyboard as covers it, measured from where it sits, so the content above shrinks and the field
+ * being typed in stays in sight, whatever header is above.
+ */
+/** How much room is left under the field being typed in, above the keyboard. */
+const ROOM_UNDER_FIELD = 110;
+
+/**
+ * Keeps the field being typed in well above the keyboard: once the keyboard is up (and the screen has
+ * shrunk for it), a field closer than ROOM_UNDER_FIELD to it scrolls up, so the button under it shows
+ * too. Pass the returned ref and onScroll to the ScrollView.
+ */
+export function useFieldAboveKeyboard() {
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  const offset = useRef(0);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', (event) => {
+      const top =
+        event.endCoordinates.screenY || Dimensions.get('window').height - event.endCoordinates.height;
+      // After the room for the keyboard has been laid out.
+      setTimeout(() => {
+        const field = TextInput.State.currentlyFocusedInput();
+        field?.measureInWindow((_x, y, _w, h) => {
+          const short = y + h + ROOM_UNDER_FIELD - top;
+          if (short > 0) scroll.current?.scrollTo({ y: offset.current + short, animated: true });
+        });
+      }, 120);
+    });
+    return () => show.remove();
+  }, []);
+  return {
+    ref: scroll,
+    onScroll: (e: { nativeEvent: { contentOffset: { y: number } } }) => {
+      offset.current = e.nativeEvent.contentOffset.y;
+    },
+    scrollEventThrottle: 32,
+  };
+}
+
+export function KeyboardSpace() {
+  const ref = useRef<ComponentRef<typeof View>>(null);
+  const height = useRef(0);
+  const [space, setSpace] = useState(0);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', (event) => {
+      const top =
+        event.endCoordinates.screenY || Dimensions.get('window').height - event.endCoordinates.height;
+      ref.current?.measureInWindow((_x, y) => {
+        // y is this view's top; with room already given, its bottom is y + that room.
+        const next = Math.max(0, Math.round(y + height.current - top));
+        height.current = next;
+        setSpace(next);
+      });
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      height.current = 0;
+      setSpace(0);
+    });
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  return <View ref={ref} collapsable={false} style={{ height: space }} />;
 }
 
 export function Title({ children }: { children: ReactNode }) {

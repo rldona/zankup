@@ -333,10 +333,16 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
           </Card>
         )}
         <Photos activity={a} />
-        {series && <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />}
+        {/* On a ride, heart-rate zones follow the power curve and zones. */}
+        {series && sport !== 'ride' && (
+          <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />
+        )}
         {(a.sets ?? []).length > 0 && <Strength sets={a.sets} />}
         <RouteAndSegments activity={a} />
         <Power activity={a} />
+        {series && sport === 'ride' && (
+          <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />
+        )}
         <BestEfforts activity={a} format={format} />
         <Laps activity={a} format={format} pace={pace} />
         <Splits activity={a} format={format} pace={pace} />

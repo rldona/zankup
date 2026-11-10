@@ -28,7 +28,7 @@ import {
   effortShown,
   alpha,
   compare,
-  comparisonYears,
+  comparisonLabels,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -260,7 +260,7 @@ export function Summary({ range }: { range: Range }) {
   const summary = useQuery(summaryQuery(api, range));
   if (!summary.data) return null;
   const { current, previous } = summary.data;
-  const years = comparisonYears(range);
+  const labels = comparisonLabels(range, locale, t); // null for All: nothing to compare with
   const rows: [string, string, number, number][] = [
     [t('feed.title'), current.count.toLocaleString(locale), current.count, previous.count],
     [t('feed.stat.distance'), format.distance(current.distance_m), current.distance_m, previous.distance_m],
@@ -291,7 +291,7 @@ export function Summary({ range }: { range: Range }) {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Muted style={{ flex: 1, fontSize: 14 }}>{label}</Muted>
               <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
-              {percent ? (
+              {labels && percent ? (
                 <Text
                   style={{
                     color: tone,
@@ -308,22 +308,24 @@ export function Summary({ range }: { range: Range }) {
                 </Text>
               ) : null}
             </View>
-            {bar(theirs, alpha(c.muted, 0.45))}
-            {bar(mine, c.accent)}
+            {labels && bar(theirs, alpha(c.muted, 0.45))}
+            {labels && bar(mine, c.accent)}
           </View>
         );
       })}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 6 }}>
-        {[
-          [String(years[0]), alpha(c.muted, 0.45)],
-          [String(years[1]), c.accent],
-        ].map(([label, colour]) => (
-          <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={{ width: 12, height: 7, borderRadius: 4, backgroundColor: colour }} />
-            <Muted style={{ fontSize: 12 }}>{label}</Muted>
-          </View>
-        ))}
-      </View>
+      {labels && (
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 6 }}>
+          {[
+            [labels[0], alpha(c.muted, 0.45)],
+            [labels[1], c.accent],
+          ].map(([label, colour]) => (
+            <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ width: 12, height: 7, borderRadius: 4, backgroundColor: colour }} />
+              <Muted style={{ fontSize: 12 }}>{label}</Muted>
+            </View>
+          ))}
+        </View>
+      )}
     </Card>
   );
 }

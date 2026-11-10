@@ -455,6 +455,8 @@
   "stats.pace": "Ritmo",
   "stats.thisPeriod": "Este periodo",
   "stats.change": "{sign}{percent} %",
+  "stats.compare.before": "12 meses anteriores",
+  "stats.compare.now": "Últimos 12 meses",
   "stats.allTime": "Siempre",
   "stats.records": "Récords",
   "stats.recordsPeriod": "Este periodo",

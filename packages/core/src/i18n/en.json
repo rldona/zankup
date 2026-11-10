@@ -455,6 +455,8 @@
   "stats.pace": "Pace",
   "stats.thisPeriod": "This period",
   "stats.change": "{sign}{percent} %",
+  "stats.compare.before": "12 months before",
+  "stats.compare.now": "Last 12 months",
   "stats.allTime": "All time",
   "stats.records": "Records",
   "stats.recordsPeriod": "This period",

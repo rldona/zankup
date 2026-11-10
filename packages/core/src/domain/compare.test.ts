@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { compare, comparisonYears } from './compare';
+import { compare, comparisonLabels } from './compare';
 
 describe('compare', () => {
   it('gives the change and the bars, the larger one full', () => {
@@ -13,8 +13,22 @@ describe('compare', () => {
     expect(compare(0, 0)).toEqual({ percent: null, now: 0, before: 0 });
   });
 
-  it("names the period's year and the one before, from the range's exclusive end", () => {
-    expect(comparisonYears({ to: '2027-01-01' })).toEqual([2025, 2026]); // the year 2026
-    expect(comparisonYears({ to: '2026-11-12' })).toEqual([2025, 2026]); // the last 12 months
+  const t = (key: string) => key;
+
+  it('names a year, whole months, or any other span, and nothing for All', () => {
+    expect(comparisonLabels({ from: '2026-01-01', to: '2027-01-01' }, 'en', t)).toEqual(['2025', '2026']);
+    expect(comparisonLabels({ from: '2026-03-01', to: '2026-04-01' }, 'en', t)).toEqual([
+      'Mar 2025',
+      'Mar 2026',
+    ]);
+    expect(comparisonLabels({ from: '2026-03-01', to: '2026-07-01' }, 'en', t)).toEqual([
+      'Mar–Jun 2025',
+      'Mar–Jun 2026',
+    ]);
+    expect(comparisonLabels({ from: '2025-11-12', to: '2026-11-12' }, 'en', t)).toEqual([
+      'stats.compare.before',
+      'stats.compare.now',
+    ]);
+    expect(comparisonLabels({ from: '2015-01-01', to: '2026-11-12' }, 'en', t)).toBeNull();
   });
 });

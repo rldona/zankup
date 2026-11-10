@@ -4091,3 +4091,28 @@ h1.greeting {
   color: var(--accent-fg);
   border-color: transparent;
 }
+
+/* Year by year: each year's colour and total, in place of the chart's legend (as the app). */
+.rows.years {
+  margin-top: 4px;
+}
+
+.rows.years li {
+  padding: 6px 0;
+}
+
+.rows.years li > span:first-child {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.rows.years li.on {
+  font-weight: 700;
+}
+
+.rows.years i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}

@@ -598,7 +598,7 @@ export function Progress({ selected }: { selected: number }) {
   );
   return (
     <Card>
-      <CardTitle>{t('stats.progress')}</CardTitle>
+      <CardTitle info={t('stats.progressNote')}>{t('stats.progress')}</CardTitle>
       <Chart
         legendGap={18}
         days={Array.from({ length: 366 }, (_, i) =>
@@ -616,6 +616,7 @@ export function Progress({ selected }: { selected: number }) {
           domain: [0, top * 1.05] as [number, number],
           width: l.year === selected ? 3 : 1.6,
           opacity: l.year === selected ? 1 : 0.5,
+          hideLegend: true, // the years and their totals are listed under the chart
         }))}
       />
       {lines.data.map((l) => (
@@ -643,7 +644,6 @@ export function Progress({ selected }: { selected: number }) {
           </Text>
         </View>
       ))}
-      <Muted>{t('stats.progressNote')}</Muted>
     </Card>
   );
 }

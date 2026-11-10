@@ -18,6 +18,8 @@ import {
   stravaComparisonQuery,
   formLabel,
   effortShown,
+  themes,
+  yearColours,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -543,11 +545,32 @@ function Progress({
 }) {
   const lines = useQuery(progressQuery(api));
   if (!lines.data?.length) return null;
+  const colours = yearColours(
+    lines.data.map((l) => l.year),
+    selected,
+    themes[theme],
+  );
   return (
     <section className="panel">
-      <CardTitle>{t('stats.progress')}</CardTitle>
+      <CardTitle info={t('stats.progressNote')}>{t('stats.progress')}</CardTitle>
       <ProgressChart lines={lines.data} selected={selected} theme={theme} distanceUnit={distanceUnit} />
-      <p className="note">{t('stats.progressNote')}</p>
+      {/* In place of a legend, as the app: each year's colour and total. */}
+      <ul className="rows years">
+        {lines.data.map((l) => (
+          <li key={l.year} className={l.year === selected ? 'on' : undefined}>
+            <span>
+              <i style={{ background: colours.get(l.year), opacity: l.year === selected ? 1 : 0.5 }} />
+              {l.year}
+            </span>
+            <span className="num">
+              {Math.round(
+                (l.cumulative_m.at(-1) ?? 0) / (distanceUnit === 'km' ? 1000 : 1609.344),
+              ).toLocaleString(locale)}{' '}
+              {distanceUnit}
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

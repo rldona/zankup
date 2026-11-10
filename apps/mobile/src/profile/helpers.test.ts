@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { ageOn, goalTarget, initials, validDate } from './helpers';
+import {
+  ageOn,
+  fromDayMonthYear,
+  goalTarget,
+  initials,
+  toDayMonthYear,
+  typeDayMonthYear,
+  validDate,
+} from './helpers';
 
 describe('profile helpers', () => {
   it('counts whole years up to the birthday', () => {
@@ -24,5 +32,15 @@ describe('profile helpers', () => {
   it('makes initials from the name or the email', () => {
     expect(initials({ display_name: 'Ana López', email: 'a@b.c' } as never)).toBe('AL');
     expect(initials({ display_name: null, email: 'raul@example.com' } as never)).toBe('RE');
+  });
+
+  it('shows and reads a date as DD/MM/YYYY', () => {
+    expect(toDayMonthYear('1982-08-14')).toBe('14/08/1982');
+    expect(typeDayMonthYear('14081982')).toBe('14/08/1982');
+    expect(typeDayMonthYear('140')).toBe('14/0');
+    expect(fromDayMonthYear('14/08/1982')).toBe('1982-08-14');
+    expect(fromDayMonthYear('4-8-1982')).toBe('1982-08-04');
+    expect(fromDayMonthYear('30/02/1990')).toBeNull();
+    expect(fromDayMonthYear('1982-08-14')).toBeNull();
   });
 });

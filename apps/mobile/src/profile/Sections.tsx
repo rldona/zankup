@@ -11,7 +11,6 @@ import {
   passkeysQuery,
   providersQuery,
   queryKeys,
-  sourcesQuery,
   SPORTS,
   type GoalOut,
   type Me,
@@ -42,19 +41,7 @@ import { asSport, useFormat, useHrMax } from '../prefs';
 import { addPasskey, passkeysSupported, SignInError } from '../session';
 import { GoalCard } from '../stats/Sections';
 import { useTheme } from '../theme';
-import {
-  Badge,
-  Button,
-  Card,
-  Choice,
-  Field,
-  Heading,
-  ListRow,
-  MenuRow,
-  Muted,
-  ProgressBar,
-  styles as ui,
-} from '../ui';
+import { Button, Card, Choice, Field, Heading, ListRow, Muted, ProgressBar, styles as ui } from '../ui';
 
 type Format = ReturnType<typeof useFormat>;
 
@@ -101,13 +88,24 @@ export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSumma
         {[me.location, summary?.device].some(Boolean) && (
           <Muted>{[me.location, summary?.device].filter(Boolean).join(' · ')}</Muted>
         )}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          {summary && <Badge tone="good">{t('profile.streak', { count: summary.streak_weeks })}</Badge>}
-          <Pressable accessibilityRole="button" onPress={onEdit} hitSlop={12}>
-            <Text style={{ color: c.accent, fontWeight: '600' }}>{t('profile.edit')}</Text>
-          </Pressable>
-        </View>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('profile.edit')}
+        onPress={onEdit}
+        hitSlop={12}
+        style={{
+          alignSelf: 'center',
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: c.surface2,
+        }}
+      >
+        <Icon name="edit" color={c.fg} size={22} />
+      </Pressable>
     </View>
   );
 }
@@ -543,11 +541,9 @@ export function GoalForm({
 // --- the account -----------------------------------------------------------------------------------
 
 export function Account({ me }: { me: Me }) {
-  const { api, signOut } = useAuth();
+  const { api } = useAuth();
   const c = useTheme();
   const queryClient = useQueryClient();
-  const sources = useQuery(sourcesQuery(api));
-  const garmin = sources.data?.find((s) => s.kind === 'garmin');
   const providers = useQuery({ ...providersQuery(api), retry: false });
   const unlink = useMutation({
     mutationFn: async () => {
@@ -585,17 +581,6 @@ export function Account({ me }: { me: Me }) {
         )}
       </Card>
       <Passkeys />
-      <Card style={{ paddingVertical: 0, gap: 0 }}>
-        {garmin && (
-          <MenuRow
-            label={t('settings.garmin')}
-            note={garmin.configured ? t('settings.garminOn') : t('settings.garminOff')}
-            onPress={() => router.push('/settings/account')}
-          />
-        )}
-        <MenuRow label={t('settings.sessions')} onPress={() => router.push('/settings/account')} last />
-      </Card>
-      <Button onPress={() => void signOut()}>{t('nav.signOut')}</Button>
     </>
   );
 }

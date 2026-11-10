@@ -1,6 +1,5 @@
 import {
   aiStatusQuery,
-  estimatesQuery,
   formatHoursMinutes,
   formatters,
   meQuery,
@@ -26,7 +25,6 @@ import { usePrefs } from '../prefs';
 import { deviceName } from '../signin/device';
 import { attestationJson, creationOptions, passkeysSupported } from '../signin/webauthn';
 import { SportIcon } from '../SportIcon';
-import { EstimatesPanel } from '../stats/panels';
 import { Menu } from '../ui';
 import { CardSkeleton, PageSkeleton, Pulse } from '../Skeleton';
 
@@ -64,7 +62,7 @@ export function Profile() {
         label={t('nav.you')}
         items={[
           { to: '/stats', icon: 'bar_chart', label: t('nav.stats') },
-          { to: '/profile?tab=estimates', icon: 'speed', label: t('stats.estimates') },
+          { to: '/estimates', icon: 'speed', label: t('stats.estimates') },
           ...(ai.data?.available && ai.data.enabled
             ? [{ to: '/coach', icon: 'wand_stars' as const, label: t('coach.title') }]
             : []),
@@ -91,7 +89,7 @@ export function Profile() {
       <div role="tabpanel">
         {tab === 'summary' && <Summary me={me.data} summary={summary.data} />}
         {tab === 'goals' && <Navigate to="/goals" replace />}
-        {tab === 'estimates' && <ProfileEstimates />}
+        {tab === 'estimates' && <Navigate to="/estimates" replace />}
         {tab === 'gear' && <Navigate to="/gear" replace />}
         {tab === 'account' && <Account me={me.data} />}
       </div>
@@ -564,15 +562,4 @@ function Passkeys() {
       )}
     </>
   );
-}
-
-function ProfileEstimates() {
-  const estimates = useQuery(estimatesQuery(api));
-  if (!estimates.data)
-    return (
-      <Pulse>
-        <CardSkeleton lines={2} />
-      </Pulse>
-    );
-  return <EstimatesPanel estimates={estimates.data} />;
 }

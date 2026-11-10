@@ -258,7 +258,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
           <SportIcon sport={sport} size={44} />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: c.fg, fontSize: 22, fontWeight: '700' }}>
+            <Text style={{ color: c.fg, fontSize: 18, fontWeight: '700' }}>
               {a.name ?? t(`sport.${sport}`)}
             </Text>
             <Muted>
@@ -365,8 +365,8 @@ function Figures({ main, more }: { main: [string, string][]; more: [string, stri
           <View key={n} style={{ flex: 1, gap: 10 }}>
             {column.map(([label, value]) => (
               <View key={label} accessible style={{ alignItems: 'center' }}>
-                <Text style={{ color: c.muted, fontSize: 12 }}>{label}</Text>
-                <Text style={{ color: c.fg, fontSize: 19, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                <Text style={{ color: c.muted, fontSize: 11 }}>{label}</Text>
+                <Text style={{ color: c.fg, fontSize: 16, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
                   {value}
                 </Text>
               </View>

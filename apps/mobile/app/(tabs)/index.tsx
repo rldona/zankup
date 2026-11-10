@@ -1,5 +1,5 @@
 /**
- * Home (OS-527): ZANKUP, with sync, the Coach, search and notifications on the right, over this week, the last day with
+ * Home (OS-527): ZANKUP, with the Coach, search and notifications on the right, over this week, the last day with
  * activities, the last seven days and the metrics. The header stays put while the widgets scroll.
  */
 import { aiStatusQuery, type MessageKey } from '@zankup/core';
@@ -19,7 +19,6 @@ import { styles as ui } from '../../src/ui';
 import { Wordmark } from '../../src/Wordmark';
 
 const ACTIONS: { href: string; icon: IconName; label: MessageKey }[] = [
-  { href: '/sync', icon: 'sync', label: 'home.sync' },
   { href: '/coach', icon: 'chat', label: 'nav.coach' },
   { href: '/search', icon: 'search', label: 'nav.search' },
   { href: '/notifications', icon: 'notifications', label: 'home.notifications' },

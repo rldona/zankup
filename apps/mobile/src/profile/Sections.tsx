@@ -6,7 +6,9 @@
 import {
   formatDuration,
   formatHoursMinutes,
+  goalInput,
   goalsQuery,
+  goalTarget,
   passkeysQuery,
   providersQuery,
   queryKeys,
@@ -26,15 +28,7 @@ import { Sheet } from '../detail/Tools';
 import { GoalsSkeleton } from '../Skeleton';
 import { Icon } from '../Icon';
 import { keys, readSync, storage } from '../storage';
-import {
-  ageOn,
-  fromDayMonthYear,
-  goalInput,
-  goalTarget,
-  initials,
-  toDayMonthYear,
-  typeDayMonthYear,
-} from './helpers';
+import { ageOn, fromDayMonthYear, initials, toDayMonthYear, typeDayMonthYear } from './helpers';
 import { effortName } from '../estimates';
 import { locale, t } from '../i18n';
 import { asSport, useFormat, useHrMax } from '../prefs';

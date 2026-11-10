@@ -3540,3 +3540,181 @@ button.danger svg.i {
 .habitualcheck small {
   margin: 0;
 }
+
+/* Goals (OS-911), as the app's: the card opens its chart; side by side on a large screen. */
+.page.goals {
+  max-width: 1100px;
+}
+
+.goalgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.panel.goalcard {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.goalhead {
+  all: unset;
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.goalhead:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.goalrow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.goalbar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.goalbar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.goaltoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.goaltoggle svg.i {
+  width: 20px;
+  height: 20px;
+}
+
+.goalcard .actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.goalcard .actions svg.i {
+  width: 18px;
+  height: 18px;
+}
+
+.goalchart {
+  margin-top: 4px;
+}
+
+.goalat {
+  min-height: 1.4em;
+  margin: 0 0 4px;
+}
+
+.goalplot {
+  cursor: crosshair;
+}
+
+.goalplot .gfloor {
+  stroke: var(--line);
+}
+
+.goalplot .gfaint {
+  stroke: var(--muted);
+  opacity: 0.25;
+}
+
+.goalplot .gshare {
+  stroke: var(--muted);
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.goalplot .garea {
+  fill: var(--accent);
+  opacity: 0.35;
+}
+
+.goalplot .gline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.goalplot .gcursor {
+  stroke: var(--fg);
+  stroke-width: 2;
+}
+
+.goalplot circle {
+  stroke-width: 2.5;
+  fill: var(--surface);
+}
+
+.goalplot .gon {
+  stroke: var(--accent);
+}
+
+.goalplot .goff {
+  stroke: var(--muted);
+}
+
+.goalplot .gpicked.gon {
+  fill: var(--accent);
+}
+
+.goalplot .gpicked.goff {
+  fill: var(--muted);
+}
+
+.goalplot .gtick {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.goaldays {
+  display: flex;
+}
+
+.goaldays span {
+  flex: 1;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.goaldays span.on {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.goalform {
+  gap: 20px;
+}
+
+.goalform .chips {
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  .goalgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

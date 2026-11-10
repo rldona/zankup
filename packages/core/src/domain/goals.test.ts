@@ -1,13 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-vi.mock('@shopify/react-native-skia', () => ({}));
-vi.mock('react-native', () => ({}));
-vi.mock('react-native-gesture-handler', () => ({}));
-vi.mock('../auth', () => ({}));
-vi.mock('../theme', () => ({}));
-vi.mock('../i18n', () => ({ locale: 'en', t: (k: string) => k }));
+import { goalInput, goalPoints as points, goalTarget } from './goals';
 
-const { goalPoints } = await import('./GoalChart');
+const goalPoints = (...args: [Parameters<typeof points>[0], Parameters<typeof points>[1], string]) =>
+  points(...args, 'en');
 
 const day = (d: string, km: number[], sport = 'run', more: { sport: string; km: number }[] = []) => ({
   day: d,
@@ -77,5 +73,16 @@ describe('goal chart', () => {
     expect(points).toHaveLength(12);
     expect(points.slice(0, 3).map((p) => p.done)).toEqual([2, 2, 3]);
     expect(points.slice(0, 4).map((p) => p.state)).toEqual(['behind', 'behind', 'behind', 'future']);
+  });
+});
+
+describe('goal targets', () => {
+  it('saves goals in metres, seconds or a count, and shows them back in the form', () => {
+    expect(goalTarget('distance', 10, 'km')).toBe(10_000);
+    expect(goalTarget('distance', 1, 'mi')).toBeCloseTo(1609.344);
+    expect(goalTarget('time', 2, 'km')).toBe(7200);
+    expect(goalTarget('count', 3, 'km')).toBe(3);
+    expect(goalInput('distance', 21_000, 'km')).toBe(21);
+    expect(goalInput('time', 5400, 'km')).toBe(1.5);
   });
 });

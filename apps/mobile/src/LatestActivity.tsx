@@ -106,23 +106,23 @@ function LatestSheet({ activity: a, onClose }: { activity: ActivitySummary; onCl
   // It rises on its own (the modal only fades, so the backdrop does not slide up with it).
   const drag = useSharedValue(900);
   useEffect(() => {
-    drag.value = withTiming(0, { duration: 260 });
+    drag.set(withTiming(0, { duration: 260 }));
   }, [drag]);
   const dismiss = Gesture.Pan()
     .activeOffsetY(8)
     .onUpdate((e) => {
-      drag.value = Math.max(0, e.translationY);
+      drag.set(Math.max(0, e.translationY));
     })
     .onEnd((e) => {
       if (e.translationY > 120 || e.velocityY > 900) {
-        drag.value = withTiming(800, { duration: 180 }, () => scheduleOnRN(onClose));
+        drag.set(withTiming(800, { duration: 180 }, () => scheduleOnRN(onClose)));
       } else {
-        drag.value = withSpring(0, { damping: 20 });
+        drag.set(withSpring(0, { damping: 20 }));
       }
     });
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: drag.value }] }));
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: drag.get() }] }));
   // The backdrop lightens as the sheet goes down.
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - drag.value / 600) }));
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - drag.get() / 600) }));
 
   const choices = (gear.data ?? []).filter((g) => !g.retired);
   const time = formatDuration(a.moving_s ?? a.duration_s);

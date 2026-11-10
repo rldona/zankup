@@ -347,7 +347,6 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         {series && sport === 'ride' && (
           <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />
         )}
-        <BestEfforts activity={a} format={format} />
         <Laps activity={a} format={format} pace={pace} />
         {sport !== 'run' && <Splits activity={a} format={format} pace={pace} />}
         {a.description ? (
@@ -355,6 +354,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             <Text style={{ color: c.fg }}>{a.description}</Text>
           </Card>
         ) : null}
+        <BestEfforts activity={a} format={format} />
       </View>
       {editing && <EditActivity activity={a} onClose={() => setEditing(false)} />}
     </ScrollView>

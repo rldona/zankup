@@ -109,39 +109,6 @@ export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSumma
   );
 }
 
-export function YearNumbers({ summary }: { summary: ProfileSummary }) {
-  const c = useTheme();
-  const format = useFormat();
-  const total = summary.this_year.reduce(
-    (sum, s) => ({
-      count: sum.count + s.count,
-      distance: sum.distance + s.distance_m,
-      time: sum.time + s.moving_s,
-      ascent: sum.ascent + s.ascent_m,
-    }),
-    { count: 0, distance: 0, time: 0, ascent: 0 },
-  );
-  const figures: [string, string][] = [
-    [t('feed.title'), total.count.toLocaleString(locale)],
-    [t('feed.stat.distance'), format.distance(total.distance)],
-    [t('feed.stat.time'), formatHoursMinutes(total.time)],
-    [t('feed.stat.ascent'), format.elevation(total.ascent)],
-  ];
-  return (
-    <Card>
-      <Heading>{t('profile.year', { year: summary.year })}</Heading>
-      <View style={ui.stats}>
-        {figures.map(([label, value]) => (
-          <View key={label} style={ui.stat}>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 20 }]}>{value}</Text>
-            <Text style={[ui.statLabel, { color: c.muted }]}>{label}</Text>
-          </View>
-        ))}
-      </View>
-    </Card>
-  );
-}
-
 // --- editing ---------------------------------------------------------------------------------------
 
 export function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {

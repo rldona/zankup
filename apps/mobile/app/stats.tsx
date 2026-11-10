@@ -1,24 +1,22 @@
 /**
  * Stats (OS-508, OS-519), as in the PWA: the period (last 12 months, all time, a year or one of its
- * months), the engine's progress while it recomputes, "Now", then everything for the period, and the
+ * months) right above everything for the period, the engine's progress while it recomputes, and the
  * way to the calendar, heatmap, routes, segments, reviews and health. All read from what the engine
  * precomputed.
  */
-import { engineQuery, periodOf, profileSummaryQuery, yearsQuery, type MessageKey } from '@zankup/core';
+import { engineQuery, periodOf, yearsQuery, type MessageKey } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 
 import { useApi } from '../src/auth';
 import { Icon, type IconName } from '../src/Icon';
-import { YearNumbers } from '../src/profile/Sections';
 import { locale, t } from '../src/i18n';
 import {
   CompareWithStrava,
   Curves,
   Efficiency,
   Fitness,
-  Now,
   Progress,
   Records,
   Summary,
@@ -39,7 +37,6 @@ const LINKS: [IconName, MessageKey, string][] = [
 
 export default function StatsScreen() {
   const api = useApi();
-  const yearSummary = useQuery(profileSummaryQuery(api));
   const c = useTheme();
   const [choice, setChoice] = useState('last12');
   const [today] = useState(() => new Date());
@@ -98,9 +95,6 @@ export default function StatsScreen() {
           {t('stats.recomputing', { done: engine.data.done, total: engine.data.total })}
         </Muted>
       )}
-
-      {yearSummary.data && <YearNumbers summary={yearSummary.data} />}
-      <Now />
 
       <Summary range={range} />
       <Fitness range={range} />

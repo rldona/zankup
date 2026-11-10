@@ -6,11 +6,13 @@
  */
 import { engineQuery, periodOf, yearsQuery, type MessageKey } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
 
 import { useApi } from '../src/auth';
 import { Icon, type IconName } from '../src/Icon';
+import { MenuButton } from '../src/Menu';
 import { locale, t } from '../src/i18n';
 import {
   CompareWithStrava,
@@ -25,12 +27,9 @@ import {
 import { useTheme } from '../src/theme';
 import { Card, Choice, Heading, MenuRow, Muted, Screen } from '../src/ui';
 
+// Health has its tab and the calendar sits in Activities' header; the reviews and the heatmap are in
+// this header. What is left goes under "More".
 const LINKS: [IconName, MessageKey, string][] = [
-  ['summarize', 'review.monthLink', '/review/month'],
-  ['trophy', 'review.yearLink', '/review/year'],
-  ['monitor_heart', 'nav.health', '/health'],
-  ['calendar_month', 'stats.calendar', '/calendar'],
-  ['layers', 'stats.heatmap', '/heatmap'],
   ['route', 'stats.routes', '/routes'],
   ['timeline', 'stats.segments', '/segments'],
 ];
@@ -90,6 +89,33 @@ export default function StatsScreen() {
         </>
       }
     >
+      {/* Shortcuts: this month's and this year's review, and the heatmap. */}
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+              <MenuButton
+                icon="summarize"
+                label={t('stats.reviews')}
+                value=""
+                onChange={(href: string) => router.push(href as never)}
+                options={[
+                  { value: '/review/month', label: t('review.monthLink') },
+                  { value: '/review/year', label: t('review.yearLink') },
+                ]}
+              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('stats.heatmap')}
+                hitSlop={10}
+                onPress={() => router.push('/heatmap')}
+              >
+                <Icon name="layers" color={c.fg} size={26} />
+              </Pressable>
+            </View>
+          ),
+        }}
+      />
       {engine.data?.running && (
         <Muted accessibilityRole="alert">
           {t('stats.recomputing', { done: engine.data.done, total: engine.data.total })}

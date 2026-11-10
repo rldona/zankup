@@ -14,15 +14,18 @@ import {
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useApi } from './auth';
 import { Photos } from './detail/Tools';
-import { Thumbnail } from './Feed';
 import { t } from './i18n';
 import { SportIcon } from './Icon';
 import { asSport, useFormat } from './prefs';
+import { TrackMap } from './TrackMap';
 import { keys, readSync, storage } from './storage';
 import { useTheme } from './theme';
 import { Button, Choice, Field, KeyboardSpace, Muted, Stat, styles as ui, useFieldAboveKeyboard } from './ui';
@@ -99,6 +102,28 @@ function LatestSheet({ activity: a, onClose }: { activity: ActivitySummary; onCl
     onSuccess: onClose,
   });
 
+  // Dragging the top of the sheet down past a third of its way, or flicking it, closes it.
+  // It rises on its own (the modal only fades, so the backdrop does not slide up with it).
+  const drag = useSharedValue(900);
+  useEffect(() => {
+    drag.value = withTiming(0, { duration: 260 });
+  }, [drag]);
+  const dismiss = Gesture.Pan()
+    .activeOffsetY(8)
+    .onUpdate((e) => {
+      drag.value = Math.max(0, e.translationY);
+    })
+    .onEnd((e) => {
+      if (e.translationY > 120 || e.velocityY > 900) {
+        drag.value = withTiming(800, { duration: 180 }, () => scheduleOnRN(onClose));
+      } else {
+        drag.value = withSpring(0, { damping: 20 });
+      }
+    });
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: drag.value }] }));
+  // The backdrop lightens as the sheet goes down.
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - drag.value / 600) }));
+
   const choices = (gear.data ?? []).filter((g) => !g.retired);
   const time = formatDuration(a.moving_s ?? a.duration_s);
   const stats: [string, string][] = a.distance_m
@@ -113,98 +138,126 @@ function LatestSheet({ activity: a, onClose }: { activity: ActivitySummary; onCl
       ];
 
   return (
-    <Modal transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable
-        accessibilityLabel={t('common.close')}
-        onPress={onClose}
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }}
-      />
-      <View
-        style={{
-          maxHeight: '88%',
-          backgroundColor: c.bg,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          paddingBottom: insets.bottom,
-        }}
-      >
-        <View style={{ alignItems: 'center', paddingTop: 10 }}>
-          <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: c.line }} />
-        </View>
-        <ScrollView {...keyboard} keyboardShouldPersistTaps="handled" contentContainerStyle={ui.page}>
-          <Text
-            accessibilityRole="header"
-            style={{ color: c.fg, fontSize: 20, fontWeight: '700', textAlign: 'center' }}
-          >
-            {t('latest.title')}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <SportIcon sport={sport} size={28} />
-            <Muted>
-              {t(`sport.${sport}`)} ·{' '}
-              {new Date(a.start_utc).toLocaleString(undefined, {
-                weekday: 'long',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Muted>
-          </View>
-          <Field label={t('activity.name')} value={name} onChangeText={setName} maxLength={255} />
-          <Field
-            label={t('latest.description')}
-            value={description ?? currentDescription}
-            onChangeText={setDescription}
-            multiline
-            style={[
-              ui.input,
-              {
-                minHeight: 72,
-                textAlignVertical: 'top',
-                color: c.fg,
-                backgroundColor: c.surface,
-                borderColor: c.line,
-              },
-            ]}
-          />
-          <View style={{ flexDirection: 'row', gap: 24 }}>
-            {stats.map(([label, value]) => (
-              <Stat key={label} label={label} value={value} labelFirst />
-            ))}
-          </View>
-          {a.route ? <Thumbnail route={a.route} colour={c[sport]} /> : null}
-          {detail.data && <Photos activity={detail.data} editable />}
-          {choices.length > 0 && (
-            <>
-              <Text style={{ color: c.fg, fontWeight: '600' }}>{t('gear.title')}</Text>
-              <Choice
-                label={t('gear.title')}
-                value={gearId ?? currentGear}
-                onChange={setGearId}
-                options={[
-                  { value: '0', label: t('gear.none') },
-                  ...choices.map((g) => ({ value: String(g.id), label: g.name })),
-                ]}
-              />
-            </>
-          )}
-          {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
-          <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
-            {t('latest.ok')}
-          </Button>
+    <Modal transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      {/* A modal is its own window on Android: gestures need their own root inside it. */}
+      <GestureHandlerRootView style={{ flex: 1, justifyContent: 'flex-end' }}>
+        {/* The dimmed backdrop covers the whole screen, also behind the sheet's rounded corners. */}
+        <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
           <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              onClose();
-              router.push(`/activity/${a.id}`);
-            }}
-            hitSlop={8}
-            style={{ alignSelf: 'center', paddingVertical: 6 }}
-          >
-            <Text style={{ color: c.accent, fontWeight: '600', fontSize: 15 }}>{t('latest.advanced')}</Text>
-          </Pressable>
-        </ScrollView>
-        <KeyboardSpace />
-      </View>
+            accessibilityLabel={t('common.close')}
+            onPress={onClose}
+            style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }]}
+          />
+        </Animated.View>
+        <Animated.View
+          style={[
+            sheetStyle,
+            {
+              maxHeight: '88%',
+              // The card colour and a thin edge, so the rounded top shows against the dimmed app.
+              backgroundColor: c.surface,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              borderWidth: 1,
+              borderBottomWidth: 0,
+              borderColor: c.line,
+              overflow: 'hidden',
+              paddingBottom: insets.bottom,
+            },
+          ]}
+        >
+          <GestureDetector gesture={dismiss}>
+            <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4, gap: 14 }}>
+              <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: c.line }} />
+              <Text
+                accessibilityRole="header"
+                style={{ color: c.fg, fontSize: 20, fontWeight: '700', textAlign: 'center' }}
+              >
+                {t('latest.title')}
+              </Text>
+            </View>
+          </GestureDetector>
+          <ScrollView {...keyboard} keyboardShouldPersistTaps="handled" contentContainerStyle={ui.page}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <SportIcon sport={sport} size={28} />
+              <Muted>
+                {t(`sport.${sport}`)} ·{' '}
+                {new Date(a.start_utc).toLocaleString(undefined, {
+                  weekday: 'long',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Muted>
+            </View>
+            <Field label={t('activity.name')} value={name} onChangeText={setName} maxLength={255} />
+            <Field
+              label={t('latest.description')}
+              value={description ?? currentDescription}
+              onChangeText={setDescription}
+              multiline
+              style={[
+                ui.input,
+                {
+                  minHeight: 72,
+                  textAlignVertical: 'top',
+                  color: c.fg,
+                  backgroundColor: c.surface,
+                  borderColor: c.line,
+                },
+              ]}
+            />
+            <View style={{ flexDirection: 'row', gap: 24 }}>
+              {stats.map(([label, value]) => (
+                <Stat key={label} label={label} value={value} labelFirst />
+              ))}
+            </View>
+            {detail.data && (
+              <Photos
+                activity={detail.data}
+                editable
+                beside={
+                  a.route ? (
+                    // The route on the map, as a picture: it does not move with the finger.
+                    <View pointerEvents="none" style={{ flex: 1 }}>
+                      <TrackMap tracks={[a.route]} colour={c[sport]} height={150} />
+                    </View>
+                  ) : null
+                }
+              />
+            )}
+            {choices.length > 0 && (
+              <>
+                <Text style={{ color: c.fg, fontWeight: '600' }}>{t('gear.title')}</Text>
+                <Choice
+                  label={t('gear.title')}
+                  value={gearId ?? currentGear}
+                  onChange={setGearId}
+                  options={[
+                    { value: '0', label: t('gear.none') },
+                    ...choices.map((g) => ({ value: String(g.id), label: g.name })),
+                  ]}
+                />
+              </>
+            )}
+            {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
+            <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
+              {t('latest.ok')}
+            </Button>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                onClose();
+                router.push(`/activity/${a.id}`);
+              }}
+              hitSlop={8}
+              style={{ alignSelf: 'center', paddingVertical: 6 }}
+            >
+              <Text style={{ color: c.accent, fontWeight: '600', fontSize: 15 }}>{t('latest.advanced')}</Text>
+            </Pressable>
+          </ScrollView>
+          <KeyboardSpace />
+        </Animated.View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

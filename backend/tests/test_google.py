@@ -192,11 +192,15 @@ def test_providers_and_safe_redirects(ctx: Ctx) -> None:
 
 def test_google_brings_the_photo_and_a_missing_name(ctx: Ctx, database: str) -> None:
     ctx.claims.update({"picture": "https://lh3.googleusercontent.com/a/photo", "name": "Ana López García"})
-    with Session(create_engine(database)) as db:
-        user = db.get(User, ctx.user_id)
-        assert user is not None
-        user.display_name = None
-        db.commit()
+    engine = create_engine(database)
+    try:
+        with Session(engine) as db:
+            user = db.get(User, ctx.user_id)
+            assert user is not None
+            user.display_name = None
+            db.commit()
+    finally:
+        engine.dispose()  # or the pooled connection is left open (ResourceWarning under -W error)
     go_through_google(ctx, ctx.signed_in, "link")
     me = ctx.signed_in.get("/api/auth/me").json()
     assert me["avatar_url"] == "https://lh3.googleusercontent.com/a/photo"

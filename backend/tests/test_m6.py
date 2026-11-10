@@ -211,6 +211,41 @@ def test_garmin_without_hrv_answers_no_content(ctx: Ctx, garmin_health: Any) -> 
         assert db.scalars(select(DailyHealth.hrv_ms)).one() is None
 
 
+def test_garmin_health_asks_for_ranges_four_weeks_at_a_time(ctx: Ctx, garmin_health: Any) -> None:  # noqa: F811
+    client = GarminClient("key", MemoryTokenCache(), sleep=lambda _: None)
+    garmin.sync_health(
+        ctx.sessions,
+        client,
+        owner(ctx),
+        since=date(2026, 10, 1),
+        today=date(2026, 11, 8),
+        sleep=lambda _: None,
+    )
+    asked = [
+        call.request.url.path
+        for call in garmin_health.calls
+        if call.request.url.path.startswith("/hrv-service/hrv/daily/")
+    ]
+    assert asked == [
+        "/hrv-service/hrv/daily/2026-10-01/2026-10-28",
+        "/hrv-service/hrv/daily/2026-10-29/2026-11-08",
+    ]
+
+
+def test_a_years_history_is_queued_for_each_connected_source(ctx: Ctx) -> None:  # noqa: F811
+    use(ctx, GOOGLE.model_copy(update={"garmin_personal_api_key": SecretStr("k")}))
+    user = owner(ctx)
+    assert ctx.http.post("/api/wellness/history").json() == {"queued": []}
+    with ctx.sessions.begin() as db:
+        db.add(Source(user_id=user, kind="garmin"))
+        db.add(Source(user_id=user, kind="google_health"))
+    assert ctx.http.post("/api/wellness/history").json() == {"queued": ["garmin", "google_health"]}
+    with ctx.sessions() as db:
+        jobs = {j.kind: j.payload for j in db.scalars(select(Job).where(Job.kind.like("sync_%_health")))}
+    since = (datetime.now(UTC).date() - timedelta(days=365)).isoformat()
+    assert jobs == {"sync_garmin_health": {"since": since}, "sync_google_health": {"since": since}}
+
+
 # --- Google Health (OS-603) -----------------------------------------------------------------------------
 
 

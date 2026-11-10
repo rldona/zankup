@@ -916,5 +916,12 @@
   "mobile.biometricLockOff": "Zankup se abre sin huella: cualquiera con tu teléfono desbloqueado puede ver tus datos.",
   "nav.goals": "Objetivos",
   "health.yesterday": "Ayer, {day}",
-  "health.nightOf": "Sueño del {day}"
+  "health.nightOf": "Sueño del {day}",
+  "health.history.title": "Historial",
+  "health.history.note": "Al conectar cada fuente, Zankup trajo sus últimos 30 días. Esto pide el último año a Garmin y a Google Health (en segundo plano: tarda unos minutos) y lo lee de Health Connect en este teléfono.",
+  "health.history.bring": "Traer el último año",
+  "health.history.working": "Pidiendo el historial…",
+  "health.history.queued": "En marcha: {sources}. Los datos irán apareciendo en Salud.",
+  "health.history.hc": "Health Connect: {nights, plural, one {# noche} other {# noches}} y {days, plural, one {# día} other {# días}} enviados.",
+  "health.history.none": "No hay ninguna fuente de salud conectada."
 }

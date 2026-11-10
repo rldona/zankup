@@ -29,6 +29,7 @@ log = logging.getLogger("zankup.health.garmin")
 
 SOURCE = "garmin"
 FIRST_DAYS = 30
+RANGE_DAYS = 28
 REFETCH = timedelta(days=2)
 EVERY = timedelta(hours=1)  # scheduled runs; the person can always ask for one
 SAMPLE_S = 120.0  # dailyHeartRate's sampling while the watch is worn
@@ -193,12 +194,18 @@ def sync_health(
     if not days:
         return 0
 
+    # The ranged figures go in windows of four weeks: a year's history in one request is more than
+    # Garmin answers.
     ranged: list[DayIn] = []
-    for path, parse in (
-        (f"/hrv-service/hrv/daily/{since}/{today}", parse_hrv),
-        (f"/usersummary-service/stats/steps/daily/{since}/{today}", parse_steps),
-    ):
-        ranged += parse(_get(client, path))
+    start = since
+    while start <= today:
+        end = min(start + timedelta(days=RANGE_DAYS - 1), today)
+        for path, parse in (
+            (f"/hrv-service/hrv/daily/{start}/{end}", parse_hrv),
+            (f"/usersummary-service/stats/steps/daily/{start}/{end}", parse_steps),
+        ):
+            ranged += parse(_get(client, path))
+        start = end + timedelta(days=1)
     with sessions.begin() as session:
         for each in ranged:
             save_day(session, user_id, SOURCE, each)

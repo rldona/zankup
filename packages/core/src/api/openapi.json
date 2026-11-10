@@ -3086,6 +3086,35 @@
         }
       }
     },
+    "/api/wellness/history": {
+      "post": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Import History",
+        "description": "Bring the last year of health data from Garmin and Google Health, beyond the 30 days the first\nsync fetched. It runs in the background; a source that is not connected is skipped.",
+        "operationId": "importHealthHistory",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response Importhealthhistory"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/wellness/sources/{source}/data": {
       "delete": {
         "tags": [

@@ -299,7 +299,10 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
                 cursor: c.fg,
                 band: `${String(c.accent)}33`,
                 text: c.fg,
+                grid: c.line,
+                muted: c.muted,
               }}
+              labels={{ alt: t('metric.alt'), hr: t('metric.hr') }}
             />
             {stats && (
               <View style={ui.stats}>

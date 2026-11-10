@@ -234,7 +234,16 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
  * The activity's photos, each opening full size. Editing the activity (`editable`) adds new ones from
  * the phone and removes them.
  */
-export function Photos({ activity, editable = false }: { activity: ActivityDetail; editable?: boolean }) {
+export function Photos({
+  activity,
+  editable = false,
+  beside,
+}: {
+  activity: ActivityDetail;
+  editable?: boolean;
+  /** Shown as a tile next to an "add photos" tile of the same size (the latest activity's map). */
+  beside?: React.ReactNode;
+}) {
   const api = useApi();
   const c = useTheme();
   const refresh = useRefreshActivity(activity.id);
@@ -303,7 +312,34 @@ export function Photos({ activity, editable = false }: { activity: ActivityDetai
           ))}
         </ScrollView>
       )}
-      {editable && (
+      {editable && beside !== undefined && (
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {beside ? (
+            <View style={{ flex: 1, height: 150, borderRadius: 16, overflow: 'hidden' }}>{beside}</View>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            disabled={add.isPending}
+            onPress={() => void choose()}
+            style={({ pressed }) => ({
+              flex: 1,
+              height: 150,
+              borderRadius: 16,
+              backgroundColor: c.surface2,
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              opacity: add.isPending ? 0.5 : pressed ? 0.8 : 1,
+            })}
+          >
+            <Icon name="photo_camera" color={c.fg} size={32} />
+            <Text style={{ color: c.fg, fontWeight: '600' }}>
+              {add.isPending ? t('photos.uploading') : t('photos.add')}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+      {editable && beside === undefined && (
         <Button
           icon={<Icon name="photo_camera" color={c.fg} size={20} />}
           disabled={add.isPending}

@@ -259,7 +259,7 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
   } as const;
   return (
     <>
-      <Heading>{t('health.lastNight')}</Heading>
+      <Heading first>{t('health.lastNight')}</Heading>
       <Card>
         <View style={{ flexDirection: 'row', gap: 24 }}>
           <View>

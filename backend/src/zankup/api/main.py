@@ -13,6 +13,7 @@ from sqlalchemy import Engine
 from zankup import __version__
 from zankup.api.activities import router as activities_router
 from zankup.api.ai import router as ai_router
+from zankup.api.keys import router as keys_router
 from zankup.api.library import router as library_router
 from zankup.api.mcp import router as mcp_router
 from zankup.api.notifications import router as notifications_router
@@ -124,6 +125,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(training_router)
     app.include_router(week_router)
     app.include_router(ai_router)
+    app.include_router(keys_router)
     app.include_router(mcp_router)
 
     # Uploads and downloads go straight to the API host (api/transfers.py): the app's origins may call

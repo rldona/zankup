@@ -100,6 +100,18 @@ function Detail({ activity }: { activity: ActivityDetail }) {
   const [hover, setHover] = useState<number | null>(null);
   const [section, setSection] = useState<[number, number] | null>(null);
   const hasMap = useMemo(() => (series ? trackPoints(series).length > 1 : false), [series]);
+  const hrZones = series?.hr?.some((v) => v != null) && (
+    <Zones
+      series={series}
+      hrMax={prefs.hrMax}
+      estimated={prefs.hrMaxEstimated}
+      engine={
+        activity.metrics?.hr_zones && activity.metrics.hr_zone_bounds
+          ? { seconds: activity.metrics.hr_zones, bounds: activity.metrics.hr_zone_bounds }
+          : null
+      }
+    />
+  );
 
   return (
     <article className="page detail">
@@ -152,30 +164,22 @@ function Detail({ activity }: { activity: ActivityDetail }) {
 
       <Photos activityId={activity.id} photos={activity.photo_list ?? []} />
 
+      {/* The sections in the app's order (OS-909): on a ride the heart-rate zones follow the power
+          curve and zones; on a run the splits follow the heart-rate zones. */}
+      {sport !== 'ride' && hrZones}
+      {sport === 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {/* Kept offline before sets existed, an activity may come without them. */}
       {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
-      {series?.hr?.some((v) => v != null) && (
-        <Zones
-          series={series}
-          hrMax={prefs.hrMax}
-          estimated={prefs.hrMaxEstimated}
-          engine={
-            activity.metrics?.hr_zones && activity.metrics.hr_zone_bounds
-              ? { seconds: activity.metrics.hr_zones, bounds: activity.metrics.hr_zone_bounds }
-              : null
-          }
-        />
-      )}
       <EngineExtras activity={activity} />
-      <BestEfforts activity={activity} format={format} />
+      {sport === 'ride' && hrZones}
       <Laps activity={activity} format={format} pace={pace} />
-      <Splits activity={activity} format={format} pace={pace} />
-
+      {sport !== 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {activity.description && (
         <section className="panel">
           <p className="desc">{activity.description}</p>
         </section>
       )}
+      <BestEfforts activity={activity} format={format} />
       <p className="note origin">
         {t('activity.origin')}: {sourceLabel(activity.source)}
         {activity.has_fit && (
@@ -460,9 +464,7 @@ function Zones({
   if (!hrMax && !engine) {
     return (
       <section className="panel">
-        <div className="ph">
-          <h2>{t('activity.zones')}</h2>
-        </div>
+        <CardTitle>{t('activity.zones')}</CardTitle>
         <p className="note">{t('activity.zonesNone')}</p>
       </section>
     );
@@ -473,9 +475,7 @@ function Zones({
   const limits = engine?.bounds ?? zoneLimits(hrMax ?? 190);
   return (
     <section className="panel zones">
-      <div className="ph">
-        <h2>{t('activity.zones')}</h2>
-      </div>
+      <CardTitle>{t('activity.zones')}</CardTitle>
       <ZoneBar seconds={seconds} label={t('activity.zones')} />
       <table className="num">
         <tbody>
@@ -526,9 +526,7 @@ function BestEfforts({ activity, format }: { activity: ActivityDetail; format: F
   if (!activity.best_efforts.length) return null;
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('activity.best')}</h2>
-      </div>
+      <CardTitle>{t('activity.best')}</CardTitle>
       <table className="num">
         <thead>
           <tr>
@@ -560,9 +558,7 @@ function Laps({ activity, format, pace }: { activity: ActivityDetail; format: Fo
   const power = activity.laps.some((l) => l.avg_power);
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('activity.laps')}</h2>
-      </div>
+      <CardTitle>{t('activity.laps')}</CardTitle>
       <div className="scroll" tabIndex={0} role="region" aria-label={t('activity.laps')}>
         <table className="num">
           <thead>
@@ -607,9 +603,7 @@ function Splits({ activity, format, pace }: { activity: ActivityDetail; format: 
   const fastest = Math.max(...speeds);
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('activity.splits')}</h2>
-      </div>
+      <CardTitle>{t('activity.splits')}</CardTitle>
       <table className="num splits">
         <tbody>
           {activity.splits.map((s, i) => (
@@ -713,9 +707,7 @@ function EngineExtras({ activity }: { activity: ActivityDetail }) {
       )}
       {(activity.segments ?? []).length > 0 && (
         <section className="panel">
-          <div className="ph">
-            <h2>{t('activity.segmentsTitle')}</h2>
-          </div>
+          <CardTitle>{t('activity.segmentsTitle')}</CardTitle>
           <ul className="rows">
             {(activity.segments ?? []).map((s) => (
               <li key={s.segment_id}>
@@ -737,9 +729,7 @@ function EngineExtras({ activity }: { activity: ActivityDetail }) {
       )}
       {curve.length > 0 && allTime.data && (
         <section className="panel">
-          <div className="ph">
-            <h2>{t('activity.powerCurve')}</h2>
-          </div>
+          <CardTitle>{t('activity.powerCurve')}</CardTitle>
           <CurveChart
             period={curve}
             allTime={allTime.data}
@@ -751,9 +741,7 @@ function EngineExtras({ activity }: { activity: ActivityDetail }) {
       )}
       {powerZones && bounds && (
         <section className="panel zones">
-          <div className="ph">
-            <h2>{t('activity.powerZones')}</h2>
-          </div>
+          <CardTitle>{t('activity.powerZones')}</CardTitle>
           <table className="num">
             <tbody>
               {powerZones.map((sec, i) => (

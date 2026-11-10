@@ -15,7 +15,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PageSkeleton } from './Skeleton';
 import { dynamicAccent, dynamicOnAccent, useTheme, type Palette } from './theme';
@@ -56,8 +56,9 @@ export function Screen({
 }) {
   const c = useTheme();
   const keyboard = useFieldAboveKeyboard();
+  const top = useTopInset(!header);
   return (
-    <SafeAreaView edges={header ? [] : ['top']} style={{ flex: 1, backgroundColor: c.bg }}>
+    <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: top }}>
       {title ? (
         <View style={styles.headerBar}>
           <View style={{ flex: 1 }}>
@@ -81,8 +82,18 @@ export function Screen({
         children
       )}
       <KeyboardSpace />
-    </SafeAreaView>
+    </View>
   );
+}
+
+/**
+ * Room for the status bar at the top of a screen, from the insets the provider already knows. Not
+ * SafeAreaView: it applies its padding natively a frame late, so a tab opened for the first time
+ * showed its header under the status bar and then jumped down.
+ */
+export function useTopInset(apply = true): number {
+  const insets = useSafeAreaInsets();
+  return apply ? insets.top : 0;
 }
 
 /**

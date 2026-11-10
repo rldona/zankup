@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { fetch } from 'expo/fetch';
 import { File } from 'expo-file-system';
-import { useEffect, useRef, useState } from 'react';
+import { Children, Fragment, isValidElement, useEffect, useRef, useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -50,10 +50,13 @@ export function Sheet({
   title,
   onClose,
   children,
+  footer,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** The sheet's main actions (Save, Cancel), fixed at the bottom while the content scrolls. */
+  footer?: React.ReactNode;
 }) {
   const c = useTheme();
   return (
@@ -68,6 +71,28 @@ export function Sheet({
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ui.page}>
           {children}
         </ScrollView>
+        {footer ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              padding: 16,
+              gap: 12,
+              borderTopWidth: 1,
+              borderColor: c.line,
+              backgroundColor: c.bg,
+            }}
+          >
+            {Children.toArray(
+              isValidElement<{ children?: React.ReactNode }>(footer) && footer.type === Fragment
+                ? footer.props.children
+                : footer,
+            ).map((child, i) => (
+              <View key={i} style={{ flex: 1 }}>
+                {child}
+              </View>
+            ))}
+          </View>
+        ) : null}
       </SafeAreaView>
     </Modal>
   );
@@ -97,7 +122,18 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
   });
   const choices = (gear.data ?? []).filter((g) => !g.retired || g.id === activity.gear?.id);
   return (
-    <Sheet title={t('activity.edit')} onClose={onClose}>
+    <Sheet
+      title={t('activity.edit')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
+            {t('settings.save')}
+          </Button>
+          <Button onPress={onClose}>{t('common.cancel')}</Button>
+        </>
+      }
+    >
       <Field label={t('activity.name')} value={name} onChangeText={setName} maxLength={255} />
       <Field
         label={t('activity.description')}
@@ -133,9 +169,6 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
         ]}
       />
       <Muted>{t('activity.editNote')}</Muted>
-      <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
-        {t('settings.save')}
-      </Button>
       {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
     </Sheet>
   );

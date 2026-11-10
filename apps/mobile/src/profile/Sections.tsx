@@ -174,7 +174,18 @@ export function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
     onChangeText: (value: string) => setForm({ ...form, [name]: value }),
   });
   return (
-    <Sheet title={t('profile.edit')} onClose={onDone}>
+    <Sheet
+      title={t('profile.edit')}
+      onClose={onDone}
+      footer={
+        <>
+          <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
+            {t('settings.save')}
+          </Button>
+          <Button onPress={onDone}>{t('profile.cancel')}</Button>
+        </>
+      }
+    >
       <Field label={t('profile.name')} autoComplete="name" maxLength={120} {...field('display_name')} />
       <Field label={t('profile.location')} maxLength={120} {...field('location')} />
       <Field
@@ -199,10 +210,6 @@ export function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
       <Field label={t('profile.weight')} keyboardType="decimal-pad" {...field('weight_kg')} />
       <Field label={t('profile.height')} keyboardType="number-pad" {...field('height_cm')} />
       {save.isError && <Muted accessibilityRole="alert">{save.error.message || t('common.error')}</Muted>}
-      <Button primary disabled={save.isPending} onPress={() => save.mutate()}>
-        {t('settings.save')}
-      </Button>
-      <Button onPress={onDone}>{t('profile.cancel')}</Button>
     </Sheet>
   );
 }
@@ -377,7 +384,18 @@ export function Goals({ withForm = true }: { withForm?: boolean }) {
 }
 
 /** Adding a goal; `bare` drops its card and heading, for a sheet that has its own title. */
-export function GoalForm({ unit, onDone, bare }: { unit: string; onDone: () => void; bare?: boolean }) {
+export function GoalForm({
+  unit,
+  onDone,
+  bare,
+  onCancel,
+}: {
+  unit: string;
+  onDone: () => void;
+  bare?: boolean;
+  /** In a sheet: Cancel and Add go to its fixed footer. */
+  onCancel?: () => void;
+}) {
   const api = useApi();
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
   const [metric, setMetric] = useState<'distance' | 'time' | 'count'>('distance');
@@ -397,7 +415,7 @@ export function GoalForm({ unit, onDone, bare }: { unit: string; onDone: () => v
       onDone();
     },
   });
-  return (
+  const form = (
     <Card style={bare ? { borderWidth: 0, padding: 0, backgroundColor: 'transparent' } : undefined}>
       {!bare && <Heading>{t('goals.add')}</Heading>}
       <Muted>{t('stats.period')}</Muted>
@@ -437,11 +455,30 @@ export function GoalForm({ unit, onDone, bare }: { unit: string; onDone: () => v
         value={target}
         onChangeText={setTarget}
       />
-      <Button primary disabled={!(value > 0) || save.isPending} onPress={() => save.mutate()}>
-        {t('goals.add')}
-      </Button>
+      {!onCancel && (
+        <Button primary disabled={!(value > 0) || save.isPending} onPress={() => save.mutate()}>
+          {t('goals.add')}
+        </Button>
+      )}
       {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
     </Card>
+  );
+  if (!onCancel) return form;
+  return (
+    <Sheet
+      title={t('goals.add')}
+      onClose={onCancel}
+      footer={
+        <>
+          <Button primary disabled={!(value > 0) || save.isPending} onPress={() => save.mutate()}>
+            {t('goals.add')}
+          </Button>
+          <Button onPress={onCancel}>{t('common.cancel')}</Button>
+        </>
+      }
+    >
+      {form}
+    </Sheet>
   );
 }
 

@@ -51,16 +51,7 @@ export function Screen({
   return (
     <SafeAreaView edges={header ? [] : ['top']} style={{ flex: 1, backgroundColor: c.bg }}>
       {title ? (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 22,
-            paddingHorizontal: 16,
-            paddingTop: 16,
-            paddingBottom: 12,
-          }}
-        >
+        <View style={styles.headerBar}>
           <View style={{ flex: 1 }}>
             <Title>{title}</Title>
           </View>
@@ -402,7 +393,9 @@ export function Badge({ children, tone }: { children: string; tone?: 'good' | 'b
 
 export const styles = StyleSheet.create({
   page: { padding: 16, gap: 12, paddingBottom: 32 },
-  title: { fontSize: 26, fontWeight: '700', letterSpacing: -0.3 },
+  title: { fontSize: 22, fontWeight: '700', letterSpacing: -0.2 },
+  /** The fixed header of the tabs and Home: one height everywhere. */
+  headerBar: { flexDirection: 'row', alignItems: 'center', gap: 20, paddingHorizontal: 16, height: 60 },
   heading: { fontSize: 17, fontWeight: '700', marginTop: 8 },
   card: { borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 8 },
   stat: { minWidth: 72, paddingVertical: 4 },

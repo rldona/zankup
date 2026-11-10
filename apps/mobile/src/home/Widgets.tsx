@@ -71,10 +71,7 @@ export function LastDay() {
   // Only today's or yesterday's: an older day is not news, and an empty one shows nothing.
   const heading = dayHeading(last.day, today);
   if (heading === 'date') return null;
-  const title = t('home.dayCount', {
-    day: t(heading === 'today' ? 'home.today' : 'home.yesterday'),
-    count: last.activities.length,
-  });
+  const title = t(heading === 'today' ? 'home.today' : 'home.yesterday');
   const day = health.data?.find((d) => d.day === last.day);
   // Each page is the screen's width with the usual 16 px either side, so cards never touch while swiping.
   const pageWidth = width;

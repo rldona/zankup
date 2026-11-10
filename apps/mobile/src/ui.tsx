@@ -293,7 +293,7 @@ export function Button({
 export function Field({ label, ...props }: TextInputProps & { label: string }) {
   const c = useTheme();
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 10 }}>
       <Text style={{ color: c.fg, fontWeight: '600' }}>{label}</Text>
       <TextInput
         accessibilityLabel={label}

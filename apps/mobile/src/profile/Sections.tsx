@@ -407,7 +407,7 @@ export function GoalForm({
       style={{ gap: 20, ...(bare ? { borderWidth: 0, padding: 0, backgroundColor: 'transparent' } : {}) }}
     >
       {!bare && <Heading>{t('goals.add')}</Heading>}
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: 10 }}>
         <Text style={{ color: c.fg, fontWeight: '600' }}>{t('stats.period')}</Text>
         <Choice
           label={t('stats.period')}
@@ -419,7 +419,7 @@ export function GoalForm({
           }))}
         />
       </View>
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: 10 }}>
         <Text style={{ color: c.fg, fontWeight: '600' }}>{t('feed.sports')}</Text>
         <Choice
           label={t('feed.sports')}
@@ -434,7 +434,7 @@ export function GoalForm({
           ]}
         />
       </View>
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: 10 }}>
         <Text style={{ color: c.fg, fontWeight: '600' }}>{t('goals.measure')}</Text>
         <Choice
           label={t('goals.measure')}

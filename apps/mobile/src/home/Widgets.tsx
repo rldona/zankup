@@ -28,6 +28,7 @@ import { asSport, useFormat } from '../prefs';
 import { formLabel } from '../stats/Sections';
 import { useTheme } from '../theme';
 import { Card, Heading, Muted, styles as ui } from '../ui';
+import { CardSkeleton, Pulse } from '../Skeleton';
 import { average, dayHeading, daysBefore, isoDay, lastDay, lastSevenDays } from './data';
 
 type Format = ReturnType<typeof useFormat>;
@@ -58,7 +59,14 @@ export function LastDay() {
   const last = lastDay(items);
   const { width } = useWindowDimensions();
   const [page, setPage] = useState(0);
-  if (!last) return feed.isFetched ? <Muted>{t('home.empty')}</Muted> : null;
+  if (!last)
+    return feed.isFetched ? (
+      <Muted>{t('home.empty')}</Muted>
+    ) : (
+      <Pulse>
+        <CardSkeleton lines={2} />
+      </Pulse>
+    );
 
   const heading = dayHeading(last.day, today);
   const title =

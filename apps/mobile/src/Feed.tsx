@@ -28,6 +28,7 @@ import { Icon, SportIcon } from './Icon';
 import { asSport, useFormat } from './prefs';
 import { useTheme } from './theme';
 import { Card, Empty, Muted, Stat, styles as ui } from './ui';
+import { FeedSkeleton, WeekSkeleton } from './Skeleton';
 
 type Format = ReturnType<typeof useFormat>;
 
@@ -47,7 +48,7 @@ export function Feed() {
       data={items}
       keyExtractor={(a) => String(a.id)}
       renderItem={({ item }) => <ActivityCard activity={item} format={format} />}
-      ListEmptyComponent={feed.isFetched ? <Empty>{t('feed.empty')}</Empty> : null}
+      ListEmptyComponent={feed.isFetched ? <Empty>{t('feed.empty')}</Empty> : <FeedSkeleton />}
       onEndReached={() => feed.hasNextPage && !feed.isFetchingNextPage && void feed.fetchNextPage()}
       onEndReachedThreshold={0.5}
       refreshControl={
@@ -69,7 +70,7 @@ export function WeekHeader({ format }: { format: Format }) {
   const c = useTheme();
   const day = today();
   const week = useQuery(weekQuery(api, day));
-  if (!week.data) return <View style={{ height: 8 }} />;
+  if (!week.data) return <WeekSkeleton />;
   const { days, this_week: totals, streak_weeks: streak } = week.data;
   return (
     <Card>

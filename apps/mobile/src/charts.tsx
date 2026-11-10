@@ -5,7 +5,7 @@
  * day and shows its values; a vertical swipe still scrolls the screen.
  */
 import { Canvas, DashPathEffect, Group, Line, Path, Rect, vec } from '@shopify/react-native-skia';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
@@ -109,6 +109,25 @@ export function dayTicks(count: number, wanted = 5) {
   return Array.from({ length: wanted }, (_, i) => Math.round(i * every));
 }
 
+/**
+ * Whether a Skia canvas of this width can be drawn on. On Android a canvas that draws before its
+ * surface exists stays blank and does not redraw on its own, which happens when a chart mounts with its
+ * data already there (a period changed, a card unfolded). The drawing waits two frames: the canvas gets
+ * its surface in the first, the drawing lands in the second. Hide the chart until then, so its labels
+ * do not show ahead of it.
+ */
+export function useCanvasReady(width: number): boolean {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!width) return;
+    let id = requestAnimationFrame(() => {
+      id = requestAnimationFrame(() => setReady(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [width]);
+  return ready;
+}
+
 const AXIS = 34;
 const TOP = 8;
 
@@ -128,6 +147,7 @@ export function Chart({
   const c = useTheme();
   const [width, setWidth] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
+  const ready = useCanvasReady(width);
   const count = days.length;
 
   // Layers given the same domain share a scale. The first scale is the left axis, the second the right.
@@ -249,7 +269,7 @@ export function Chart({
   const muted = { color: c.muted, fontSize: 10, fontVariant: ['tabular-nums' as const] };
 
   return (
-    <View accessible accessibilityLabel={label} style={{ gap: 6 }}>
+    <View accessible accessibilityLabel={label} style={{ gap: 6, opacity: ready ? 1 : 0 }}>
       <GestureDetector gesture={gesture}>
         <View
           collapsable={false}
@@ -259,28 +279,38 @@ export function Chart({
           {width > 0 && (
             <>
               <Canvas style={{ width, height }}>
-                {leftTicks.map((_, i) => {
-                  const py = Math.round(TOP + inner - (i / INTERVALS) * inner) - 0.5;
-                  return (
-                    <Line key={i} p1={vec(left, py)} p2={vec(left + plot, py)} color={c.line} strokeWidth={1}>
-                      {i > 0 && <DashPathEffect intervals={[3, 4]} />}
-                    </Line>
-                  );
-                })}
-                {zeroLines.map((on, scale) =>
-                  on ? (
-                    <Line
-                      key={`zero${scale}`}
-                      p1={vec(left, yOf(scale)(0))}
-                      p2={vec(left + plot, yOf(scale)(0))}
-                      color={c.muted}
-                      strokeWidth={1}
-                    />
-                  ) : null,
-                )}
-                <Group transform={[{ translateX: left }]}>{drawn}</Group>
-                {picked != null && (
-                  <Line p1={vec(pickedX, TOP)} p2={vec(pickedX, height)} color={c.fg} strokeWidth={1} />
+                {ready && (
+                  <>
+                    {leftTicks.map((_, i) => {
+                      const py = Math.round(TOP + inner - (i / INTERVALS) * inner) - 0.5;
+                      return (
+                        <Line
+                          key={i}
+                          p1={vec(left, py)}
+                          p2={vec(left + plot, py)}
+                          color={c.line}
+                          strokeWidth={1}
+                        >
+                          {i > 0 && <DashPathEffect intervals={[3, 4]} />}
+                        </Line>
+                      );
+                    })}
+                    {zeroLines.map((on, scale) =>
+                      on ? (
+                        <Line
+                          key={`zero${scale}`}
+                          p1={vec(left, yOf(scale)(0))}
+                          p2={vec(left + plot, yOf(scale)(0))}
+                          color={c.muted}
+                          strokeWidth={1}
+                        />
+                      ) : null,
+                    )}
+                    <Group transform={[{ translateX: left }]}>{drawn}</Group>
+                    {picked != null && (
+                      <Line p1={vec(pickedX, TOP)} p2={vec(pickedX, height)} color={c.fg} strokeWidth={1} />
+                    )}
+                  </>
                 )}
               </Canvas>
               {leftTicks.map((v, i) => (

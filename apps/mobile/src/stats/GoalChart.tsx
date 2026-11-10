@@ -9,13 +9,13 @@
 import { calendarQuery, type CalendarDay, type GoalOut } from '@zankup/core';
 import { Canvas, Circle, DashPathEffect, Group, Line, Path, vec } from '@shopify/react-native-skia';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { useApi } from '../auth';
 import { locale, t } from '../i18n';
-import { niceScale } from '../charts';
+import { niceScale, useCanvasReady } from '../charts';
 import { useTheme } from '../theme';
 
 export type GoalPoint = {
@@ -116,17 +116,7 @@ export function GoalChart({
   // Today on the phone's calendar, fixed while the card is on screen.
   const [today] = useState(() => iso(new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)));
   const [picked, setPicked] = useState<number | null>(null);
-  // On Android a canvas that draws before its surface exists stays blank, and these never redraw on
-  // their own: the drawing comes a moment after the canvas, which then paints it.
-  const [painted, setPainted] = useState(false);
-  useEffect(() => {
-    if (!width) return;
-    // Two frames: the canvas gets its surface in the first, the drawing lands in the second.
-    let id = requestAnimationFrame(() => {
-      id = requestAnimationFrame(() => setPainted(true));
-    });
-    return () => cancelAnimationFrame(id);
-  }, [width]);
+  const painted = useCanvasReady(width);
   const calendar = useQuery(calendarQuery(api, { from: goal.start, to: goal.end }));
   if (!calendar.data) return <View style={{ height: 150 }} />;
   const points = goalPoints(goal, calendar.data, today);

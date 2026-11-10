@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@shopify/react-native-skia', () => ({}));
 vi.mock('react-native', () => ({}));
+vi.mock('react-native-gesture-handler', () => ({}));
 vi.mock('../auth', () => ({}));
 vi.mock('../theme', () => ({}));
 vi.mock('../i18n', () => ({ locale: 'en', t: (k: string) => k }));

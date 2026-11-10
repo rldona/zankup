@@ -14,6 +14,8 @@ import {
   metricValues,
   quantile,
   RAMP,
+  shareCardFigures,
+  sharedPreviewQuery,
   activityCharts,
   activityFigures,
   POWER_COLOUR,
@@ -22,7 +24,7 @@ import {
   type Metric,
   type Series,
 } from '@zankup/core';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
 import {
   startTransition,
@@ -33,7 +35,7 @@ import {
   useState,
   type ComponentProps,
 } from 'react';
-import { Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { SummaryCard } from '../../src/Ai';
@@ -44,6 +46,7 @@ import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../..
 import { Strength } from '../../src/detail/Strength';
 import { MapControls } from '../../src/detail/MapControls';
 import { ActivitySkeleton } from '../../src/Skeleton';
+import { drawCard, shareCard } from '../../src/share/card';
 import { EditActivity, metaLine, Photos, SaveSegment, useReplay } from '../../src/detail/Tools';
 import { Icon, SportIcon } from '../../src/Icon';
 import { buildTrack, sectionStats, type SectionStats } from '../../src/detail/track';
@@ -170,7 +173,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
   const { main, more } = activityFigures(a, { pace, format, t, locale });
   const meta = metaLine(a, units);
 
-  const share = async () => {
+  const shareLink = async () => {
     const { data } = await api.POST('/api/activities/{activity_id}/shares', {
       params: { path: { activity_id: a.id } },
       body: { days: 7, show_map: true },
@@ -179,6 +182,32 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
     const web = webOrigin(instanceUrl() ?? '');
     await Share.share({ message: `${a.name ?? ''} ${web}${data.path}`.trim() });
   };
+  // The image (OS-919), as the PWA's: the shared view of the activity (privacy zones already out) on a
+  // 1080 × 1350 card in the theme's colours.
+  const queryClient = useQueryClient();
+  const shareImage = async () => {
+    try {
+      const shared = await queryClient.fetchQuery(sharedPreviewQuery(api, a.id, true));
+      const bytes = drawCard(
+        {
+          title: shared.name ?? t(`sport.${sport}`),
+          subtitle: new Date(`${shared.day}T12:00:00`).toLocaleDateString(locale, { dateStyle: 'long' }),
+          figures: shareCardFigures(shared, pace, format, t),
+          route: shared.route as [number, number][][] | null,
+        },
+        { bg: String(c.bg), fg: String(c.fg), muted: String(c.muted), accent: String(c[sport]) },
+      );
+      await shareCard(bytes, `zankup-${a.id}.png`, shared.name ?? 'Zankup');
+    } catch {
+      Alert.alert(t('common.error'));
+    }
+  };
+  const share = () =>
+    Alert.alert(t('activity.share'), undefined, [
+      { text: t('share.image'), onPress: () => void shareImage() },
+      { text: t('share.link'), onPress: () => void shareLink() },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
 
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: 32 }}>

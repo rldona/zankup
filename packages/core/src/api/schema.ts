@@ -2822,11 +2822,8 @@ export interface components {
       initial_m: number;
       /** Limit M */
       limit_m?: number | null;
-      /**
-       * Habitual
-       * @default false
-       */
-      habitual: boolean;
+      /** Habitual */
+      habitual?: boolean | null;
     };
     /** GearOut */
     GearOut: {

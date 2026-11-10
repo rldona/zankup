@@ -891,5 +891,7 @@
   "home.perKg": "{value} W/kg",
   "mobile.biometricLock": "Ask for the fingerprint to open Zankup",
   "mobile.biometricLockOff": "Zankup opens without the fingerprint: anyone with your unlocked phone can see your data.",
-  "nav.goals": "Goals"
+  "nav.goals": "Goals",
+  "health.yesterday": "Yesterday, {day}",
+  "health.nightOf": "Sleep, {day}"
 }

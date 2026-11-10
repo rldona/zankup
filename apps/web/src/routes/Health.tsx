@@ -2,6 +2,7 @@ import {
   formatHoursMinutes,
   healthDaysQuery,
   healthNightQuery,
+  relativeDay,
   SOURCE_ICONS,
   type HealthDay,
   type HealthNight,
@@ -144,7 +145,11 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
     new Date(new Date(iso).getTime() + (sleep.utc_offset_s ?? 0) * 1000).toISOString().slice(11, 16);
   return (
     <>
-      <h2>{t('health.lastNight')}</h2>
+      <h2>
+        {relativeDay(day.day, localToday()) === 'today'
+          ? t('health.lastNight')
+          : t('health.nightOf', { day: longDay(day.day) })}
+      </h2>
       <article className="panel night">
         <div className="nighthead">
           <div>
@@ -209,7 +214,13 @@ function Today({ day }: { day: HealthDay }) {
   add('health.steps', day.steps, (n) => n.toLocaleString(locale));
   return (
     <>
-      <h2>{t('health.today', { day: longDay(day.day) })}</h2>
+      <h2>
+        {relativeDay(day.day, localToday()) === 'today'
+          ? t('health.today', { day: longDay(day.day) })
+          : relativeDay(day.day, localToday()) === 'yesterday'
+            ? t('health.yesterday', { day: longDay(day.day) })
+            : longDay(day.day)}
+      </h2>
       <div className="cards">
         <article className="panel">
           <h3>{t('health.readiness')}</h3>

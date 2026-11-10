@@ -14,13 +14,17 @@ import {
   metricValues,
   quantile,
   RAMP,
-  smooth,
+  shareCardFigures,
+  sharedPreviewQuery,
+  activityCharts,
+  activityFigures,
+  POWER_COLOUR,
   usesPace,
   type ActivityDetail,
   type Metric,
   type Series,
 } from '@zankup/core';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
 import {
   startTransition,
@@ -31,7 +35,7 @@ import {
   useState,
   type ComponentProps,
 } from 'react';
-import { Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { SummaryCard } from '../../src/Ai';
@@ -42,6 +46,7 @@ import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../..
 import { Strength } from '../../src/detail/Strength';
 import { MapControls } from '../../src/detail/MapControls';
 import { ActivitySkeleton } from '../../src/Skeleton';
+import { drawCard, shareCard } from '../../src/share/card';
 import { EditActivity, metaLine, Photos, SaveSegment, useReplay } from '../../src/detail/Tools';
 import { Icon, SportIcon } from '../../src/Icon';
 import { buildTrack, sectionStats, type SectionStats } from '../../src/detail/track';
@@ -164,46 +169,11 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
     [track, setSection, setStats],
   );
 
-  const moving = a.moving_s ?? a.duration_s;
-  const m = a.metrics ?? null;
-  // The six figures that matter, as Strava lays them out; the rest wait behind "More".
-  const main: [string, string][] = [];
-  const more: [string, string][] = [];
-  if (a.distance_m) main.push([t('activity.fig.distance'), format.distance(a.distance_m)]);
-  main.push([t('activity.fig.moving'), formatDuration(moving)]);
-  if (a.distance_m && moving)
-    main.push([
-      t(pace ? 'activity.fig.pace' : 'activity.fig.speed'),
-      format.speedFor(a.distance_m / moving, pace),
-    ]);
-  if (a.ascent_m) main.push([t('activity.fig.ascent'), format.elevation(a.ascent_m)]);
-  if (a.avg_power) main.push([t('activity.power'), `${a.avg_power} W`]);
-  else if (a.avg_hr) main.push([t('feed.stat.hr'), `${a.avg_hr} bpm`]);
-  const kcal = a.calories ?? m?.calories;
-  if (kcal)
-    main.push([
-      t('activity.calories'),
-      `${Math.round(kcal).toLocaleString(locale)} kcal${a.calories == null ? ' *' : ''}`,
-    ]);
-  if (a.moving_s && a.duration_s - a.moving_s > 60)
-    more.push([t('activity.elapsed'), formatDuration(a.duration_s)]);
-  if (a.avg_power && a.avg_hr) more.push([t('feed.stat.hr'), `${a.avg_hr} bpm`]);
-  if (a.max_hr) more.push([t('activity.maxHr'), `${a.max_hr} bpm`]);
-  if (a.normalized_power) more.push([t('activity.np'), `${a.normalized_power} W`]);
-  if (m?.trimp != null) more.push([t('activity.effort'), Math.round(m.trimp).toLocaleString(locale)]);
-  if (pace && m?.gap_speed) more.push([t('activity.gap'), format.pace(m.gap_speed)]);
-  if (m?.decoupling != null)
-    more.push([
-      t('activity.decoupling'),
-      `${m.decoupling.toLocaleString(locale, { maximumFractionDigits: 1 })} %`,
-    ]);
-  if (a.training_effect)
-    more.push([t('activity.te'), a.training_effect.toLocaleString(locale, { maximumFractionDigits: 1 })]);
-  // Without a distance (strength, indoor), the next figures fill the six places.
-  main.push(...more.splice(0, Math.max(0, 6 - main.length)));
+  // The six figures that matter, as Strava lays them out; the rest wait behind "More" (packages/core).
+  const { main, more } = activityFigures(a, { pace, format, t, locale });
   const meta = metaLine(a, units);
 
-  const share = async () => {
+  const shareLink = async () => {
     const { data } = await api.POST('/api/activities/{activity_id}/shares', {
       params: { path: { activity_id: a.id } },
       body: { days: 7, show_map: true },
@@ -212,6 +182,32 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
     const web = webOrigin(instanceUrl() ?? '');
     await Share.share({ message: `${a.name ?? ''} ${web}${data.path}`.trim() });
   };
+  // The image (OS-919), as the PWA's: the shared view of the activity (privacy zones already out) on a
+  // 1080 × 1350 card in the theme's colours.
+  const queryClient = useQueryClient();
+  const shareImage = async () => {
+    try {
+      const shared = await queryClient.fetchQuery(sharedPreviewQuery(api, a.id, true));
+      const bytes = drawCard(
+        {
+          title: shared.name ?? t(`sport.${sport}`),
+          subtitle: new Date(`${shared.day}T12:00:00`).toLocaleDateString(locale, { dateStyle: 'long' }),
+          figures: shareCardFigures(shared, pace, format, t),
+          route: shared.route as [number, number][][] | null,
+        },
+        { bg: String(c.bg), fg: String(c.fg), muted: String(c.muted), accent: String(c[sport]) },
+      );
+      await shareCard(bytes, `zankup-${a.id}.png`, shared.name ?? 'Zankup');
+    } catch {
+      Alert.alert(t('common.error'));
+    }
+  };
+  const share = () =>
+    Alert.alert(t('activity.share'), undefined, [
+      { text: t('share.image'), onPress: () => void shareImage() },
+      { text: t('share.link'), onPress: () => void shareLink() },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
 
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: 32 }}>
@@ -443,10 +439,7 @@ function Figures({ main, more }: { main: [string, string][]; more: [string, stri
 
 type Format = ReturnType<typeof useFormat>;
 
-/** The charts an activity has data for, each in the unit it is read in: power, speed (or pace), cadence, altitude and heart rate (left out of a ride, which has its zones). */
-/** Power in a light violet on every theme: the ride's blue and speed's accent can both be blue (Ocean). */
-const POWER_COLOUR = '#b197fc';
-
+/** The charts the activity has (packages/core, shared with the web), in the app's colours and readout. */
 function chartSeries(
   series: Series,
   sport: ReturnType<typeof asSport>,
@@ -456,164 +449,21 @@ function chartSeries(
   c: ReturnType<typeof useTheme>,
   a: ActivityDetail | undefined,
 ): ChartSeries[] {
-  const usable = (values: (number | null)[]) => values.filter((v): v is number => v != null && v > 0);
-  const maxOf = (values: (number | null)[]) => Math.max(...usable(values));
-  const minOf = (values: (number | null)[]) => Math.min(...values.filter((v): v is number => v != null));
-  const avgOf = (values: (number | null)[]) => {
-    const u = usable(values);
-    return u.length ? u.reduce((x, y) => x + y, 0) / u.length : 0;
-  };
-  const has = (values: (number | null)[] | null | undefined): values is (number | null)[] =>
-    !!values?.some((v) => v != null && v > 0);
-  const average = (values: (number | null)[], text: (v: number) => string) => {
-    const usable = values.filter((v): v is number => v != null && v > 0);
-    return usable.length
-      ? `${t('chart.average')} ${text(usable.reduce((a, b) => a + b, 0) / usable.length)}`
-      : '–';
-  };
   const decimal = (1.5).toLocaleString(locale).charAt(1);
-  const out: ChartSeries[] = [];
-  const feet = units === 'imperial' ? 3.28084 : 1;
-
-  const alt = series.alt;
-  if (alt?.some((v) => v != null)) {
-    const values = alt.map((v) => (v == null ? null : v * feet));
-    out.push({
-      label: t('metric.alt'),
-      color: String(c.muted),
-      values,
-      readout: { kind: 'int', suffix: units === 'imperial' ? ' ft' : ' m', decimal },
-      average:
-        format.elevation(Math.max(...alt.filter((v): v is number => v != null))) + ` ${t('chart.max')}`,
-      footer: [
-        ...(a?.ascent_m != null
-          ? ([[t('chart.ascent'), format.elevation(a.ascent_m)]] as [string, string][])
-          : []),
-        ...(a?.descent_m != null
-          ? ([[t('chart.descent'), format.elevation(a.descent_m)]] as [string, string][])
-          : []),
-        [t('chart.min'), format.elevation(minOf(alt))],
-        [t('chart.maxFull'), format.elevation(Math.max(...alt.filter((v): v is number => v != null)))],
-      ],
-    });
-  }
-
-  const speed = metricValues(series, 'speed');
-  if (has(speed)) {
-    const unit = units === 'imperial' ? 1609.344 : 1000;
-    const text = (v: number) => format.speedFor(v, pace);
-    const moving = speed.filter((v): v is number => v != null && v > 0.5);
-    const mean = moving.length ? moving.reduce((a, b) => a + b, 0) / moving.length : 0;
-    out.push(
-      pace
-        ? {
-            label: t('metric.pace'),
-            color: String(c.accent),
-            // Minutes per km (or mile); standing still has no pace.
-            values: speed.map((v) => (v == null || v < 0.5 ? null : unit / v / 60)),
-            readout: { kind: 'pace', suffix: units === 'imperial' ? ' /mi' : ' /km', decimal },
-            average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
-            inverted: true,
-            tick: (v) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`,
-            footer: [
-              [t('chart.avgFull'), mean ? text(mean) : '–'],
-              [t('chart.bestPace'), moving.length ? text(Math.max(...moving)) : '–'],
-              ...(a?.metrics?.gap_speed
-                ? ([[t('chart.gap'), format.pace(a.metrics.gap_speed)]] as [string, string][])
-                : []),
-            ],
-          }
-        : {
-            label: t('metric.speed'),
-            color: String(c.accent),
-            values: speed.map((v) => (v == null ? null : (v * 3600) / unit)),
-            readout: { kind: 'dec1', suffix: units === 'imperial' ? ' mph' : ' km/h', decimal },
-            average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
-            fromZero: true,
-            footer: [
-              [t('chart.avgFull'), mean ? text(mean) : '–'],
-              [t('chart.maxFull'), moving.length ? text(Math.max(...moving)) : '–'],
-            ],
-          },
-    );
-  }
-
-  const hr = series.hr;
-  if (has(hr)) {
-    const text = (v: number) => `${Math.round(v)} bpm`;
-    out.push({
-      label: t('metric.hr'),
-      color: c.zone5,
-      values: hr,
-      readout: { kind: 'int', suffix: ' bpm', decimal },
-      average: average(hr, text),
-      footer: [
-        [t('chart.avgFull'), text(a?.avg_hr ?? avgOf(hr))],
-        [t('chart.maxFull'), text(a?.max_hr ?? maxOf(hr))],
-        ...(a?.metrics?.trimp != null
-          ? ([[t('chart.effort'), Math.round(a.metrics.trimp).toLocaleString(locale)]] as [string, string][])
-          : []),
-      ],
-    });
-  }
-
-  const power = metricValues(series, 'power');
-  if (has(power)) {
-    const text = (v: number) => `${Math.round(v)} W`;
-    out.push({
-      label: t('metric.power'),
-      color: POWER_COLOUR,
-      values: power,
-      readout: { kind: 'int', suffix: ' W', decimal },
-      average: average(series.power ?? power, text),
-      fromZero: true,
-      footer: [
-        [t('chart.avgFull'), text(a?.avg_power ?? avgOf(series.power ?? power))],
-        [t('chart.maxFull'), text(maxOf(series.power ?? power))],
-        ...(a?.normalized_power
-          ? ([
-              [t('chart.np'), text(a.normalized_power)],
-              ...(a.avg_power
-                ? [
-                    [
-                      t('chart.vi'),
-                      (a.normalized_power / a.avg_power).toLocaleString(locale, { maximumFractionDigits: 2 }),
-                    ],
-                  ]
-                : []),
-            ] as [string, string][])
-          : []),
-      ],
-    });
-  }
-
-  if (has(series.cad)) {
-    const cad = smooth(series.cad);
-    const per = sport === 'ride' ? 'rpm' : t('chart.spm');
-    const text = (v: number) => `${Math.round(v)} ${per}`;
-    out.push({
-      label: t('metric.cad'),
-      color: c.zone4,
-      values: cad,
-      readout: { kind: 'int', suffix: ` ${per}`, decimal },
-      average: average(series.cad, text),
-      footer: [
-        [t('chart.avgFull'), text(avgOf(series.cad))],
-        [t('chart.maxFull'), text(maxOf(series.cad))],
-      ],
-    });
-  }
-  const order = [
-    t('metric.power'),
-    t('metric.speed'),
-    t('metric.pace'),
-    t('metric.cad'),
-    t('metric.alt'),
-    t('metric.hr'),
-  ];
-  return out
-    .filter((chart) => sport !== 'ride' || chart.label !== t('metric.hr'))
-    .sort((x, y) => order.indexOf(x.label) - order.indexOf(y.label));
+  return activityCharts(series, { sport, pace, units, format, activity: a, t, locale }).map((chart) => ({
+    label: chart.label,
+    color: chart.colour === 'power' ? POWER_COLOUR : String(c[chart.colour]),
+    values: chart.values,
+    readout: { ...chart.readout, decimal },
+    average: '',
+    inverted: chart.inverted,
+    fromZero: chart.fromZero,
+    footer: chart.footer,
+    tick:
+      chart.readout.kind === 'pace'
+        ? (v: number) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`
+        : undefined,
+  }));
 }
 
 /**

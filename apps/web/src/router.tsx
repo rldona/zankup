@@ -3,6 +3,10 @@ import { createBrowserRouter, type RouteObject } from 'react-router';
 import { Activity } from './routes/Activity';
 import { AppError } from './routes/AppError';
 import { Feed, PickActivity } from './routes/Feed';
+import { Estimates } from './routes/Estimates';
+import { Goals } from './routes/Goals';
+import { Notifications } from './routes/Notifications';
+import { Home } from './routes/Home';
 import { Health } from './routes/Health';
 import { NotFound } from './routes/NotFound';
 import { Profile } from './routes/Profile';
@@ -31,13 +35,18 @@ import {
 
 /** Every screen. Public: sign-in, setup, password recovery and shared activities (/s/…). */
 const screens: RouteObject[] = [
+  { index: true, element: <Home /> },
   {
+    path: 'activities',
     element: <Feed />,
     children: [
       { index: true, element: <PickActivity /> },
-      { path: 'activities/:id', element: <Activity /> },
+      { path: ':id', element: <Activity /> },
     ],
   },
+  { path: 'goals', element: <Goals /> },
+  { path: 'estimates', element: <Estimates /> },
+  { path: 'notifications', element: <Notifications /> },
   { path: 'search', element: <Search /> },
   { path: 'stats', element: <Stats /> },
   { path: 'stats/calendar', element: <TrainingCalendar /> },
@@ -50,6 +59,7 @@ const screens: RouteObject[] = [
   { path: 'segments/:id', element: <SegmentView /> },
   { path: 'sync', element: <Sync /> },
   { path: 'settings', element: <Settings /> },
+  { path: 'settings/:section', element: <Settings /> },
   { path: 'settings/import', element: <Import /> },
   { path: 'gear', element: <Gear /> },
   { path: 'review/:period', element: <Review /> },

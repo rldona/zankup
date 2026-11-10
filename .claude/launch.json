@@ -4,8 +4,29 @@
     {
       "name": "docs",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "docs"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "docs"
+      ],
       "port": 8765
+    },
+    {
+      "name": "web-prod-api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@zankup/web",
+        "dev"
+      ],
+      "env": {
+        "ZANKUP_API": "https://api.zankup.com"
+      },
+      "port": 5173
     }
   ]
 }

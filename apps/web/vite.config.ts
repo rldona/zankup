@@ -66,7 +66,11 @@ export default defineConfig({
   optimizeDeps: { exclude: ['@zankup/core'] },
   server: {
     port: 5173,
-    proxy: { '/api': 'http://127.0.0.1:8000' },
+    // ZANKUP_API=https://api.zankup.com points the dev server at a live instance instead (real data,
+    // signing in with e-mail; Google and passkeys need the instance's own domain).
+    proxy: {
+      '/api': { target: process.env.ZANKUP_API ?? 'http://127.0.0.1:8000', changeOrigin: true },
+    },
   },
   test: {
     environment: 'jsdom',

@@ -4,6 +4,7 @@
  * the activity shares the section; each chart may have its own cursor (one card each) or share one.
  * What follows the finger (cursor line, value, section band) runs on the UI thread from shared values.
  */
+import { rangeOf } from '@zankup/core';
 import { Canvas, DashPathEffect, Group, Line, Path, Rect, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
@@ -18,7 +19,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { niceScale, shortNumber } from '../charts';
-import { indexAtDistance, rangeOf, type Track } from './track';
+import { indexAtDistance, type Track } from './track';
 
 const AnimatedText = Animated.createAnimatedComponent(TextInput);
 

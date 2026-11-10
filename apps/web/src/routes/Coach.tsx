@@ -5,6 +5,8 @@ import { Link } from 'react-router';
 
 import { api } from '../api';
 import { locale, t } from '../i18n';
+import { MaterialIcon } from '../MaterialIcon';
+import { CardTitle } from '../ui';
 
 type Turn = { role: 'user' | 'assistant'; content: string; tools?: string[]; error?: string };
 type Event =
@@ -21,38 +23,31 @@ const TOOL_LABELS: Record<string, Parameters<typeof t>[0]> = {
   daily_health: 'coach.tool.daily_health',
   estimates: 'coach.tool.estimates',
 };
-const SUGGESTIONS = [
-  'coach.suggestion.1',
-  'coach.suggestion.2',
-  'coach.suggestion.3',
-  'coach.suggestion.4',
-] as const;
+/** Two examples, as on the app: enough to show the kind of question, not a wall of text. */
+const SUGGESTIONS = ['coach.suggestion.1', 'coach.suggestion.3'] as const;
 
 const day = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
 
 /**
- * The Coach (OS-705): questions in natural language, answered as they are written, with the weekly
- * report on top (OS-704). The conversation lives in this screen only: nothing is stored.
+ * The Coach (OS-705, OS-915): questions in natural language, answered as they are written, with the
+ * weekly report on top (OS-704). As on the app: it opens at the top, the report is compact, two example
+ * questions, the "it can be wrong" note behind an (i) in the header. Nothing is stored.
  */
 export function Coach() {
   const status = useQuery({ ...aiStatusQuery(api), retry: false });
   const info = status.data;
+  const ready = info?.available && info.enabled;
   return (
     <section className="page coach">
-      <h1>{t('coach.title')}</h1>
+      {!ready && <h1>{t('coach.title')}</h1>}
       {info && !info.available && <p className="state">{t('coach.unavailable')}</p>}
       {info?.available && !info.enabled && (
         <p className="state">
-          {t('coach.off')} <Link to="/settings#ai">{t('nav.settings')}</Link>
+          {t('coach.off')} <Link to="/settings/ai">{t('nav.settings')}</Link>
         </p>
       )}
-      {info?.available && info.enabled && (
-        <>
-          {info.weekly && <Weekly />}
-          {info.budget?.exceeded ? <p className="warn">{t('coach.budget')}</p> : <Chat />}
-        </>
-      )}
+      {ready && <Chat weekly={!!info.weekly} budgetSpent={!!info.budget?.exceeded} />}
     </section>
   );
 }
@@ -69,13 +64,13 @@ function Weekly() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: weeklyReportsQuery(api).queryKey }),
   });
   const latest: WeeklyReport | undefined = reports.data?.[0];
+  // The long text waits behind a link: the headline, the highlights and next week's advice say most.
+  const [full, setFull] = useState(false);
   if (!reports.data) return null;
   return (
     <section className="panel weekly" aria-labelledby="weekly-title">
-      <div className="ph">
-        <h2 id="weekly-title">{t('weekly.title')}</h2>
-        {latest && <span className="note">{t('weekly.week', { date: day(latest.week_start) })}</span>}
-      </div>
+      <CardTitle id="weekly-title">{t('weekly.title')}</CardTitle>
+      {latest && <p className="note weekof">{t('weekly.week', { date: day(latest.week_start) })}</p>}
       {!latest && <p className="note">{t('weekly.none')}</p>}
       {latest?.status === 'pending' && <p className="note">{t('weekly.pending')}</p>}
       {latest?.status === 'failed' && (
@@ -85,8 +80,7 @@ function Weekly() {
       )}
       {latest?.status === 'done' && (
         <>
-          <h3>{latest.headline}</h3>
-          <p className="desc">{latest.summary}</p>
+          <h3 className="headline">{latest.headline}</h3>
           {latest.highlights && latest.highlights.length > 0 && (
             <ul className="highlights">
               {latest.highlights.map((item) => (
@@ -95,22 +89,34 @@ function Weekly() {
             </ul>
           )}
           {latest.recommendation && (
-            <p className="recommendation">
-              <b>{t('weekly.recommendation')}:</b> {latest.recommendation}
-            </p>
+            <div className="recommendation">
+              <b>{t('weekly.recommendation')}</b>
+              <p>{latest.recommendation}</p>
+            </div>
           )}
+          {full && <p className="desc">{latest.summary}</p>}
+          <button type="button" className="link more" aria-expanded={full} onClick={() => setFull(!full)}>
+            {t(full ? 'weekly.less' : 'weekly.more')}
+            <MaterialIcon name={full ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} />
+          </button>
         </>
       )}
-      <div className="actions">
-        <button type="button" onClick={() => write.mutate()} disabled={write.isPending}>
+      {/* Writing it by hand only when there is none yet; Monday's comes on its own. */}
+      {!latest && (
+        <button
+          type="button"
+          className="link quiet"
+          onClick={() => write.mutate()}
+          disabled={write.isPending}
+        >
           {write.isPending ? t('coach.thinking') : t('weekly.generate')}
         </button>
-        {write.isError && (
-          <span className="note" role="alert">
-            {t('weekly.failed')}
-          </span>
-        )}
-      </div>
+      )}
+      {write.isError && (
+        <p className="note" role="alert">
+          {t('weekly.failed')}
+        </p>
+      )}
     </section>
   );
 }
@@ -132,14 +138,19 @@ async function* events(response: Response): AsyncGenerator<Event> {
   if (buffer.trim()) yield JSON.parse(buffer) as Event;
 }
 
-function Chat() {
+function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }) {
   const [turns, setTurns] = useState<Turn[]>([]);
+  // What the Coach can and cannot do, behind an (i) in the header instead of a line under the chat.
+  const [about, setAbout] = useState(false);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => end.current?.scrollIntoView?.({ block: 'end' }), [turns, working]);
+  // It opens at the top (the report first); only a conversation follows its last line.
+  useEffect(() => {
+    if (turns.length) end.current?.scrollIntoView?.({ block: 'end' });
+  }, [turns, working]);
   useEffect(() => () => abort.current?.abort(), []);
 
   const ask = async (question: string) => {
@@ -193,69 +204,105 @@ function Chat() {
   };
 
   return (
-    <section className="chat" aria-label={t('coach.title')}>
-      {turns.length === 0 && (
-        <div className="intro">
-          <p>{t('coach.intro')}</p>
-          <div className="suggestions">
-            {SUGGESTIONS.map((key) => (
-              <button key={key} type="button" onClick={() => void ask(t(key))}>
-                {t(key)}
-              </button>
-            ))}
-          </div>
+    <>
+      <div className="titlebar">
+        <h1>{t('coach.title')}</h1>
+        <div className="menuwrap">
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label={t('coach.about')}
+            title={t('coach.about')}
+            aria-expanded={about}
+            onClick={() => setAbout(!about)}
+          >
+            <MaterialIcon name="info" />
+          </button>
+          {about && (
+            <p className="popmenu tip" role="note">
+              {t('coach.disclaimer')}
+            </p>
+          )}
         </div>
-      )}
-      <ol className="turns" aria-live="polite">
-        {turns.map((turn, index) => (
-          <li key={index} className={turn.role}>
-            {turn.role === 'user' ? <p>{turn.content}</p> : <Answer text={turn.content} />}
-            {turn.error && (
-              <p className="note" role="alert">
-                {turn.error}
-              </p>
+        {turns.length > 0 && (
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label={t('coach.clear')}
+            title={t('coach.clear')}
+            onClick={() => {
+              abort.current?.abort();
+              setTurns([]);
+            }}
+          >
+            <MaterialIcon name="add_comment" />
+          </button>
+        )}
+      </div>
+      {weekly && <Weekly />}
+      {budgetSpent ? (
+        <p className="warn">{t('coach.budget')}</p>
+      ) : (
+        <section className="chat" aria-label={t('coach.title')}>
+          {turns.length === 0 && (
+            <div className="intro">
+              <p className="note">{t('coach.suggestionsTitle')}</p>
+              <div className="suggestions">
+                {SUGGESTIONS.map((key) => (
+                  <button key={key} type="button" onClick={() => void ask(t(key))}>
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <ol className="turns" aria-live="polite">
+            {turns.map((turn, index) => (
+              <li key={index} className={turn.role}>
+                {turn.role === 'user' ? <p>{turn.content}</p> : <Answer text={turn.content} />}
+                {turn.error && (
+                  <p className="note" role="alert">
+                    {turn.error}
+                  </p>
+                )}
+              </li>
+            ))}
+            {working && (
+              <li className="assistant working" role="status">
+                {working}
+              </li>
             )}
-          </li>
-        ))}
-        {working && (
-          <li className="assistant working" role="status">
-            {working}
-          </li>
-        )}
-      </ol>
-      <div ref={end} />
-      <form className="composer" onSubmit={submit}>
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={t('coach.placeholder')}
-          aria-label={t('coach.placeholder')}
-          rows={2}
-          maxLength={4000}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              if (draft.trim() && !busy) void ask(draft.trim());
-            }
-          }}
-        />
-        {busy ? (
-          <button type="button" onClick={() => abort.current?.abort()}>
-            {t('coach.stop')}
-          </button>
-        ) : (
-          <button type="submit" className="primary" disabled={!draft.trim()}>
-            {t('coach.send')}
-          </button>
-        )}
-        {turns.length > 0 && !busy && (
-          <button type="button" className="link" onClick={() => setTurns([])}>
-            {t('coach.clear')}
-          </button>
-        )}
-      </form>
-      <p className="note disclaimer">{t('coach.disclaimer')}</p>
-    </section>
+          </ol>
+          <div ref={end} />
+          <form className="composer" onSubmit={submit}>
+            <MaterialIcon name="wand_stars" />
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder={t('coach.placeholder')}
+              aria-label={t('coach.placeholder')}
+              rows={2}
+              maxLength={4000}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (draft.trim() && !busy) void ask(draft.trim());
+                }
+              }}
+            />
+            {busy ? (
+              <button type="button" onClick={() => abort.current?.abort()}>
+                {t('coach.stop')}
+              </button>
+            ) : (
+              <button type="submit" className="primary" disabled={!draft.trim()}>
+                {t('coach.send')}
+              </button>
+            )}
+          </form>
+        </section>
+      )}
+    </>
   );
 }
 

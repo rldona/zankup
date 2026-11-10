@@ -2270,20 +2270,6 @@ a.button {
   border-radius: 8px;
 }
 
-.replay {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 10px;
-}
-
-.replay input[type='range'] {
-  flex: 1;
-  min-width: 120px;
-  accent-color: var(--accent);
-}
-
 .gearlist {
   list-style: none;
   margin: 0;
@@ -2712,4 +2698,1396 @@ svg.source {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+/*
+ * The app's visual language (OS-902), in one place: cards with 16 px corners and a hairline border, the
+ * card title inside the card with its chips or figure on its line (`CardTitle`), pill-shaped buttons
+ * (quiet outlined ones, the accent for the main action) so a button never reads as a field, fields with
+ * soft corners and room under their label, and choices filled with the accent as on the phone.
+ */
+.panel {
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.ph {
+  margin-bottom: 12px;
+  gap: 8px 12px;
+}
+
+.ph h2 {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.page h2 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 22px 0 10px;
+}
+
+.page .panel h2,
+.page .ph h2 {
+  margin: 0;
+}
+
+button {
+  border-radius: 999px;
+  background: transparent;
+  border-color: var(--muted);
+  padding: 7px 16px;
+  font-weight: 600;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+button.primary,
+button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
+}
+
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+button.block {
+  border-radius: 999px;
+  padding: 12px 16px;
+}
+
+button.link,
+button.link:hover:not(:disabled) {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+input,
+select,
+textarea {
+  border-radius: 12px;
+  padding: 9px 12px;
+}
+
+.field {
+  gap: 10px;
+}
+
+.field > span > b,
+.field > b {
+  font-weight: 600;
+}
+
+.seg {
+  border-radius: 999px;
+  border-color: var(--line);
+}
+
+.seg button {
+  border-radius: 0;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.seg button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.seg button[aria-pressed='true'],
+.seg button[aria-pressed='true']:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.chip {
+  border-color: var(--line);
+  background: var(--surface);
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.chip[aria-pressed='true'],
+.chip[aria-pressed='true']:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
+}
+
+/* A screen's title with its actions on the right, as the app's headers (OS-903). */
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.titlebar h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.titlebar .iconbtn {
+  background: transparent;
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  color: var(--fg);
+}
+
+.titlebar .iconbtn:hover {
+  background: var(--surface-2);
+}
+
+.titlebar .iconbtn svg.i {
+  width: 24px;
+  height: 24px;
+}
+
+.tabbar a svg.i.m {
+  width: 26px;
+  height: 26px;
+}
+
+/* A card of rows that lead somewhere (You's menu), as the app's MenuRow. */
+.panel.menu {
+  padding: 0 16px;
+  display: grid;
+}
+
+.panel.menu a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel.menu a:last-child {
+  border-bottom: 0;
+}
+
+.panel.menu a > span {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.panel.menu a small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.panel.menu a > i {
+  color: var(--muted);
+  font-size: 20px;
+  font-style: normal;
+}
+
+.panel.menu a:hover b {
+  color: var(--accent);
+}
+
+.panel.menu svg.i {
+  width: 22px;
+  height: 22px;
+}
+
+/* Home (OS-904), as the app's: two columns on a large screen, one on a phone. */
+.page.home {
+  max-width: 1100px;
+}
+
+.homegrid {
+  display: grid;
+  gap: 0 20px;
+  align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .homegrid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+}
+
+.week {
+  border-radius: 16px;
+}
+
+.hblock {
+  margin-bottom: 16px;
+}
+
+.hblock > h2 {
+  margin: 4px 0 10px;
+}
+
+.dayacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel.dayact {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.panel.dayact:hover {
+  border-color: var(--sport);
+}
+
+.dayact .dname {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dayact .dbody {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 64px;
+}
+
+.dayact .dicon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--sport);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.dayact .dicon svg.i {
+  width: 28px;
+  height: 28px;
+}
+
+.dayact .dfig {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.dayact .dfig b {
+  font-size: 26px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hring {
+  flex: none;
+}
+
+.dayact .dfig small,
+.tile small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.panel.rowsbox {
+  padding: 0 16px;
+}
+
+.hrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 16px;
+}
+
+.hrow:last-child {
+  border-bottom: 0;
+}
+
+.hrow > span:first-child {
+  display: grid;
+}
+
+.hrow svg.i {
+  width: 24px;
+  height: 24px;
+}
+
+.hrow .hlabel {
+  flex: 1;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.panel.tile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tile .ph h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tile .ph svg.i {
+  width: 22px;
+  height: 22px;
+}
+
+.tile .tbody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.tile .form {
+  font-size: 24px;
+}
+
+.tile .big {
+  font-size: 28px;
+}
+
+.gauge,
+.ringwrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.gauge .gvalue,
+.ringwrap > b {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+}
+
+.gauge .gvalue b {
+  font-size: 28px;
+}
+
+.ringwrap > b {
+  font-size: 22px;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Loading skeletons (OS-905), as the app's. */
+.pulse {
+  display: grid;
+  gap: 12px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.pulse .bone {
+  display: block;
+  background: var(--surface-2);
+}
+
+.panel.bonecard {
+  display: grid;
+  margin: 0;
+}
+
+.bonepair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}
+
+/* The latest activity on arrival (OS-906): a dialog on desktop, a sheet from below on a phone. */
+.modal.latest .ph h2 {
+  font-size: 20px;
+}
+
+.latest .lsub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.latest .lstats {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+}
+
+.latest .lstats dt {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.latest .lstats dd {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.latest input,
+.latest textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.latest .lmedia {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.latest .lmap {
+  grid-column: span 2;
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.latest .lmedia img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.latest .ladd {
+  display: grid;
+  place-items: center;
+  height: 150px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+.latest .chips {
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+
+.latest .ladv {
+  justify-self: center;
+}
+
+@media (max-width: 1023px) {
+  .modal.latest {
+    box-sizing: border-box;
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 88dvh;
+    margin: auto 0 0;
+    border-radius: 28px 28px 0 0;
+    border-bottom: 0;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    animation: rise 260ms ease-out;
+  }
+
+  .modal.latest .ph {
+    position: relative;
+    justify-content: center;
+    padding-top: 10px;
+  }
+
+  .modal.latest .ph::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    margin-left: -20px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+
+  .modal.latest .ph h2 {
+    flex: none;
+  }
+
+  .modal.latest .ph button {
+    position: absolute;
+    right: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* The activity's charts, one card each (OS-907), as the app's: side by side on a large screen. */
+.profilehead {
+  margin: 20px 0 10px;
+}
+
+.profilehead h2 {
+  flex: 1;
+  margin: 0;
+}
+
+.chartgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.chartgrid .panel {
+  margin: 0;
+}
+
+.chartfoot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 28px;
+  margin: 18px 0 2px;
+}
+
+.chartfoot > div {
+  display: grid;
+  justify-items: center;
+  min-width: 64px;
+}
+
+.chartfoot dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.chartfoot dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sectionfigs .save,
+.sectionfigs form {
+  margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+  .chartgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The activity's map with its controls on it (OS-908), as the app's. */
+.mapblock {
+  position: relative;
+  margin: 0 0 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.mapblock .map {
+  margin: 0;
+  border-radius: 0;
+  border: 0;
+}
+
+.mapbtn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.18);
+}
+
+.mapbtn.flat {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.mapbtn svg.i {
+  width: 22px;
+  height: 22px;
+}
+
+.mapopts {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.mappanel {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  z-index: 3;
+  width: min(340px, calc(100% - 24px));
+  box-sizing: border-box;
+  display: grid;
+  gap: 14px;
+  padding: 14px 16px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.25);
+}
+
+.mappanel .ph {
+  margin: 0;
+}
+
+.mappanel .chips {
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+
+.mappanel .legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mappanel .legend i {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.mapbar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.mapbar > * {
+  pointer-events: auto;
+}
+
+.mapbar input[type='range'] {
+  flex: 1;
+  max-width: 320px;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.mapbar .num {
+  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+/* The figures under the title: label over value, centred, in columns. */
+.figures {
+  display: grid;
+  gap: 12px;
+  margin: 6px 0 16px;
+}
+
+.figs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 8px;
+  margin: 0;
+}
+
+.figs > div {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.figs dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.figs dd {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.figmore {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.figmore svg.i {
+  width: 20px;
+  height: 20px;
+}
+
+.summary .fold {
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .figs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.mapblock .map.fallback {
+  padding-bottom: 64px;
+}
+
+/* A destructive action (deleting an activity, OS-909): red, quiet until hovered. */
+button.danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--zone-5);
+  border-color: var(--zone-5);
+  margin-top: 8px;
+}
+
+button.danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--zone-5) 12%, transparent);
+}
+
+button.danger svg.i {
+  width: 18px;
+  height: 18px;
+}
+
+/* The habitual gear (OS-910), as on the app: first, ringed in the accent, with its badge. */
+.gearlist > li.habitual {
+  border: 2px solid var(--accent);
+}
+
+.badge.good {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: transparent;
+  margin-left: 8px;
+}
+
+.habitualcheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.habitualcheck > span {
+  display: grid;
+  gap: 4px;
+}
+
+.habitualcheck small {
+  margin: 0;
+}
+
+/* Goals (OS-911), as the app's: the card opens its chart; side by side on a large screen. */
+.page.goals {
+  max-width: 1100px;
+}
+
+.goalgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.panel.goalcard {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.goalhead {
+  all: unset;
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.goalhead:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.goalrow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.goalbar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.goalbar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.goaltoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.goaltoggle svg.i {
+  width: 20px;
+  height: 20px;
+}
+
+.goalcard .actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.goalcard .actions svg.i {
+  width: 18px;
+  height: 18px;
+}
+
+.goalchart {
+  margin-top: 4px;
+}
+
+.goalat {
+  min-height: 1.4em;
+  margin: 0 0 4px;
+}
+
+.goalplot {
+  cursor: crosshair;
+}
+
+.goalplot .gfloor {
+  stroke: var(--line);
+}
+
+.goalplot .gfaint {
+  stroke: var(--muted);
+  opacity: 0.25;
+}
+
+.goalplot .gshare {
+  stroke: var(--muted);
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.goalplot .garea {
+  fill: var(--accent);
+  opacity: 0.35;
+}
+
+.goalplot .gline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.goalplot .gcursor {
+  stroke: var(--fg);
+  stroke-width: 2;
+}
+
+.goalplot circle {
+  stroke-width: 2.5;
+  fill: var(--surface);
+}
+
+.goalplot .gon {
+  stroke: var(--accent);
+}
+
+.goalplot .goff {
+  stroke: var(--muted);
+}
+
+.goalplot .gpicked.gon {
+  fill: var(--accent);
+}
+
+.goalplot .gpicked.goff {
+  fill: var(--muted);
+}
+
+.goalplot .gtick {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.goaldays {
+  display: flex;
+}
+
+.goaldays span {
+  flex: 1;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.goaldays span.on {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.goalform {
+  gap: 20px;
+}
+
+.goalform .chips {
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  .goalgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Stats (OS-912), as the app's: the period over everything, the cards two by two on a large screen. */
+.page.stats {
+  max-width: 1200px;
+}
+
+.periodbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin-bottom: 16px;
+}
+
+.periodbar .chips {
+  margin: 0;
+  padding: 0;
+}
+
+.steppers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper b {
+  min-width: 84px;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.stepper .iconbtn {
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+}
+
+.stepper .iconbtn:disabled {
+  opacity: 0.3;
+}
+
+.statgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr));
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.statgrid > .panel {
+  margin: 0;
+}
+
+.cardtotal {
+  text-align: right;
+  font-size: 17px;
+  font-weight: 700;
+  margin: -4px 0 6px;
+}
+
+.efficiency .spark {
+  height: 120px;
+}
+
+.menuwrap {
+  position: relative;
+}
+
+.popmenu {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  z-index: 5;
+  min-width: 220px;
+  display: grid;
+  padding: 8px 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.25);
+}
+
+.popmenu a {
+  padding: 12px 16px;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.popmenu a:hover {
+  background: var(--surface-2);
+}
+
+.page.estimates {
+  max-width: 1100px;
+}
+
+/* Settings in the app's sections (OS-914): the list on the left and the open one on the right on a large
+   screen; on a phone the list is a page and each section another. */
+.page.settings {
+  max-width: 1200px;
+}
+
+.settingswrap {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.settingslist {
+  position: sticky;
+  top: 16px;
+}
+
+.settingslist a.on {
+  color: var(--accent);
+}
+
+.settingslist a.on b {
+  color: var(--accent);
+}
+
+.settingsmain .sectiontitle {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.settingsmain > .panel,
+.settingsmain > section {
+  margin-bottom: 14px;
+}
+
+.pairs dd.masked {
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+
+@media (max-width: 1023px) {
+  .settingswrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settingslist {
+    position: static;
+  }
+
+  .page.settings.picked .settingslist,
+  .page.settings.picked .settingstitle,
+  .page.settings:not(.picked) .settingsmain {
+    display: none;
+  }
+
+  .page.settings:not(.picked) .settingslist a.on,
+  .page.settings:not(.picked) .settingslist a.on b {
+    color: var(--fg);
+  }
+}
+
+/* The Coach (OS-915), as the app's: a compact report, two examples and a question field that shows. */
+.weekly .weekof {
+  margin: -8px 0 8px;
+}
+
+.weekly .headline {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.weekly .highlights li {
+  background: var(--surface-2);
+}
+
+.weekly .recommendation {
+  margin: 12px 0 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.weekly .recommendation p {
+  margin: 4px 0 0;
+}
+
+.weekly .more {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.weekly .more svg.i {
+  width: 20px;
+  height: 20px;
+}
+
+.weekly .quiet {
+  display: block;
+  margin: 8px auto 0;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 13px;
+  text-decoration: underline;
+}
+
+.suggestions {
+  display: grid;
+  gap: 8px;
+}
+
+.suggestions button {
+  border-radius: 12px;
+  border-color: var(--line);
+  text-align: left;
+  font-weight: 400;
+  padding: 12px;
+}
+
+.composer {
+  position: relative;
+  align-items: center;
+}
+
+.composer > svg.i {
+  position: absolute;
+  left: 14px;
+  top: 18px;
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.composer textarea {
+  min-height: 56px;
+  padding: 16px 14px 14px 46px;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  border-radius: 16px;
+  background: var(--surface);
+  resize: vertical;
+}
+
+.popmenu.tip {
+  width: min(320px, 80vw);
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* Notifications (OS-916), as the app's: one row per event, each opening its activity. */
+.panel.events {
+  list-style: none;
+  padding: 0 16px;
+  margin: 0;
+  max-width: 760px;
+}
+
+.panel.events li {
+  border-bottom: 1px solid var(--line);
+}
+
+.panel.events li:last-child {
+  border-bottom: 0;
+}
+
+.panel.events li > a,
+.panel.events li > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.panel.events .eicon {
+  color: var(--accent);
+  display: grid;
+}
+
+.panel.events .eicon.warn {
+  color: var(--zone-5);
+}
+
+.panel.events .etext {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.panel.events small {
+  margin: 0;
+}
+
+.panel.events i {
+  color: var(--muted);
+  font-style: normal;
+  font-size: 20px;
+}
+
+.panel.events a:hover .etext > span {
+  color: var(--accent);
+}
+
+.popmenu button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.popmenu button:hover,
+.popmenu button:focus-visible {
+  background: var(--surface-2);
+}
+
+.popmenu button svg.i {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+
+/* Sign-in in the app's order (OS-918): the quick ways first, then "or" and the e-mail. */
+h1.greeting {
+  margin-bottom: 24px;
+}
+
+.quick {
+  display: grid;
+  gap: 10px;
+}
+
+.quick:empty,
+.quick:empty + .or {
+  display: none;
+}
+
+.quick > a.button.google,
+.quick > button {
+  margin: 0;
+  border-radius: 999px;
+}
+
+/* On a phone the search's order wraps under the filters instead of running off the side (OS-920). */
+.searchbar {
+  flex-wrap: wrap;
+}
+
+.searchbar .sortby {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* A chip in a radio group (role="radio") is chosen by aria-checked: aria-pressed is not allowed there. */
+.chip[aria-checked='true'],
+.chip[aria-checked='true']:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
 }

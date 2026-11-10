@@ -59,9 +59,11 @@ jobs:
           CI: '1'
       - name: Build the release APK (arm64)
         working-directory: apps/mobile/android
-        # Fewer parallel native compilations and a bounded heap: the hosted runner has little memory.
+        # One worker, one native compilation at a time and Kotlin inside Gradle's own process (no second
+        # daemon): the hosted runner has little memory, and with two workers the build was killed halfway
+        # once the app had one more native module (expo-sharing, Nov 2026). Slower, still well within time.
         run: >-
-          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon --max-workers=2
-          -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"
+          ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon --max-workers=1
+          -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" -Pkotlin.compiler.execution.strategy=in-process
         env:
-          CMAKE_BUILD_PARALLEL_LEVEL: '2'
+          CMAKE_BUILD_PARALLEL_LEVEL: '1'

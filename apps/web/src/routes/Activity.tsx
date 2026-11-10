@@ -1,4 +1,6 @@
 import {
+  activityCharts,
+  activityFigures,
   ApiError,
   activityQuery,
   curvesQuery,
@@ -27,13 +29,14 @@ import {
   themes,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { api } from '../api';
 import { ZoneBar } from '../charts/static';
-import { Profile } from '../detail/Profile';
-import { Replay } from '../detail/Replay';
+import { ChartCard } from '../detail/ChartCard';
+import { MapControls } from '../detail/MapControls';
+import { useReplay } from '../detail/replay';
 import { ActivityActions, Meta, Photos } from '../detail/Tools';
 import { RouteMap } from '../detail/RouteMap';
 import { Strength } from '../detail/Strength';
@@ -43,6 +46,9 @@ import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { SportIcon } from '../SportIcon';
 import { useResolvedTheme } from '../theme';
+import { ActivitySkeleton, ChartSkeleton, Pulse } from '../Skeleton';
+import { CardTitle } from '../ui';
+import { MaterialIcon } from '../MaterialIcon';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -78,7 +84,7 @@ export function Activity() {
   }
   return (
     <section className="page">
-      <p className="state">{t('common.loading')}</p>
+      <ActivitySkeleton />
     </section>
   );
 }
@@ -90,9 +96,37 @@ function Detail({ activity }: { activity: ActivityDetail }) {
   const pace = usesPace(sport);
   const streams = useQuery({ ...streamsQuery(api, activity.id), enabled: activity.streams != null });
   const series = streams.data as Series | undefined;
+  // The cursor and the section, shared by the map and every chart.
+  const [hover, setHover] = useState<number | null>(null);
+  const [section, setSection] = useState<[number, number] | null>(null);
+  const hasMap = useMemo(() => (series ? trackPoints(series).length > 1 : false), [series]);
+  const hrZones = series?.hr?.some((v) => v != null) && (
+    <Zones
+      series={series}
+      hrMax={prefs.hrMax}
+      estimated={prefs.hrMaxEstimated}
+      engine={
+        activity.metrics?.hr_zones && activity.metrics.hr_zone_bounds
+          ? { seconds: activity.metrics.hr_zones, bounds: activity.metrics.hr_zone_bounds }
+          : null
+      }
+    />
+  );
 
   return (
     <article className="page detail">
+      {/* As on the app: the map on top, then the title, the figures and the Coach's summary. */}
+      {series && hasMap && (
+        <ActivityMap
+          series={series}
+          sport={sport}
+          pace={pace}
+          format={format}
+          hover={hover}
+          section={section}
+          onHover={setHover}
+        />
+      )}
       <header className="dhead">
         <SportIcon sport={sport} />
         <div>
@@ -106,47 +140,46 @@ function Detail({ activity }: { activity: ActivityDetail }) {
         <ActivityActions activity={activity} />
       </header>
 
-      <Kpis activity={activity} format={format} pace={pace} />
+      <Figures {...activityFigures(activity, { pace, format, t, locale })} />
       <Summary activityId={activity.id} name={activity.name} />
 
-      {activity.streams && !series && <p className="state">{t('activity.loadingSeries')}</p>}
+      {activity.streams && !series && (
+        <Pulse>
+          <ChartSkeleton height={280} />
+        </Pulse>
+      )}
       {series && (
-        <RoutePanel
+        <ActivityCharts
           series={series}
           sport={sport}
           pace={pace}
           format={format}
           units={prefs.units}
-          activityId={activity.id}
+          activity={activity}
+          section={section}
+          onHover={setHover}
+          onSection={setSection}
         />
       )}
 
       <Photos activityId={activity.id} photos={activity.photo_list ?? []} />
 
+      {/* The sections in the app's order (OS-909): on a ride the heart-rate zones follow the power
+          curve and zones; on a run the splits follow the heart-rate zones. */}
+      {sport !== 'ride' && hrZones}
+      {sport === 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {/* Kept offline before sets existed, an activity may come without them. */}
       {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
-      {series?.hr?.some((v) => v != null) && (
-        <Zones
-          series={series}
-          hrMax={prefs.hrMax}
-          estimated={prefs.hrMaxEstimated}
-          engine={
-            activity.metrics?.hr_zones && activity.metrics.hr_zone_bounds
-              ? { seconds: activity.metrics.hr_zones, bounds: activity.metrics.hr_zone_bounds }
-              : null
-          }
-        />
-      )}
       <EngineExtras activity={activity} />
-      <BestEfforts activity={activity} format={format} />
+      {sport === 'ride' && hrZones}
       <Laps activity={activity} format={format} pace={pace} />
-      <Splits activity={activity} format={format} pace={pace} />
-
+      {sport !== 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {activity.description && (
         <section className="panel">
           <p className="desc">{activity.description}</p>
         </section>
       )}
+      <BestEfforts activity={activity} format={format} />
       <p className="note origin">
         {t('activity.origin')}: {sourceLabel(activity.source)}
         {activity.has_fit && (
@@ -174,71 +207,56 @@ function sourceLabel(source: string): string {
     : source;
 }
 
-function Kpis({ activity: a, format, pace }: { activity: ActivityDetail; format: Format; pace: boolean }) {
-  const moving = a.moving_s ?? a.duration_s;
-  const items: [MessageKey, string][] = [];
-  if (a.distance_m) items.push(['feed.stat.distance', format.distance(a.distance_m)]);
-  items.push(['feed.stat.time', formatDuration(moving)]);
-  if (a.moving_s && a.duration_s - a.moving_s > 60)
-    items.push(['activity.elapsed', formatDuration(a.duration_s)]);
-  if (a.distance_m && moving > 0)
-    items.push([pace ? 'feed.stat.pace' : 'feed.stat.speed', format.speedFor(a.distance_m / moving, pace)]);
-  if (a.ascent_m) items.push(['feed.stat.ascent', format.elevation(a.ascent_m)]);
-  if (a.avg_hr) items.push(['feed.stat.hr', `${a.avg_hr} bpm`]);
-  if (a.max_hr) items.push(['activity.maxHr', `${a.max_hr} bpm`]);
-  if (a.avg_power) items.push(['activity.power', `${a.avg_power} W`]);
-  if (a.normalized_power) items.push(['activity.np', `${a.normalized_power} W`]);
-  const metrics = a.metrics ?? null;
-  if (metrics?.trimp != null)
-    items.push(['activity.effort', Math.round(metrics.trimp).toLocaleString(locale)]);
-  if (pace && metrics?.gap_speed) items.push(['activity.gap', format.pace(metrics.gap_speed)]);
-  const kcal = a.calories ?? metrics?.calories;
-  if (kcal)
-    items.push([
-      'activity.calories',
-      `${Math.round(kcal).toLocaleString(locale)} kcal${a.calories == null ? ` (${t('activity.estimated')})` : ''}`,
-    ]);
-  if (metrics?.decoupling != null)
-    items.push([
-      'activity.decoupling',
-      `${metrics.decoupling.toLocaleString(locale, { maximumFractionDigits: 1 })} %`,
-    ]);
-  if (a.training_effect)
-    items.push(['activity.te', a.training_effect.toLocaleString(locale, { maximumFractionDigits: 1 })]);
-  return (
-    <dl className="kpis num">
+/** The figures under the title (OS-908), as the app's: the six that matter in columns, the rest behind "More". */
+function Figures({ main, more }: { main: [string, string][]; more: [string, string][] }) {
+  const [open, setOpen] = useState(false);
+  const list = (items: [string, string][]) => (
+    <dl className="figs num">
       {items.map(([label, value]) => (
-        <div key={label} className="kpi">
+        <div key={label}>
+          <dt>{label}</dt>
           <dd>{value}</dd>
-          <dt>{t(label)}</dt>
         </div>
       ))}
     </dl>
   );
+  return (
+    <section className="figures" aria-label={t('activity.figures')}>
+      {list(main)}
+      {more.length > 0 && open && list(more)}
+      {more.length > 0 && (
+        <button type="button" className="link figmore" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {t(open ? 'activity.fig.less' : 'activity.fig.more')}
+          <MaterialIcon name={open ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} />
+        </button>
+      )}
+    </section>
+  );
 }
 
-function RoutePanel({
+/** The map with its controls on it (OS-908): replay, what the route is coloured by and its legend. */
+function ActivityMap({
   series,
   sport,
   pace,
   format,
-  units,
-  activityId,
+  hover,
+  section,
+  onHover,
 }: {
   series: Series;
   sport: Sport;
   pace: boolean;
   format: Format;
-  units: 'metric' | 'imperial';
-  activityId: number;
+  hover: number | null;
+  section: [number, number] | null;
+  onHover: (index: number | null) => void;
 }) {
   const theme = useResolvedTheme();
   const metrics = useMemo(() => availableMetrics(series), [series]);
   const [chosen, setMetric] = useState<Metric | null>(null);
   const metric = chosen && metrics.includes(chosen) ? chosen : (metrics[0] ?? null);
-  const [hover, setHover] = useState<number | null>(null);
-  const [section, setSection] = useState<[number, number] | null>(null);
-  const hasMap = useMemo(() => trackPoints(series).length > 1, [series]);
+  const replay = useReplay(series, hover, onHover);
 
   const formatMetric = useCallback(
     (m: Metric, v: number) => {
@@ -260,68 +278,113 @@ function RoutePanel({
     const values = metric ? metricValues(series, metric) : null;
     const lo = values ? quantile(values, 0.02) : null;
     const hi = values ? quantile(values, 0.98) : null;
-    return metric && lo != null && hi != null && hi > lo
-      ? { min: formatMetric(metric, lo), max: formatMetric(metric, hi) }
-      : null;
-  }, [series, metric, formatMetric]);
+    if (!metric || lo == null || hi == null || hi <= lo) return null;
+    // A pace reads best first: the fast end of the ramp is the low pace.
+    const inverted = pace && metric === 'speed';
+    return {
+      low: formatMetric(metric, inverted ? hi : lo),
+      high: formatMetric(metric, inverted ? lo : hi),
+      colours: RAMP,
+    };
+  }, [series, metric, formatMetric, pace]);
 
   const label = (m: Metric) => t(m === 'speed' ? (pace ? 'metric.pace' : 'metric.speed') : `metric.${m}`);
 
   return (
-    <section className="panel route">
-      <div className="ph">
-        <h2>{hasMap ? t('activity.route') : t('activity.profile')}</h2>
-        {metrics.length > 1 && (
-          <div className="seg" role="group" aria-label={t('activity.colourBy')}>
-            {metrics.map((m) => (
-              <button key={m} type="button" aria-pressed={m === metric} onClick={() => setMetric(m)}>
-                {label(m)}
-              </button>
-            ))}
-          </div>
-        )}
-        {hasMap && legend && (
-          <div className="legend num" aria-hidden="true">
-            <span>{pace && metric === 'speed' ? legend.max : legend.min}</span>
-            <i style={{ background: `linear-gradient(90deg, ${RAMP.join(', ')})` }} />
-            <span>{pace && metric === 'speed' ? legend.min : legend.max}</span>
-          </div>
-        )}
-      </div>
-      {hasMap && <Replay series={series} index={hover} onIndex={setHover} />}
-      {hasMap && (
-        <RouteMap
-          series={series}
-          metric={metric}
-          theme={theme}
-          hover={hover}
-          section={section}
-          onHover={setHover}
-          colour={sportColour(theme, sport)}
-        />
-      )}
-      <Profile
+    <section className="mapblock" aria-label={t('activity.route')}>
+      <RouteMap
         series={series}
         metric={metric}
-        pace={pace}
-        units={units}
         theme={theme}
         hover={hover}
         section={section}
-        onHover={setHover}
-        onSection={setSection}
-        format={formatMetric}
+        onHover={onHover}
+        colour={sportColour(theme, sport)}
       />
-      <Readout
-        series={series}
-        hover={hover}
-        section={section}
-        format={format}
-        pace={pace}
-        onClear={() => setSection(null)}
-        activityId={activityId}
+      <MapControls
+        replay={replay}
+        metric={metric}
+        metrics={metrics.map((m) => ({ value: m, label: label(m) }))}
+        onMetric={setMetric}
+        legend={legend}
       />
     </section>
+  );
+}
+
+/** The activity's charts, each on its own card (OS-907), under one heading with the section switch. */
+function ActivityCharts({
+  series,
+  sport,
+  pace,
+  format,
+  units,
+  activity,
+  section,
+  onHover,
+  onSection,
+}: {
+  series: Series;
+  sport: Sport;
+  pace: boolean;
+  format: Format;
+  units: 'metric' | 'imperial';
+  activity: ActivityDetail;
+  section: [number, number] | null;
+  onHover: (index: number | null) => void;
+  onSection: (range: [number, number] | null) => void;
+}) {
+  const theme = useResolvedTheme();
+  const [selecting, setSelecting] = useState(false);
+  const charts = useMemo(
+    () => activityCharts(series, { sport, pace, units, format, activity, t, locale }),
+    [series, sport, pace, units, format, activity],
+  );
+  if (!charts.length) return null;
+  return (
+    <>
+      <div className="titlebar profilehead">
+        <h2>{t('activity.profile')}</h2>
+        <button
+          type="button"
+          className="chip"
+          aria-pressed={selecting}
+          onClick={() => {
+            // Turning "Section" off drops the band, its figures and the map's highlight.
+            if (selecting) onSection(null);
+            setSelecting(!selecting);
+          }}
+        >
+          {t('mobile.selectSection')}
+        </button>
+      </div>
+      {selecting && !section && <p className="note">{t('activity.sectionHint')}</p>}
+      <div className="chartgrid">
+        {charts.map((chart) => (
+          <ChartCard
+            key={chart.key}
+            chart={chart}
+            series={series}
+            units={units}
+            theme={theme}
+            section={section}
+            selecting={selecting}
+            onHover={onHover}
+            onSection={onSection}
+          />
+        ))}
+      </div>
+      {section && (
+        <SectionFigures
+          series={series}
+          section={section}
+          format={format}
+          pace={pace}
+          onClear={() => onSection(null)}
+          activityId={activity.id}
+        />
+      )}
+    </>
   );
 }
 
@@ -329,9 +392,9 @@ function sportColour(theme: ThemeName, sport: Sport): string {
   return themes[theme][sport];
 }
 
-function Readout({
+/** The selected section's figures, with "save as segment" when it has a track (OS-216, OS-308). */
+function SectionFigures({
   series,
-  hover,
   section,
   format,
   pace,
@@ -339,54 +402,51 @@ function Readout({
   activityId,
 }: {
   series: Series;
-  hover: number | null;
-  section: [number, number] | null;
+  section: [number, number];
   format: Format;
   pace: boolean;
   onClear: () => void;
   activityId: number;
 }) {
-  if (section) {
-    const s = sectionStats(series, section[0], section[1]);
-    return (
-      <div className="readout section num" aria-live="polite">
-        <b>{t('activity.section')}</b>
-        {s.distance_m != null && <span>{format.distance(s.distance_m)}</span>}
-        <span>{formatDuration(s.time_s)}</span>
-        {s.speed != null && <span>{format.speedFor(s.speed, pace)}</span>}
-        {s.avg_hr != null && <span>{s.avg_hr} bpm</span>}
-        {s.avg_power != null && <span>{s.avg_power} W</span>}
-        {s.ascent_m != null && (
-          <span>
-            +{format.elevation(s.ascent_m)} / −{format.elevation(s.descent_m ?? 0)}
-          </span>
-        )}
-        <button type="button" className="link" onClick={onClear}>
-          {t('activity.clearSection')}
-        </button>
-        {series.lat?.some((v) => v != null) && <SaveSegment activityId={activityId} section={section} />}
-      </div>
-    );
-  }
-  if (hover == null) return <p className="readout note">{t('activity.hint')}</p>;
-  const parts: ReactNode[] = [];
-  const dist = series.dist?.[hover];
-  if (dist != null) parts.push(format.distance(dist));
-  parts.push(formatDuration(series.t[hover] ?? 0));
-  const speed = metricValues(series, 'speed')?.[hover];
-  if (speed != null && speed > 0) parts.push(format.speedFor(speed, pace));
-  const hr = series.hr?.[hover];
-  if (hr != null) parts.push(`${hr} bpm`);
-  const power = series.power?.[hover];
-  if (power != null) parts.push(`${power} W`);
-  const alt = series.alt?.[hover];
-  if (alt != null) parts.push(format.elevation(alt));
+  const s = sectionStats(series, section[0], section[1]);
+  const figures: [string, string][] = [
+    ...(s.distance_m != null
+      ? ([[t('feed.stat.distance'), format.distance(s.distance_m)]] as [string, string][])
+      : []),
+    [t('feed.stat.time'), formatDuration(s.time_s)],
+    ...(s.speed != null
+      ? ([[t(pace ? 'feed.stat.pace' : 'feed.stat.speed'), format.speedFor(s.speed, pace)]] as [
+          string,
+          string,
+        ][])
+      : []),
+    ...(s.ascent_m != null
+      ? ([[t('feed.stat.ascent'), format.elevation(s.ascent_m)]] as [string, string][])
+      : []),
+    ...(s.avg_hr != null ? ([[t('feed.stat.hr'), `${s.avg_hr} bpm`]] as [string, string][]) : []),
+    ...(s.avg_power != null ? ([[t('activity.power'), `${s.avg_power} W`]] as [string, string][]) : []),
+  ];
   return (
-    <p className="readout num">
-      {parts.map((p, i) => (
-        <span key={i}>{p}</span>
-      ))}
-    </p>
+    <section className="panel sectionfigs" aria-live="polite">
+      <CardTitle
+        right={
+          <button type="button" className="link" onClick={onClear}>
+            {t('activity.clearSection')}
+          </button>
+        }
+      >
+        {t('activity.section')}
+      </CardTitle>
+      <dl className="chartfoot num">
+        {figures.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {series.lat?.some((v) => v != null) && <SaveSegment activityId={activityId} section={section} />}
+    </section>
   );
 }
 
@@ -404,9 +464,7 @@ function Zones({
   if (!hrMax && !engine) {
     return (
       <section className="panel">
-        <div className="ph">
-          <h2>{t('activity.zones')}</h2>
-        </div>
+        <CardTitle>{t('activity.zones')}</CardTitle>
         <p className="note">{t('activity.zonesNone')}</p>
       </section>
     );
@@ -417,9 +475,7 @@ function Zones({
   const limits = engine?.bounds ?? zoneLimits(hrMax ?? 190);
   return (
     <section className="panel zones">
-      <div className="ph">
-        <h2>{t('activity.zones')}</h2>
-      </div>
+      <CardTitle>{t('activity.zones')}</CardTitle>
       <ZoneBar seconds={seconds} label={t('activity.zones')} />
       <table className="num">
         <tbody>
@@ -470,9 +526,7 @@ function BestEfforts({ activity, format }: { activity: ActivityDetail; format: F
   if (!activity.best_efforts.length) return null;
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('activity.best')}</h2>
-      </div>
+      <CardTitle>{t('activity.best')}</CardTitle>
       <table className="num">
         <thead>
           <tr>
@@ -504,9 +558,7 @@ function Laps({ activity, format, pace }: { activity: ActivityDetail; format: Fo
   const power = activity.laps.some((l) => l.avg_power);
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('activity.laps')}</h2>
-      </div>
+      <CardTitle>{t('activity.laps')}</CardTitle>
       <div className="scroll" tabIndex={0} role="region" aria-label={t('activity.laps')}>
         <table className="num">
           <thead>
@@ -551,9 +603,7 @@ function Splits({ activity, format, pace }: { activity: ActivityDetail; format: 
   const fastest = Math.max(...speeds);
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('activity.splits')}</h2>
-      </div>
+      <CardTitle>{t('activity.splits')}</CardTitle>
       <table className="num splits">
         <tbody>
           {activity.splits.map((s, i) => (
@@ -657,9 +707,7 @@ function EngineExtras({ activity }: { activity: ActivityDetail }) {
       )}
       {(activity.segments ?? []).length > 0 && (
         <section className="panel">
-          <div className="ph">
-            <h2>{t('activity.segmentsTitle')}</h2>
-          </div>
+          <CardTitle>{t('activity.segmentsTitle')}</CardTitle>
           <ul className="rows">
             {(activity.segments ?? []).map((s) => (
               <li key={s.segment_id}>
@@ -681,9 +729,7 @@ function EngineExtras({ activity }: { activity: ActivityDetail }) {
       )}
       {curve.length > 0 && allTime.data && (
         <section className="panel">
-          <div className="ph">
-            <h2>{t('activity.powerCurve')}</h2>
-          </div>
+          <CardTitle>{t('activity.powerCurve')}</CardTitle>
           <CurveChart
             period={curve}
             allTime={allTime.data}
@@ -695,9 +741,7 @@ function EngineExtras({ activity }: { activity: ActivityDetail }) {
       )}
       {powerZones && bounds && (
         <section className="panel zones">
-          <div className="ph">
-            <h2>{t('activity.powerZones')}</h2>
-          </div>
+          <CardTitle>{t('activity.powerZones')}</CardTitle>
           <table className="num">
             <tbody>
               {powerZones.map((sec, i) => (

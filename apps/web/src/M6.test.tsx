@@ -161,7 +161,7 @@ describe('phase 6: health', () => {
     expect(await screen.findByText(/No health data yet/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Connect a source/ })).toHaveAttribute(
       'href',
-      '/settings#health',
+      '/settings/health',
     );
   });
 
@@ -185,7 +185,7 @@ describe('phase 6: health', () => {
     vi.stubGlobal('confirm', () => true);
     renderAt('/settings?health=connected');
     expect(await screen.findByRole('heading', { name: 'Health' })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Google Health is connected');
+    expect(await screen.findByRole('status')).toHaveTextContent('Google Health is connected');
     expect(screen.getByRole('link', { name: 'Connect Google Health' })).toHaveAttribute(
       'href',
       '/api/wellness/google/start',
@@ -202,5 +202,15 @@ describe('phase 6: health', () => {
         true,
       ),
     );
+  });
+
+  it('settings: brings a year of health history (OS-917)', async () => {
+    const calls = mockApi({
+      'POST /api/wellness/history': () => Response.json({ queued: ['garmin', 'google_health'] }),
+    });
+    renderAt('/settings/health');
+    await userEvent.click(await screen.findByRole('button', { name: 'Bring the last year' }));
+    expect(await screen.findByText(/Under way: Garmin, Google Health/)).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'POST' && c.path === '/api/wellness/history')).toBe(true);
   });
 });

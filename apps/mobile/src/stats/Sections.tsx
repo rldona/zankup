@@ -22,6 +22,8 @@ import {
   type GoalOut,
   type MessageKey,
   type Sport,
+  formLabel,
+  weekQuery,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -48,13 +50,6 @@ import { Card, CardTitle, Choice, Heading, Muted, ProgressBar, Stat, styles as u
 
 type Format = ReturnType<typeof useFormat>;
 export type Range = { from: string; to: string };
-
-export function formLabel(tsb: number): MessageKey {
-  if (tsb > 5) return 'stats.form.fresh';
-  if (tsb > -10) return 'stats.form.neutral';
-  if (tsb > -30) return 'stats.form.optimal';
-  return 'stats.form.overreaching';
-}
 
 const open = (id: number) => router.push(`/activity/${id}`);
 
@@ -724,3 +719,52 @@ export function CompareWithStrava() {
 
 export const sportColour = (c: ReturnType<typeof useTheme>, sport: string) =>
   (c as unknown as Record<string, string>)[asSport(sport) as Sport] ?? c.muted;
+
+/**
+ * "Now" (OS-919, from the PWA): today's form (TSB) with what it means and the fitness and fatigue
+ * behind it, and this week's moving time against the average of the previous 12 weeks.
+ */
+export function Now() {
+  const api = useApi();
+  const c = useTheme();
+  const [today] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  const week = useQuery(weekQuery(api, today));
+  const fitness = useQuery(fitnessQuery(api, {}));
+  const now = fitness.data?.at(-1);
+  const previous = week.data?.previous ?? [];
+  const average = previous.length ? previous.reduce((s, w) => s + w.moving_s, 0) / previous.length : 0;
+  const share = week.data && average > 0 ? Math.round((week.data.this_week.moving_s / average) * 100) : null;
+  if (!now && !week.data) return null;
+  return (
+    <>
+      <Heading>{t('stats.now')}</Heading>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        {now && (
+          <Card style={{ flex: 1 }}>
+            <Muted>{t('stats.tsb')}</Muted>
+            <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
+              {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
+            </Text>
+            <Muted>
+              {t(formLabel(now.tsb))} · {t('stats.ctl')} {now.ctl.toFixed(0)} · {t('stats.atl')}{' '}
+              {now.atl.toFixed(0)}
+            </Muted>
+          </Card>
+        )}
+        {week.data && (
+          <Card style={{ flex: 1 }}>
+            <Muted>{t('stats.load')}</Muted>
+            <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
+              {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
+            </Text>
+            {share != null && <ProgressBar value={share} max={150} label={t('stats.load')} />}
+            <Muted>{t('stats.loadNote', { average: formatHoursMinutes(average) })}</Muted>
+          </Card>
+        )}
+      </View>
+    </>
+  );
+}

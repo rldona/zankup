@@ -9,6 +9,7 @@ import { usePrefs } from '../prefs';
 import { drawCard, shareImage, type CardFigure } from '../share/card';
 import { effortName } from '../stats/format';
 import { useResolvedTheme } from '../theme';
+import { CardSkeleton, Pulse } from '../Skeleton';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -79,7 +80,12 @@ export function Review() {
           {title(period, shift(period, value, 1))} →
         </Link>
       </nav>
-      {review.isPending && <p className="state">{t('common.loading')}</p>}
+      {review.isPending && (
+        <Pulse>
+          <CardSkeleton lines={2} />
+          <CardSkeleton />
+        </Pulse>
+      )}
       {review.isError && <p className="state">{t('common.error')}</p>}
       {review.data && review.data.totals.count === 0 && <p className="state">{t('review.empty')}</p>}
       {review.data && review.data.totals.count > 0 && (

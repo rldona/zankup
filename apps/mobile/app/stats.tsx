@@ -17,6 +17,7 @@ import { locale, t } from '../src/i18n';
 import {
   CompareWithStrava,
   Curves,
+  Now,
   Efficiency,
   Fitness,
   Progress,
@@ -177,6 +178,7 @@ export default function StatsScreen() {
         </Muted>
       )}
 
+      <Now />
       <Fitness range={range} />
       <Volume range={range} unit={period.unit} />
       <Curves range={range} />

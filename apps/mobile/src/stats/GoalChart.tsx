@@ -6,7 +6,7 @@
  * the day's amount and the total so far; touching or sliding picks another. Days still to come have no
  * point. The days come from the calendar the Stats screen already reads, so the server needs nothing new.
  */
-import { calendarQuery, type CalendarDay, type GoalOut } from '@zankup/core';
+import { calendarQuery, goalPoints, type GoalOut } from '@zankup/core';
 import { Canvas, Circle, DashPathEffect, Group, Line, Path, vec } from '@shopify/react-native-skia';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -18,87 +18,7 @@ import { locale, t } from '../i18n';
 import { niceScale, useCanvasReady } from '../charts';
 import { useTheme } from '../theme';
 
-export type GoalPoint = {
-  label: string;
-  /** The point's day (or month) written out, for the value above the chart. */
-  when: string;
-  /** What was done from the start of the period to the end of this point. */
-  done: number;
-  /** What was done in this point alone (the day, or the month of a yearly goal). */
-  own: number;
-  /** Where a steady pace would be by then. */
-  expected: number;
-  state: 'on' | 'behind' | 'future';
-};
-
 const iso = (d: Date) => d.toISOString().slice(0, 10);
-const parse = (day: string) => new Date(`${day}T00:00:00Z`);
-
-/** How much one calendar day counts towards the goal (its sport, its metric). */
-export function dayAmount(goal: Pick<GoalOut, 'metric' | 'sport'>, day: CalendarDay): number {
-  return day.activities
-    .filter((a) => !goal.sport || a.sport === goal.sport)
-    .reduce(
-      (sum, a) =>
-        sum + (goal.metric === 'distance' ? (a.distance_m ?? 0) : goal.metric === 'time' ? a.moving_s : 1),
-      0,
-    );
-}
-
-/** The points of the chart: days of a week or a month, months of a year, cumulated. */
-export function goalPoints(
-  goal: Pick<GoalOut, 'metric' | 'sport' | 'period' | 'target' | 'start' | 'end'>,
-  days: CalendarDay[],
-  today: string,
-): GoalPoint[] {
-  const start = parse(goal.start);
-  const end = parse(goal.end);
-  const length = Math.round((end.getTime() - start.getTime()) / 86_400_000);
-  const byDay = new Map(days.map((d) => [d.day, dayAmount(goal, d)]));
-  // Each point closes at the end of a day (week, month) or of a month (year).
-  const closes: { last: Date; label: string; when: string }[] = [];
-  if (goal.period === 'year') {
-    for (let m = 0; m < 12; m++) {
-      const last = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + m + 1, 0));
-      closes.push({
-        last,
-        label: last.toLocaleDateString(locale, { month: 'narrow', timeZone: 'UTC' }),
-        when: last.toLocaleDateString(locale, { month: 'long', timeZone: 'UTC' }),
-      });
-    }
-  } else {
-    for (let i = 0; i < length; i++) {
-      const day = new Date(start.getTime() + i * 86_400_000);
-      closes.push({
-        last: day,
-        label:
-          goal.period === 'week'
-            ? day.toLocaleDateString(locale, { weekday: 'short', timeZone: 'UTC' }).replace('.', '')
-            : String(day.getUTCDate()),
-        when: day.toLocaleDateString(locale, {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'short',
-          timeZone: 'UTC',
-        }),
-      });
-    }
-  }
-  let done = 0;
-  let cursor = new Date(start);
-  return closes.map(({ last, label, when }) => {
-    let own = 0;
-    for (; cursor <= last; cursor = new Date(cursor.getTime() + 86_400_000))
-      own += byDay.get(iso(cursor)) ?? 0;
-    done += own;
-    const elapsed = Math.round((last.getTime() - start.getTime()) / 86_400_000) + 1;
-    const expected = (goal.target * elapsed) / length;
-    // A day after today is still to come; so is a month of a yearly goal that has not begun.
-    const future = goal.period === 'year' ? iso(last).slice(0, 7) > today.slice(0, 7) : iso(last) > today;
-    const state: GoalPoint['state'] = future ? 'future' : done >= expected ? 'on' : 'behind';
-    return { label, when, done, own, expected, state };
-  });
-}
 
 export function GoalChart({
   goal,
@@ -119,7 +39,7 @@ export function GoalChart({
   const painted = useCanvasReady(width);
   const calendar = useQuery(calendarQuery(api, { from: goal.start, to: goal.end }));
   if (!calendar.data) return <View style={{ height: 150 }} />;
-  const points = goalPoints(goal, calendar.data, today);
+  const points = goalPoints(goal, calendar.data, today, locale);
   const past = points.filter((p) => p.state !== 'future').length;
   const current = Math.min(picked ?? past - 1, past - 1);
 

@@ -25,6 +25,7 @@ import { usePrefs } from '../prefs';
 import { SportIcon } from '../SportIcon';
 import { day } from '../stats/format';
 import { useResolvedTheme } from '../theme';
+import { PageSkeleton } from '../Skeleton';
 
 const asSport = (value: string): Sport =>
   (SPORTS as readonly string[]).includes(value) ? (value as Sport) : 'other';
@@ -242,8 +243,7 @@ export function RouteView() {
   const theme = useResolvedTheme();
   const prefs = usePrefs();
   const format = useMemo(() => formatters(prefs), [prefs]);
-  if (!route.data)
-    return <section className="page">{<p className="state">{t('common.loading')}</p>}</section>;
+  if (!route.data) return <PageSkeleton cards={2} />;
   const r = route.data;
   const fastest = Math.min(...r.activities.map((a) => a.moving_s));
   return (
@@ -319,8 +319,7 @@ export function SegmentView() {
       void navigate('/segments', { replace: true });
     },
   });
-  if (!segment.data)
-    return <section className="page">{<p className="state">{t('common.loading')}</p>}</section>;
+  if (!segment.data) return <PageSkeleton cards={2} />;
   const s = segment.data;
   const best = s.best_s;
   return (

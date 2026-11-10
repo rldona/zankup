@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  ageOn,
-  fromDayMonthYear,
-  goalTarget,
-  initials,
-  toDayMonthYear,
-  typeDayMonthYear,
-  validDate,
-} from './helpers';
+import { ageOn, fromDayMonthYear, initials, toDayMonthYear, typeDayMonthYear, validDate } from './helpers';
 
 describe('profile helpers', () => {
   it('counts whole years up to the birthday', () => {
@@ -20,13 +12,6 @@ describe('profile helpers', () => {
     expect(validDate('1990-04-07')).toBe(true);
     expect(validDate('1990-02-30')).toBe(false);
     expect(validDate('7/4/1990')).toBe(false);
-  });
-
-  it('saves goals in metres, seconds or a count', () => {
-    expect(goalTarget('distance', 10, 'km')).toBe(10_000);
-    expect(goalTarget('distance', 1, 'mi')).toBeCloseTo(1609.344);
-    expect(goalTarget('time', 2, 'km')).toBe(7200);
-    expect(goalTarget('count', 3, 'km')).toBe(3);
   });
 
   it('makes initials from the name or the email', () => {

@@ -3,9 +3,17 @@
  * for sharing (privacy zones already removed, OS-407) and a few figures. Nothing leaves the device until
  * the person shares the file.
  */
-import { commonTokens, themes, type ThemeName } from '@zankup/core';
+import {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  commonTokens,
+  projectRoute,
+  themes,
+  type CardFigure,
+  type ThemeName,
+} from '@zankup/core';
 
-export type CardFigure = { label: string; value: string };
+export type { CardFigure };
 
 export type CardContent = {
   title: string;
@@ -18,21 +26,9 @@ export type CardContent = {
   sport?: string;
 };
 
-const WIDTH = 1080;
-const HEIGHT = 1350;
-
-function project(stretches: [number, number][][], box: { x: number; y: number; w: number; h: number }) {
-  const points = stretches.flat();
-  const lat0 = points.reduce((s, p) => s + p[0], 0) / points.length;
-  const k = Math.cos((lat0 * Math.PI) / 180);
-  const xs = points.map((p) => p[1] * k);
-  const ys = points.map((p) => p[0]);
-  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  const scale = Math.min(box.w / (maxX - minX || 1e-9), box.h / (maxY - minY || 1e-9));
-  const offX = box.x + (box.w - (maxX - minX) * scale) / 2;
-  const offY = box.y + (box.h - (maxY - minY) * scale) / 2;
-  return (p: [number, number]) => [offX + (p[1] * k - minX) * scale, offY + (maxY - p[0]) * scale] as const;
-}
+const WIDTH = CARD_WIDTH;
+const HEIGHT = CARD_HEIGHT;
+const project = projectRoute;
 
 export async function drawCard(content: CardContent, theme: ThemeName): Promise<Blob> {
   const c = { ...commonTokens, ...themes[theme] } as Record<string, string>;

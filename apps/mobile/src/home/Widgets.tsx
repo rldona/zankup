@@ -59,58 +59,60 @@ export function LastDay() {
   const last = lastDay(items);
   const { width } = useWindowDimensions();
   const [page, setPage] = useState(0);
-  if (!last)
-    return feed.isFetched ? (
-      <Muted>{t('home.empty')}</Muted>
-    ) : (
+  if (!feed.isFetched && !last)
+    return (
       <Pulse>
         <CardSkeleton lines={2} />
       </Pulse>
     );
 
-  const heading = dayHeading(last.day, today);
-  const title =
-    heading === 'date'
-      ? new Date(`${last.day}T12:00:00`).toLocaleDateString(locale, {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-        })
-      : t(heading === 'today' ? 'home.today' : 'home.yesterday');
-  const day = health.data?.find((d) => d.day === last.day);
+  // The day's activities only for today or yesterday: an older day is not news. The day's steps, heart
+  // rate and HRV show either way (those of today, or yesterday's while today has none yet).
+  const heading = last ? dayHeading(last.day, today) : 'date';
+  const recent = last && heading !== 'date' ? last : null;
+  const yesterday = daysBefore(today, 1);
+  const day = recent
+    ? health.data?.find((d) => d.day === recent.day)
+    : (health.data?.find((d) => d.day === today && (d.steps || d.resting_hr || d.hrv)) ??
+      health.data?.find((d) => d.day === yesterday));
   // Each page is the screen's width with the usual 16 px either side, so cards never touch while swiping.
   const pageWidth = width;
 
   return (
     <>
-      <Heading>{title.charAt(0).toUpperCase() + title.slice(1)}</Heading>
-      <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / pageWidth))}
-        style={{ marginHorizontal: -16 }}
-      >
-        {last.activities.map((a) => (
-          <View key={a.id} style={{ width: pageWidth, paddingHorizontal: 16 }}>
-            <DayActivity activity={a} format={format} />
-          </View>
-        ))}
-      </ScrollView>
-      {last.activities.length > 1 && (
-        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
-          {last.activities.map((a, i) => (
-            <View
-              key={a.id}
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: i === page ? c.fg : c.line,
-              }}
-            />
-          ))}
-        </View>
+      {!last && <Muted>{t('home.empty')}</Muted>}
+      {recent && (
+        <>
+          <Heading>{t(heading === 'today' ? 'home.today' : 'home.yesterday')}</Heading>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / pageWidth))}
+            style={{ marginHorizontal: -16 }}
+          >
+            {recent.activities.map((a) => (
+              <View key={a.id} style={{ width: pageWidth, paddingHorizontal: 16 }}>
+                <DayActivity activity={a} format={format} />
+              </View>
+            ))}
+          </ScrollView>
+          {recent.activities.length > 1 && (
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+              {recent.activities.map((a, i) => (
+                <View
+                  key={a.id}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: i === page ? c.fg : c.line,
+                  }}
+                />
+              ))}
+            </View>
+          )}
+        </>
       )}
       {day && (day.steps || day.resting_hr || day.hrv) ? (
         <Card style={{ paddingVertical: 0, gap: 0 }}>

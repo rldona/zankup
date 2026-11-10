@@ -105,15 +105,31 @@ def _known_ids(session: Session, user_id: int) -> set[str]:
         set(imported)
         | {key.removeprefix(prefix) for key in queued if key and key.startswith(prefix)}
         | _no_fit_ids(session, user_id)
+        | set(_cursor(session, user_id).get("deleted", []))
     )
 
 
 def _no_fit_ids(session: Session, user_id: int) -> set[str]:
     """Activities Garmin has no FIT for (manual, or GPX/TCX uploads): remembered, never downloaded again."""
+    return set(_cursor(session, user_id).get("no_fit", []))
+
+
+def _cursor(session: Session, user_id: int) -> dict[str, Any]:
     cursor = session.scalar(
         select(Source.sync_cursor).where(Source.user_id == user_id, Source.kind == SOURCE)
     )
-    return set((cursor or {}).get("no_fit", []))
+    return dict(cursor or {})
+
+
+def forget_on_sync(session: Session, user_id: int, external_id: str) -> None:
+    """A Garmin activity the person deleted: the sync skips it from now on. The caller commits."""
+    source = session.scalar(select(Source).where(Source.user_id == user_id, Source.kind == SOURCE))
+    if source is None:
+        source = Source(user_id=user_id, kind=SOURCE)
+        session.add(source)
+    cursor = dict(source.sync_cursor or {})
+    cursor["deleted"] = sorted({*cursor.get("deleted", []), external_id})
+    source.sync_cursor = cursor
 
 
 def _remember_no_fit(sessions: sessionmaker[Session], user_id: int, external_id: str) -> None:

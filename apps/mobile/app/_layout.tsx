@@ -20,6 +20,7 @@ import { forgetOfflineData, keepOffline, OFFLINE_MAX_AGE, persister, queryClient
 import { readAndSend as readHealthConnect } from '../src/healthConnect';
 import { listenToTaps, registerPush } from '../src/push';
 import { authorisedClient, signOut, storeRefreshToken, unlock, type Session } from '../src/session';
+import { OfflineNotice } from '../src/OfflineNotice';
 import { Wordmark } from '../src/Wordmark';
 import { SignIn } from '../src/SignIn';
 import { keys, storage } from '../src/storage';
@@ -150,6 +151,7 @@ export default function Root() {
                   <Stack.Screen name="segments/[id]" options={{ title: '' }} />
                   <Stack.Screen name="review/[period]" options={{ title: '' }} />
                 </Stack>
+                <OfflineNotice />
               </AuthContext.Provider>
             )}
           </PersistQueryClientProvider>

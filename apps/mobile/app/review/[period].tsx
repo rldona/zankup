@@ -76,7 +76,7 @@ export default function ReviewScreen() {
         </View>
       </View>
       {review.isPending && <Loading />}
-      {review.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
+      {review.isError && !review.data && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
       {review.data && review.data.totals.count === 0 && <Muted>{t('review.empty')}</Muted>}
       {review.data && review.data.totals.count > 0 && <Cards data={review.data} format={format} />}
     </Screen>

@@ -492,7 +492,15 @@ export interface paths {
     get: operations['getActivity'];
     put?: never;
     post?: never;
-    delete?: never;
+    /**
+     * Delete Activity
+     * @description Delete an activity with everything derived from it (streams, laps, metrics, photos, shares…).
+     *
+     *     A Garmin activity is remembered as deleted, so the next sync does not bring it back. The original
+     *     file stays in the raw store, which is never rewritten. Records, estimates and the form are
+     *     recomputed without it.
+     */
+    delete: operations['deleteActivity'];
     options?: never;
     head?: never;
     /**
@@ -2814,6 +2822,8 @@ export interface components {
       initial_m: number;
       /** Limit M */
       limit_m?: number | null;
+      /** Habitual */
+      habitual?: boolean | null;
     };
     /** GearOut */
     GearOut: {
@@ -2835,6 +2845,11 @@ export interface components {
       limit_m: number | null;
       /** Retired */
       retired: boolean;
+      /**
+       * Habitual
+       * @description The one of its kind used most; preferred for new activities
+       */
+      habitual: boolean;
       /**
        * Distance M
        * @description Activities plus initial_m
@@ -2878,6 +2893,8 @@ export interface components {
       limit_m?: number | null;
       /** Retired */
       retired?: boolean | null;
+      /** Habitual */
+      habitual?: boolean | null;
     };
     /** GoalCreate */
     GoalCreate: {
@@ -5457,6 +5474,35 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ActivityDetail'];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deleteActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

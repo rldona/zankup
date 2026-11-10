@@ -12,6 +12,7 @@ Photos are uploaded as the raw image body (the app resizes them first, so they s
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import Literal
 
@@ -22,8 +23,11 @@ from sqlalchemy import func, select, update
 from zankup.api.routing import protected_router
 from zankup.auth.deps import AppSettings, CurrentUser, DbSession
 from zankup.db.models import GEAR_KINDS, Activity, Gear, Photo
-from zankup.engine.run import queue_activity, queue_user
+from zankup.engine.run import queue_activity, queue_full, queue_user
 from zankup.photos import PhotoError, get_photo_store
+from zankup.sync.orchestrator import forget_on_sync
+
+log = logging.getLogger(__name__)
 
 router = protected_router(tags=["library"])
 
@@ -86,6 +90,32 @@ def edit_activity(activity_id: int, body: ActivityEdit, db: DbSession, user: Cur
     )
 
 
+@router.delete("/api/activities/{activity_id}", operation_id="deleteActivity", status_code=204)
+def delete_activity(activity_id: int, db: DbSession, user: CurrentUser, settings: AppSettings) -> Response:
+    """Delete an activity with everything derived from it (streams, laps, metrics, photos, shares…).
+
+    A Garmin activity is remembered as deleted, so the next sync does not bring it back. The original
+    file stays in the raw store, which is never rewritten. Records, estimates and the form are
+    recomputed without it.
+    """
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id, Activity.user_id == user.id))
+    if activity is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Activity not found")
+    photos = list(db.scalars(select(Photo.key).where(Photo.activity_id == activity.id)))
+    if activity.source == "garmin":
+        forget_on_sync(db, user.id, activity.external_id)
+    db.delete(activity)
+    queue_full(db, user.id, "activity deleted")
+    db.commit()
+    store = get_photo_store(settings)
+    for key in photos:
+        try:
+            store.delete(key)
+        except OSError:
+            log.warning("Photo file not removed", extra={"key": key})
+    return Response(status_code=204)
+
+
 # --- gear ------------------------------------------------------------------------------------------
 
 
@@ -97,6 +127,7 @@ class GearIn(BaseModel):
     sports: list[Literal["run", "ride", "strength", "walk", "row", "swim", "other"]] = []
     initial_m: float = Field(default=0, ge=0, le=1e8)
     limit_m: float | None = Field(default=None, ge=0, le=1e8)
+    habitual: bool | None = None
 
 
 class GearUpdate(BaseModel):
@@ -108,6 +139,7 @@ class GearUpdate(BaseModel):
     initial_m: float | None = Field(default=None, ge=0, le=1e8)
     limit_m: float | None = Field(default=None, ge=0, le=1e8)
     retired: bool | None = None
+    habitual: bool | None = None
 
 
 class GearOut(BaseModel):
@@ -120,6 +152,7 @@ class GearOut(BaseModel):
     initial_m: float
     limit_m: float | None
     retired: bool
+    habitual: bool = Field(description="The one of its kind used most; preferred for new activities")
     distance_m: float = Field(description="Activities plus initial_m")
     activities: int
     moving_s: float
@@ -170,6 +203,7 @@ def gear_list(db: DbSession, user_id: int) -> list[GearOut]:
                 initial_m=gear.initial_m,
                 limit_m=gear.limit_m,
                 retired=gear.retired_at is not None,
+                habitual=gear.habitual,
                 distance_m=distance,
                 activities=row.n if row else 0,
                 moving_s=row.moving if row else 0.0,
@@ -209,8 +243,22 @@ def create_gear(body: GearIn, db: DbSession, user: CurrentUser) -> GearOut:
         limit_m=body.limit_m if body.limit_m is not None else (800_000.0 if body.kind == "shoe" else None),
     )
     db.add(gear)
+    if body.habitual:
+        _make_habitual(db, gear)
     db.commit()
     return next(g for g in gear_list(db, user.id) if g.id == gear.id)
+
+
+def _make_habitual(db: DbSession, gear: Gear) -> None:
+    """Marks the gear as the habitual one of its kind, unmarking the one that was."""
+    db.flush()  # new gear gets its id first
+    db.execute(
+        update(Gear)
+        .where(Gear.user_id == gear.user_id, Gear.kind == gear.kind, Gear.id != gear.id, Gear.habitual)
+        .values(habitual=False)
+    )
+    db.flush()
+    gear.habitual = True
 
 
 @router.patch("/api/gear/{gear_id}", operation_id="updateGear")
@@ -229,6 +277,15 @@ def update_gear(gear_id: int, body: GearUpdate, db: DbSession, user: CurrentUser
         gear.sports = list(body.sports) or None
     if body.retired is not None:
         gear.retired_at = datetime.now(UTC) if body.retired else None
+    if body.habitual is not None or "kind" in sent:
+        # Retired gear is no one's habitual; a change of kind keeps it habitual in its new kind.
+        habitual = (gear.habitual if body.habitual is None else body.habitual) and gear.retired_at is None
+        gear.habitual = False
+        db.flush()
+        if habitual:
+            _make_habitual(db, gear)
+    elif gear.retired_at is not None:
+        gear.habitual = False
     db.commit()
     return next(g for g in gear_list(db, user.id) if g.id == gear.id)
 

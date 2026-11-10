@@ -14,3 +14,4 @@ export * from './domain/strength';
 export * from './domain/password';
 export * from './stats/period';
 export * from './icons';
+export * from './domain/sleep';

@@ -25,6 +25,7 @@ import { useApi, useAuth } from '../auth';
 import { Sheet } from '../detail/Tools';
 import { GoalsSkeleton } from '../Skeleton';
 import { Icon } from '../Icon';
+import { keys, readSync, storage } from '../storage';
 import {
   ageOn,
   fromDayMonthYear,
@@ -40,7 +41,7 @@ import { asSport, useFormat, useHrMax } from '../prefs';
 import { addPasskey, passkeysSupported, SignInError } from '../session';
 import { GoalCard } from '../stats/Sections';
 import { useTheme } from '../theme';
-import { Button, Card, Choice, Field, Heading, ListRow, Muted, styles as ui } from '../ui';
+import { Button, Card, CardTitle, Choice, Field, Heading, ListRow, Muted, styles as ui } from '../ui';
 
 type Format = ReturnType<typeof useFormat>;
 
@@ -222,15 +223,35 @@ export function Summary({ me, summary }: { me: Me; summary: ProfileSummary }) {
   if (me.weight_kg) physical.push(['profile.weight', me.weight_kg.toLocaleString(locale)]);
   if (me.height_cm) physical.push(['profile.height', String(me.height_cm)]);
   if (hrMax) physical.push(['settings.hrMax', `${hrMax} bpm`]);
+  // The eye hides the values (when showing the phone), remembered on this phone.
+  const [hidden, setHidden] = useState(() => readSync(keys.physicalHidden) === '1');
+  const toggleHidden = () => {
+    const next = !hidden;
+    setHidden(next);
+    void storage.setItem(keys.physicalHidden, next ? '1' : '0');
+  };
   return (
     <>
       {physical.length > 0 && (
         <Card>
-          <Heading>{t('profile.physical')}</Heading>
+          <CardTitle
+            right={
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t(hidden ? 'profile.showPhysical' : 'profile.hidePhysical')}
+                hitSlop={10}
+                onPress={toggleHidden}
+              >
+                <Icon name={hidden ? 'visibility_off' : 'visibility'} color={c.muted} size={22} />
+              </Pressable>
+            }
+          >
+            {t('profile.physical')}
+          </CardTitle>
           <View style={ui.stats}>
             {physical.map(([label, value]) => (
               <View key={label} style={ui.stat}>
-                <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
+                <Text style={[ui.statValue, { color: c.fg }]}>{hidden ? '•••' : value}</Text>
                 <Text style={[ui.statLabel, { color: c.muted }]}>{t(label)}</Text>
               </View>
             ))}
@@ -239,17 +260,17 @@ export function Summary({ me, summary }: { me: Me; summary: ProfileSummary }) {
       )}
       {summary.this_year.length > 0 && (
         <Card>
-          <Heading>{t('profile.byYear')}</Heading>
+          <CardTitle>{t('profile.byYear')}</CardTitle>
           <SportRows rows={summary.this_year} format={format} />
         </Card>
       )}
       <Card>
-        <Heading>{t('profile.allTime')}</Heading>
+        <CardTitle>{t('profile.allTime')}</CardTitle>
         {summary.since && <Muted>{t('profile.since', { date: day(summary.since) })}</Muted>}
         <SportRows rows={summary.all_time} format={format} />
       </Card>
       <Card>
-        <Heading>{t('profile.records')}</Heading>
+        <CardTitle>{t('profile.records')}</CardTitle>
         {summary.records.length === 0 && <Muted>{t('profile.noRecords')}</Muted>}
         {summary.records.map((r) => (
           <Pressable
@@ -361,6 +382,7 @@ export function GoalForm({
   onCancel?: () => void;
   goal?: GoalOut;
 }) {
+  const c = useTheme();
   const api = useApi();
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>(
     (goal?.period as 'week' | 'month' | 'year' | undefined) ?? 'week',
@@ -402,35 +424,46 @@ export function GoalForm({
     },
   });
   const form = (
-    <Card style={bare ? { borderWidth: 0, padding: 0, backgroundColor: 'transparent' } : undefined}>
+    <Card
+      style={{ gap: 20, ...(bare ? { borderWidth: 0, padding: 0, backgroundColor: 'transparent' } : {}) }}
+    >
       {!bare && <Heading>{t('goals.add')}</Heading>}
-      <Muted>{t('stats.period')}</Muted>
-      <Choice
-        label={t('stats.period')}
-        value={period}
-        onChange={setPeriod}
-        options={(['week', 'month', 'year'] as const).map((p) => ({
-          value: p,
-          label: t(`goals.period.${p}`),
-        }))}
-      />
-      <Muted>{t('feed.sports')}</Muted>
-      <Choice
-        label={t('feed.sports')}
-        value={sport}
-        onChange={chooseSport}
-        options={[
-          { value: '', label: t('goals.allSports') },
-          ...SPORTS.filter((s) => s !== 'other').map((s) => ({ value: s as string, label: t(`sport.${s}`) })),
-        ]}
-      />
-      <Muted>{t('goals.measure')}</Muted>
-      <Choice
-        label={t('goals.measure')}
-        value={metric}
-        onChange={setMetric}
-        options={metrics.map((m) => ({ value: m, label: t(`goals.metric.${m}`) }))}
-      />
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: c.fg, fontWeight: '600' }}>{t('stats.period')}</Text>
+        <Choice
+          label={t('stats.period')}
+          value={period}
+          onChange={setPeriod}
+          options={(['week', 'month', 'year'] as const).map((p) => ({
+            value: p,
+            label: t(`goals.period.${p}`),
+          }))}
+        />
+      </View>
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: c.fg, fontWeight: '600' }}>{t('feed.sports')}</Text>
+        <Choice
+          label={t('feed.sports')}
+          value={sport}
+          onChange={chooseSport}
+          options={[
+            { value: '', label: t('goals.allSports') },
+            ...SPORTS.filter((s) => s !== 'other').map((s) => ({
+              value: s as string,
+              label: t(`sport.${s}`),
+            })),
+          ]}
+        />
+      </View>
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: c.fg, fontWeight: '600' }}>{t('goals.measure')}</Text>
+        <Choice
+          label={t('goals.measure')}
+          value={metric}
+          onChange={setMetric}
+          options={metrics.map((m) => ({ value: m, label: t(`goals.metric.${m}`) }))}
+        />
+      </View>
       <Field
         label={`${t('goals.target')} (${metric === 'distance' ? unit : metric === 'time' ? 'h' : '#'})`}
         keyboardType="decimal-pad"

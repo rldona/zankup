@@ -1,7 +1,7 @@
 /**
  * Signing in on the phone (OS-503, OS-524 to OS-526), as in the PWA: the instance (api.zankup.com or
- * your own), then e-mail and password followed by the code, a passkey, or Google with the native
- * account sheet; "forgot it?"; and on a brand-new instance, creating its account. After that the
+ * your own), then Google with the native account sheet, a passkey, or e-mail and password followed
+ * by the code; "forgot it?"; and on a brand-new instance, creating its account. After that the
  * fingerprint is enough (session.ts).
  */
 import { createApiClient } from '@zankup/core';
@@ -27,6 +27,7 @@ import {
 import { CodeBoxes, ErrorBox, PasswordField } from './signin/Fields';
 import { Setup } from './signin/Setup';
 import { challengeExpired, validEmail } from './signin/rules';
+import { keys, storage } from './storage';
 import { useTheme } from './theme';
 import { Wordmark } from './Wordmark';
 import { Button, Field, Muted, Screen } from './ui';
@@ -38,15 +39,23 @@ type Step =
   | { kind: 'forgot' }
   | { kind: 'setup' };
 
+/**
+ * Choosing another instance (your own server) on the sign-in screen. Hidden for now: the app signs in to
+ * api.zankup.com only. Set to true to offer it again.
+ */
+const OTHER_INSTANCES = false;
+
 const message = (failure: unknown) => (failure instanceof SignInError ? failure.message : t('common.error'));
 
 export function SignIn({ onSignedIn }: { onSignedIn: (session: Session) => void }) {
-  const [baseUrl, setBaseUrl] = useState(instanceUrl());
+  const [baseUrl, setBaseUrl] = useState(instanceUrl() ?? (OTHER_INSTANCES ? null : DEFAULT_INSTANCE));
   const [step, setStep] = useState<Step>({ kind: baseUrl ? 'password' : 'instance' });
   const [googleClient, setGoogleClient] = useState<string | null>(null);
 
   useEffect(() => {
     if (!baseUrl) return;
+    // Without the instance step, the default one is kept as if it had been chosen.
+    if (!instanceUrl()) void storage.setItem(keys.instance, baseUrl);
     let live = true;
     // A brand-new instance has nobody to sign in yet: straight to creating the account.
     void setupOpen(baseUrl).then((open) => live && open && setStep({ kind: 'setup' }));
@@ -121,7 +130,7 @@ function Brand() {
 function Title({ title, sub }: { title: string; sub?: string }) {
   const c = useTheme();
   return (
-    <View style={{ gap: 4 }}>
+    <View style={{ gap: 4, marginBottom: 12 }}>
       <Text accessibilityRole="header" style={{ color: c.fg, fontSize: 20, fontWeight: '700' }}>
         {title}
       </Text>
@@ -231,6 +240,43 @@ function PasswordStep({
     <>
       <Title title={t('signIn.welcome')} />
       <ErrorBox message={error} />
+      {googleClient && (
+        <Button
+          primary
+          disabled={busy !== null}
+          onPress={() => void google()}
+          icon={<GoogleIcon color="#fff" />}
+          labelColor="#fff"
+        >
+          {t('signIn.google')}
+        </Button>
+      )}
+      {passkeysSupported() && (
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy !== null}
+          onPress={() => void passkey()}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: c.muted,
+            paddingVertical: 12,
+            opacity: busy !== null ? 0.5 : pressed ? 0.8 : 1,
+          })}
+        >
+          <Icon name="passkey" color={c.fg} size={20} />
+          <Text style={{ color: c.fg, fontWeight: '600', fontSize: 15 }}>
+            {busy === 'passkey' ? t('signIn.passkeyWaiting') : t('signIn.passkey')}
+          </Text>
+        </Pressable>
+      )}
+      {(googleClient || passkeysSupported()) && (
+        <Muted style={{ textAlign: 'center' }}>{t('signIn.or')}</Muted>
+      )}
       <Field
         label={t('signIn.email')}
         value={email}
@@ -253,49 +299,15 @@ function PasswordStep({
       <View style={{ alignItems: 'flex-end' }}>
         <LinkButton onPress={onForgot}>{t('signIn.forgot')}</LinkButton>
       </View>
-      <Button primary disabled={busy !== null} onPress={submit}>
+      <Button disabled={busy !== null} onPress={submit}>
         {busy === 'password' ? t('common.loading') : t('signIn.submit')}
       </Button>
-      <Muted style={{ textAlign: 'center' }}>{t('signIn.or')}</Muted>
-      {passkeysSupported() && (
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy !== null}
-          onPress={() => void passkey()}
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: c.line,
-            backgroundColor: c.surface,
-            paddingVertical: 12,
-            opacity: busy !== null ? 0.5 : pressed ? 0.8 : 1,
-          })}
-        >
-          <Icon name="passkey" color={c.fg} size={20} />
-          <Text style={{ color: c.fg, fontWeight: '600', fontSize: 15 }}>
-            {busy === 'passkey' ? t('signIn.passkeyWaiting') : t('signIn.passkey')}
-          </Text>
-        </Pressable>
+      {OTHER_INSTANCES && (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingTop: 4 }}>
+          <Muted style={{ flex: 1 }}>{baseUrl.replace(/^https?:\/\//, '')}</Muted>
+          <LinkButton onPress={onChangeInstance}>{t('mobile.changeInstance')}</LinkButton>
+        </View>
       )}
-      {googleClient && (
-        <Button
-          primary
-          disabled={busy !== null}
-          onPress={() => void google()}
-          icon={<GoogleIcon color="#fff" />}
-          labelColor="#fff"
-        >
-          {t('signIn.google')}
-        </Button>
-      )}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingTop: 4 }}>
-        <Muted style={{ flex: 1 }}>{baseUrl.replace(/^https?:\/\//, '')}</Muted>
-        <LinkButton onPress={onChangeInstance}>{t('mobile.changeInstance')}</LinkButton>
-      </View>
     </>
   );
 }

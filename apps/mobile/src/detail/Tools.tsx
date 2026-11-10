@@ -7,6 +7,7 @@ import { gearQuery, SPORTS, type ActivityDetail, type Sport } from '@zankup/core
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { fetch } from 'expo/fetch';
+import { router } from 'expo-router';
 import { File } from 'expo-file-system';
 import { Children, Fragment, isValidElement, useEffect, useRef, useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
@@ -131,6 +132,27 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
       onClose();
     },
   });
+  const queryClient = useQueryClient();
+  const remove = useMutation({
+    mutationFn: async () => {
+      const { error } = await api.DELETE('/api/activities/{activity_id}', {
+        params: { path: { activity_id: activity.id } },
+      });
+      if (error) throw new Error('delete');
+    },
+    onSuccess: () => {
+      // Out of every list, total and chart: drop its own page and refresh the rest.
+      queryClient.removeQueries({ queryKey: ['activity', activity.id] });
+      void queryClient.invalidateQueries();
+      onClose();
+      router.back();
+    },
+  });
+  const confirmDelete = () =>
+    Alert.alert(t('activity.delete'), t('activity.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('activity.delete'), style: 'destructive', onPress: () => remove.mutate() },
+    ]);
   const choices = (gear.data ?? []).filter((g) => !g.retired || g.id === activity.gear?.id);
   return (
     <Sheet
@@ -183,6 +205,27 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
       <Photos activity={activity} editable />
       <Muted>{t('activity.editNote')}</Muted>
       {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
+      <Pressable
+        accessibilityRole="button"
+        disabled={remove.isPending}
+        onPress={confirmDelete}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          marginTop: 12,
+          paddingVertical: 12,
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: c.zone5,
+          opacity: remove.isPending ? 0.5 : 1,
+        }}
+      >
+        <Icon name="delete" color={c.zone5} size={20} />
+        <Text style={{ color: c.zone5, fontWeight: '600' }}>{t('activity.delete')}</Text>
+      </Pressable>
+      {remove.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
     </Sheet>
   );
 }
@@ -191,7 +234,16 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
  * The activity's photos, each opening full size. Editing the activity (`editable`) adds new ones from
  * the phone and removes them.
  */
-export function Photos({ activity, editable = false }: { activity: ActivityDetail; editable?: boolean }) {
+export function Photos({
+  activity,
+  editable = false,
+  beside,
+}: {
+  activity: ActivityDetail;
+  editable?: boolean;
+  /** Shown as a tile next to an "add photos" tile of the same size (the latest activity's map). */
+  beside?: React.ReactNode;
+}) {
   const api = useApi();
   const c = useTheme();
   const refresh = useRefreshActivity(activity.id);
@@ -260,7 +312,34 @@ export function Photos({ activity, editable = false }: { activity: ActivityDetai
           ))}
         </ScrollView>
       )}
-      {editable && (
+      {editable && beside !== undefined && (
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {beside ? (
+            <View style={{ flex: 1, height: 150, borderRadius: 16, overflow: 'hidden' }}>{beside}</View>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            disabled={add.isPending}
+            onPress={() => void choose()}
+            style={({ pressed }) => ({
+              flex: 1,
+              height: 150,
+              borderRadius: 16,
+              backgroundColor: c.surface2,
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              opacity: add.isPending ? 0.5 : pressed ? 0.8 : 1,
+            })}
+          >
+            <Icon name="photo_camera" color={c.fg} size={32} />
+            <Text style={{ color: c.fg, fontWeight: '600' }}>
+              {add.isPending ? t('photos.uploading') : t('photos.add')}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+      {editable && beside === undefined && (
         <Button
           icon={<Icon name="photo_camera" color={c.fg} size={20} />}
           disabled={add.isPending}

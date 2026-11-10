@@ -5,11 +5,13 @@
  */
 import { activitySummaryQuery, aiStatusQuery, settingsQuery, type AiPrefs } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
 import { useAuth } from './auth';
 import { Icon } from './Icon';
 import { t } from './i18n';
+import { keys, readSync, storage } from './storage';
 import { useTheme } from './theme';
 import { Body, Button, Card, Heading, Muted, SwitchRow } from './ui';
 
@@ -29,6 +31,13 @@ export function SummaryCard({ activityId }: { activityId: number }) {
     },
     onSuccess: (data) => queryClient.setQueryData(activitySummaryQuery(api, activityId).queryKey, data),
   });
+  // Folded or open, remembered on this phone for every activity.
+  const [folded, setFolded] = useState(() => readSync(keys.coachFolded) === '1');
+  const fold = () => {
+    const next = !folded;
+    setFolded(next);
+    void storage.setItem(keys.coachFolded, next ? '1' : '0');
+  };
   const can = status.data?.available && status.data.enabled && status.data.summaries;
   const row = summary.data;
   if (!row && !can) return null;
@@ -48,14 +57,21 @@ export function SummaryCard({ activityId }: { activityId: number }) {
   );
   return (
     <Card>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: !folded }}
+        accessibilityLabel={`${t('summary.aiTitle')}, ${t(folded ? 'summary.show' : 'summary.hide')}`}
+        onPress={fold}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+      >
         {wand}
         <View style={{ flex: 1 }}>
           <Text style={{ color: c.fg, fontSize: 17, fontWeight: '700' }}>{t('summary.aiTitle')}</Text>
           <Text style={{ color: c.muted, fontSize: 13 }}>{t('summary.aiSubtitle')}</Text>
         </View>
-      </View>
-      {row ? (
+        <Icon name={folded ? 'keyboard_arrow_down' : 'keyboard_arrow_up'} color={c.muted} size={26} />
+      </Pressable>
+      {folded ? null : row ? (
         <>
           <Body>{row.summary}</Body>
           {row.highlights.length > 0 && (

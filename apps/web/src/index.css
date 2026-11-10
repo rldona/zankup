@@ -2451,25 +2451,68 @@ a.button {
   margin-left: auto;
 }
 
-.night .nighthead {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
+.sleeptiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 
-.hypnogram {
+.sleeptile p {
+  margin: 0 0 4px;
+}
+
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--tone) 25%, transparent);
+}
+.tone-good {
+  --tone: var(--sleep-light);
+}
+.tone-fair {
+  --tone: var(--sleep-awake);
+}
+.tone-poor {
+  --tone: var(--zone-5);
+}
+
+/* The night's stages: a lane each, blocks joined by thin lines, the names above the lines. */
+.lanebox {
   position: relative;
-  height: 72px;
-  margin: 14px 0 8px;
-  border-radius: 6px;
-  background: var(--surface-2);
-  overflow: hidden;
+  margin-bottom: 8px;
 }
-
-.hypnogram span {
+.lanebox > span {
   position: absolute;
-  height: 25%;
-  min-width: 1px;
+  display: block;
+}
+.lanebox .lanetrack {
+  left: 0;
+  right: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.lanebox .lanelink {
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--muted);
+  opacity: 0.45;
+}
+.lanebox .lanename {
+  position: absolute;
+  left: 0;
+  padding-right: 8px;
+  background: var(--surface);
+  font-size: 15px;
+  line-height: 22px;
+}
+.laneclock {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .stage-deep {
@@ -2485,27 +2528,8 @@ a.button {
   --stage: var(--sleep-awake);
 }
 
-.hypnogram span,
-.stagelegend i {
+.lanebox .laneblock {
   background: var(--stage);
-}
-
-.stagelegend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  padding: 0;
-  margin: 8px 0;
-  list-style: none;
-  font-size: 14px;
-}
-
-.stagelegend i {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  margin-right: 6px;
-  border-radius: 3px;
 }
 
 .rows li > .actions {

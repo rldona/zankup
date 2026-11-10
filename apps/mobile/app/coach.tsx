@@ -25,7 +25,7 @@ import { blocks, pieces, readEvents } from '../src/coach';
 import { locale, t } from '../src/i18n';
 import { accessToken, instanceUrl } from '../src/session';
 import { useTheme } from '../src/theme';
-import { accent, Body, Button, Card, Heading, Muted, onAccent, styles as ui } from '../src/ui';
+import { accent, Body, Button, Card, CardTitle, Muted, onAccent, styles as ui } from '../src/ui';
 
 type Turn = { role: 'user' | 'assistant'; content: string; error?: string };
 
@@ -37,12 +37,8 @@ const TOOL_LABELS: Record<string, Parameters<typeof t>[0]> = {
   daily_health: 'coach.tool.daily_health',
   estimates: 'coach.tool.estimates',
 };
-const SUGGESTIONS = [
-  'coach.suggestion.1',
-  'coach.suggestion.2',
-  'coach.suggestion.3',
-  'coach.suggestion.4',
-] as const;
+// Two examples, short and different: performance and recovery.
+const SUGGESTIONS = ['coach.suggestion.1', 'coach.suggestion.3'] as const;
 
 const day = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
@@ -77,31 +73,79 @@ function Weekly() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: weeklyReportsQuery(api).queryKey }),
   });
   const latest: WeeklyReport | undefined = reports.data?.[0];
+  // The long text waits behind a link: the headline, the highlights and next week's advice say most.
+  const [full, setFull] = useState(false);
   if (!reports.data) return null;
   return (
     <Card>
-      <Heading>{t('weekly.title')}</Heading>
-      {latest && <Muted>{t('weekly.week', { date: day(latest.week_start) })}</Muted>}
+      <CardTitle>{t('weekly.title')}</CardTitle>
+      {latest && (
+        <Muted style={{ marginTop: -8 }}>{t('weekly.week', { date: day(latest.week_start) })}</Muted>
+      )}
       {!latest && <Muted>{t('weekly.none')}</Muted>}
       {latest?.status === 'pending' && <Muted>{t('weekly.pending')}</Muted>}
       {latest?.status === 'failed' && <Muted accessibilityRole="alert">{t('weekly.failed')}</Muted>}
       {latest?.status === 'done' && (
         <>
-          <Text style={{ color: c.fg, fontSize: 16, fontWeight: '700' }}>{latest.headline}</Text>
-          <Body>{latest.summary}</Body>
-          {latest.highlights?.map((item) => (
-            <Body key={item}>• {item}</Body>
-          ))}
-          {latest.recommendation && (
-            <Body>
-              <Text style={{ fontWeight: '700' }}>{t('weekly.recommendation')}:</Text> {latest.recommendation}
-            </Body>
+          <Text style={{ color: c.fg, fontSize: 18, fontWeight: '700' }}>{latest.headline}</Text>
+          {(latest.highlights?.length ?? 0) > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {latest.highlights?.map((item) => (
+                <Text
+                  key={item}
+                  style={{
+                    color: c.fg,
+                    fontSize: 13,
+                    paddingHorizontal: 10,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                    backgroundColor: c.surface2,
+                  }}
+                >
+                  {item}
+                </Text>
+              ))}
+            </View>
           )}
+          {latest.recommendation && (
+            <View style={{ backgroundColor: c.accentSoft, borderRadius: 12, padding: 12, gap: 4 }}>
+              <Text style={{ color: c.fg, fontWeight: '700' }}>{t('weekly.recommendation')}</Text>
+              <Body>{latest.recommendation}</Body>
+            </View>
+          )}
+          {full && <Body>{latest.summary}</Body>}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: full }}
+            onPress={() => setFull(!full)}
+            hitSlop={8}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' }}
+          >
+            <Text style={{ color: c.accent, fontWeight: '600' }}>
+              {t(full ? 'weekly.less' : 'weekly.more')}
+            </Text>
+            <Icon
+              name={full ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+              color={String(c.accent)}
+              size={20}
+            />
+          </Pressable>
         </>
       )}
-      <Button onPress={() => write.mutate()} disabled={write.isPending}>
-        {write.isPending ? t('coach.thinking') : t('weekly.generate')}
-      </Button>
+      {/* Writing it by hand only when there is none yet; Monday's comes on its own. */}
+      {!latest && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => write.mutate()}
+          disabled={write.isPending}
+          hitSlop={8}
+          style={{ alignSelf: 'center', paddingTop: 6, opacity: write.isPending ? 0.5 : 1 }}
+        >
+          <Text style={{ color: c.muted, fontSize: 13, textDecorationLine: 'underline' }}>
+            {write.isPending ? t('coach.thinking') : t('weekly.generate')}
+          </Text>
+        </Pressable>
+      )}
       {write.isError && <Muted accessibilityRole="alert">{t('weekly.failed')}</Muted>}
     </Card>
   );
@@ -120,10 +164,22 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
   // "New conversation" in the header as soon as there is one; while answering it stops first.
   const navigation = useNavigation();
   const hasTurns = turns.length > 0;
+  // What the coach can and cannot do, behind an (i) in the header instead of a line under the chat.
+  const [about, setAbout] = useState(false);
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: hasTurns
-        ? () => (
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('coach.about')}
+            accessibilityState={{ expanded: about }}
+            hitSlop={10}
+            onPress={() => setAbout(!about)}
+          >
+            <Icon name="info" color={c.fg} />
+          </Pressable>
+          {hasTurns && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('coach.clear')}
@@ -135,10 +191,11 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
             >
               <Icon name="add_comment" color={c.fg} />
             </Pressable>
-          )
-        : undefined,
+          )}
+        </View>
+      ),
     });
-  }, [navigation, hasTurns, c.fg]);
+  }, [navigation, hasTurns, c.fg, about]);
 
   const ask = async (question: string) => {
     const history: Turn[] = [...turns, { role: 'user', content: question }];
@@ -192,18 +249,46 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
 
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: c.bg }}>
+      {about && (
+        // The tooltip under the (i): a tap on it closes it.
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('coach.disclaimer')}
+          onPress={() => setAbout(false)}
+          style={{
+            position: 'absolute',
+            top: 6,
+            right: 12,
+            left: 64,
+            zIndex: 10,
+            elevation: 6,
+            backgroundColor: c.surface2,
+            borderColor: c.line,
+            borderWidth: 1,
+            borderRadius: 12,
+            padding: 12,
+          }}
+        >
+          <Text style={{ color: c.fg, fontSize: 14 }}>{t('coach.disclaimer')}</Text>
+        </Pressable>
+      )}
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }} keyboardVerticalOffset={90}>
         <ScrollView
           ref={scroll}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={ui.page}
-          onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
+          // Only a conversation follows its newest message: on opening, the report shows from the top.
+          onContentSizeChange={() => {
+            if (turns.length > 0) scroll.current?.scrollToEnd({ animated: true });
+          }}
         >
           {weekly && turns.length === 0 && <Weekly />}
           {budgetSpent && <Muted accessibilityRole="alert">{t('coach.budget')}</Muted>}
           {turns.length === 0 && !budgetSpent && (
             <>
-              <Body>{t('coach.intro')}</Body>
+              <Text style={{ color: c.fg, fontWeight: '600', marginTop: 4 }}>
+                {t('coach.suggestionsTitle')}
+              </Text>
               <View style={{ gap: 8 }}>
                 {SUGGESTIONS.map((key) => (
                   <Pressable
@@ -242,7 +327,6 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
             )}
             {working && <Muted>{working}</Muted>}
           </View>
-          <Muted>{t('coach.disclaimer')}</Muted>
         </ScrollView>
         {!budgetSpent && (
           <View
@@ -268,14 +352,24 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
                 style={[
                   ui.input,
                   {
+                    // Taller and edged in the theme's colour, so the place to ask stands out.
                     color: c.fg,
                     backgroundColor: c.surface,
-                    borderColor: c.line,
-                    maxHeight: 120,
+                    borderColor: `${String(c.accent)}99`,
+                    borderWidth: 1.5,
+                    borderRadius: 16,
+                    fontSize: 17,
+                    minHeight: 56,
+                    maxHeight: 140,
+                    paddingVertical: 15,
+                    paddingLeft: 46,
                     paddingRight: 52,
                   },
                 ]}
               />
+              <View pointerEvents="none" style={{ position: 'absolute', left: 14, top: 16 }}>
+                <Icon name="wand_stars" color={String(c.accent)} size={22} />
+              </View>
               {(busy || draft.trim()) && (
                 <Pressable
                   accessibilityRole="button"

@@ -93,17 +93,9 @@ export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSumma
         accessibilityLabel={t('profile.edit')}
         onPress={onEdit}
         hitSlop={12}
-        style={{
-          alignSelf: 'center',
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: c.surface2,
-        }}
+        style={{ alignSelf: 'flex-start', paddingTop: 6 }}
       >
-        <Icon name="edit_square" color={c.fg} size={22} />
+        <Icon name="edit_square" color={c.fg} size={24} />
       </Pressable>
     </View>
   );

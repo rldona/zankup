@@ -522,6 +522,7 @@
   "goals.editTitle": "Editar objetivo",
   "goals.showChart": "Ver evolución",
   "goals.hideChart": "Ocultar evolución",
+  "goals.total": "{value} en total",
   "goals.delete": "Borrar",
   "settings.zones": "Zonas",
   "settings.zoneModel": "Zonas de frecuencia cardiaca",

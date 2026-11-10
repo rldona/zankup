@@ -14,7 +14,7 @@ import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { useApi } from '../auth';
-import { locale } from '../i18n';
+import { locale, t } from '../i18n';
 import { niceScale } from '../charts';
 import { useTheme } from '../theme';
 
@@ -24,6 +24,8 @@ export type GoalPoint = {
   when: string;
   /** What was done from the start of the period to the end of this point. */
   done: number;
+  /** What was done in this point alone (the day, or the month of a yearly goal). */
+  own: number;
   /** Where a steady pace would be by then. */
   expected: number;
   state: 'on' | 'behind' | 'future';
@@ -85,14 +87,16 @@ export function goalPoints(
   let done = 0;
   let cursor = new Date(start);
   return closes.map(({ last, label, when }) => {
+    let own = 0;
     for (; cursor <= last; cursor = new Date(cursor.getTime() + 86_400_000))
-      done += byDay.get(iso(cursor)) ?? 0;
+      own += byDay.get(iso(cursor)) ?? 0;
+    done += own;
     const elapsed = Math.round((last.getTime() - start.getTime()) / 86_400_000) + 1;
     const expected = (goal.target * elapsed) / length;
     // A day after today is still to come; so is a month of a yearly goal that has not begun.
     const future = goal.period === 'year' ? iso(last).slice(0, 7) > today.slice(0, 7) : iso(last) > today;
     const state: GoalPoint['state'] = future ? 'future' : done >= expected ? 'on' : 'behind';
-    return { label, when, done, expected, state };
+    return { label, when, done, own, expected, state };
   });
 }
 
@@ -174,8 +178,9 @@ export function GoalChart({
         <Text style={{ color: c.muted, fontSize: 12 }}>
           {at.when} ·{' '}
           <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-            {value(at.done)}
+            {value(at.own)}
           </Text>
+          {current > 0 ? ` · ${t('goals.total', { value: value(at.done) })}` : ''}
         </Text>
       )}
       <GestureDetector gesture={gesture}>
@@ -244,11 +249,13 @@ export function GoalChart({
                       strokeWidth={2}
                     />
                   )}
-                  {shown.map((p, i) =>
-                    i === current ? (
+                  {/* Green where something was done that day; a grey ring where the line only carries on. */}
+                  {shown.map((p, i) => {
+                    const tint = p.own > 0 ? colour : c.muted;
+                    return i === current ? (
                       <Group key={i}>
-                        <Circle cx={x(i)} cy={y(p.done)} r={radius * 2.2} color={colour} opacity={0.3} />
-                        <Circle cx={x(i)} cy={y(p.done)} r={radius + 1} color={colour} />
+                        <Circle cx={x(i)} cy={y(p.done)} r={radius * 2.2} color={tint} opacity={0.3} />
+                        <Circle cx={x(i)} cy={y(p.done)} r={radius + 1} color={tint} />
                       </Group>
                     ) : (
                       <Group key={i}>
@@ -257,13 +264,13 @@ export function GoalChart({
                           cx={x(i)}
                           cy={y(p.done)}
                           r={radius}
-                          color={colour}
+                          color={tint}
                           style="stroke"
                           strokeWidth={2.5}
                         />
                       </Group>
-                    ),
-                  )}
+                    );
+                  })}
                 </>
               )}
             </Canvas>

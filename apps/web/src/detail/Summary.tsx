@@ -2,11 +2,13 @@ import { activitySummaryQuery, aiStatusQuery } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '../api';
+import { MaterialIcon } from '../MaterialIcon';
 import { t } from '../i18n';
 
 /**
- * The model's summary of the activity (OS-703): the sentences, the highlights and the suggested title,
- * with a button to write it (again). Hidden when this server has no model, unless a summary exists.
+ * Zankup Coach's summary of the activity (OS-703): the sentences, the highlights and the suggested title.
+ * Before there is one, it says what the Coach will write and offers to; a written summary stays as it
+ * is. Hidden when this server has no model, unless a summary exists.
  */
 export function Summary({ activityId, name }: { activityId: number; name: string | null }) {
   const queryClient = useQueryClient();
@@ -42,14 +44,24 @@ export function Summary({ activityId, name }: { activityId: number; name: string
   if (!row && summary.isPending) return null;
   return (
     <section className="panel summary" aria-labelledby="summary-title">
-      <div className="ph">
-        <h2 id="summary-title">{t('summary.title')}</h2>
-        {can && (
-          <button type="button" className="link" onClick={() => write.mutate()} disabled={write.isPending}>
-            {write.isPending ? t('coach.thinking') : row ? t('summary.regenerate') : t('summary.generate')}
-          </button>
-        )}
+      <div className="ph coach-head">
+        <span className="wand">
+          <MaterialIcon name="wand_stars" />
+        </span>
+        <div>
+          <h2 id="summary-title">{t('summary.aiTitle')}</h2>
+          <p className="note">{t('summary.aiSubtitle')}</p>
+        </div>
       </div>
+      {!row && can && (
+        <>
+          <p className="desc">{t('summary.pitch')}</p>
+          <button type="button" className="primary" onClick={() => write.mutate()} disabled={write.isPending}>
+            <MaterialIcon name="wand_stars" />
+            {write.isPending ? t('summary.writing') : t('summary.write')}
+          </button>
+        </>
+      )}
       {row && (
         <>
           <p className="desc">{row.summary}</p>

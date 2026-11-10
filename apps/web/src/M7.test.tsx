@@ -153,10 +153,10 @@ describe('phase 7: the AI assistant', () => {
         ]),
     });
     renderAt('/coach');
-    expect(await screen.findByRole('heading', { name: 'Weekly report' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: "Coach's weekly report" })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'A solid week' })).toBeInTheDocument();
     expect(screen.getByText(/Keep the volume/)).toBeInTheDocument();
-    const box = screen.getByRole('textbox', { name: 'Ask the Coach…' });
+    const box = screen.getByRole('textbox', { name: 'Ask the coach…' });
     await userEvent.type(box, 'How much did I run this month?{Enter}');
     expect(await screen.findByText(/You ran 16.0 km in two runs/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Activity 7' })).toHaveAttribute('href', '/activities/7');
@@ -176,7 +176,7 @@ describe('phase 7: the AI assistant', () => {
         }),
     });
     renderAt('/coach');
-    expect(await screen.findByText(/This month's AI budget is spent/)).toBeInTheDocument();
+    expect(await screen.findByText(/This month's Zankup Coach budget is spent/)).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
@@ -194,8 +194,8 @@ describe('phase 7: the AI assistant', () => {
         request.json().then((body: { name: string }) => Response.json({ ...RUN, name: body.name })),
     });
     renderAt('/activities/7');
-    expect(await screen.findByRole('heading', { name: 'Summary' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Summarise' }));
+    expect(await screen.findByRole('heading', { name: 'Zankup Coach' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Ask for a summary' }));
     expect(await screen.findByText(/A steady 10.0 km/)).toBeInTheDocument();
     expect(screen.getByText('5 km record')).toBeInTheDocument();
     expect(screen.getByText('Steady 10 km with a 5 km record')).toBeInTheDocument();
@@ -205,7 +205,8 @@ describe('phase 7: the AI assistant', () => {
         name: 'Steady 10 km with a 5 km record',
       }),
     );
-    expect(await screen.findByRole('button', { name: 'Write it again' })).toBeInTheDocument();
+    // A written summary stays as it is: no button to write it again.
+    expect(screen.queryByRole('button', { name: /summary/i })).not.toBeInTheDocument();
   });
 
   it('has the AI switches, the explanation and the MCP tokens in Settings', async () => {
@@ -232,16 +233,16 @@ describe('phase 7: the AI assistant', () => {
       },
     });
     renderAt('/settings');
-    expect(await screen.findByRole('heading', { name: 'AI assistant' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Zankup Coach' })).toBeInTheDocument();
     expect(await screen.findByText('coordinates and routes')).toBeInTheDocument();
     expect(screen.getByText(/\$0\.42 of \$5\.00 spent this month/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Use AI' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Use Zankup Coach' }));
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'PATCH' && c.path === '/api/settings')?.body).toEqual({
         ai: { enabled: false, summaries: true, weekly: true },
       }),
     );
-    expect(screen.getByRole('checkbox', { name: 'Weekly report (Mondays)' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: "Coach's weekly report (Mondays)" })).toBeInTheDocument();
     await userEvent.type(screen.getByRole('textbox', { name: 'Token name' }), 'Claude Desktop');
     await userEvent.click(screen.getByRole('button', { name: 'Create token' }));
     expect(await screen.findByDisplayValue('zk_abcdefghij')).toBeInTheDocument();

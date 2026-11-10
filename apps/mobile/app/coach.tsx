@@ -37,11 +37,10 @@ const TOOL_LABELS: Record<string, Parameters<typeof t>[0]> = {
   daily_health: 'coach.tool.daily_health',
   estimates: 'coach.tool.estimates',
 };
+// Two examples, short and different: performance and recovery.
 const SUGGESTIONS = [
   'coach.suggestion.1',
-  'coach.suggestion.2',
   'coach.suggestion.3',
-  'coach.suggestion.4',
 ] as const;
 
 const day = (iso: string) =>

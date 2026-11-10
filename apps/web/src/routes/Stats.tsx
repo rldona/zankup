@@ -15,8 +15,8 @@ import {
   yearsQuery,
   formatDuration,
   type FitnessDay,
-  type MessageKey,
   stravaComparisonQuery,
+  formLabel,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -38,13 +38,6 @@ import { effortName } from '../stats/format';
 import { EstimatesPanel, EventsList, GoalsPanel } from '../stats/panels';
 import { useResolvedTheme } from '../theme';
 import { localToday } from '../week/today';
-
-function formLabel(tsb: number): MessageKey {
-  if (tsb > 5) return 'stats.form.fresh';
-  if (tsb > -10) return 'stats.form.neutral';
-  if (tsb > -30) return 'stats.form.optimal';
-  return 'stats.form.overreaching';
-}
 
 /**
  * Stats (OS-311, OS-321, OS-322, OS-320): "Now" (form today, this week, goals, estimates, what the

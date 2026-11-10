@@ -49,13 +49,6 @@ import { Card, CardTitle, Choice, Heading, Muted, ProgressBar, Stat, styles as u
 type Format = ReturnType<typeof useFormat>;
 export type Range = { from: string; to: string };
 
-export function formLabel(tsb: number): MessageKey {
-  if (tsb > 5) return 'stats.form.fresh';
-  if (tsb > -10) return 'stats.form.neutral';
-  if (tsb > -30) return 'stats.form.optimal';
-  return 'stats.form.overreaching';
-}
-
 const open = (id: number) => router.push(`/activity/${id}`);
 
 /** A pressable line of text that opens an activity. */

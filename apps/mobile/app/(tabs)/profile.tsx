@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   if (!me.data) return <Loading />;
   return (
     <Screen>
-      <Header me={me.data} summary={summary.data} onEdit={() => setEditing(true)} />
+      <Header me={me.data} onEdit={() => setEditing(true)} />
       {editing && <EditProfile me={me.data} onDone={() => setEditing(false)} />}
       <Card style={{ paddingVertical: 0, gap: 0 }}>
         <MenuRow

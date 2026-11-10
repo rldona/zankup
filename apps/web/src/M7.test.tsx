@@ -206,7 +206,7 @@ describe('phase 7: the AI assistant', () => {
       }),
     );
     // A written summary stays as it is: no button to write it again.
-    expect(screen.queryByRole('button', { name: /summary/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ask for a summary' })).not.toBeInTheDocument();
   });
 
   it('has the AI switches, the explanation and the MCP tokens in Settings', async () => {

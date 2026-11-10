@@ -2270,19 +2270,7 @@ a.button {
   border-radius: 8px;
 }
 
-.replay {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 10px;
-}
 
-.replay input[type='range'] {
-  flex: 1;
-  min-width: 120px;
-  accent-color: var(--accent);
-}
 
 .gearlist {
   list-style: none;
@@ -3333,4 +3321,177 @@ textarea {
   .chartgrid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The activity's map with its controls on it (OS-908), as the app's. */
+.mapblock {
+  position: relative;
+  margin: 0 0 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.mapblock .map {
+  margin: 0;
+  border-radius: 0;
+  border: 0;
+}
+
+.mapbtn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.18);
+}
+
+.mapbtn.flat {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.mapbtn svg.i {
+  width: 22px;
+  height: 22px;
+}
+
+.mapopts {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.mappanel {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  z-index: 3;
+  width: min(340px, calc(100% - 24px));
+  box-sizing: border-box;
+  display: grid;
+  gap: 14px;
+  padding: 14px 16px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.25);
+}
+
+.mappanel .ph {
+  margin: 0;
+}
+
+.mappanel .chips {
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+
+.mappanel .legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mappanel .legend i {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.mapbar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.mapbar > * {
+  pointer-events: auto;
+}
+
+.mapbar input[type='range'] {
+  flex: 1;
+  max-width: 320px;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.mapbar .num {
+  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+/* The figures under the title: label over value, centred, in columns. */
+.figures {
+  display: grid;
+  gap: 12px;
+  margin: 6px 0 16px;
+}
+
+.figs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 8px;
+  margin: 0;
+}
+
+.figs > div {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.figs dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.figs dd {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.figmore {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.figmore svg.i {
+  width: 20px;
+  height: 20px;
+}
+
+.summary .fold {
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .figs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.mapblock .map.fallback {
+  padding-bottom: 64px;
 }

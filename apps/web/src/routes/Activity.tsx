@@ -1,5 +1,6 @@
 import {
   activityCharts,
+  activityFigures,
   ApiError,
   activityQuery,
   curvesQuery,
@@ -34,7 +35,8 @@ import { Link, useParams } from 'react-router';
 import { api } from '../api';
 import { ZoneBar } from '../charts/static';
 import { ChartCard } from '../detail/ChartCard';
-import { Replay } from '../detail/Replay';
+import { MapControls } from '../detail/MapControls';
+import { useReplay } from '../detail/replay';
 import { ActivityActions, Meta, Photos } from '../detail/Tools';
 import { RouteMap } from '../detail/RouteMap';
 import { Strength } from '../detail/Strength';
@@ -46,6 +48,7 @@ import { SportIcon } from '../SportIcon';
 import { useResolvedTheme } from '../theme';
 import { ActivitySkeleton, ChartSkeleton, Pulse } from '../Skeleton';
 import { CardTitle } from '../ui';
+import { MaterialIcon } from '../MaterialIcon';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -93,9 +96,25 @@ function Detail({ activity }: { activity: ActivityDetail }) {
   const pace = usesPace(sport);
   const streams = useQuery({ ...streamsQuery(api, activity.id), enabled: activity.streams != null });
   const series = streams.data as Series | undefined;
+  // The cursor and the section, shared by the map and every chart.
+  const [hover, setHover] = useState<number | null>(null);
+  const [section, setSection] = useState<[number, number] | null>(null);
+  const hasMap = useMemo(() => (series ? trackPoints(series).length > 1 : false), [series]);
 
   return (
     <article className="page detail">
+      {/* As on the app: the map on top, then the title, the figures and the Coach's summary. */}
+      {series && hasMap && (
+        <ActivityMap
+          series={series}
+          sport={sport}
+          pace={pace}
+          format={format}
+          hover={hover}
+          section={section}
+          onHover={setHover}
+        />
+      )}
       <header className="dhead">
         <SportIcon sport={sport} />
         <div>
@@ -109,7 +128,7 @@ function Detail({ activity }: { activity: ActivityDetail }) {
         <ActivityActions activity={activity} />
       </header>
 
-      <Kpis activity={activity} format={format} pace={pace} />
+      <Figures {...activityFigures(activity, { pace, format, t, locale })} />
       <Summary activityId={activity.id} name={activity.name} />
 
       {activity.streams && !series && (
@@ -118,13 +137,16 @@ function Detail({ activity }: { activity: ActivityDetail }) {
         </Pulse>
       )}
       {series && (
-        <RoutePanel
+        <ActivityCharts
           series={series}
           sport={sport}
           pace={pace}
           format={format}
           units={prefs.units}
           activity={activity}
+          section={section}
+          onHover={setHover}
+          onSection={setSection}
         />
       )}
 
@@ -181,76 +203,56 @@ function sourceLabel(source: string): string {
     : source;
 }
 
-function Kpis({ activity: a, format, pace }: { activity: ActivityDetail; format: Format; pace: boolean }) {
-  const moving = a.moving_s ?? a.duration_s;
-  const items: [MessageKey, string][] = [];
-  if (a.distance_m) items.push(['feed.stat.distance', format.distance(a.distance_m)]);
-  items.push(['feed.stat.time', formatDuration(moving)]);
-  if (a.moving_s && a.duration_s - a.moving_s > 60)
-    items.push(['activity.elapsed', formatDuration(a.duration_s)]);
-  if (a.distance_m && moving > 0)
-    items.push([pace ? 'feed.stat.pace' : 'feed.stat.speed', format.speedFor(a.distance_m / moving, pace)]);
-  if (a.ascent_m) items.push(['feed.stat.ascent', format.elevation(a.ascent_m)]);
-  if (a.avg_hr) items.push(['feed.stat.hr', `${a.avg_hr} bpm`]);
-  if (a.max_hr) items.push(['activity.maxHr', `${a.max_hr} bpm`]);
-  if (a.avg_power) items.push(['activity.power', `${a.avg_power} W`]);
-  if (a.normalized_power) items.push(['activity.np', `${a.normalized_power} W`]);
-  const metrics = a.metrics ?? null;
-  if (metrics?.trimp != null)
-    items.push(['activity.effort', Math.round(metrics.trimp).toLocaleString(locale)]);
-  if (pace && metrics?.gap_speed) items.push(['activity.gap', format.pace(metrics.gap_speed)]);
-  const kcal = a.calories ?? metrics?.calories;
-  if (kcal)
-    items.push([
-      'activity.calories',
-      `${Math.round(kcal).toLocaleString(locale)} kcal${a.calories == null ? ` (${t('activity.estimated')})` : ''}`,
-    ]);
-  if (metrics?.decoupling != null)
-    items.push([
-      'activity.decoupling',
-      `${metrics.decoupling.toLocaleString(locale, { maximumFractionDigits: 1 })} %`,
-    ]);
-  if (a.training_effect)
-    items.push(['activity.te', a.training_effect.toLocaleString(locale, { maximumFractionDigits: 1 })]);
-  return (
-    <dl className="kpis num">
+/** The figures under the title (OS-908), as the app's: the six that matter in columns, the rest behind "More". */
+function Figures({ main, more }: { main: [string, string][]; more: [string, string][] }) {
+  const [open, setOpen] = useState(false);
+  const list = (items: [string, string][]) => (
+    <dl className="figs num">
       {items.map(([label, value]) => (
-        <div key={label} className="kpi">
+        <div key={label}>
+          <dt>{label}</dt>
           <dd>{value}</dd>
-          <dt>{t(label)}</dt>
         </div>
       ))}
     </dl>
   );
+  return (
+    <section className="figures" aria-label={t('activity.figures')}>
+      {list(main)}
+      {more.length > 0 && open && list(more)}
+      {more.length > 0 && (
+        <button type="button" className="link figmore" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {t(open ? 'activity.fig.less' : 'activity.fig.more')}
+          <MaterialIcon name={open ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} />
+        </button>
+      )}
+    </section>
+  );
 }
 
-function RoutePanel({
+/** The map with its controls on it (OS-908): replay, what the route is coloured by and its legend. */
+function ActivityMap({
   series,
   sport,
   pace,
   format,
-  units,
-  activity,
+  hover,
+  section,
+  onHover,
 }: {
   series: Series;
   sport: Sport;
   pace: boolean;
   format: Format;
-  units: 'metric' | 'imperial';
-  activity: ActivityDetail;
+  hover: number | null;
+  section: [number, number] | null;
+  onHover: (index: number | null) => void;
 }) {
   const theme = useResolvedTheme();
   const metrics = useMemo(() => availableMetrics(series), [series]);
   const [chosen, setMetric] = useState<Metric | null>(null);
   const metric = chosen && metrics.includes(chosen) ? chosen : (metrics[0] ?? null);
-  const [hover, setHover] = useState<number | null>(null);
-  const [section, setSection] = useState<[number, number] | null>(null);
-  const [selecting, setSelecting] = useState(false);
-  const hasMap = useMemo(() => trackPoints(series).length > 1, [series]);
-  const charts = useMemo(
-    () => activityCharts(series, { sport, pace, units, format, activity, t, locale }),
-    [series, sport, pace, units, format, activity],
-  );
+  const replay = useReplay(series, hover, onHover);
 
   const formatMetric = useCallback(
     (m: Metric, v: number) => {
@@ -272,93 +274,111 @@ function RoutePanel({
     const values = metric ? metricValues(series, metric) : null;
     const lo = values ? quantile(values, 0.02) : null;
     const hi = values ? quantile(values, 0.98) : null;
-    return metric && lo != null && hi != null && hi > lo
-      ? { min: formatMetric(metric, lo), max: formatMetric(metric, hi) }
-      : null;
-  }, [series, metric, formatMetric]);
+    if (!metric || lo == null || hi == null || hi <= lo) return null;
+    // A pace reads best first: the fast end of the ramp is the low pace.
+    const inverted = pace && metric === 'speed';
+    return {
+      low: formatMetric(metric, inverted ? hi : lo),
+      high: formatMetric(metric, inverted ? lo : hi),
+      colours: RAMP,
+    };
+  }, [series, metric, formatMetric, pace]);
 
   const label = (m: Metric) => t(m === 'speed' ? (pace ? 'metric.pace' : 'metric.speed') : `metric.${m}`);
 
   return (
+    <section className="mapblock" aria-label={t('activity.route')}>
+      <RouteMap
+        series={series}
+        metric={metric}
+        theme={theme}
+        hover={hover}
+        section={section}
+        onHover={onHover}
+        colour={sportColour(theme, sport)}
+      />
+      <MapControls
+        replay={replay}
+        metric={metric}
+        metrics={metrics.map((m) => ({ value: m, label: label(m) }))}
+        onMetric={setMetric}
+        legend={legend}
+      />
+    </section>
+  );
+}
+
+/** The activity's charts, each on its own card (OS-907), under one heading with the section switch. */
+function ActivityCharts({
+  series,
+  sport,
+  pace,
+  format,
+  units,
+  activity,
+  section,
+  onHover,
+  onSection,
+}: {
+  series: Series;
+  sport: Sport;
+  pace: boolean;
+  format: Format;
+  units: 'metric' | 'imperial';
+  activity: ActivityDetail;
+  section: [number, number] | null;
+  onHover: (index: number | null) => void;
+  onSection: (range: [number, number] | null) => void;
+}) {
+  const theme = useResolvedTheme();
+  const [selecting, setSelecting] = useState(false);
+  const charts = useMemo(
+    () => activityCharts(series, { sport, pace, units, format, activity, t, locale }),
+    [series, sport, pace, units, format, activity],
+  );
+  if (!charts.length) return null;
+  return (
     <>
-      {hasMap && (
-        <section className="panel route">
-          <div className="ph">
-            <h2>{t('activity.route')}</h2>
-            {metrics.length > 1 && (
-              <div className="seg" role="group" aria-label={t('activity.colourBy')}>
-                {metrics.map((m) => (
-                  <button key={m} type="button" aria-pressed={m === metric} onClick={() => setMetric(m)}>
-                    {label(m)}
-                  </button>
-                ))}
-              </div>
-            )}
-            {legend && (
-              <div className="legend num" aria-hidden="true">
-                <span>{pace && metric === 'speed' ? legend.max : legend.min}</span>
-                <i style={{ background: `linear-gradient(90deg, ${RAMP.join(', ')})` }} />
-                <span>{pace && metric === 'speed' ? legend.min : legend.max}</span>
-              </div>
-            )}
-          </div>
-          <Replay series={series} index={hover} onIndex={setHover} />
-          <RouteMap
+      <div className="titlebar profilehead">
+        <h2>{t('activity.profile')}</h2>
+        <button
+          type="button"
+          className="chip"
+          aria-pressed={selecting}
+          onClick={() => {
+            // Turning "Section" off drops the band, its figures and the map's highlight.
+            if (selecting) onSection(null);
+            setSelecting(!selecting);
+          }}
+        >
+          {t('mobile.selectSection')}
+        </button>
+      </div>
+      {selecting && !section && <p className="note">{t('activity.sectionHint')}</p>}
+      <div className="chartgrid">
+        {charts.map((chart) => (
+          <ChartCard
+            key={chart.key}
+            chart={chart}
             series={series}
-            metric={metric}
+            units={units}
             theme={theme}
-            hover={hover}
             section={section}
-            onHover={setHover}
-            colour={sportColour(theme, sport)}
+            selecting={selecting}
+            onHover={onHover}
+            onSection={onSection}
           />
-        </section>
-      )}
-      {charts.length > 0 && (
-        <>
-          {/* Each chart on its own card, under one heading with the section switch (as on the app). */}
-          <div className="titlebar profilehead">
-            <h2>{t('activity.profile')}</h2>
-            <button
-              type="button"
-              className="chip"
-              aria-pressed={selecting}
-              onClick={() => {
-                // Turning "Section" off drops the band, its figures and the map's highlight.
-                if (selecting) setSection(null);
-                setSelecting(!selecting);
-              }}
-            >
-              {t('mobile.selectSection')}
-            </button>
-          </div>
-          {selecting && !section && <p className="note">{t('activity.sectionHint')}</p>}
-          <div className="chartgrid">
-            {charts.map((chart) => (
-              <ChartCard
-                key={chart.key}
-                chart={chart}
-                series={series}
-                units={units}
-                theme={theme}
-                section={section}
-                selecting={selecting}
-                onHover={setHover}
-                onSection={setSection}
-              />
-            ))}
-          </div>
-          {section && (
-            <SectionFigures
-              series={series}
-              section={section}
-              format={format}
-              pace={pace}
-              onClear={() => setSection(null)}
-              activityId={activity.id}
-            />
-          )}
-        </>
+        ))}
+      </div>
+      {section && (
+        <SectionFigures
+          series={series}
+          section={section}
+          format={format}
+          pace={pace}
+          onClear={() => onSection(null)}
+          activityId={activity.id}
+        />
       )}
     </>
   );

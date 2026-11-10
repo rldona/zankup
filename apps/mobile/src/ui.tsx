@@ -166,12 +166,24 @@ export function Heading({ children, first }: { children: ReactNode; first?: bool
 
 /**
  * The title at the top of a card (Zones, Splits, Power curve…): no gap above, beyond the card's own
- * padding, and the same room below as the activity's chart cards.
+ * padding, and the same room below as the activity's chart cards; `right` sits on its line.
  */
-export function CardTitle({ children }: { children: ReactNode }) {
+export function CardTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
-    <View style={{ marginBottom: 12 }}>
-      <Heading first>{children}</Heading>
+    <View
+      style={{
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+      }}
+    >
+      <View style={{ flexShrink: 1 }}>
+        <Heading first>{children}</Heading>
+      </View>
+      {/* What changes the card (chips such as Hours | Distance), on the title's line. */}
+      {right}
     </View>
   );
 }

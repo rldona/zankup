@@ -375,16 +375,21 @@ export function Volume({ range, unit }: { range: Range; unit: 'day' | 'week' | '
   );
   return (
     <Card>
-      <CardTitle>{t('stats.volume')}</CardTitle>
-      <Choice
-        label={t('stats.volume')}
-        value={metric}
-        onChange={setMetric}
-        options={[
-          { value: 'time', label: t('stats.hours') },
-          { value: 'distance', label: t('stats.distanceUnit') },
-        ]}
-      />
+      <CardTitle
+        right={
+          <Choice
+            label={t('stats.volume')}
+            value={metric}
+            onChange={setMetric}
+            options={[
+              { value: 'time', label: t('stats.hours') },
+              { value: 'distance', label: t('stats.distanceUnit') },
+            ]}
+          />
+        }
+      >
+        {t('stats.volume')}
+      </CardTitle>
       {buckets.length > 0 && (
         <>
           <Text style={[ui.statValue, { color: c.fg }]}>
@@ -449,16 +454,21 @@ export function Curves({ range }: { range: Range }) {
   const layers: Layer[] = lines.map((l) => ({ kind: 'line', ...l, domain }));
   return (
     <Card>
-      <CardTitle>{t('stats.curves')}</CardTitle>
-      <Choice
-        label={t('stats.curves')}
-        value={kind}
-        onChange={setKind}
-        options={[
-          { value: 'speed', label: t('stats.pace') },
-          { value: 'power', label: t('stats.power') },
-        ]}
-      />
+      <CardTitle
+        right={
+          <Choice
+            label={t('stats.curves')}
+            value={kind}
+            onChange={setKind}
+            options={[
+              { value: 'speed', label: t('stats.pace') },
+              { value: 'power', label: t('stats.power') },
+            ]}
+          />
+        }
+      >
+        {t('stats.curves')}
+      </CardTitle>
       {durations.length > 1 ? (
         <>
           <Chart

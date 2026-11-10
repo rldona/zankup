@@ -33,6 +33,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../auth';
 import { Chart, type Layer } from '../charts';
+import { GoalChart } from './GoalChart';
 import {
   effortName,
   ESTIMATE_ORDER,
@@ -153,6 +154,7 @@ export function GoalCard({
         </Text>
       </View>
       <ProgressBar value={share} max={1} label={t('goals.target')} />
+      <GoalChart goal={goal} />
       <Text style={{ color: c.fg, fontVariant: ['tabular-nums'] }}>
         <Text style={{ fontWeight: '700' }}>{goalValue(goal, goal.current, format)}</Text> /{' '}
         {goalValue(goal, goal.target, format)}

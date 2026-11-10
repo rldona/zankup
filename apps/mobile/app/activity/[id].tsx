@@ -359,7 +359,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
 
 type Format = ReturnType<typeof useFormat>;
 
-/** The charts an activity has data for, each in the unit it is read in: speed (or pace), cadence, power, heart rate, altitude. */
+/** The charts an activity has data for, each in the unit it is read in: power, speed (or pace), cadence, altitude and heart rate (left out of a ride, which has its zones). */
 function chartSeries(
   series: Series,
   sport: ReturnType<typeof asSport>,
@@ -461,12 +461,14 @@ function chartSeries(
     });
   }
   const order = [
+    t('metric.power'),
     t('metric.speed'),
     t('metric.pace'),
     t('metric.cad'),
-    t('metric.power'),
-    t('metric.hr'),
     t('metric.alt'),
+    t('metric.hr'),
   ];
-  return out.sort((x, y) => order.indexOf(x.label) - order.indexOf(y.label));
+  return out
+    .filter((chart) => sport !== 'ride' || chart.label !== t('metric.hr'))
+    .sort((x, y) => order.indexOf(x.label) - order.indexOf(y.label));
 }

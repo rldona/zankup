@@ -163,8 +163,8 @@ def build_workers() -> list[Worker]:
 
     settings = get_settings()
     sessions = sessionmaker(get_engine(), expire_on_commit=False)
-    key = settings.garmin_personal_api_key.get_secret_value() if settings.garmin_personal_api_key else None
-    handlers = default_handlers(get_raw_store(settings), sessions, key, email_sender(settings), settings)
+    # No Garmin key here: the handlers read it for each job, so one saved from the apps works at once.
+    handlers = default_handlers(get_raw_store(settings), sessions, None, email_sender(settings), settings)
     base = f"{socket.gethostname()}:{os.getpid()}"
     return [
         Worker(sessions, kinds, name=f"{base}:{label}")

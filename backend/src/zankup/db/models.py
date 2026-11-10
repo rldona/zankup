@@ -818,3 +818,20 @@ class ApiToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+INSTANCE_KEYS = ("garmin", "anthropic")
+
+
+class InstanceKey(Timestamps, Base):
+    """A service key set from the apps instead of the environment: Garmin's Personal API key or
+    Anthropic's. Encrypted with zankup.health.crypto and never sent back; only its last characters are
+    shown. A key here wins over the environment variable (see zankup.instance_keys)."""
+
+    __tablename__ = "instance_keys"
+    __table_args__ = (CheckConstraint(_in("name", INSTANCE_KEYS), name="name"),)
+
+    name: Mapped[str] = mapped_column(String(20), primary_key=True)
+    secret: Mapped[bytes] = mapped_column(LargeBinary)
+    last4: Mapped[str] = mapped_column(String(4), comment="The key's last characters, to recognise it")
+    expires_on: Mapped[date | None] = mapped_column(Date, comment="When the key stops working, if known")

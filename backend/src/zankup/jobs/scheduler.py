@@ -18,6 +18,7 @@ from datetime import UTC, date, datetime, timedelta
 from sqlalchemy import delete
 from sqlalchemy.orm import Session, sessionmaker
 
+from zankup.core.config import Settings
 from zankup.db.models import Job
 from zankup.jobs.queue import enqueue
 from zankup.users import ensure_owner
@@ -42,7 +43,11 @@ class Scheduler:
         google_health: bool = False,
         weekly_hour: int | None = None,
         tick_s: float = TICK_S,
+        settings: Settings | None = None,
     ) -> None:
+        # With settings, the Garmin sync, its key's expiry and the weekly report follow the keys in
+        # force at each tick (saved from the apps or the environment), not those at start-up.
+        self.settings = settings
         self.weekly_hour = weekly_hour
         self.garmin_health, self.google_health = garmin_health, google_health
         self.sessions, self.interval, self.owner_email, self.tick_s = sessions, interval, owner_email, tick_s
@@ -110,12 +115,25 @@ class Scheduler:
 
         return queue_weekly(session, user_id, when, self.weekly_hour)
 
+    def follow_keys(self, session: Session) -> None:
+        from zankup.instance_keys import effective
+
+        assert self.settings is not None
+        current = effective(self.settings, session)
+        syncs = current.garmin_personal_api_key is not None and current.sync_interval_minutes > 0
+        self.interval = timedelta(minutes=current.sync_interval_minutes) if syncs else None
+        self.garmin_health = syncs
+        self.garmin_key_expires_on = current.garmin_key_expires_on if syncs else None
+        self.weekly_hour = current.weekly_report_hour_utc if current.integrations()["ai"] else None
+
     def tick(self, when: datetime | None = None) -> int | None:
         """Queue this slot's sync and today's backup if they are not queued yet, and prune old finished
         jobs. Returns the id of the sync job queued, if any."""
         when = when or datetime.now(UTC)
         job_id = backup_id = None
         with self.sessions.begin() as session:
+            if self.settings is not None:
+                self.follow_keys(session)
             user_id = ensure_owner(session, self.owner_email).id
             if self.interval is not None:
                 job_id = enqueue(
@@ -164,8 +182,9 @@ class Scheduler:
         self.stop_event.set()
 
 
-def build_scheduler() -> Scheduler | None:
-    """The scheduler, or None when there is nothing to schedule (no Garmin sync, backups, health or AI)."""
+def build_scheduler() -> Scheduler:
+    """The scheduler. It always runs: a Garmin or Anthropic key can be saved from the apps at any time,
+    and it picks the keys up at each tick."""
     from zankup.core.config import get_settings
     from zankup.db.session import get_engine
 
@@ -174,8 +193,6 @@ def build_scheduler() -> Scheduler | None:
     backups = settings.integrations()["backups"]
     google_health = settings.integrations()["google_health"]
     ai = settings.integrations()["ai"]
-    if not syncs and not backups and not google_health and not ai:
-        return None
     return Scheduler(
         sessionmaker(get_engine(), expire_on_commit=False),
         interval=timedelta(minutes=settings.sync_interval_minutes) if syncs else None,
@@ -185,4 +202,5 @@ def build_scheduler() -> Scheduler | None:
         garmin_health=syncs,
         google_health=google_health,
         weekly_hour=settings.weekly_report_hour_utc if ai else None,
+        settings=settings,
     )

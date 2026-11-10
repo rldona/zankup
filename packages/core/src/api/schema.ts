@@ -1875,6 +1875,50 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/keys': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Keys
+     * @description Garmin's and Anthropic's keys: set or not, where from, and their last characters.
+     */
+    get: operations['listKeys'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/keys/{name}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Save Key
+     * @description Try the key against its service and save it encrypted. A refused key answers 422.
+     */
+    put: operations['saveKey'];
+    post?: never;
+    /**
+     * Delete Key
+     * @description Remove the key saved from the apps; the environment's, if any, is used again.
+     */
+    delete: operations['deleteKey'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -3017,6 +3061,38 @@ export interface components {
       file: string;
       /** Error */
       error: string;
+    };
+    /** KeyIn */
+    KeyIn: {
+      /** Value */
+      value: string;
+      /**
+       * Expires On
+       * @description Garmin only: when the key stops working
+       */
+      expires_on?: string | null;
+    };
+    /** KeyStatus */
+    KeyStatus: {
+      /**
+       * Name
+       * @enum {string}
+       */
+      name: 'garmin' | 'anthropic';
+      /** Configured */
+      configured: boolean;
+      /**
+       * Source
+       * @description Saved from the apps, or the environment's
+       */
+      source: ('app' | 'env') | null;
+      /**
+       * Last4
+       * @description The key's last characters, to recognise it
+       */
+      last4: string | null;
+      /** Expires On */
+      expires_on?: string | null;
     };
     /** LapOut */
     LapOut: {
@@ -7893,6 +7969,92 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  listKeys: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['KeyStatus'][];
+        };
+      };
+    };
+  };
+  saveKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        name: 'garmin' | 'anthropic';
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['KeyIn'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['KeyStatus'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deleteKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        name: 'garmin' | 'anthropic';
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['KeyStatus'];
+        };
       };
       /** @description Validation Error */
       422: {

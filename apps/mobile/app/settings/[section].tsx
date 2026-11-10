@@ -15,6 +15,7 @@ import { locale, saveLanguage, t } from '../../src/i18n';
 import { SETTINGS_SECTIONS, type SettingsSection } from '../../src/links';
 import { Account } from '../../src/profile/Sections';
 import { HealthSources } from '../../src/settings/HealthSources';
+import { ServiceKeyEditor } from '../../src/settings/ServiceKey';
 import { PrivacyZones } from '../../src/settings/Privacy';
 import { useSaveSettings } from '../../src/settings/save';
 import {
@@ -52,6 +53,11 @@ export default function SettingsSectionScreen() {
       {section === 'notifications' && <Notifications />}
       {section === 'ai' && (
         <>
+          <Card>
+            <Heading first>{t('keys.anthropic')}</Heading>
+            <Muted>{t('keys.anthropicHelp')}</Muted>
+            <ServiceKeyEditor name="anthropic" />
+          </Card>
           <AiCard />
           <Mcp />
         </>

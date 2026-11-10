@@ -184,22 +184,35 @@ export function GoalChart({
             <Canvas style={{ width, height }}>
               {painted && (
                 <>
-                  {/* The floor as a line; above it, a faint dot on every day at every mark of the axis. */}
+                  {/* The floor as a line; above it, each day a faint vertical line with a hollow ring at
+                      every mark of the axis, the size of a day's point. */}
                   <Line p1={vec(0, y(0))} p2={vec(plot, y(0))} color={c.line} strokeWidth={1} />
+                  {points.map((_, i) => (
+                    <Line
+                      key={`day-${i}`}
+                      p1={vec(x(i), y(hi))}
+                      p2={vec(x(i), y(0))}
+                      color={c.muted}
+                      opacity={0.25}
+                      strokeWidth={1}
+                    />
+                  ))}
                   {scale.ticks
                     .filter((v) => v > 0)
                     .flatMap((v) =>
                       points.map((_, i) => (
-                        <Circle
-                          key={`${v}-${i}`}
-                          cx={x(i)}
-                          cy={y(v)}
-                          r={radius}
-                          color={c.muted}
-                          opacity={0.4}
-                          style="stroke"
-                          strokeWidth={1.5}
-                        />
+                        <Group key={`${v}-${i}`}>
+                          <Circle cx={x(i)} cy={y(v)} r={radius} color={c.surface} />
+                          <Circle
+                            cx={x(i)}
+                            cy={y(v)}
+                            r={radius}
+                            color={c.muted}
+                            opacity={0.4}
+                            style="stroke"
+                            strokeWidth={1.5}
+                          />
+                        </Group>
                       )),
                     )}
                   <Line

@@ -359,7 +359,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
 
 type Format = ReturnType<typeof useFormat>;
 
-/** The charts an activity has data for, in the order Garmin shows them, each in the unit it is read in. */
+/** The charts an activity has data for, each in the unit it is read in: speed (or pace), cadence, power, heart rate, altitude. */
 function chartSeries(
   series: Series,
   sport: ReturnType<typeof asSport>,
@@ -460,5 +460,13 @@ function chartSeries(
       average: average(series.cad, text),
     });
   }
-  return out;
+  const order = [
+    t('metric.speed'),
+    t('metric.pace'),
+    t('metric.cad'),
+    t('metric.power'),
+    t('metric.hr'),
+    t('metric.alt'),
+  ];
+  return out.sort((x, y) => order.indexOf(x.label) - order.indexOf(y.label));
 }

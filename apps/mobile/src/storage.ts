@@ -12,6 +12,8 @@ export const keys = {
   /** "0" when the person turned the fingerprint lock off. */
   biometricLock: 'zankup.biometricLock',
   queryCache: 'zankup.queryCache',
+  /** The newest activity this phone has already announced (LatestActivity). */
+  latestSeen: 'zankup.latestSeen',
 } as const;
 
 export const storage = Storage;

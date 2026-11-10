@@ -880,6 +880,8 @@
   "weekly.pending": "Being written…",
   "weekly.failed": "The report could not be written.",
   "weekly.recommendation": "For the coming week",
+  "weekly.more": "Read the full report",
+  "weekly.less": "Show less",
   "weekly.none": "The first report arrives next Monday.",
   "mcp.title": "Connect an AI assistant (MCP)",
   "mcp.help": "Claude or any other assistant that speaks MCP can ask Zankup about your training, read-only and with the same limits as the coach: aggregated numbers, never your location. Create a token and give it to the assistant as a bearer token for the server URL.",

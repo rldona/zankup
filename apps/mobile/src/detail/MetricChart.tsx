@@ -18,7 +18,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { niceScale, shortNumber } from '../charts';
-import { indexAtDistance, type Track } from './track';
+import { indexAtDistance, rangeOf, type Track } from './track';
 
 const AnimatedText = Animated.createAnimatedComponent(TextInput);
 
@@ -90,16 +90,6 @@ type Props = {
   /** On a card of its own: the label as the card's heading and a larger readout. */
   heading?: boolean;
 };
-
-/** The range the axis covers: the 2nd to the 98th percentile, so a slow start or a GPS spike doesn't flatten the rest. */
-function rangeOf(values: (number | null)[], fromZero: boolean): [number, number] {
-  const sorted = values.filter((v): v is number => v != null && Number.isFinite(v)).sort((a, b) => a - b);
-  if (!sorted.length) return [0, 1];
-  const at = (q: number) => sorted[Math.min(sorted.length - 1, Math.floor(q * (sorted.length - 1)))];
-  const lo = fromZero ? 0 : at(0.02);
-  const hi = at(0.98);
-  return hi > lo ? [lo, hi] : [lo, lo + 1];
-}
 
 export const MetricChart = memo(function MetricChart({
   track,

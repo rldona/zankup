@@ -221,3 +221,19 @@ export function indexAt(times: number[], seconds: number): number {
   }
   return lo;
 }
+
+/**
+ * The range the axis covers: up to the highest value, so a real fast stretch is not cut off; only a
+ * lone spike far above the rest (over 1.5 × the 98th percentile, a GPS glitch) is left out, and the
+ * axis then stops at the 99.5th percentile. Values that hug zero start from the 2nd percentile.
+ */
+export function rangeOf(values: (number | null)[], fromZero: boolean): [number, number] {
+  const sorted = values.filter((v): v is number => v != null && Number.isFinite(v)).sort((a, b) => a - b);
+  if (!sorted.length) return [0, 1];
+  const at = (q: number) => sorted[Math.min(sorted.length - 1, Math.floor(q * (sorted.length - 1)))];
+  const lo = fromZero ? 0 : at(0.02);
+  const max = sorted[sorted.length - 1];
+  const p98 = at(0.98);
+  const hi = max <= Math.max(p98 * 1.5, p98 + 1) ? max : at(0.995);
+  return hi > lo ? [lo, hi] : [lo, lo + 1];
+}

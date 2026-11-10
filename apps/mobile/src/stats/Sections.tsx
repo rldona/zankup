@@ -151,7 +151,8 @@ export function GoalCard({
           />
         </View>
       )}
-      {children}
+      {/* The edit and delete buttons, with the same room above. */}
+      {children ? <View style={{ marginTop: 12 }}>{children}</View> : null}
     </Card>
   );
 }

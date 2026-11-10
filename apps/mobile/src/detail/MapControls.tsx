@@ -1,7 +1,7 @@
 /**
- * What drives the activity map, on the map itself: play and pause at the bottom left, the colour
- * legend along the bottom, and an options button at the top right that opens a panel with what the
- * route is coloured by and the replay speed.
+ * What drives the activity map, on the map itself: play and pause at the bottom left, and an options
+ * button at the top right that opens a panel with what the route is coloured by (and its legend) and
+ * the replay speed. Nothing else sits on the map, so the route stays in view.
  */
 import { useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
@@ -69,31 +69,6 @@ export function MapControls<M extends string>({ replay, metric, metrics, onMetri
         >
           <Icon name={replay.playing ? 'pause' : 'play_arrow'} color={c.fg} size={24} />
         </Pressable>
-        {legend && (
-          <View
-            accessible={false}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingHorizontal: 10,
-              height: 28,
-              borderRadius: 14,
-              backgroundColor: c.surface,
-              borderWidth: 1,
-              borderColor: c.line,
-              flexShrink: 1,
-            }}
-          >
-            <Text style={{ color: c.muted, fontSize: 11 }}>{legend.low}</Text>
-            <View style={{ width: 64, flexDirection: 'row', height: 5, borderRadius: 3, overflow: 'hidden' }}>
-              {legend.colours.map((colour) => (
-                <View key={colour} style={{ flex: 1, backgroundColor: colour }} />
-              ))}
-            </View>
-            <Text style={{ color: c.muted, fontSize: 11 }}>{legend.high}</Text>
-          </View>
-        )}
       </View>
       <Modal transparent animationType="fade" visible={open} onRequestClose={() => setOpen(false)}>
         <Pressable
@@ -132,6 +107,28 @@ export function MapControls<M extends string>({ replay, metric, metrics, onMetri
                     }}
                     options={metrics}
                   />
+                  {legend && (
+                    <View
+                      accessible={false}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}
+                    >
+                      <Text style={{ color: c.muted, fontSize: 12 }}>{legend.low}</Text>
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: 'row',
+                          height: 6,
+                          borderRadius: 3,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {legend.colours.map((colour) => (
+                          <View key={colour} style={{ flex: 1, backgroundColor: colour }} />
+                        ))}
+                      </View>
+                      <Text style={{ color: c.muted, fontSize: 12 }}>{legend.high}</Text>
+                    </View>
+                  )}
                 </View>
               )}
               <View style={{ gap: 8 }}>

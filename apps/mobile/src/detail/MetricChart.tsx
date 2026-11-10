@@ -29,13 +29,33 @@ export function axisMarks(total: number, unit: number) {
   return marks;
 }
 
+export type Readout = { kind: 'int' | 'dec1' | 'pace'; suffix: string; decimal: string };
+
+/** The value under the finger, written on the UI thread as the finger moves (no Intl there). */
+export function formatReadout(v: number | null | undefined, f: Readout): string {
+  'worklet';
+  if (v == null || !Number.isFinite(v)) return '–';
+  if (f.kind === 'pace') {
+    let m = Math.floor(v);
+    let s = Math.round((v - m) * 60);
+    if (s === 60) {
+      m += 1;
+      s = 0;
+    }
+    return `${m}:${s < 10 ? '0' : ''}${s}${f.suffix}`;
+  }
+  if (f.kind === 'dec1') return `${(Math.round(v * 10) / 10).toFixed(1).replace('.', f.decimal)}${f.suffix}`;
+  return `${Math.round(v)}${f.suffix}`;
+}
+
 export type ChartSeries = {
   label: string;
   color: string;
   /** One value per sample, in the unit the axis shows (null where there is none). */
   values: (number | null)[];
-  /** The value under the finger and the average, written out (one string per sample). */
-  text: string[];
+  /** How the value under the finger is written: whole, one decimal or m:ss, and what follows it. */
+  readout: Readout;
+  /** What the header shows while nothing is touched (the average, or the highest altitude). */
   average: string;
   /** Tick labels: numbers by default, m:ss for a pace. */
   tick?: (v: number) => string;
@@ -189,11 +209,12 @@ export const MetricChart = memo(function MetricChart({
     return s ? Math.abs(xAtIndex(s[1]) - xAtIndex(s[0])) : 0;
   });
 
-  const texts = series.text;
+  const values = series.values;
+  const format = series.readout;
   const average = series.average;
   const readout = useAnimatedProps(() => {
     const i = cursor.value;
-    const text = i < 0 ? average : (texts[i] ?? '–');
+    const text = i < 0 ? average : formatReadout(values[i], format);
     return { text, defaultValue: text };
   });
 

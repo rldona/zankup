@@ -299,7 +299,7 @@ describe('phase 3 screens', () => {
           { kind: 'lthr', value: 161, method: 'lthr_60min', day: '2026-11-08', sources: [], history: [] },
         ]),
     });
-    renderAt('/settings');
+    renderAt('/settings/heart');
     const model = await screen.findByRole('combobox', { name: 'Heart rate zones' });
     expect(screen.getByText('Estimated: 161 bpm')).toBeInTheDocument();
     expect(screen.getByText('Estimated: 192 W')).toBeInTheDocument();

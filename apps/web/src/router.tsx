@@ -57,6 +57,7 @@ const screens: RouteObject[] = [
   { path: 'segments/:id', element: <SegmentView /> },
   { path: 'sync', element: <Sync /> },
   { path: 'settings', element: <Settings /> },
+  { path: 'settings/:section', element: <Settings /> },
   { path: 'settings/import', element: <Import /> },
   { path: 'gear', element: <Gear /> },
   { path: 'review/:period', element: <Review /> },

@@ -183,22 +183,26 @@ describe('phase 4 screens', () => {
       'PATCH /api/settings': async (_url, request) =>
         Response.json({ ...SETTINGS, ...((await request.json()) as object) }),
     });
-    renderAt('/settings');
-    expect(await screen.findByRole('heading', { name: 'Notifications' })).toBeInTheDocument();
-    expect(screen.getByText(/cannot receive notifications/)).toBeInTheDocument(); // no push in jsdom
+    renderAt('/settings/notifications');
+    expect((await screen.findAllByRole('heading', { name: 'Notifications' })).length).toBeGreaterThan(0);
+    expect(await screen.findByText(/cannot receive notifications/)).toBeInTheDocument(); // no push in jsdom
     await userEvent.click(screen.getByRole('checkbox', { name: /Estimates going up/ }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true));
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
       notifications: { ...NOTIFICATIONS, estimate: true },
     });
-    const zones = screen.getByRole('heading', { name: 'Privacy zones' }).closest('section');
+    await userEvent.click(screen.getByRole('link', { name: /^Privacy zones/ }));
+    const zones = (await screen.findAllByRole('heading', { name: 'Privacy zones' }))
+      .map((h) => h.closest('section'))
+      .find((section) => section?.textContent?.includes('Home'));
     if (!zones) throw new Error('no privacy zones section');
     expect(within(zones).getByText('Home')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
     await waitFor(() =>
       expect(calls.filter((c) => c.method === 'PATCH').at(-1)?.body).toEqual({ privacy_zones: [] }),
     );
-    expect(screen.getByRole('link', { name: 'Gear' })).toHaveAttribute('href', '/gear');
+    await userEvent.click(screen.getByRole('link', { name: /^Your data/ }));
+    expect(await screen.findByRole('link', { name: 'Gear' })).toHaveAttribute('href', '/gear');
     expect(screen.getByRole('button', { name: 'Prepare export' })).toBeInTheDocument();
   });
 

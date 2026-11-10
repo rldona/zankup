@@ -324,7 +324,7 @@ describe('app skeleton', () => {
         return Response.json({ theme: saved });
       },
     });
-    renderAt('/settings');
+    renderAt('/settings/general');
     const ocean = await screen.findByRole('button', { name: 'Ocean' });
     expect(screen.getByRole('button', { name: /System/ })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(ocean);

@@ -104,7 +104,7 @@ export function Health() {
         <div className="panel empty">
           <p>{t('health.none')}</p>
           <p className="note">
-            <Link to="/settings#health">{t('health.connect')} ›</Link>
+            <Link to="/settings/health">{t('health.connect')} ›</Link>
           </p>
         </div>
       )}
@@ -131,7 +131,7 @@ export function Health() {
       )}
       {list.length > 0 && (
         <p className="note">
-          <Link to="/settings#health">{t('health.sourcesLink')} ›</Link>
+          <Link to="/settings/health">{t('health.sourcesLink')} ›</Link>
         </p>
       )}
     </section>

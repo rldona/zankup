@@ -2,18 +2,20 @@ import {
   devicesQuery,
   engineQuery,
   estimatesQuery,
+  meQuery,
   settingsQuery,
   sourcesQuery,
   THEME_CHOICES,
   themes,
   type Locale,
+  type MaterialIcon as MaterialIconName,
   type MessageKey,
   type ThemeChoice,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type CSSProperties, type FormEvent } from 'react';
 
-import { Link } from 'react-router';
+import { Link, Navigate, NavLink, useLocation, useParams } from 'react-router';
 
 import { api } from '../api';
 import { chosenLanguage, locale, switchLanguage, t } from '../i18n';
@@ -27,6 +29,8 @@ import { useSaveSettings } from '../settings';
 import { useSetTheme, useThemeChoice } from '../theme';
 import { AlertSettings, BackupSettings, GoogleHealthSwitch, SyncInterval } from '../settings/Instance';
 import { ServiceKeyForm } from '../settings/ServiceKey';
+import { MaterialIcon } from '../MaterialIcon';
+import { Account } from './Profile';
 
 // The "System" preview is half light, half dark: the two themes the device can pick between.
 const SPLIT = { '--light-bg': themes.light.bg, '--dark-bg': themes.dark.bg } as CSSProperties;
@@ -40,32 +44,150 @@ const NOTES: Partial<Record<ThemeChoice, MessageKey>> = {
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 
+const SECTIONS = ['general', 'heart', 'notifications', 'ai', 'privacy', 'health', 'data', 'account'] as const;
+type Section = (typeof SECTIONS)[number];
+
+const ICONS: Record<Section, MaterialIconName> = {
+  general: 'tune',
+  heart: 'ecg_heart',
+  notifications: 'notifications',
+  ai: 'wand_stars',
+  privacy: 'location_off',
+  health: 'health_and_safety',
+  data: 'database',
+  account: 'lock',
+};
+
+const TITLES: Record<Section, MessageKey> = {
+  general: 'mobile.section.general',
+  heart: 'mobile.section.heart',
+  notifications: 'notifications.title',
+  ai: 'mobile.section.ai',
+  privacy: 'privacy.title',
+  health: 'health.settings',
+  data: 'data.title',
+  account: 'mobile.section.account',
+};
+
+const SECTION_NOTES: Record<Section, MessageKey> = {
+  general: 'mobile.section.generalNote',
+  heart: 'mobile.section.heartNote',
+  notifications: 'mobile.section.notificationsNote',
+  ai: 'mobile.section.aiNote',
+  privacy: 'mobile.section.privacyNote',
+  health: 'mobile.section.healthNote',
+  data: 'mobile.section.dataNote',
+  account: 'mobile.section.accountNote',
+};
+
+/** Old links went to an anchor on the one long page (`/settings#health`): the section it was in. */
+const ANCHORS: Record<string, Section> = {
+  health: 'health',
+  ai: 'ai',
+  mcp: 'ai',
+  notifications: 'notifications',
+  privacy: 'privacy',
+  garmin: 'account',
+  sessions: 'account',
+  zones: 'heart',
+};
+
 /**
- * Settings (OS-212, OS-214): appearance, language and units, heart rate and zones, notifications
- * (OS-401), the AI assistant and the MCP tokens (OS-708, OS-709), privacy zones (OS-407), your data
- * (import, gear, export: OS-404, OS-410, OS-411), Garmin, health sources (OS-603, OS-605) and sessions.
+ * Settings (OS-212, OS-214, OS-914), in the app's sections: general, heart rate and zones,
+ * notifications, AI, privacy, health, your data and the account, each on its own page. On a large
+ * screen the list stays on the left and the open section on the right (General when none is open); on
+ * a phone the list is one page and each section another.
  */
 export function Settings() {
+  const { section: param } = useParams();
+  const { hash, search } = useLocation();
+  // Google Health's sign-in comes back to `/settings?health=connected`.
+  const anchor = ANCHORS[hash.slice(1)] ?? (new URLSearchParams(search).has('health') ? 'health' : undefined);
+  if (!param && anchor) return <Navigate to={`/settings/${anchor}${search}`} replace />;
+  const section = (SECTIONS as readonly string[]).includes(param ?? '') ? (param as Section) : null;
+  if (param && !section) return <Navigate to="/settings" replace />;
+  const shown = section ?? 'general';
   return (
-    <section className="page">
-      <h1>{t('nav.settings')}</h1>
-      <Appearance />
-      <LanguageAndUnits />
-      <HeartRate />
-      <Zones />
-      <Notifications />
-      <AlertSettings />
-      <Ai />
-      <Mcp />
-      <PrivacyZones />
-      <YourData />
-      <BackupSettings />
-      <Garmin />
-      <GoogleHealthSwitch />
-      <HealthSources />
-      <Sessions />
+    <section className={`page settings${section ? ' picked' : ''}`}>
+      <h1 className="settingstitle">{t('nav.settings')}</h1>
+      <div className="settingswrap">
+        <nav className="panel menu settingslist" aria-label={t('nav.settings')}>
+          {SECTIONS.map((s) => (
+            <NavLink key={s} to={`/settings/${s}`} className={s === shown ? 'on' : undefined}>
+              <MaterialIcon name={ICONS[s]} />
+              <span>
+                <b>{t(TITLES[s])}</b>
+                <small>{t(SECTION_NOTES[s])}</small>
+              </span>
+              <i aria-hidden="true">›</i>
+            </NavLink>
+          ))}
+        </nav>
+        <div className="settingsmain">
+          <h2 className="sectiontitle">{t(TITLES[shown])}</h2>
+          <SectionBody section={shown} />
+        </div>
+      </div>
     </section>
   );
+}
+
+function SectionBody({ section }: { section: Section }) {
+  const me = useQuery(meQuery(api));
+  switch (section) {
+    case 'general':
+      return (
+        <>
+          <Appearance />
+          <LanguageAndUnits />
+        </>
+      );
+    case 'heart':
+      return (
+        <>
+          <HeartRate />
+          <Zones />
+        </>
+      );
+    case 'notifications':
+      return (
+        <>
+          <Notifications />
+          <AlertSettings />
+        </>
+      );
+    case 'ai':
+      return (
+        <>
+          <Ai />
+          <Mcp />
+        </>
+      );
+    case 'privacy':
+      return <PrivacyZones />;
+    case 'health':
+      return (
+        <>
+          <GoogleHealthSwitch />
+          <HealthSources />
+        </>
+      );
+    case 'data':
+      return (
+        <>
+          <YourData />
+          <BackupSettings />
+        </>
+      );
+    case 'account':
+      return (
+        <>
+          {me.data && <Account me={me.data} />}
+          <Garmin />
+          <Sessions />
+        </>
+      );
+  }
 }
 
 function Appearance() {

@@ -1,21 +1,29 @@
 /**
- * Training calendar on the phone (OS-520), as in the PWA (OS-326): a month of weeks, one bubble per
- * activity sized by its effort and coloured by sport, the form of each day and the week's totals.
+ * Training calendar on the phone (OS-520), as in the PWA (OS-326): a month of weeks, one round sport
+ * icon per activity sized by its effort and coloured by sport, the form of each day and the week's
+ * totals. Plain arrows beside the month move between months.
  * Tapping a bubble opens the activity; tapping two days sums the days between them.
  */
-import { calendarQuery, formatDuration, formatHoursMinutes, type CalendarDay } from '@zankup/core';
+import {
+  calendarQuery,
+  formatDuration,
+  formatHoursMinutes,
+  SPORT_ICONS,
+  type CalendarDay,
+} from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../src/auth';
+import { Icon } from '../src/Icon';
 import { locale, t } from '../src/i18n';
 import { asSport, useFormat } from '../src/prefs';
 import { monthGrid } from '../src/stats/dates';
 import { sportColour } from '../src/stats/Sections';
 import { useTheme } from '../src/theme';
-import { Button, Muted, Screen } from '../src/ui';
+import { Muted, Screen } from '../src/ui';
 
 export default function CalendarScreen() {
   const api = useApi();
@@ -49,15 +57,25 @@ export default function CalendarScreen() {
   return (
     <Screen header>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Button accessibilityLabel={t('calendar.prev')} onPress={() => shift(-1)}>
-          ‹
-        </Button>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('calendar.prev')}
+          onPress={() => shift(-1)}
+          hitSlop={12}
+        >
+          <Icon name="chevron_left" color={c.fg} size={28} />
+        </Pressable>
         <Text style={{ flex: 1, textAlign: 'center', color: c.fg, fontSize: 17, fontWeight: '700' }}>
           {new Date(y, m - 1, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
         </Text>
-        <Button accessibilityLabel={t('calendar.next')} onPress={() => shift(1)}>
-          ›
-        </Button>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('calendar.next')}
+          onPress={() => shift(1)}
+          hitSlop={12}
+        >
+          <Icon name="chevron_right" color={c.fg} size={28} />
+        </Pressable>
       </View>
       {selected.length > 1 && (
         <Muted accessibilityRole="alert">
@@ -114,7 +132,8 @@ export default function CalendarScreen() {
                     }}
                   >
                     {d.activities.map((a) => {
-                      const size = 10 + 18 * Math.sqrt((a.load ?? 10) / heaviest);
+                      // Big enough for the sport's icon to read, bigger with the effort.
+                      const size = 18 + 10 * Math.sqrt((a.load ?? 10) / heaviest);
                       return (
                         <Pressable
                           key={a.id}
@@ -127,8 +146,12 @@ export default function CalendarScreen() {
                             height: size,
                             borderRadius: size / 2,
                             backgroundColor: sportColour(c, a.sport),
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
-                        />
+                        >
+                          <Icon name={SPORT_ICONS[asSport(a.sport)]} color="#ffffff" size={size * 0.62} />
+                        </Pressable>
                       );
                     })}
                   </View>

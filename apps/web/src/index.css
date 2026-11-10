@@ -4148,25 +4148,23 @@ h1.greeting {
   grid-column: 1 / -1;
 }
 
-.compare .pill,
-.compare .pill.up,
-.compare .pill.down {
+.compare .pill {
+  --tone: var(--muted);
   font-size: 12px;
   font-weight: 600;
   padding: 1px 8px;
   border-radius: 999px;
-  color: var(--muted);
-  background: color-mix(in srgb, var(--muted) 15%, transparent);
+  /* The tone towards the text colour, so it reads on its pale background in any theme. */
+  color: color-mix(in srgb, var(--tone) 60%, var(--fg));
+  background: color-mix(in srgb, var(--tone) 15%, transparent);
 }
 
 .compare .pill.up {
-  color: var(--form-positive);
-  background: color-mix(in srgb, var(--form-positive) 15%, transparent);
+  --tone: var(--form-positive);
 }
 
 .compare .pill.down {
-  color: var(--form-negative);
-  background: color-mix(in srgb, var(--form-negative) 15%, transparent);
+  --tone: var(--form-negative);
 }
 
 .compare .bar,
@@ -4219,7 +4217,8 @@ h1.greeting {
   font-weight: 600;
   padding: 1px 8px;
   border-radius: 999px;
-  color: var(--tone);
+  /* The tone towards the text colour, so it reads on its pale background in any theme. */
+  color: color-mix(in srgb, var(--tone) 60%, var(--fg));
   background: color-mix(in srgb, var(--tone) 15%, transparent);
 }
 

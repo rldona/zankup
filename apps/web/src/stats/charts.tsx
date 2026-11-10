@@ -259,8 +259,8 @@ export function ProgressChart({
       c,
     );
     return {
-      grid: { left: 48, right: 12, top: 30, bottom: 26 },
-      legend: { top: 0 },
+      grid: { left: 48, right: 12, top: 12, bottom: 26 },
+      legend: { show: false }, // the years and their totals are listed under the chart
       tooltip: { trigger: 'axis', valueFormatter: (v: number) => `${v} ${distanceUnit}` },
       xAxis: {
         type: 'category',

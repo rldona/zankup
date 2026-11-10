@@ -117,7 +117,7 @@ export function LastDay() {
           {day.resting_hr ? (
             <Row
               icon="favorite"
-              tint="var(--zone5)"
+              tint="var(--zone-5)"
               label={t('home.heartRate')}
               value={t('home.resting', { value: Math.round(day.resting_hr.value) })}
             />
@@ -208,7 +208,7 @@ export function LastSevenDays() {
           {
             key: 'hr',
             icon: 'favorite' as const,
-            tint: 'var(--zone5)',
+            tint: 'var(--zone-5)',
             label: t('home.heartRate'),
             value: t('home.resting', { value: Math.round(resting) }),
           },

@@ -89,6 +89,8 @@ export function Screen({
  * the keyboard as covers it, measured from where it sits, so the content above shrinks and the field
  * being typed in stays in sight, whatever header is above.
  */
+const KEYBOARD_MARGIN = 32;
+
 export function KeyboardSpace() {
   const ref = useRef<ComponentRef<typeof View>>(null);
   const height = useRef(0);
@@ -99,7 +101,9 @@ export function KeyboardSpace() {
         event.endCoordinates.screenY || Dimensions.get('window').height - event.endCoordinates.height;
       ref.current?.measureInWindow((_x, y) => {
         // y is this view's top; with room already given, its bottom is y + that room.
-        const next = Math.max(0, Math.round(y + height.current - top));
+        // Plus a margin, so what is typed in does not sit right on the keyboard.
+        const covered = y + height.current - top;
+        const next = covered > 0 ? Math.round(covered + KEYBOARD_MARGIN) : 0;
         height.current = next;
         setSpace(next);
       });

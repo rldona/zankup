@@ -924,5 +924,11 @@
   "health.history.queued": "Under way: {sources}. The data will show up in Health as it arrives.",
   "health.history.hc": "Health Connect: {nights, plural, one {# night} other {# nights}} and {days, plural, one {# day} other {# days}} sent.",
   "health.history.none": "No health source is connected.",
-  "stats.reviews": "Reviews"
+  "stats.reviews": "Reviews",
+  "stats.mode.last12": "12 months",
+  "stats.mode.year": "Year",
+  "stats.mode.month": "Month",
+  "stats.mode.all": "All",
+  "stats.previous": "Previous",
+  "stats.next": "Next"
 }

@@ -924,5 +924,11 @@
   "health.history.queued": "En marcha: {sources}. Los datos irán apareciendo en Salud.",
   "health.history.hc": "Health Connect: {nights, plural, one {# noche} other {# noches}} y {days, plural, one {# día} other {# días}} enviados.",
   "health.history.none": "No hay ninguna fuente de salud conectada.",
-  "stats.reviews": "Resúmenes"
+  "stats.reviews": "Resúmenes",
+  "stats.mode.last12": "12 meses",
+  "stats.mode.year": "Año",
+  "stats.mode.month": "Mes",
+  "stats.mode.all": "Todo",
+  "stats.previous": "Anterior",
+  "stats.next": "Siguiente"
 }

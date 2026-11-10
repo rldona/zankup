@@ -830,6 +830,8 @@
   "ai.budgetExceeded": "This month's Zankup Coach budget is spent: summaries, reports and chat pause until next month.",
   "summary.title": "Summary",
   "summary.aiTitle": "Zankup Coach",
+  "summary.show": "show the summary",
+  "summary.hide": "hide the summary",
   "summary.aiSubtitle": "Activity summary",
   "summary.pitch": "The coach reads this activity and compares it with your earlier ones to tell you in a few lines how it went: the effort, the pace and what stands out.",
   "summary.write": "Ask for a summary",

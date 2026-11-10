@@ -830,6 +830,8 @@
   "ai.budgetExceeded": "El presupuesto de Zankup Coach de este mes está gastado: resúmenes, informes y chat se pausan hasta el mes que viene.",
   "summary.title": "Resumen",
   "summary.aiTitle": "Zankup Coach",
+  "summary.show": "mostrar el resumen",
+  "summary.hide": "ocultar el resumen",
   "summary.aiSubtitle": "Resumen de la actividad",
   "summary.pitch": "El coach lee esta actividad y la compara con tus anteriores para contarte en unas líneas cómo fue: el esfuerzo, el ritmo y lo que más destaca.",
   "summary.write": "Pedir resumen",

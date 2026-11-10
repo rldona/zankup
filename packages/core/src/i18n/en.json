@@ -872,6 +872,7 @@
   "coach.budget": "This month's Zankup Coach budget is spent: it is back next month.",
   "coach.clear": "New conversation",
   "coach.disclaimer": "The coach can be wrong. It only works from your numbers and is not a doctor.",
+  "coach.about": "About the coach",
   "coach.off": "Zankup Coach is off. Turn it on in Settings.",
   "coach.unavailable": "Zankup Coach turns on as soon as you save an Anthropic key above.",
   "weekly.title": "Coach's weekly report",

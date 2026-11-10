@@ -1,8 +1,10 @@
 /** Small building blocks shared by the screens, drawn with the theme's tokens. */
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import {
   Animated,
+  Dimensions,
   Easing,
+  Keyboard,
   Pressable,
   ScrollView,
   Switch,
@@ -76,8 +78,42 @@ export function Screen({
       ) : (
         children
       )}
+      <KeyboardSpace />
     </SafeAreaView>
   );
+}
+
+/**
+ * Room for the keyboard at the bottom of a screen or a sheet. The app draws edge to edge, so Android
+ * no longer shrinks the window for the keyboard (adjustResize is ignored): this grows by as much of
+ * the keyboard as covers it, measured from where it sits, so the content above shrinks and the field
+ * being typed in stays in sight, whatever header is above.
+ */
+export function KeyboardSpace() {
+  const ref = useRef<ComponentRef<typeof View>>(null);
+  const height = useRef(0);
+  const [space, setSpace] = useState(0);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', (event) => {
+      const top =
+        event.endCoordinates.screenY || Dimensions.get('window').height - event.endCoordinates.height;
+      ref.current?.measureInWindow((_x, y) => {
+        // y is this view's top; with room already given, its bottom is y + that room.
+        const next = Math.max(0, Math.round(y + height.current - top));
+        height.current = next;
+        setSpace(next);
+      });
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      height.current = 0;
+      setSpace(0);
+    });
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  return <View ref={ref} collapsable={false} style={{ height: space }} />;
 }
 
 export function Title({ children }: { children: ReactNode }) {

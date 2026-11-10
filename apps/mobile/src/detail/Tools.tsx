@@ -17,7 +17,7 @@ import { Icon } from '../Icon';
 import { t } from '../i18n';
 import { accessToken, instanceUrl } from '../session';
 import { useTheme } from '../theme';
-import { Button, Choice, Field, Heading, Muted, styles as ui } from '../ui';
+import { Button, Choice, Field, Heading, KeyboardSpace, Muted, styles as ui } from '../ui';
 import { indexAt } from './track';
 
 function useRefreshActivity(id: number) {
@@ -93,6 +93,7 @@ export function Sheet({
             ))}
           </View>
         ) : null}
+        <KeyboardSpace />
       </SafeAreaView>
     </Modal>
   );

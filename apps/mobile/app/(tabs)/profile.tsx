@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { useApi } from '../../src/auth';
 import { Icon } from '../../src/Icon';
 import { t } from '../../src/i18n';
-import { Account, EditProfile, Header, Summary, YearNumbers } from '../../src/profile/Sections';
+import { Account, EditProfile, Header, Summary } from '../../src/profile/Sections';
 import { Estimates } from '../../src/stats/Sections';
 import { useTheme } from '../../src/theme';
 import { Card, Choice, Loading, MenuRow, Screen } from '../../src/ui';
@@ -62,7 +62,6 @@ export default function ProfileScreen() {
           last
         />
       </Card>
-      {summary.data && <YearNumbers summary={summary.data} />}
       <Choice
         scroll
         label={t('nav.you')}

@@ -4,13 +4,14 @@
  * way to the calendar, heatmap, routes, segments, reviews and health. All read from what the engine
  * precomputed.
  */
-import { engineQuery, periodOf, yearsQuery, type MessageKey } from '@zankup/core';
+import { engineQuery, periodOf, profileSummaryQuery, yearsQuery, type MessageKey } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 
 import { useApi } from '../src/auth';
 import { Icon, type IconName } from '../src/Icon';
+import { YearNumbers } from '../src/profile/Sections';
 import { locale, t } from '../src/i18n';
 import {
   CompareWithStrava,
@@ -38,6 +39,7 @@ const LINKS: [IconName, MessageKey, string][] = [
 
 export default function StatsScreen() {
   const api = useApi();
+  const yearSummary = useQuery(profileSummaryQuery(api));
   const c = useTheme();
   const [choice, setChoice] = useState('last12');
   const [today] = useState(() => new Date());
@@ -97,6 +99,7 @@ export default function StatsScreen() {
         </Muted>
       )}
 
+      {yearSummary.data && <YearNumbers summary={yearSummary.data} />}
       <Now />
 
       <Summary range={range} />

@@ -1,10 +1,10 @@
 /**
- * Stats (OS-508, OS-519), as in the PWA: the period (last 12 months, a year or a month moved with
- * arrows, or all time) right above everything for the period, the engine's progress while it recomputes, and the
+ * Stats (OS-508, OS-519), as in the PWA: the period (last 12 months, a year moved with arrows, a
+ * run of months from one to another, or all time) right above everything for the period, the engine's progress while it recomputes, and the
  * way to the calendar, heatmap, routes, segments, reviews and health. All read from what the engine
  * precomputed.
  */
-import { engineQuery, periodOf, yearsQuery, type MessageKey } from '@zankup/core';
+import { engineQuery, monthsRange, periodOf, yearsQuery, type MessageKey } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -35,6 +35,13 @@ const LINKS: [IconName, MessageKey, string][] = [
 ];
 
 const MODES = ['last12', 'year', 'month', 'all'] as const;
+
+/** A month counted from year 0, short: "sep 2026". */
+const monthLabel = (month: number) =>
+  new Date(Math.floor(month / 12), month % 12, 15)
+    .toLocaleDateString(locale, { month: 'short', year: 'numeric' })
+    .replace(' de ', ' ')
+    .replace('.', '');
 type Mode = (typeof MODES)[number];
 
 /** The year or month shown, with an arrow on each side; an arrow at the end of the history is dimmed. */
@@ -64,9 +71,7 @@ function Stepper({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
       {arrow('chevron_left', back, 'stats.previous')}
-      <Text style={{ color: c.fg, fontSize: 17, fontWeight: '700', textTransform: 'capitalize' }}>
-        {label}
-      </Text>
+      <Text style={{ color: c.fg, fontSize: 16, fontWeight: '700' }}>{label}</Text>
       {arrow('chevron_right', forward, 'stats.next')}
     </View>
   );
@@ -83,20 +88,21 @@ export default function StatsScreen() {
   const [mode, setMode] = useState<Mode>('last12');
   const now = today.getFullYear() * 12 + today.getMonth();
   const [shownYear, setShownYear] = useState(today.getFullYear());
-  const [shownMonth, setShownMonth] = useState(now);
-  const choice =
-    mode === 'year'
-      ? String(shownYear)
-      : mode === 'month'
-        ? `${Math.floor(shownMonth / 12)}-${String((shownMonth % 12) + 1).padStart(2, '0')}`
-        : mode;
-  const period = useMemo(() => periodOf(choice, today, first), [choice, today, first]);
+  // Months: from and to, both included; each stops at the other, so the run never turns around.
+  const [fromMonth, setFromMonth] = useState(now);
+  const [toMonth, setToMonth] = useState(now);
+  const choice = mode === 'year' ? String(shownYear) : mode;
+  const period = useMemo(
+    () => (mode === 'month' ? monthsRange(fromMonth, toMonth) : periodOf(choice, today, first)),
+    [mode, fromMonth, toMonth, choice, today, first],
+  );
   const range = { from: period.from, to: period.to };
   const engine = useQuery({
     ...engineQuery(api),
     refetchInterval: (q) => (q.state.data?.running ? 3000 : false),
   });
-  const year = mode === 'year' ? String(shownYear) : mode === 'month' ? choice.slice(0, 4) : null;
+  const year =
+    mode === 'year' ? String(shownYear) : mode === 'month' ? String(Math.floor(toMonth / 12)) : null;
 
   return (
     <Screen
@@ -117,14 +123,23 @@ export default function StatsScreen() {
             />
           )}
           {mode === 'month' && (
-            <Stepper
-              label={new Date(Math.floor(shownMonth / 12), shownMonth % 12, 15).toLocaleDateString(locale, {
-                month: 'long',
-                year: 'numeric',
-              })}
-              back={shownMonth > first * 12 ? () => setShownMonth(shownMonth - 1) : null}
-              forward={shownMonth < now ? () => setShownMonth(shownMonth + 1) : null}
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flex: 1 }}>
+                <Stepper
+                  label={monthLabel(fromMonth)}
+                  back={fromMonth > first * 12 ? () => setFromMonth(fromMonth - 1) : null}
+                  forward={fromMonth < toMonth ? () => setFromMonth(fromMonth + 1) : null}
+                />
+              </View>
+              <Text style={{ color: c.muted }}>–</Text>
+              <View style={{ flex: 1 }}>
+                <Stepper
+                  label={monthLabel(toMonth)}
+                  back={toMonth > fromMonth ? () => setToMonth(toMonth - 1) : null}
+                  forward={toMonth < now ? () => setToMonth(toMonth + 1) : null}
+                />
+              </View>
+            </View>
           )}
         </>
       }

@@ -142,55 +142,72 @@ export function positionAt(track: Track, index: number): [number, number] | null
   return null;
 }
 
-/** At most this many pieces of line on the map: enough detail, little work for MapLibre. */
-const MAX_PIECES = 400;
+/** A colour on the ramp for a share from 0 to 1, blended between its two nearest stops. */
+export function rampColour(share: number, ramp: readonly string[] = RAMP): string {
+  const at = Math.min(Math.max(share, 0), 1) * (ramp.length - 1);
+  const i = Math.min(ramp.length - 2, Math.floor(at));
+  const f = at - i;
+  const rgb = (hex: string) => [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16));
+  const a = rgb(ramp[i]);
+  const b = rgb(ramp[i + 1]);
+  return `#${a
+    .map((v, k) =>
+      Math.round(v + (b[k] - v) * f)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+}
+
+/** At most this many colour stops along the line: smooth enough, and quick for MapLibre to restyle. */
+const MAX_STOPS = 240;
 
 /**
- * The route as consecutive pieces, each a few samples long and carrying the mean value it is
- * coloured by (`v`, left out where the metric is missing: MapLibre on the phone cannot compare with
- * null). Pieces share their ends, so the line has no gaps, and are long enough that the map's
- * simplification never drops them.
+ * The route coloured by a metric as one `line-gradient` (over `line-progress`, the share of the
+ * line's length), so switching the metric only restyles the line: its geometry is sent once.
+ * Progress is measured on the same points `lineFeature` draws.
  */
-export function colouredSegments(
+export function gradientExpression(
   track: Track,
-  values: (number | null)[] | null | undefined,
-): GeoJSON.FeatureCollection<GeoJSON.LineString> {
+  values: (number | null)[],
+  [lo, hi]: [number, number],
+  fallback: string,
+  ramp: readonly string[] = RAMP,
+) {
   const points: number[] = [];
   for (let i = 0; i < track.n; i++) if (track.lon[i] != null && track.lat[i] != null) points.push(i);
-  const size = Math.max(1, Math.ceil((points.length - 1) / MAX_PIECES));
-  const features: GeoJSON.Feature<GeoJSON.LineString>[] = [];
-  for (let start = 0; start < points.length - 1; start += size) {
-    const piece = points.slice(start, Math.min(points.length, start + size + 1));
+  if (points.length < 2) return null;
+  const along: number[] = [0];
+  for (let k = 1; k < points.length; k++) {
+    const p = points[k - 1];
+    const q = points[k];
+    const lat = (((track.lat[p] as number) + (track.lat[q] as number)) / 2) * (Math.PI / 180);
+    const dx = ((track.lon[q] as number) - (track.lon[p] as number)) * Math.cos(lat);
+    const dy = (track.lat[q] as number) - (track.lat[p] as number);
+    along.push(along[k - 1] + Math.hypot(dx, dy));
+  }
+  const length = along[along.length - 1] || 1;
+  const size = Math.max(1, Math.ceil(points.length / MAX_STOPS));
+  const stops: (number | string)[] = [];
+  let last = -1;
+  for (let start = 0; start < points.length; start += size) {
+    const end = Math.min(points.length, start + size);
     let sum = 0;
     let count = 0;
-    for (const i of piece.slice(1)) {
-      const v = values?.[i];
+    for (let k = start; k < end; k++) {
+      const v = values[points[k]];
       if (v != null) {
         sum += v;
         count++;
       }
     }
-    features.push({
-      type: 'Feature',
-      properties: count ? { v: sum / count } : {},
-      geometry: {
-        type: 'LineString',
-        coordinates: piece.map((i) => [track.lon[i] as number, track.lat[i] as number]),
-      },
-    });
+    const progress = along[Math.floor((start + end - 1) / 2)] / length;
+    if (progress <= last) continue;
+    last = progress;
+    stops.push(progress, count ? rampColour((sum / count - lo) / (hi - lo || 1), ramp) : fallback);
   }
-  return { type: 'FeatureCollection', features };
-}
-
-/** The ramp's colours spread over `[lo, hi]`, the sport's colour where a piece has no value. */
-export function rampExpression([lo, hi]: [number, number], fallback: string, ramp: readonly string[] = RAMP) {
-  const step = (hi - lo) / (ramp.length - 1);
-  return [
-    'case',
-    ['has', 'v'],
-    ['interpolate', ['linear'], ['get', 'v'], ...ramp.flatMap((c, i) => [lo + i * step, c])],
-    fallback,
-  ] as unknown as string;
+  if (stops.length < 4) return null;
+  return ['interpolate', ['linear'], ['line-progress'], ...stops];
 }
 
 /** The sample at time `seconds` (the last one not after it). */

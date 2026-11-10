@@ -23,10 +23,13 @@ export function Modal({
   title,
   onClose,
   children,
+  className,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Another look for this dialog (the latest activity's is a sheet on a phone). */
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   // Removing the element ends the modal: no close() on unmount, which would fire onClose (and, with
@@ -36,7 +39,13 @@ export function Modal({
     if (dialog && !dialog.open) dialog.showModal?.();
   }, []);
   return (
-    <dialog ref={ref} className="modal" aria-label={title} onClose={onClose} onCancel={onClose}>
+    <dialog
+      ref={ref}
+      className={className ? `modal ${className}` : 'modal'}
+      aria-label={title}
+      onClose={onClose}
+      onCancel={onClose}
+    >
       <header className="ph">
         <h2>{title}</h2>
         <button type="button" className="link" onClick={onClose}>
@@ -325,7 +334,7 @@ async function resized(file: File): Promise<Blob> {
   );
 }
 
-function AddPhoto({ activityId }: { activityId: number }) {
+export function AddPhoto({ activityId }: { activityId: number }) {
   const input = useRef<HTMLInputElement>(null);
   const refresh = useRefreshActivity(activityId);
   const upload = useMutation({

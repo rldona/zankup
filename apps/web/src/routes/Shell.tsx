@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { Icon } from '../Icon';
+import { LatestActivity } from '../LatestActivity';
 import { MaterialIcon } from '../MaterialIcon';
 import { t } from '../i18n';
 import { Wordmark } from '../Wordmark';
@@ -119,6 +120,8 @@ export function Shell() {
           </span>
         </button>
       </header>
+
+      <LatestActivity />
 
       <main className="main">
         {!online && (

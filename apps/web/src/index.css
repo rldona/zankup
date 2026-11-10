@@ -3153,3 +3153,127 @@ textarea {
     animation: none;
   }
 }
+
+/* The latest activity on arrival (OS-906): a dialog on desktop, a sheet from below on a phone. */
+.modal.latest .ph h2 {
+  font-size: 20px;
+}
+
+.latest .lsub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.latest .lstats {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+}
+
+.latest .lstats dt {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.latest .lstats dd {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.latest input,
+.latest textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.latest .lmedia {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.latest .lmap {
+  grid-column: span 2;
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.latest .lmedia img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.latest .ladd {
+  display: grid;
+  place-items: center;
+  height: 150px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+.latest .chips {
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+
+.latest .ladv {
+  justify-self: center;
+}
+
+@media (max-width: 1023px) {
+  .modal.latest {
+    box-sizing: border-box;
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 88dvh;
+    margin: auto 0 0;
+    border-radius: 28px 28px 0 0;
+    border-bottom: 0;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    animation: rise 260ms ease-out;
+  }
+
+  .modal.latest .ph {
+    position: relative;
+    justify-content: center;
+    padding-top: 10px;
+  }
+
+  .modal.latest .ph::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    margin-left: -20px;
+    border-radius: 2px;
+    background: var(--line);
+  }
+
+  .modal.latest .ph h2 {
+    flex: none;
+  }
+
+  .modal.latest .ph button {
+    position: absolute;
+    right: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+}

@@ -17,7 +17,7 @@ import {
   type MessageKey,
 } from '@zankup/core';
 import { useState, type ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { t } from './i18n';
 import { useTheme } from './theme';
@@ -60,7 +60,8 @@ function Tile({ label, value, children }: { label: string; value: string; childr
         padding: 14,
         borderRadius: 16,
         backgroundColor: c.surface,
-        borderWidth: 1,
+        // The same hairline as every other card.
+        borderWidth: StyleSheet.hairlineWidth,
         borderColor: c.line,
       }}
     >

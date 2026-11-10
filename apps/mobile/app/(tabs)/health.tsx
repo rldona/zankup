@@ -21,9 +21,10 @@ import { useApi } from '../../src/auth';
 import { Chart } from '../../src/charts';
 import { lastRead, readAndSend } from '../../src/healthConnect';
 import { SourceIcon, SpinningIcon } from '../../src/Icon';
+import { MenuButton } from '../../src/Menu';
 import { locale, t } from '../../src/i18n';
 import { useTheme } from '../../src/theme';
-import { Button, Card, Choice, Heading, Loading, Muted, Screen, styles as ui } from '../../src/ui';
+import { Button, Card, Heading, Loading, Muted, Screen, styles as ui } from '../../src/ui';
 
 const PERIODS = ['30', '90', '365'] as const;
 type Period = (typeof PERIODS)[number];
@@ -89,29 +90,31 @@ export default function HealthScreen() {
       title={t('nav.health')}
       busy={sync.isPending}
       actions={
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('health.sync')}
-          accessibilityState={{ busy: sync.isPending }}
-          disabled={sync.isPending}
-          hitSlop={10}
-          onPress={() => sync.mutate()}
-        >
-          <SpinningIcon
-            name="sync"
-            color={sync.isPending ? c.accent : c.fg}
-            size={26}
-            spinning={sync.isPending}
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('health.sync')}
+            accessibilityState={{ busy: sync.isPending }}
+            disabled={sync.isPending}
+            hitSlop={10}
+            onPress={() => sync.mutate()}
+          >
+            <SpinningIcon
+              name="sync"
+              color={sync.isPending ? c.accent : c.fg}
+              size={26}
+              spinning={sync.isPending}
+            />
+          </Pressable>
+          <MenuButton
+            label={t('stats.period')}
+            value={period}
+            onChange={setPeriod}
+            options={PERIODS.map((p) => ({ value: p, label: t(`health.period.${p}`) }))}
           />
-        </Pressable>
+        </>
       }
     >
-      <Choice
-        label={t('stats.period')}
-        value={period}
-        onChange={setPeriod}
-        options={PERIODS.map((p) => ({ value: p, label: t(`health.period.${p}`) }))}
-      />
       {sync.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
 
       {days.isPending && <Loading />}

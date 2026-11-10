@@ -42,17 +42,7 @@ import { asSport, useFormat, useHrMax, useUnits } from '../../src/prefs';
 import { webOrigin } from '../../src/links';
 import { instanceUrl } from '../../src/session';
 import { useTheme } from '../../src/theme';
-import {
-  accent,
-  onAccent,
-  Card,
-  Empty,
-  Heading,
-  Loading,
-  Muted,
-  Stat,
-  styles as ui,
-} from '../../src/ui';
+import { accent, onAccent, Card, Empty, Heading, Loading, Muted, Stat, styles as ui } from '../../src/ui';
 
 export default function ActivityScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
@@ -142,36 +132,41 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
 
   const moving = a.moving_s ?? a.duration_s;
   const m = a.metrics ?? null;
-  const figures: [string, string][] = [];
-  if (a.distance_m) figures.push([t('feed.stat.distance'), format.distance(a.distance_m)]);
-  figures.push([t('feed.stat.time'), formatDuration(moving)]);
-  if (a.moving_s && a.duration_s - a.moving_s > 60)
-    figures.push([t('activity.elapsed'), formatDuration(a.duration_s)]);
+  // The six figures that matter, as Strava lays them out; the rest wait behind "More".
+  const main: [string, string][] = [];
+  const more: [string, string][] = [];
+  if (a.distance_m) main.push([t('activity.fig.distance'), format.distance(a.distance_m)]);
+  main.push([t('activity.fig.moving'), formatDuration(moving)]);
   if (a.distance_m && moving)
-    figures.push([
-      t(pace ? 'feed.stat.pace' : 'feed.stat.speed'),
+    main.push([
+      t(pace ? 'activity.fig.pace' : 'activity.fig.speed'),
       format.speedFor(a.distance_m / moving, pace),
     ]);
-  if (a.ascent_m) figures.push([t('feed.stat.ascent'), format.elevation(a.ascent_m)]);
-  if (a.avg_hr) figures.push([t('feed.stat.hr'), `${a.avg_hr} bpm`]);
-  if (a.max_hr) figures.push([t('activity.maxHr'), `${a.max_hr} bpm`]);
-  if (a.avg_power) figures.push([t('activity.power'), `${a.avg_power} W`]);
-  if (a.normalized_power) figures.push([t('activity.np'), `${a.normalized_power} W`]);
-  if (m?.trimp != null) figures.push([t('activity.effort'), Math.round(m.trimp).toLocaleString(locale)]);
-  if (pace && m?.gap_speed) figures.push([t('activity.gap'), format.pace(m.gap_speed)]);
+  if (a.ascent_m) main.push([t('activity.fig.ascent'), format.elevation(a.ascent_m)]);
+  if (a.avg_power) main.push([t('activity.power'), `${a.avg_power} W`]);
+  else if (a.avg_hr) main.push([t('feed.stat.hr'), `${a.avg_hr} bpm`]);
   const kcal = a.calories ?? m?.calories;
   if (kcal)
-    figures.push([
+    main.push([
       t('activity.calories'),
-      `${Math.round(kcal).toLocaleString(locale)} kcal${a.calories == null ? ` (${t('activity.estimated')})` : ''}`,
+      `${Math.round(kcal).toLocaleString(locale)} kcal${a.calories == null ? ' *' : ''}`,
     ]);
+  if (a.moving_s && a.duration_s - a.moving_s > 60)
+    more.push([t('activity.elapsed'), formatDuration(a.duration_s)]);
+  if (a.avg_power && a.avg_hr) more.push([t('feed.stat.hr'), `${a.avg_hr} bpm`]);
+  if (a.max_hr) more.push([t('activity.maxHr'), `${a.max_hr} bpm`]);
+  if (a.normalized_power) more.push([t('activity.np'), `${a.normalized_power} W`]);
+  if (m?.trimp != null) more.push([t('activity.effort'), Math.round(m.trimp).toLocaleString(locale)]);
+  if (pace && m?.gap_speed) more.push([t('activity.gap'), format.pace(m.gap_speed)]);
   if (m?.decoupling != null)
-    figures.push([
+    more.push([
       t('activity.decoupling'),
       `${m.decoupling.toLocaleString(locale, { maximumFractionDigits: 1 })} %`,
     ]);
   if (a.training_effect)
-    figures.push([t('activity.te'), a.training_effect.toLocaleString(locale, { maximumFractionDigits: 1 })]);
+    more.push([t('activity.te'), a.training_effect.toLocaleString(locale, { maximumFractionDigits: 1 })]);
+  // Without a distance (strength, indoor), the next figures fill the six places.
+  main.push(...more.splice(0, Math.max(0, 6 - main.length)));
   const meta = metaLine(a, units);
 
   const share = async () => {
@@ -255,11 +250,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             {meta ? <Muted>{meta}</Muted> : null}
           </View>
         </View>
-        <View style={ui.stats}>
-          {figures.map(([label, value]) => (
-            <Stat key={label} label={label} value={value} />
-          ))}
-        </View>
+        <Figures main={main} more={more} />
         <SummaryCard activityId={a.id} />
         {track && track.n > 1 && (
           <Card>
@@ -349,6 +340,55 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
 }
 
 const NO_TIMES: number[] = [];
+
+/** The activity's figures in two centred columns, label over value, read down each column. */
+function Figures({ main, more }: { main: [string, string][]; more: [string, string][] }) {
+  const c = useTheme();
+  const [open, setOpen] = useState(false);
+  const grid = (items: [string, string][]) => {
+    const half = Math.ceil(items.length / 2);
+    return (
+      <View style={{ flexDirection: 'row' }}>
+        {[items.slice(0, half), items.slice(half)].map((column, n) => (
+          <View key={n} style={{ flex: 1, gap: 14 }}>
+            {column.map(([label, value]) => (
+              <View key={label} accessible style={{ alignItems: 'center' }}>
+                <Text style={{ color: c.muted, fontSize: 14 }}>{label}</Text>
+                <Text style={{ color: c.fg, fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                  {value}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    );
+  };
+  return (
+    <View style={{ gap: 14, paddingVertical: 4 }}>
+      {grid(main)}
+      {more.length > 0 && open && grid(more)}
+      {more.length > 0 && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          onPress={() => setOpen(!open)}
+          hitSlop={8}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+        >
+          <Text style={{ color: c.accent, fontSize: 14, fontWeight: '600' }}>
+            {t(open ? 'activity.fig.less' : 'activity.fig.more')}
+          </Text>
+          <Icon
+            name={open ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+            color={String(c.accent)}
+            size={20}
+          />
+        </Pressable>
+      )}
+    </View>
+  );
+}
 
 type Format = ReturnType<typeof useFormat>;
 

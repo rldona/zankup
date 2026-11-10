@@ -986,6 +986,7 @@
   "keys.anthropicHelp": "Zankup Coach usa la API de Anthropic para los resúmenes, el informe semanal y el chat; el gasto va a tu cuenta (console.anthropic.com). Se prueba antes de guardarla, se guarda cifrada y no se vuelve a mostrar.",
   "common.copy": "Copiar",
   "common.copied": "Copiado",
+  "common.moreInfo": "Más información",
   "instance.fromServer": "Ahora viene de la configuración del servidor; si lo cambias aquí, se usará el tuyo.",
   "instance.coachTitle": "Modelo y presupuesto",
   "instance.model": "Modelo",

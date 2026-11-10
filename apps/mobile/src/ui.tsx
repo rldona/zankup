@@ -5,6 +5,7 @@ import {
   Dimensions,
   Easing,
   Keyboard,
+  Modal,
   Pressable,
   ScrollView,
   Switch,
@@ -17,6 +18,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Icon } from './Icon';
+import { t } from './i18n';
 import { PageSkeleton } from './Skeleton';
 import { dynamicAccent, dynamicOnAccent, useTheme, type Palette } from './theme';
 
@@ -177,9 +180,19 @@ export function Heading({ children, first }: { children: ReactNode; first?: bool
 
 /**
  * The title at the top of a card (Zones, Splits, Power curve…): no gap above, beyond the card's own
- * padding, and the same room below as the activity's chart cards; `right` sits on its line.
+ * padding, and the same room below as the activity's chart cards; `right` sits on its line. `info`
+ * puts an (i) on the right that opens it as a tooltip under the title, instead of a note under the
+ * card; a tap on the tooltip closes it.
  */
-export function CardTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
+export function CardTitle({
+  children,
+  right,
+  info,
+}: {
+  children: ReactNode;
+  right?: ReactNode;
+  info?: string;
+}) {
   return (
     <View
       style={{
@@ -195,7 +208,61 @@ export function CardTitle({ children, right }: { children: ReactNode; right?: Re
       </View>
       {/* What changes the card (chips such as Hours | Distance), on the title's line. */}
       {right}
+      {info ? <InfoButton text={info} /> : null}
     </View>
+  );
+}
+
+/**
+ * An (i) that opens `text` as a tooltip under it (a card's title, the Coach's header). The tooltip sits
+ * on a transparent layer over the whole screen, so a tap anywhere, on it or outside it, closes it.
+ */
+export function InfoButton({ text, label = t('common.moreInfo') }: { text: string; label?: string }) {
+  const c = useTheme();
+  const anchor = useRef<ComponentRef<typeof View>>(null);
+  const [below, setBelow] = useState<number | null>(null);
+  const open = () => anchor.current?.measureInWindow((_x, y, _w, h) => setBelow(y + h + 8));
+  const close = () => setBelow(null);
+  return (
+    <>
+      <Pressable
+        ref={anchor}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ expanded: below !== null }}
+        hitSlop={10}
+        onPress={below === null ? open : close}
+      >
+        <Icon name="info" color={c.fg} size={22} />
+      </Pressable>
+      <Modal
+        transparent
+        visible={below !== null}
+        animationType="fade"
+        statusBarTranslucent
+        navigationBarTranslucent
+        onRequestClose={close}
+      >
+        <Pressable accessibilityRole="button" accessibilityLabel={text} onPress={close} style={{ flex: 1 }}>
+          <View
+            style={{
+              position: 'absolute',
+              top: below ?? 0,
+              left: 16,
+              right: 16,
+              elevation: 6,
+              backgroundColor: c.surface2,
+              borderColor: c.line,
+              borderWidth: 1,
+              borderRadius: 12,
+              padding: 12,
+            }}
+          >
+            <Text style={{ color: c.fg, fontSize: 14, lineHeight: 20 }}>{text}</Text>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 

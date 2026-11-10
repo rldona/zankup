@@ -158,7 +158,6 @@ describe('phase 3 screens', () => {
     expect(await screen.findByText('Recomputing your metrics: 12 of 207 activities.')).toBeInTheDocument();
     expect((await screen.findAllByText(/\+100 % vs the same period last year/)).length).toBeGreaterThan(0);
     expect(screen.getByText(/\+150 % vs the same period last year/)).toBeInTheDocument(); // 100 km against 40
-    expect(await screen.findByText('New 5 km record: 25:00')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'How the 5 km record came down' })).toBeInTheDocument();
     // The period as on the app (OS-912): a year moved with arrows, or a run of months.
     const year = new Date().getFullYear();
@@ -170,6 +169,14 @@ describe('phase 3 screens', () => {
     expect(router.state.location.search).toBe(`?period=${year}-${month}`);
     // Estimates have their own page now (OS-913).
     expect(screen.queryByText(/Riegel's formula/)).not.toBeInTheDocument();
+  });
+
+  it('notifications: the bell on Home opens what the engine noticed (OS-916)', async () => {
+    mockApi();
+    const router = renderAt('/');
+    await userEvent.click(await screen.findByRole('link', { name: 'Notifications' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/notifications'));
+    expect(await screen.findByText('New 5 km record: 25:00')).toBeInTheDocument();
   });
 
   it("goals: add one from Goals (You's old Goals tab leads there)", async () => {

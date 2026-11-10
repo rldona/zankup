@@ -35,7 +35,6 @@ import {
   VolumeChart,
 } from '../stats/charts';
 import { effortName } from '../stats/format';
-import { EventsList } from '../stats/panels';
 import { MaterialIcon } from '../MaterialIcon';
 import { CardTitle, Menu } from '../ui';
 import { useResolvedTheme } from '../theme';
@@ -289,7 +288,6 @@ function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
           </article>
         )}
       </div>
-      <EventsList />
     </>
   );
 }

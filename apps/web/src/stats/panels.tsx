@@ -4,6 +4,7 @@ import {
   formatters,
   type EstimateOut,
   type EventOut,
+  type MaterialIcon as MaterialIconName,
   type MessageKey,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +13,8 @@ import { Link } from 'react-router';
 
 import { api } from '../api';
 import { Sparkline } from '../charts/static';
-import { t } from '../i18n';
+import { locale, t } from '../i18n';
+import { MaterialIcon } from '../MaterialIcon';
 import { usePrefs } from '../prefs';
 import { day, effortName, ESTIMATE_ORDER, estimateValue, methodText, RACES } from './format';
 
@@ -75,27 +77,53 @@ export function EstimatesPanel({ estimates }: { estimates: EstimateOut[] }) {
 }
 
 /** What the engine noticed lately (OS-319). */
+const EVENT_ICONS: Record<string, MaterialIconName> = {
+  record: 'trophy',
+  estimate_up: 'trending_up',
+  ramp: 'warning',
+};
+
+/**
+ * What the engine noticed lately (OS-319), the same events that send a notification: a new record, an
+ * estimate going up, a risky jump in load. As the app's Notifications screen (OS-916): every one, newest
+ * first, each opening its activity when it has one.
+ */
 export function EventsList() {
   const prefs = usePrefs();
   const format = useMemo(() => formatters(prefs), [prefs]);
   const events = useQuery(eventsQuery(api));
-  if (!events.data?.length) return null;
+  if (events.isPending) return null;
+  const list = events.data ?? [];
+  if (!list.length) return <p className="note">{t('notifications.empty')}</p>;
   return (
-    <section className="panel">
-      <div className="ph">
-        <h2>{t('stats.events')}</h2>
-      </div>
-      <ul className="rows">
-        {events.data.slice(0, 6).map((e) => (
+    <ul className="panel events">
+      {list.map((e) => {
+        const activity = typeof e.payload.activity_id === 'number' ? e.payload.activity_id : null;
+        const body = (
+          <>
+            <span className={e.kind === 'ramp' ? 'eicon warn' : 'eicon'}>
+              <MaterialIcon name={EVENT_ICONS[e.kind] ?? 'notifications'} />
+            </span>
+            <span className="etext">
+              <span>{eventText(e, format)}</span>
+              <small className="note">
+                {new Date(e.created_at).toLocaleDateString(locale, {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </small>
+            </span>
+            {activity && <i aria-hidden="true">›</i>}
+          </>
+        );
+        return (
           <li key={e.id}>
-            <span>{eventText(e, format)}</span>
-            {typeof e.payload.activity_id === 'number' && (
-              <Link to={`/activities/${e.payload.activity_id}`}>›</Link>
-            )}
+            {activity ? <Link to={`/activities/${activity}`}>{body}</Link> : <div>{body}</div>}
           </li>
-        ))}
-      </ul>
-    </section>
+        );
+      })}
+    </ul>
   );
 }
 

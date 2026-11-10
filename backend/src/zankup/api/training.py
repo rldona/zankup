@@ -304,6 +304,18 @@ def create_goal(body: GoalCreate, db: DbSession, user: CurrentUser) -> GoalOut:
     return _goal_out(db, goal, datetime.now(UTC).date())
 
 
+@router.patch("/goals/{goal_id}", operation_id="updateGoal")
+def update_goal(goal_id: int, body: GoalCreate, db: DbSession, user: CurrentUser) -> GoalOut:
+    """Change a goal: its period, measure, sport and target, all at once."""
+    goal = db.scalar(select(Goal).where(Goal.id == goal_id, Goal.user_id == user.id))
+    if goal is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Goal not found")
+    for key, value in body.model_dump().items():
+        setattr(goal, key, value)
+    db.commit()
+    return _goal_out(db, goal, datetime.now(UTC).date())
+
+
 @router.delete("/goals/{goal_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="deleteGoal")
 def delete_goal(goal_id: int, db: DbSession, user: CurrentUser) -> None:
     goal = db.scalar(select(Goal).where(Goal.id == goal_id, Goal.user_id == user.id))

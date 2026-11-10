@@ -1649,7 +1649,11 @@ export interface paths {
     delete: operations['deleteGoal'];
     options?: never;
     head?: never;
-    patch?: never;
+    /**
+     * Update Goal
+     * @description Change a goal: its period, measure, sport and target, all at once.
+     */
+    patch: operations['updateGoal'];
     trace?: never;
   };
   '/api/events': {
@@ -7458,6 +7462,41 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  updateGoal: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        goal_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GoalCreate'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GoalOut'];
+        };
       };
       /** @description Validation Error */
       422: {

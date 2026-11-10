@@ -1,6 +1,7 @@
 /**
- * Goals (OS-527): each goal with its progress and end-of-period projection; the + in the header opens
- * the form to add one.
+ * Goals (OS-527): each goal with its progress and end-of-period projection. In the header, the pencil
+ * turns on editing (each goal can then be changed or deleted, the pencil becomes a tick) and the +
+ * opens the form to add one.
  */
 import { goalsQuery } from '@zankup/core';
 import { useQueryClient } from '@tanstack/react-query';
@@ -21,21 +22,33 @@ export default function GoalsScreen() {
   const format = useFormat();
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(false);
   return (
     <Screen
       title={t('nav.goals')}
       actions={
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('goals.add')}
-          hitSlop={10}
-          onPress={() => setAdding(true)}
-        >
-          <Icon name="add" color={c.fg} size={28} />
-        </Pressable>
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={editing ? t('goals.doneEditing') : t('goals.edit')}
+            accessibilityState={{ selected: editing }}
+            hitSlop={10}
+            onPress={() => setEditing(!editing)}
+          >
+            <Icon name={editing ? 'check' : 'edit'} color={editing ? String(c.accent) : c.fg} size={24} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('goals.add')}
+            hitSlop={10}
+            onPress={() => setAdding(true)}
+          >
+            <Icon name="add" color={c.fg} size={28} />
+          </Pressable>
+        </>
       }
     >
-      <Goals withForm={false} />
+      <Goals withForm={false} editing={editing} />
       {adding && (
         <GoalForm
           bare

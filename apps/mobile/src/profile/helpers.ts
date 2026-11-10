@@ -26,6 +26,12 @@ export function validDate(value: string): boolean {
 }
 
 /** Target in the unit people think in (km or mi, hours, a count), saved in metres, seconds or a count. */
+/** A stored target back in the unit the form shows (km or mi, hours, sessions). */
+export function goalInput(metric: 'distance' | 'time' | 'count', target: number, unit: string): number {
+  if (metric === 'distance') return target / (unit === 'km' ? 1000 : 1609.344);
+  return metric === 'time' ? target / 3600 : target;
+}
+
 export function goalTarget(metric: 'distance' | 'time' | 'count', value: number, unit: string): number {
   if (metric === 'distance') return value * (unit === 'km' ? 1000 : 1609.344);
   return metric === 'time' ? value * 3600 : value;

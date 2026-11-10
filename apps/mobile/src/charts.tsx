@@ -170,7 +170,7 @@ export function Chart({
           key={index}
           path={path}
           style="stroke"
-          strokeWidth={layer.width ?? 2.5}
+          strokeWidth={layer.width ?? 3}
           strokeCap="round"
           strokeJoin="round"
           color={layer.color}

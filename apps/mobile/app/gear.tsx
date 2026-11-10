@@ -4,10 +4,12 @@
  */
 import { gearQuery, SPORTS, type GearOut } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Alert, Switch, Text, View } from 'react-native';
+import { useNavigation } from 'expo-router';
+import { useLayoutEffect, useState } from 'react';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
 
 import { useApi } from '../src/auth';
+import { Icon } from '../src/Icon';
 import { locale, t } from '../src/i18n';
 import { useFormat } from '../src/prefs';
 import { useTheme } from '../src/theme';
@@ -32,6 +34,25 @@ export default function GearScreen() {
   const [editing, setEditing] = useState<GearOut | 'new' | null>(null);
   const list = gear.data ?? [];
   const sorted = [...list.filter((g) => !g.retired), ...list.filter((g) => g.retired)];
+  // Adding gear is the + in the header, while the list shows.
+  const navigation = useNavigation();
+  const listing = editing === null;
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: listing
+        ? () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('gear.add')}
+              hitSlop={10}
+              onPress={() => setEditing('new')}
+            >
+              <Icon name="add" color={c.fg} size={28} />
+            </Pressable>
+          )
+        : undefined,
+    });
+  }, [navigation, listing, c.fg]);
 
   if (editing)
     return (
@@ -43,9 +64,6 @@ export default function GearScreen() {
   return (
     <Screen header>
       <Muted>{t('gear.help')}</Muted>
-      <Button primary onPress={() => setEditing('new')}>
-        {t('gear.add')}
-      </Button>
       {gear.data && list.length === 0 && <Muted>{t('gear.empty')}</Muted>}
       {sorted.map((g) => (
         <Card key={g.id} style={g.retired ? { opacity: 0.6 } : undefined}>

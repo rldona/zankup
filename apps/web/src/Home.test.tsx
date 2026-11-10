@@ -13,6 +13,12 @@ const isoDay = (daysAgo: number) => {
   const d = new Date(Date.now() - daysAgo * DAY);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
+/** The machine's UTC offset on that date, as the API gives it: "+01:00". */
+const offset = (date: Date) => {
+  const minutes = -date.getTimezoneOffset();
+  const abs = Math.abs(minutes);
+  return `${minutes < 0 ? '-' : '+'}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+};
 const activity = (id: number, name: string, daysAgo: number) => ({
   id,
   name,
@@ -20,7 +26,8 @@ const activity = (id: number, name: string, daysAgo: number) => ({
   sub_sport: null,
   source: 'garmin',
   start_utc: at(daysAgo),
-  timezone: null,
+  // The machine's own offset, as "today" is: with none, the day would be UTC's (wrong after midnight).
+  timezone: offset(new Date(Date.now() - daysAgo * DAY)),
   duration_s: 3600,
   moving_s: 3500,
   distance_m: 10000,

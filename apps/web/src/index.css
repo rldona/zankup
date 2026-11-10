@@ -3975,3 +3975,58 @@ button.danger svg.i {
   font-size: 14px;
   line-height: 1.45;
 }
+
+/* Notifications (OS-916), as the app's: one row per event, each opening its activity. */
+.panel.events {
+  list-style: none;
+  padding: 0 16px;
+  margin: 0;
+  max-width: 760px;
+}
+
+.panel.events li {
+  border-bottom: 1px solid var(--line);
+}
+
+.panel.events li:last-child {
+  border-bottom: 0;
+}
+
+.panel.events li > a,
+.panel.events li > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.panel.events .eicon {
+  color: var(--accent);
+  display: grid;
+}
+
+.panel.events .eicon.warn {
+  color: var(--zone-5);
+}
+
+.panel.events .etext {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.panel.events small {
+  margin: 0;
+}
+
+.panel.events i {
+  color: var(--muted);
+  font-style: normal;
+  font-size: 20px;
+}
+
+.panel.events a:hover .etext > span {
+  color: var(--accent);
+}

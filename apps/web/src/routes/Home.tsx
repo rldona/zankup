@@ -24,6 +24,14 @@ export function Home() {
             <MaterialIcon name="wand_stars" />
           </Link>
         )}
+        <Link
+          to="/notifications"
+          className="iconbtn"
+          aria-label={t('home.notifications')}
+          title={t('home.notifications')}
+        >
+          <MaterialIcon name="notifications" />
+        </Link>
       </div>
       <div className="homegrid">
         <div>

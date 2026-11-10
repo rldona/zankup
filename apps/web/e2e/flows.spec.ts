@@ -82,6 +82,8 @@ test('a theme picked in Settings survives a reload with no flash', async ({ page
 });
 
 test('no serious accessibility problems on the main screens', async ({ page }, info) => {
+  // An axe scan of every main screen takes close to the default 30 s on its own.
+  test.setTimeout(90_000);
   await page.goto('/sign-in');
   const scan = async (where: string) => {
     const result = await new AxeBuilder({ page }).analyze();

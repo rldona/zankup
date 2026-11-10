@@ -4083,3 +4083,11 @@ h1.greeting {
   flex-wrap: wrap;
   min-width: 0;
 }
+
+/* A chip in a radio group (role="radio") is chosen by aria-checked: aria-pressed is not allowed there. */
+.chip[aria-checked='true'],
+.chip[aria-checked='true']:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
+}

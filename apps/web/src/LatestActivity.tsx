@@ -192,7 +192,6 @@ function LatestPanel({ activity: a, onClose }: { activity: ActivitySummary; onCl
                   className="chip"
                   role="radio"
                   aria-checked={(gearId ?? currentGear) === g.id}
-                  aria-pressed={(gearId ?? currentGear) === g.id}
                   onClick={() => setGearId(g.id)}
                 >
                   {g.name}

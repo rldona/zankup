@@ -1,7 +1,7 @@
 /**
  * Signing in on the phone (OS-503, OS-524 to OS-526), as in the PWA: the instance (api.zankup.com or
- * your own), then e-mail and password followed by the code, a passkey, or Google with the native
- * account sheet; "forgot it?"; and on a brand-new instance, creating its account. After that the
+ * your own), then Google with the native account sheet, a passkey, or e-mail and password followed
+ * by the code; "forgot it?"; and on a brand-new instance, creating its account. After that the
  * fingerprint is enough (session.ts).
  */
 import { createApiClient } from '@zankup/core';
@@ -231,6 +231,44 @@ function PasswordStep({
     <>
       <Title title={t('signIn.welcome')} />
       <ErrorBox message={error} />
+      {googleClient && (
+        <Button
+          primary
+          disabled={busy !== null}
+          onPress={() => void google()}
+          icon={<GoogleIcon color="#fff" />}
+          labelColor="#fff"
+        >
+          {t('signIn.google')}
+        </Button>
+      )}
+      {passkeysSupported() && (
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy !== null}
+          onPress={() => void passkey()}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: c.line,
+            backgroundColor: c.surface,
+            paddingVertical: 12,
+            opacity: busy !== null ? 0.5 : pressed ? 0.8 : 1,
+          })}
+        >
+          <Icon name="passkey" color={c.fg} size={20} />
+          <Text style={{ color: c.fg, fontWeight: '600', fontSize: 15 }}>
+            {busy === 'passkey' ? t('signIn.passkeyWaiting') : t('signIn.passkey')}
+          </Text>
+        </Pressable>
+      )}
+      {(googleClient || passkeysSupported()) && (
+        <Muted style={{ textAlign: 'center' }}>{t('signIn.or')}</Muted>
+      )}
       <Field
         label={t('signIn.email')}
         value={email}
@@ -256,42 +294,6 @@ function PasswordStep({
       <Button primary disabled={busy !== null} onPress={submit}>
         {busy === 'password' ? t('common.loading') : t('signIn.submit')}
       </Button>
-      <Muted style={{ textAlign: 'center' }}>{t('signIn.or')}</Muted>
-      {passkeysSupported() && (
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy !== null}
-          onPress={() => void passkey()}
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: c.line,
-            backgroundColor: c.surface,
-            paddingVertical: 12,
-            opacity: busy !== null ? 0.5 : pressed ? 0.8 : 1,
-          })}
-        >
-          <Icon name="passkey" color={c.fg} size={20} />
-          <Text style={{ color: c.fg, fontWeight: '600', fontSize: 15 }}>
-            {busy === 'passkey' ? t('signIn.passkeyWaiting') : t('signIn.passkey')}
-          </Text>
-        </Pressable>
-      )}
-      {googleClient && (
-        <Button
-          primary
-          disabled={busy !== null}
-          onPress={() => void google()}
-          icon={<GoogleIcon color="#fff" />}
-          labelColor="#fff"
-        >
-          {t('signIn.google')}
-        </Button>
-      )}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingTop: 4 }}>
         <Muted style={{ flex: 1 }}>{baseUrl.replace(/^https?:\/\//, '')}</Muted>
         <LinkButton onPress={onChangeInstance}>{t('mobile.changeInstance')}</LinkButton>

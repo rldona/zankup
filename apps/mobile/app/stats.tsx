@@ -1,6 +1,6 @@
 /**
- * Stats (OS-508, OS-519), as in the PWA: the period (last 12 months, all time, a year or one of its
- * months) right above everything for the period, the engine's progress while it recomputes, and the
+ * Stats (OS-508, OS-519), as in the PWA: the period (last 12 months, a year or a month moved with
+ * arrows, or all time) right above everything for the period, the engine's progress while it recomputes, and the
  * way to the calendar, heatmap, routes, segments, reviews and health. All read from what the engine
  * precomputed.
  */
@@ -8,7 +8,7 @@ import { engineQuery, periodOf, yearsQuery, type MessageKey } from '@zankup/core
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../src/auth';
 import { Icon, type IconName } from '../src/Icon';
@@ -34,26 +34,69 @@ const LINKS: [IconName, MessageKey, string][] = [
   ['timeline', 'stats.segments', '/segments'],
 ];
 
+const MODES = ['last12', 'year', 'month', 'all'] as const;
+type Mode = (typeof MODES)[number];
+
+/** The year or month shown, with an arrow on each side; an arrow at the end of the history is dimmed. */
+function Stepper({
+  label,
+  back,
+  forward,
+}: {
+  label: string;
+  back: (() => void) | null;
+  forward: (() => void) | null;
+}) {
+  const c = useTheme();
+  const arrow = (name: IconName, onPress: (() => void) | null, a11y: MessageKey) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t(a11y)}
+      accessibilityState={{ disabled: !onPress }}
+      disabled={!onPress}
+      onPress={onPress ?? undefined}
+      hitSlop={12}
+      style={{ opacity: onPress ? 1 : 0.3 }}
+    >
+      <Icon name={name} color={c.fg} size={28} />
+    </Pressable>
+  );
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      {arrow('chevron_left', back, 'stats.previous')}
+      <Text style={{ color: c.fg, fontSize: 17, fontWeight: '700', textTransform: 'capitalize' }}>
+        {label}
+      </Text>
+      {arrow('chevron_right', forward, 'stats.next')}
+    </View>
+  );
+}
+
 export default function StatsScreen() {
   const api = useApi();
   const c = useTheme();
-  const [choice, setChoice] = useState('last12');
   const [today] = useState(() => new Date());
   const years = useQuery(yearsQuery(api));
   const first = years.data?.at(-1) ?? today.getFullYear();
+  // The period: a mode, and for a year or a month where the arrows have moved to (months count from
+  // year 0, so one step is always one month).
+  const [mode, setMode] = useState<Mode>('last12');
+  const now = today.getFullYear() * 12 + today.getMonth();
+  const [shownYear, setShownYear] = useState(today.getFullYear());
+  const [shownMonth, setShownMonth] = useState(now);
+  const choice =
+    mode === 'year'
+      ? String(shownYear)
+      : mode === 'month'
+        ? `${Math.floor(shownMonth / 12)}-${String((shownMonth % 12) + 1).padStart(2, '0')}`
+        : mode;
   const period = useMemo(() => periodOf(choice, today, first), [choice, today, first]);
   const range = { from: period.from, to: period.to };
   const engine = useQuery({
     ...engineQuery(api),
     refetchInterval: (q) => (q.state.data?.running ? 3000 : false),
   });
-  const year = /^\d{4}/.test(choice) ? choice.slice(0, 4) : null;
-  const months = useMemo(() => {
-    if (!year) return [];
-    const y = Number(year);
-    const last = y === today.getFullYear() ? today.getMonth() : 11;
-    return Array.from({ length: last + 1 }, (_, i) => `${y}-${String(i + 1).padStart(2, '0')}`);
-  }, [year, today]);
+  const year = mode === 'year' ? String(shownYear) : mode === 'month' ? choice.slice(0, 4) : null;
 
   return (
     <Screen
@@ -61,29 +104,26 @@ export default function StatsScreen() {
       toolbar={
         <>
           <Choice
-            scroll
             label={t('stats.period')}
-            value={year ?? choice}
-            onChange={setChoice}
-            options={[
-              { value: 'last12', label: t('stats.period.last12') },
-              { value: 'all', label: t('stats.period.all') },
-              ...(years.data ?? []).map((y) => ({ value: String(y), label: String(y) })),
-            ]}
+            value={mode}
+            onChange={setMode}
+            options={MODES.map((m) => ({ value: m, label: t(`stats.mode.${m}`) }))}
           />
-          {months.length > 0 && year && (
-            <Choice
-              scroll
-              label={t('search.date')}
-              value={choice}
-              onChange={setChoice}
-              options={[
-                { value: year, label: '—' },
-                ...months.map((m) => ({
-                  value: m,
-                  label: new Date(`${m}-15T12:00:00`).toLocaleDateString(locale, { month: 'short' }),
-                })),
-              ]}
+          {mode === 'year' && (
+            <Stepper
+              label={String(shownYear)}
+              back={shownYear > first ? () => setShownYear(shownYear - 1) : null}
+              forward={shownYear < today.getFullYear() ? () => setShownYear(shownYear + 1) : null}
+            />
+          )}
+          {mode === 'month' && (
+            <Stepper
+              label={new Date(Math.floor(shownMonth / 12), shownMonth % 12, 15).toLocaleDateString(locale, {
+                month: 'long',
+                year: 'numeric',
+              })}
+              back={shownMonth > first * 12 ? () => setShownMonth(shownMonth - 1) : null}
+              forward={shownMonth < now ? () => setShownMonth(shownMonth + 1) : null}
             />
           )}
         </>

@@ -361,6 +361,7 @@ export function GoalForm({
   onCancel?: () => void;
   goal?: GoalOut;
 }) {
+  const c = useTheme();
   const api = useApi();
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>(
     (goal?.period as 'week' | 'month' | 'year' | undefined) ?? 'week',
@@ -402,35 +403,46 @@ export function GoalForm({
     },
   });
   const form = (
-    <Card style={bare ? { borderWidth: 0, padding: 0, backgroundColor: 'transparent' } : undefined}>
+    <Card
+      style={{ gap: 20, ...(bare ? { borderWidth: 0, padding: 0, backgroundColor: 'transparent' } : {}) }}
+    >
       {!bare && <Heading>{t('goals.add')}</Heading>}
-      <Muted>{t('stats.period')}</Muted>
-      <Choice
-        label={t('stats.period')}
-        value={period}
-        onChange={setPeriod}
-        options={(['week', 'month', 'year'] as const).map((p) => ({
-          value: p,
-          label: t(`goals.period.${p}`),
-        }))}
-      />
-      <Muted>{t('feed.sports')}</Muted>
-      <Choice
-        label={t('feed.sports')}
-        value={sport}
-        onChange={chooseSport}
-        options={[
-          { value: '', label: t('goals.allSports') },
-          ...SPORTS.filter((s) => s !== 'other').map((s) => ({ value: s as string, label: t(`sport.${s}`) })),
-        ]}
-      />
-      <Muted>{t('goals.measure')}</Muted>
-      <Choice
-        label={t('goals.measure')}
-        value={metric}
-        onChange={setMetric}
-        options={metrics.map((m) => ({ value: m, label: t(`goals.metric.${m}`) }))}
-      />
+      <View style={{ gap: 8 }}>
+        <Text style={{ color: c.fg, fontWeight: '600' }}>{t('stats.period')}</Text>
+        <Choice
+          label={t('stats.period')}
+          value={period}
+          onChange={setPeriod}
+          options={(['week', 'month', 'year'] as const).map((p) => ({
+            value: p,
+            label: t(`goals.period.${p}`),
+          }))}
+        />
+      </View>
+      <View style={{ gap: 8 }}>
+        <Text style={{ color: c.fg, fontWeight: '600' }}>{t('feed.sports')}</Text>
+        <Choice
+          label={t('feed.sports')}
+          value={sport}
+          onChange={chooseSport}
+          options={[
+            { value: '', label: t('goals.allSports') },
+            ...SPORTS.filter((s) => s !== 'other').map((s) => ({
+              value: s as string,
+              label: t(`sport.${s}`),
+            })),
+          ]}
+        />
+      </View>
+      <View style={{ gap: 8 }}>
+        <Text style={{ color: c.fg, fontWeight: '600' }}>{t('goals.measure')}</Text>
+        <Choice
+          label={t('goals.measure')}
+          value={metric}
+          onChange={setMetric}
+          options={metrics.map((m) => ({ value: m, label: t(`goals.metric.${m}`) }))}
+        />
+      </View>
       <Field
         label={`${t('goals.target')} (${metric === 'distance' ? unit : metric === 'time' ? 'h' : '#'})`}
         keyboardType="decimal-pad"

@@ -211,7 +211,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
                 hitSlop={10}
                 onPress={() => setEditing(true)}
               >
-                <Icon name="edit" color={c.fg} />
+                <Icon name="edit_square" color={c.fg} />
               </Pressable>
               <Pressable
                 accessibilityRole="button"

@@ -104,7 +104,7 @@ export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSumma
           backgroundColor: c.surface2,
         }}
       >
-        <Icon name="edit" color={c.fg} size={22} />
+        <Icon name="edit_square" color={c.fg} size={22} />
       </Pressable>
     </View>
   );
@@ -379,7 +379,7 @@ export function Goals({ withForm = true, editing = false }: { withForm?: boolean
         <GoalCard key={g.id} goal={g} format={format}>
           {editing && (
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Button icon={<Icon name="edit" color={c.fg} size={18} />} onPress={() => setChanging(g)}>
+              <Button icon={<Icon name="edit_square" color={c.fg} size={18} />} onPress={() => setChanging(g)}>
                 {t('goals.edit')}
               </Button>
               <Button

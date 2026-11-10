@@ -35,7 +35,7 @@ export default function GoalsScreen() {
             hitSlop={10}
             onPress={() => setEditing(!editing)}
           >
-            <Icon name={editing ? 'check' : 'edit'} color={editing ? String(c.accent) : c.fg} size={24} />
+            <Icon name={editing ? 'check' : 'edit_square'} color={editing ? String(c.accent) : c.fg} size={24} />
           </Pressable>
           <Pressable
             accessibilityRole="button"

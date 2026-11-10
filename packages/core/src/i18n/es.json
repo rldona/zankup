@@ -143,6 +143,7 @@
   "chart.average": "Media",
   "chart.max": "máx.",
   "chart.spm": "ppm",
+  "activity.mapOptions": "Opciones del mapa",
   "activity.colourBy": "Colorear por",
   "activity.hint": "Pasa por la gráfica o por el recorrido. Arrastra sobre la gráfica para elegir un tramo.",
   "activity.section": "Tramo",

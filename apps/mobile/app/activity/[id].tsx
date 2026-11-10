@@ -258,7 +258,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
           <SportIcon sport={sport} size={44} />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: c.fg, fontSize: 18, fontWeight: '700' }}>
+            <Text numberOfLines={1} style={{ color: c.fg, fontSize: 18, fontWeight: '700' }}>
               {a.name ?? t(`sport.${sport}`)}
             </Text>
             <Muted>

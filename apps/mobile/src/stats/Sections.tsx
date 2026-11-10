@@ -169,13 +169,16 @@ export function GoalCard({
         <Text style={{ fontWeight: '700' }}>{goalValue(goal, goal.current, format)}</Text> /{' '}
         {goalValue(goal, goal.target, format)}
       </Text>
-      <Muted>
-        {done
-          ? t('goals.done')
-          : t(goal.projection >= goal.target ? 'goals.onTrack' : 'goals.behind', {
-              projection: goalValue(goal, goal.projection, format),
-            })}
-      </Muted>
+      {/* Nothing done yet: no projection to speak of. */}
+      {(done || goal.current > 0) && (
+        <Muted>
+          {done
+            ? t('goals.done')
+            : t(goal.projection >= goal.target ? 'goals.onTrack' : 'goals.behind', {
+                projection: goalValue(goal, goal.projection, format),
+              })}
+        </Muted>
+      )}
       {children}
     </Card>
   );

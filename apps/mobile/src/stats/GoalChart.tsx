@@ -184,9 +184,16 @@ export function GoalChart({
             <Canvas style={{ width, height }}>
               {painted && (
                 <>
-                  {/* The floor as a line; above it, each day a faint vertical line with a hollow ring at
+                  {/* The floor and the top as lines; between them, each day a faint vertical line with a hollow ring at
                       every mark of the axis, the size of a day's point. */}
                   <Line p1={vec(0, y(0))} p2={vec(plot, y(0))} color={c.line} strokeWidth={1} />
+                  <Line
+                    p1={vec(0, y(hi))}
+                    p2={vec(plot, y(hi))}
+                    color={c.muted}
+                    opacity={0.25}
+                    strokeWidth={1}
+                  />
                   {points.map((_, i) => (
                     <Line
                       key={`day-${i}`}
@@ -197,10 +204,10 @@ export function GoalChart({
                       strokeWidth={1}
                     />
                   ))}
-                  {scale.ticks
-                    .filter((v) => v > 0)
-                    .flatMap((v) =>
-                      points.map((_, i) => (
+                  {scale.ticks.flatMap((v) =>
+                    points.map((p, i) =>
+                      // On the floor, only the days to come: the others have their own point there.
+                      v === 0 && p.state !== 'future' ? null : (
                         <Group key={`${v}-${i}`}>
                           <Circle cx={x(i)} cy={y(v)} r={radius} color={c.surface} />
                           <Circle
@@ -213,8 +220,9 @@ export function GoalChart({
                             strokeWidth={1.5}
                           />
                         </Group>
-                      )),
-                    )}
+                      ),
+                    ),
+                  )}
                   <Line
                     p1={vec(0, y(0))}
                     p2={vec(plot, y(goal.target))}

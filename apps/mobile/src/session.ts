@@ -173,6 +173,9 @@ export async function addPasskey(api: ApiClient): Promise<boolean> {
     credential = await Passkey.create(data.options as unknown as PasskeyCreateRequest);
   } catch (error) {
     if (passkeyCancelled(error)) return false;
+    // The account's passkey is already on this phone (the server lists it as excluded): nothing to add.
+    if ((error as { error?: string } | null)?.error === 'CredentialAlreadyExists')
+      throw new SignInError(t('profile.passkeyExists'));
     console.warn('Passkey creation failed', JSON.stringify(error));
     throw new SignInError(t('profile.passkeyFailed'));
   }

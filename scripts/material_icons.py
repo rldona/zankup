@@ -140,6 +140,7 @@ INTERFACE = [
     "add",
     "edit",
     "edit_square",
+    "cloud_off",
     "delete",
     "check",
     "more_vert",

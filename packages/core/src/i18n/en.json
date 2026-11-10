@@ -446,6 +446,7 @@
   "stats.form.overreaching": "High risk",
   "stats.fitnessNote": "Fitness is your 42-day average effort, fatigue your 7-day one, and form the difference: positive means rested.",
   "stats.summaryTitle": "Summary",
+  "stats.summaryNote": "The figures of the period against the same period a year before. Training load adds up every activity's TRIMP: the longer and the higher your heart rate between your resting and maximum, the more it counts, so an easy hour counts little and a hard one a lot.",
   "stats.noPrevious": "Nothing in the same period last year",
   "stats.volume": "Volume",
   "stats.hours": "Hours",

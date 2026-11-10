@@ -51,7 +51,7 @@ import { Icon } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
 import { useTheme } from '../theme';
-import { Card, CardTitle, Choice, Heading, Muted, ProgressBar, Stat, styles as ui } from '../ui';
+import { Card, CardTitle, Choice, Heading, Muted, ProgressBar, Stat, styles as ui, InfoButton } from '../ui';
 
 type Format = ReturnType<typeof useFormat>;
 export type Range = { from: string; to: string };
@@ -266,7 +266,7 @@ export function Summary({ range }: { range: Range }) {
     [t('feed.stat.distance'), format.distance(current.distance_m), current.distance_m, previous.distance_m],
     [t('feed.stat.time'), formatHoursMinutes(current.moving_s), current.moving_s, previous.moving_s],
     [t('feed.stat.ascent'), format.elevation(current.ascent_m), current.ascent_m, previous.ascent_m],
-    [t('stats.load'), Math.round(current.load).toLocaleString(locale), current.load, previous.load],
+    [t('home.load'), Math.round(current.load).toLocaleString(locale), current.load, previous.load],
   ];
   const bar = (share: number, colour: string) => (
     <View
@@ -280,7 +280,7 @@ export function Summary({ range }: { range: Range }) {
   );
   return (
     <Card>
-      <CardTitle>{t('stats.summaryTitle')}</CardTitle>
+      <CardTitle info={t('stats.summaryNote')}>{t('stats.summaryTitle')}</CardTitle>
       {/* Each figure against the same period a year before: last year's bar, then this period's. */}
       {rows.map(([label, value, now, before]) => {
         const { percent, now: mine, before: theirs } = compare(now, before);
@@ -341,7 +341,7 @@ export function Fitness({ range }: { range: Range }) {
   const top = Math.max(1, ...days.flatMap((d) => [d.ctl, d.atl])) * 1.05;
   return (
     <Card>
-      <CardTitle>{t('stats.fitness')}</CardTitle>
+      <CardTitle info={t('stats.fitnessNote')}>{t('stats.fitness')}</CardTitle>
       {days.length > 1 ? (
         <Chart
           legendGap={18}
@@ -384,7 +384,6 @@ export function Fitness({ range }: { range: Range }) {
       ) : (
         <Muted>{t('stats.empty')}</Muted>
       )}
-      <Muted>{t('stats.fitnessNote')}</Muted>
     </Card>
   );
 }
@@ -741,21 +740,20 @@ export function CompareWithStrava() {
     v == null ? '–' : v.toLocaleString(locale, { maximumFractionDigits: digits });
   return (
     <Card>
-      <CardTitle>{t('compare.title')}</CardTitle>
+      <CardTitle info={t('compare.help')}>{t('compare.title')}</CardTitle>
       <Choice
         label={t('compare.metric')}
         value={metric}
         onChange={setMetric}
         options={COMPARED.map((m) => ({ value: m, label: t(`compare.${m}`) }))}
       />
-      <Muted>{t('compare.help')}</Muted>
       {current && current.count >= 3 ? (
         <>
           <View style={ui.stats}>
-            <Stat label={t('compare.count')} value={String(current.count)} />
-            <Stat label="R²" value={number(current.r2, 3)} />
-            <Stat label={t('compare.mae')} value={number(current.mae, 1)} />
-            <Stat label={t('compare.ratio')} value={number(current.ratio, 3)} />
+            <Stat labelFirst label={t('compare.count')} value={String(current.count)} />
+            <Stat labelFirst label="R²" value={number(current.r2, 3)} />
+            <Stat labelFirst label={t('compare.mae')} value={number(current.mae, 1)} />
+            <Stat labelFirst label={t('compare.ratio')} value={number(current.ratio, 3)} />
           </View>
           <Text style={{ color: c.fg, fontWeight: '700' }}>{t('compare.largest')}</Text>
           {current.largest.map((p) => (
@@ -816,12 +814,14 @@ export function Now() {
         )}
         {week.data && (
           <Card style={{ flex: 1 }}>
-            <Muted>{t('stats.load')}</Muted>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Muted>{t('stats.load')}</Muted>
+              <InfoButton text={t('stats.loadNote', { average: formatHoursMinutes(average) })} />
+            </View>
             <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
               {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
             </Text>
             {share != null && <ProgressBar value={share} max={150} label={t('stats.load')} />}
-            <Muted>{t('stats.loadNote', { average: formatHoursMinutes(average) })}</Muted>
           </Card>
         )}
       </View>

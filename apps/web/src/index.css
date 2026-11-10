@@ -589,6 +589,11 @@ svg.i.m {
   flex: 1;
 }
 
+.ph h3 {
+  margin: 0;
+  flex: 1;
+}
+
 .seg {
   display: inline-flex;
   border: 1px solid var(--line);

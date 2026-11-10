@@ -446,6 +446,7 @@
   "stats.form.overreaching": "Riesgo alto",
   "stats.fitnessNote": "La forma física es tu esfuerzo medio de 42 días, la fatiga el de 7 días y la frescura la diferencia: positiva es estar descansado.",
   "stats.summaryTitle": "Resumen",
+  "stats.summaryNote": "Las cifras del periodo frente al mismo periodo de un año antes. La carga de entrenamiento suma el TRIMP de cada actividad: cuanto más dura y más alta va tu frecuencia cardiaca entre la de reposo y la máxima, más cuenta, así que una hora suave suma poco y una intensa mucho.",
   "stats.noPrevious": "Nada en el mismo periodo del año pasado",
   "stats.volume": "Volumen",
   "stats.hours": "Horas",

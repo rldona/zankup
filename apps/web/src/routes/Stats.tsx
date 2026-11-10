@@ -41,7 +41,7 @@ import {
 } from '../stats/charts';
 import { effortName } from '../stats/format';
 import { MaterialIcon } from '../MaterialIcon';
-import { CardTitle, Menu } from '../ui';
+import { CardTitle, Menu, InfoTip } from '../ui';
 import { useResolvedTheme } from '../theme';
 import { localToday } from '../week/today';
 
@@ -280,7 +280,10 @@ function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
         )}
         {week.data && (
           <article className="panel">
-            <h3>{t('stats.load')}</h3>
+            <div className="ph">
+              <h3>{t('stats.load')}</h3>
+              <InfoTip text={t('stats.loadNote', { average: formatHoursMinutes(average) })} />
+            </div>
             <p className="big num">
               {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
             </p>
@@ -288,7 +291,6 @@ function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
               <i style={{ width: `${Math.min(100, (share ?? 0) / 1.5)}%` }} />
               <b style={{ left: `${100 / 1.5}%` }} />
             </div>
-            <p className="note">{t('stats.loadNote', { average: formatHoursMinutes(average) })}</p>
           </article>
         )}
       </div>
@@ -312,11 +314,11 @@ function Summary({
     [t('feed.stat.distance'), format.distance(current.distance_m), current.distance_m, previous.distance_m],
     [t('feed.stat.time'), formatHoursMinutes(current.moving_s), current.moving_s, previous.moving_s],
     [t('feed.stat.ascent'), format.elevation(current.ascent_m), current.ascent_m, previous.ascent_m],
-    [t('stats.load'), Math.round(current.load).toLocaleString(locale), current.load, previous.load],
+    [t('home.load'), Math.round(current.load).toLocaleString(locale), current.load, previous.load],
   ];
   return (
     <section className="panel">
-      <CardTitle>{t('stats.summaryTitle')}</CardTitle>
+      <CardTitle info={t('stats.summaryNote')}>{t('stats.summaryTitle')}</CardTitle>
       {/* Each figure against the same period a year before, as the app: last year's bar, then this period's. */}
       <ul className="compare num">
         {rows.map(([label, value, now, before]) => {
@@ -366,9 +368,8 @@ function FitnessSection({
   const days: FitnessDay[] = fitness.data ?? [];
   return (
     <section className="panel">
-      <CardTitle>{t('stats.fitness')}</CardTitle>
+      <CardTitle info={t('stats.fitnessNote')}>{t('stats.fitness')}</CardTitle>
       {days.length ? <FitnessChart days={days} theme={theme} /> : <p className="note">{t('stats.empty')}</p>}
-      <p className="note">{t('stats.fitnessNote')}</p>
     </section>
   );
 }
@@ -626,8 +627,8 @@ function CompareWithStrava({ theme }: { theme: ReturnType<typeof useResolvedThem
             </button>
           ))}
         </div>
+        <InfoTip text={t('compare.help')} />
       </div>
-      <p className="note">{t('compare.help')}</p>
       {current && current.count >= 3 ? (
         <>
           <dl className="kpis num">

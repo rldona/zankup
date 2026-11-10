@@ -8,7 +8,6 @@ import { useState } from 'react';
 import { Pressable } from 'react-native';
 
 import { useApi } from '../../src/auth';
-import { Sheet } from '../../src/detail/Tools';
 import { Icon } from '../../src/Icon';
 import { t } from '../../src/i18n';
 import { useFormat } from '../../src/prefs';
@@ -38,16 +37,15 @@ export default function GoalsScreen() {
     >
       <Goals withForm={false} />
       {adding && (
-        <Sheet title={t('goals.add')} onClose={() => setAdding(false)}>
-          <GoalForm
-            bare
-            unit={format.unit}
-            onDone={() => {
-              void queryClient.invalidateQueries({ queryKey: goalsQuery(api).queryKey });
-              setAdding(false);
-            }}
-          />
-        </Sheet>
+        <GoalForm
+          bare
+          unit={format.unit}
+          onCancel={() => setAdding(false)}
+          onDone={() => {
+            void queryClient.invalidateQueries({ queryKey: goalsQuery(api).queryKey });
+            setAdding(false);
+          }}
+        />
       )}
     </Screen>
   );

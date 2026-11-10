@@ -130,7 +130,7 @@ function Brand() {
 function Title({ title, sub }: { title: string; sub?: string }) {
   const c = useTheme();
   return (
-    <View style={{ gap: 4 }}>
+    <View style={{ gap: 4, marginBottom: 12 }}>
       <Text accessibilityRole="header" style={{ color: c.fg, fontSize: 20, fontWeight: '700' }}>
         {title}
       </Text>

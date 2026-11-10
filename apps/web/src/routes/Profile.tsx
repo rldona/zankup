@@ -12,6 +12,7 @@ import {
   type MessageKey,
   type ProfileSummary,
   type Sport,
+  effortShown,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type FormEvent } from 'react';
@@ -260,16 +261,18 @@ function Summary({ me, summary }: { me: Me; summary?: ProfileSummary }) {
         {summary.records.length ? (
           <table className="num">
             <tbody>
-              {summary.records.map((r) => (
-                <tr key={r.distance_key}>
-                  <th scope="row">{effortLabel(r.distance_key) ?? format.distance(r.distance_m)}</th>
-                  <td>{formatHoursMinutesOrClock(r.time_s)}</td>
-                  <td>{format.pace(r.distance_m / r.time_s)}</td>
-                  <td>
-                    <Link to={`/activities/${r.activity_id}`}>{day(r.date)}</Link>
-                  </td>
-                </tr>
-              ))}
+              {summary.records
+                .filter((r) => effortShown(r.distance_key, format.unit))
+                .map((r) => (
+                  <tr key={r.distance_key}>
+                    <th scope="row">{effortLabel(r.distance_key) ?? format.distance(r.distance_m)}</th>
+                    <td>{formatHoursMinutesOrClock(r.time_s)}</td>
+                    <td>{format.pace(r.distance_m / r.time_s)}</td>
+                    <td>
+                      <Link to={`/activities/${r.activity_id}`}>{day(r.date)}</Link>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         ) : (

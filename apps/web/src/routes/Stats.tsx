@@ -17,6 +17,7 @@ import {
   type FitnessDay,
   stravaComparisonQuery,
   formLabel,
+  effortShown,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -190,7 +191,7 @@ export function Stats() {
         <FitnessSection range={range} theme={theme} />
         <Volume range={range} unit={period.unit} theme={theme} format={format} />
         <Curves range={range} theme={theme} format={format} />
-        <RecordsSection range={range} theme={theme} />
+        <RecordsSection range={range} theme={theme} unit={format.unit} />
         <Progress
           theme={theme}
           distanceUnit={format.unit}
@@ -460,9 +461,11 @@ function Curves({
 function RecordsSection({
   range,
   theme,
+  unit,
 }: {
   range: { from: string; to: string };
   theme: ReturnType<typeof useResolvedTheme>;
+  unit: 'km' | 'mi';
 }) {
   const records = useQuery(recordsQuery(api, range));
   const [chosen, setChosen] = useState('5k');
@@ -488,29 +491,31 @@ function RecordsSection({
             </tr>
           </thead>
           <tbody>
-            {records.data.all_time.map((r) => {
-              const p = period.get(r.distance_key);
-              return (
-                <tr
-                  key={r.distance_key}
-                  aria-selected={chosen === r.distance_key}
-                  onClick={() => setChosen(r.distance_key)}
-                >
-                  <th scope="row">
-                    <button type="button" className="link" onClick={() => setChosen(r.distance_key)}>
-                      {effortName(r.distance_key)}
-                    </button>
-                  </th>
-                  <td>
-                    <Link to={`/activities/${r.activity_id}`}>{formatDuration(r.time_s)}</Link>{' '}
-                    <span className="note">{day(r.day)}</span>
-                  </td>
-                  <td>
-                    {p ? <Link to={`/activities/${p.activity_id}`}>{formatDuration(p.time_s)}</Link> : '—'}
-                  </td>
-                </tr>
-              );
-            })}
+            {records.data.all_time
+              .filter((r) => effortShown(r.distance_key, unit))
+              .map((r) => {
+                const p = period.get(r.distance_key);
+                return (
+                  <tr
+                    key={r.distance_key}
+                    aria-selected={chosen === r.distance_key}
+                    onClick={() => setChosen(r.distance_key)}
+                  >
+                    <th scope="row">
+                      <button type="button" className="link" onClick={() => setChosen(r.distance_key)}>
+                        {effortName(r.distance_key)}
+                      </button>
+                    </th>
+                    <td>
+                      <Link to={`/activities/${r.activity_id}`}>{formatDuration(r.time_s)}</Link>{' '}
+                      <span className="note">{day(r.day)}</span>
+                    </td>
+                    <td>
+                      {p ? <Link to={`/activities/${p.activity_id}`}>{formatDuration(p.time_s)}</Link> : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>

@@ -1,4 +1,11 @@
-import { formatDuration, formatters, reviewQuery, type Review as ReviewData, type Sport } from '@zankup/core';
+import {
+  formatDuration,
+  formatters,
+  reviewQuery,
+  type Review as ReviewData,
+  type Sport,
+  effortShown,
+} from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
@@ -211,22 +218,25 @@ function Cards({ data, heading, format }: { data: ReviewData; heading: string; f
             title: heading,
             subtitle: t('review.records'),
             figures: data.records
+              .filter((r) => effortShown(r.distance_key, format.unit))
               .slice(0, 6)
               .map((r) => ({ label: effortName(r.distance_key), value: formatDuration(r.time_s) })),
           }}
         >
           <ul className="rows">
-            {data.records.map((r) => (
-              <li key={r.distance_key}>
-                <span>
-                  <Link to={`/activities/${r.activity_id}`}>{effortName(r.distance_key)}</Link>
-                  <small className="note">
-                    {r.previous_s ? t('review.beat', { previous: formatDuration(r.previous_s) }) : ''}
-                  </small>
-                </span>
-                <b className="num">{formatDuration(r.time_s)}</b>
-              </li>
-            ))}
+            {data.records
+              .filter((r) => effortShown(r.distance_key, format.unit))
+              .map((r) => (
+                <li key={r.distance_key}>
+                  <span>
+                    <Link to={`/activities/${r.activity_id}`}>{effortName(r.distance_key)}</Link>
+                    <small className="note">
+                      {r.previous_s ? t('review.beat', { previous: formatDuration(r.previous_s) }) : ''}
+                    </small>
+                  </span>
+                  <b className="num">{formatDuration(r.time_s)}</b>
+                </li>
+              ))}
           </ul>
         </Card>
       )}

@@ -27,6 +27,7 @@ import {
   type Sport,
   type ThemeName,
   themes,
+  effortShown,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
@@ -536,17 +537,19 @@ function BestEfforts({ activity, format }: { activity: ActivityDetail; format: F
           </tr>
         </thead>
         <tbody>
-          {activity.best_efforts.map((e) => (
-            <tr key={e.distance_key}>
-              <td>
-                {EFFORT_KEYS.has(e.distance_key)
-                  ? t(`effort.${e.distance_key}` as MessageKey)
-                  : format.distance(e.distance_m)}
-              </td>
-              <td>{formatDuration(e.time_s)}</td>
-              <td>{format.pace(e.distance_m / e.time_s)}</td>
-            </tr>
-          ))}
+          {activity.best_efforts
+            .filter((e) => effortShown(e.distance_key, format.unit))
+            .map((e) => (
+              <tr key={e.distance_key}>
+                <td>
+                  {EFFORT_KEYS.has(e.distance_key)
+                    ? t(`effort.${e.distance_key}` as MessageKey)
+                    : format.distance(e.distance_m)}
+                </td>
+                <td>{formatDuration(e.time_s)}</td>
+                <td>{format.pace(e.distance_m / e.time_s)}</td>
+              </tr>
+            ))}
         </tbody>
       </table>
     </section>

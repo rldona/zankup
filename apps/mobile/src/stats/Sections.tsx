@@ -25,6 +25,7 @@ import {
   formLabel,
   weekQuery,
   yearColours,
+  effortShown,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -505,6 +506,7 @@ export function Records({ range }: { range: Range }) {
   const api = useApi();
   const c = useTheme();
   const records = useQuery(recordsQuery(api, range));
+  const format = useFormat();
   const [chosen, setChosen] = useState('5k');
   if (!records.data?.all_time.length) return null;
   const period = new Map(records.data.period.map((r) => [r.distance_key, r]));
@@ -522,32 +524,34 @@ export function Records({ range }: { range: Range }) {
           </Text>
         ))}
       </View>
-      {records.data.all_time.map((r) => {
-        const p = period.get(r.distance_key);
-        const on = chosen === r.distance_key;
-        return (
-          <View
-            key={r.distance_key}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
-          >
-            <Text
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              onPress={() => setChosen(r.distance_key)}
-              style={{ flex: 1, color: on ? c.accent : c.fg, fontWeight: on ? '700' : '400' }}
+      {records.data.all_time
+        .filter((r) => effortShown(r.distance_key, format.unit))
+        .map((r) => {
+          const p = period.get(r.distance_key);
+          const on = chosen === r.distance_key;
+          return (
+            <View
+              key={r.distance_key}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
             >
-              {effortName(r.distance_key)}
-            </Text>
-            <Text style={{ flex: 1.4, textAlign: 'right', fontVariant: ['tabular-nums'] }}>
-              <ActivityLink id={r.activity_id}>{formatDuration(r.time_s)}</ActivityLink>
-              <Text style={{ color: c.muted, fontSize: 11 }}> {shortDay(r.day)}</Text>
-            </Text>
-            <Text style={{ flex: 1, textAlign: 'right', color: c.fg, fontVariant: ['tabular-nums'] }}>
-              {p ? <ActivityLink id={p.activity_id}>{formatDuration(p.time_s)}</ActivityLink> : '—'}
-            </Text>
-          </View>
-        );
-      })}
+              <Text
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                onPress={() => setChosen(r.distance_key)}
+                style={{ flex: 1, color: on ? c.accent : c.fg, fontWeight: on ? '700' : '400' }}
+              >
+                {effortName(r.distance_key)}
+              </Text>
+              <Text style={{ flex: 1.4, textAlign: 'right', fontVariant: ['tabular-nums'] }}>
+                <ActivityLink id={r.activity_id}>{formatDuration(r.time_s)}</ActivityLink>
+                <Text style={{ color: c.muted, fontSize: 11 }}> {shortDay(r.day)}</Text>
+              </Text>
+              <Text style={{ flex: 1, textAlign: 'right', color: c.fg, fontVariant: ['tabular-nums'] }}>
+                {p ? <ActivityLink id={p.activity_id}>{formatDuration(p.time_s)}</ActivityLink> : '—'}
+              </Text>
+            </View>
+          );
+        })}
       {progression.length > 1 && (
         <>
           <Text style={{ color: c.fg, fontWeight: '700', marginTop: 8 }}>

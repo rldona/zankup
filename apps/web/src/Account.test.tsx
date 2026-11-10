@@ -171,7 +171,8 @@ describe('settings and profile', () => {
     });
     renderAt('/profile');
     expect(await screen.findByRole('heading', { name: 'Runner' })).toBeInTheDocument();
-    expect(await screen.findByText('Madrid · fēnix 6X Pro')).toBeInTheDocument();
+    expect(await screen.findByText('Madrid')).toBeInTheDocument();
+    expect(screen.queryByText(/fēnix 6X Pro/)).not.toBeInTheDocument();
     expect(screen.getByText('12 weeks in a row')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '2026 so far' })).toBeInTheDocument();
     expect(screen.getByText('121')).toBeInTheDocument(); // activities this year
@@ -185,7 +186,7 @@ describe('settings and profile', () => {
     await userEvent.clear(location);
     await userEvent.type(location, 'Valencia');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByText('Valencia · fēnix 6X Pro')).toBeInTheDocument();
+    expect(await screen.findByText('Valencia')).toBeInTheDocument();
     const patch = calls.find((c) => c.method === 'PATCH');
     expect(patch?.body).toMatchObject({ location: 'Valencia', sex: 'male', weight_kg: 72.5, height_cm: 178 });
 

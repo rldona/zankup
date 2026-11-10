@@ -49,7 +49,7 @@ const day = (iso: string) =>
 
 // --- the header ------------------------------------------------------------------------------------
 
-export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSummary; onEdit: () => void }) {
+export function Header({ me, onEdit }: { me: Me; onEdit: () => void }) {
   const c = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -84,9 +84,8 @@ export function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSumma
         >
           {me.display_name ?? me.email}
         </Text>
-        {[me.location, summary?.device].some(Boolean) && (
-          <Muted>{[me.location, summary?.device].filter(Boolean).join(' · ')}</Muted>
-        )}
+        {/* Only where you are: the watch belongs to each activity, Garmin to Account. */}
+        {me.location ? <Muted>{me.location}</Muted> : null}
       </View>
       <Pressable
         accessibilityRole="button"

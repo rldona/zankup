@@ -203,4 +203,14 @@ describe('phase 6: health', () => {
       ),
     );
   });
+
+  it('settings: brings a year of health history (OS-917)', async () => {
+    const calls = mockApi({
+      'POST /api/wellness/history': () => Response.json({ queued: ['garmin', 'google_health'] }),
+    });
+    renderAt('/settings/health');
+    await userEvent.click(await screen.findByRole('button', { name: 'Bring the last year' }));
+    expect(await screen.findByText(/Under way: Garmin, Google Health/)).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'POST' && c.path === '/api/wellness/history')).toBe(true);
+  });
 });

@@ -12,6 +12,7 @@ import { useLocation, useSearchParams } from 'react-router';
 import { api } from '../api';
 import { locale, t } from '../i18n';
 import { sourceName } from '../health/names';
+import { CardTitle } from '../ui';
 
 const METRICS: HealthMetric[] = ['sleep', 'hrv', 'resting_hr', 'spo2', 'respiration', 'steps'];
 const RESULTS: Record<string, { text: MessageKey; ok: boolean }> = {
@@ -153,5 +154,47 @@ export function HealthSources() {
         </>
       )}
     </>
+  );
+}
+
+/**
+ * Bringing a year of health history (OS-917), as the app's Settings › Health: Garmin and Google Health
+ * fetch their last year in the background (`POST /api/wellness/history`), and Health shows it as it
+ * arrives. Health Connect's history is read on the phone.
+ */
+export function HealthHistory() {
+  const queryClient = useQueryClient();
+  const bring = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await api.POST('/api/wellness/history');
+      if (error) throw new Error('history');
+      return data?.queued ?? [];
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['wellness'] }),
+  });
+  return (
+    <section className="panel">
+      <CardTitle>{t('health.history.title')}</CardTitle>
+      <p className="note">{t('health.history.noteWeb')}</p>
+      <div className="actions">
+        <button type="button" disabled={bring.isPending} onClick={() => bring.mutate()}>
+          {bring.isPending ? t('health.history.working') : t('health.history.bring')}
+        </button>
+      </div>
+      {bring.isSuccess && (
+        <p className="note" role="status">
+          {bring.data.length
+            ? t('health.history.queued', {
+                sources: bring.data.map((s) => t(`health.source.${s}` as MessageKey)).join(', '),
+              })
+            : t('health.history.none')}
+        </p>
+      )}
+      {bring.isError && (
+        <p className="note" role="alert">
+          {t('common.error')}
+        </p>
+      )}
+    </section>
   );
 }

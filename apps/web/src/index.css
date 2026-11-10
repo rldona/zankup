@@ -4030,3 +4030,25 @@ button.danger svg.i {
 .panel.events a:hover .etext > span {
   color: var(--accent);
 }
+
+.popmenu button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.popmenu button:hover,
+.popmenu button:focus-visible {
+  background: var(--surface-2);
+}
+
+.popmenu button svg.i {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}

@@ -7,6 +7,7 @@ import { BarChart, LineChart, ScatterChart } from 'echarts/charts';
 import {
   BrushComponent,
   GridComponent,
+  LegendComponent,
   MarkAreaComponent,
   MarkLineComponent,
   ToolboxComponent,
@@ -20,6 +21,7 @@ echarts.use([
   BarChart,
   ScatterChart, // the comparison with Strava (OS-323)
   GridComponent,
+  LegendComponent, // the series' names over the chart, as on the app
   TooltipComponent,
   MarkAreaComponent,
   MarkLineComponent,

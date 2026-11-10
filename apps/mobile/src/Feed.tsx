@@ -27,7 +27,7 @@ import { locale, t } from './i18n';
 import { Icon, SportIcon } from './Icon';
 import { asSport, useFormat } from './prefs';
 import { useTheme } from './theme';
-import { Card, Empty, Muted, Stat, styles as ui } from './ui';
+import { Badge, Card, Empty, Muted, Stat, styles as ui } from './ui';
 import { FeedSkeleton, WeekSkeleton } from './Skeleton';
 
 type Format = ReturnType<typeof useFormat>;
@@ -76,7 +76,7 @@ export function WeekHeader({ format }: { format: Format }) {
     <Card>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={[ui.heading, { color: c.fg, marginTop: 0 }]}>{t('week.title')}</Text>
-        <Muted>{t('week.streak', { count: streak })}</Muted>
+        {streak > 0 && <Badge tone="good">{t('week.streak', { count: streak })}</Badge>}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         {days.map((d) => {

@@ -1,16 +1,14 @@
 /**
- * Settings on the phone (OS-522): one row per section, as the PWA's page has them, and sign-out.
- * Each section opens its own screen.
+ * Settings on the phone (OS-522): one row per section, as the PWA's page has them. Each section opens
+ * its own screen; signing out is in Account.
  */
 import { router } from 'expo-router';
 
-import { useAuth } from '../../src/auth';
-import { t } from '../../src/i18n';
 import { Icon, type IconName } from '../../src/Icon';
 import { SETTINGS_SECTIONS, type SettingsSection } from '../../src/links';
 import { sectionNote, sectionTitle } from '../../src/settings/titles';
 import { useTheme } from '../../src/theme';
-import { Button, Card, MenuRow, Screen } from '../../src/ui';
+import { Card, MenuRow, Screen } from '../../src/ui';
 
 const SECTION_ICONS: Record<SettingsSection, IconName> = {
   general: 'tune',
@@ -24,7 +22,6 @@ const SECTION_ICONS: Record<SettingsSection, IconName> = {
 };
 
 export default function SettingsScreen() {
-  const { signOut } = useAuth();
   const c = useTheme();
   return (
     <Screen header>
@@ -40,7 +37,6 @@ export default function SettingsScreen() {
           />
         ))}
       </Card>
-      <Button onPress={() => void signOut()}>{t('nav.signOut')}</Button>
     </Screen>
   );
 }

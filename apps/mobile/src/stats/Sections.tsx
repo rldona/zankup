@@ -12,7 +12,6 @@ import {
   fitnessQuery,
   formatDuration,
   formatHoursMinutes,
-  goalsQuery,
   progressQuery,
   recordsQuery,
   SPORTS,
@@ -118,7 +117,6 @@ export function Now() {
           </Card>
         )}
       </View>
-      <Goals />
       <Events />
       <Estimates />
     </>
@@ -198,19 +196,6 @@ export function GoalCard({
       )}
       {children}
     </Card>
-  );
-}
-
-function Goals() {
-  const api = useApi();
-  const format = useFormat();
-  const goals = useQuery(goalsQuery(api));
-  return (
-    <>
-      {goals.data?.map((g) => (
-        <GoalCard key={g.id} goal={g} format={format} />
-      ))}
-    </>
   );
 }
 

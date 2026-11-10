@@ -3,7 +3,7 @@
  * zones, notifications, the AI assistant and MCP tokens, privacy zones, health sources (with Health
  * Connect, OS-607), your data, and security and sessions (biometrics, OS-503; Garmin; devices).
  */
-import { settingsQuery, THEME_CHOICES, type Locale, type MessageKey } from '@zankup/core';
+import { meQuery, settingsQuery, THEME_CHOICES, type Locale, type MessageKey } from '@zankup/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useContext, useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ import { useAuth } from '../../src/auth';
 import { ask, available, lastRead, readAndSend, readHistory, type ReadResult } from '../../src/healthConnect';
 import { locale, saveLanguage, t } from '../../src/i18n';
 import { SETTINGS_SECTIONS, type SettingsSection } from '../../src/links';
+import { Account } from '../../src/profile/Sections';
 import { HealthSources } from '../../src/settings/HealthSources';
 import { PrivacyZones } from '../../src/settings/Privacy';
 import { useSaveSettings } from '../../src/settings/save';
@@ -36,6 +37,8 @@ export default function SettingsSectionScreen() {
   const section = (SETTINGS_SECTIONS as readonly string[]).includes(params.section)
     ? (params.section as SettingsSection)
     : 'general';
+  const { api, signOut } = useAuth();
+  const me = useQuery({ ...meQuery(api), enabled: section === 'account' });
   return (
     <Screen header>
       <Stack.Screen options={{ title: sectionTitle(section) }} />
@@ -64,9 +67,11 @@ export default function SettingsSectionScreen() {
       {section === 'data' && <YourData />}
       {section === 'account' && (
         <>
+          {me.data && <Account me={me.data} />}
           <Security />
           <Garmin />
           <Sessions />
+          <Button onPress={() => void signOut()}>{t('nav.signOut')}</Button>
         </>
       )}
     </Screen>

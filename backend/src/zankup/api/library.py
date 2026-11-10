@@ -127,7 +127,7 @@ class GearIn(BaseModel):
     sports: list[Literal["run", "ride", "strength", "walk", "row", "swim", "other"]] = []
     initial_m: float = Field(default=0, ge=0, le=1e8)
     limit_m: float | None = Field(default=None, ge=0, le=1e8)
-    habitual: bool = False
+    habitual: bool | None = None
 
 
 class GearUpdate(BaseModel):

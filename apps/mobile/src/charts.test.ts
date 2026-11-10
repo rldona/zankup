@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@shopify/react-native-skia', () => ({}));
 vi.mock('react-native', () => ({}));
+vi.mock('react-native-gesture-handler', () => ({}));
 vi.mock('./theme', () => ({}));
 
-const { domainOf, linePath } = await import('./charts');
+const { dayTicks, domainOf, linePath, niceScale, shortNumber } = await import('./charts');
 
 describe('charts', () => {
   it('pads a line and keeps bars on zero', () => {
@@ -31,5 +32,23 @@ describe('charts', () => {
       ],
       [[30, 50]],
     ]);
+  });
+
+  it('rounds an axis to four even steps', () => {
+    expect(niceScale([0, 100])).toEqual({ domain: [0, 100], ticks: [0, 25, 50, 75, 100] });
+    expect(niceScale([0, 7.6]).ticks).toEqual([0, 2, 4, 6, 8]);
+    expect(niceScale([47.3, 61.2]).ticks).toEqual([45, 50, 55, 60, 65]);
+    expect(niceScale([-12, 30]).ticks).toEqual([-20, 0, 20, 40, 60]);
+  });
+
+  it('writes ticks short and spreads the days', () => {
+    expect([shortNumber(1.25), shortNumber(8), shortNumber(152.4), shortNumber(12500)]).toEqual([
+      '1,3',
+      '8',
+      '152',
+      '12.5k',
+    ]);
+    expect(dayTicks(3)).toEqual([0, 1, 2]);
+    expect(dayTicks(30)).toEqual([0, 7, 15, 22, 29]);
   });
 });

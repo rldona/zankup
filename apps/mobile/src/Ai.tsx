@@ -50,7 +50,10 @@ export function SummaryCard({ activityId }: { activityId: number }) {
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {wand}
-        <Text style={{ color: c.fg, fontSize: 17, fontWeight: '700', flex: 1 }}>{t('summary.aiTitle')}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: c.fg, fontSize: 17, fontWeight: '700' }}>{t('summary.aiTitle')}</Text>
+          <Text style={{ color: c.muted, fontSize: 13 }}>{t('summary.aiSubtitle')}</Text>
+        </View>
       </View>
       {row ? (
         <>

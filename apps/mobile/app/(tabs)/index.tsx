@@ -19,7 +19,7 @@ import { styles as ui } from '../../src/ui';
 import { Wordmark } from '../../src/Wordmark';
 
 const ACTIONS: { href: string; icon: IconName; label: MessageKey }[] = [
-  { href: '/coach', icon: 'chat', label: 'nav.coach' },
+  { href: '/coach', icon: 'wand_stars', label: 'nav.coach' },
   { href: '/search', icon: 'search', label: 'nav.search' },
   { href: '/notifications', icon: 'notifications', label: 'home.notifications' },
 ];

@@ -40,8 +40,8 @@ export default function ProfileScreen() {
         />
         {ai.data?.available && (
           <MenuRow
-            icon={<Icon name="chat" color={c.fg} />}
-            label={t('nav.coach')}
+            icon={<Icon name="wand_stars" color={c.fg} />}
+            label={t('coach.title')}
             onPress={() => router.push('/coach')}
           />
         )}

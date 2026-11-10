@@ -1,11 +1,9 @@
 import {
-  formatHoursMinutes,
   healthDaysQuery,
   healthNightQuery,
   relativeDay,
   SOURCE_ICONS,
   type HealthDay,
-  type HealthNight,
   type HealthSourceName,
   type MessageKey,
 } from '@zankup/core';
@@ -16,13 +14,13 @@ import { Link, useSearchParams } from 'react-router';
 import { api } from '../api';
 import { HeartChart, ReadinessChart, SleepChart } from '../health/charts';
 import { sourceName } from '../health/names';
+import { SleepTiles, StageLanes } from '../health/SleepNight';
 import { locale, t } from '../i18n';
 import { useResolvedTheme } from '../theme';
 import { localToday } from '../week/today';
 
 const PERIODS = { '30': 30, '90': 90, '365': 365 } as const;
 type PeriodKey = keyof typeof PERIODS;
-const STAGES = ['awake', 'rem', 'light', 'deep'] as const;
 
 const isoDay = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -150,54 +148,19 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
           ? t('health.lastNight')
           : t('health.nightOf', { day: longDay(day.day) })}
       </h2>
+      <SleepTiles sleep={sleep} />
       <article className="panel night">
-        <div className="nighthead">
-          <div>
-            <p className="big num">{sleep.score ?? '–'}</p>
-            <p className="note">{t('health.score')}</p>
-          </div>
-          <div>
-            <p className="big num">{formatHoursMinutes(sleep.asleep_s ?? 0)}</p>
-            <p className="note">
-              {t('health.asleep')} · {clock(sleep.start_utc)}–{clock(sleep.end_utc)}
-            </p>
-          </div>
-        </div>
-        {night.data && night.data.stages.length > 0 && <Hypnogram night={night.data} />}
-        <ul className="stagelegend">
-          {(['deep', 'rem', 'light', 'awake'] as const).map((stage) => {
-            const seconds = sleep[`${stage}_s`];
-            return seconds != null ? (
-              <li key={stage} className={`stage-${stage}`}>
-                <i aria-hidden="true" />
-                {t(`health.stage.${stage}`)} <b className="num">{formatHoursMinutes(seconds)}</b>
-              </li>
-            ) : null;
-          })}
-        </ul>
+        {night.data && night.data.stages.length > 0 ? (
+          <StageLanes night={night.data} sleep={sleep} />
+        ) : (
+          <p className="note">
+            {t('health.asleep')} · {clock(sleep.start_utc)}–{clock(sleep.end_utc)}
+          </p>
+        )}
         <p className="note">{longDay(day.day)}</p>
         <SourceMark source={sleep.source} label={from(sleep.source, sleep.others)} />
       </article>
     </>
-  );
-}
-
-function Hypnogram({ night }: { night: HealthNight }) {
-  const total = night.stages.reduce((end, s) => Math.max(end, s.offset_s + s.duration_s), 0) || 1;
-  return (
-    <div className="hypnogram" role="img" aria-label={t('health.stagesLabel')}>
-      {night.stages.map((s, i) => (
-        <span
-          key={i}
-          className={`stage-${s.stage}`}
-          style={{
-            left: `${(s.offset_s / total) * 100}%`,
-            width: `${(s.duration_s / total) * 100}%`,
-            top: `${STAGES.indexOf(s.stage) * 25}%`,
-          }}
-        />
-      ))}
-    </div>
   );
 }
 

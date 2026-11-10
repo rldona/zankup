@@ -14,7 +14,7 @@ import { Icon } from '../src/Icon';
 import { locale, t } from '../src/i18n';
 import { useFormat } from '../src/prefs';
 import { useTheme } from '../src/theme';
-import { Badge, Button, Card, Choice, Field, Muted, ProgressBar, Screen } from '../src/ui';
+import { accent, Badge, Button, Card, Choice, Field, Muted, ProgressBar, Screen, SwitchRow } from '../src/ui';
 
 type Kind = 'shoe' | 'bike' | 'other';
 
@@ -34,7 +34,12 @@ export default function GearScreen() {
   const gear = useQuery(gearQuery(api));
   const [editing, setEditing] = useState<GearOut | 'new' | null>(null);
   const list = gear.data ?? [];
-  const sorted = [...list.filter((g) => !g.retired), ...list.filter((g) => g.retired)];
+  // The habitual ones first, then the rest in use, then the retired.
+  const sorted = [
+    ...list.filter((g) => g.habitual && !g.retired),
+    ...list.filter((g) => !g.habitual && !g.retired),
+    ...list.filter((g) => g.retired),
+  ];
   // Adding gear is the + in the header, while the list shows.
   const navigation = useNavigation();
   useLayoutEffect(() => {
@@ -57,9 +62,15 @@ export default function GearScreen() {
       <Muted>{t('gear.help')}</Muted>
       {gear.data && list.length === 0 && <Muted>{t('gear.empty')}</Muted>}
       {sorted.map((g) => (
-        <Card key={g.id} style={g.retired ? { opacity: 0.6 } : undefined}>
+        <Card
+          key={g.id}
+          style={
+            g.retired ? { opacity: 0.6 } : g.habitual ? { borderColor: accent(c), borderWidth: 2 } : undefined
+          }
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Text style={{ color: c.fg, fontSize: 16, fontWeight: '700', flex: 1 }}>{g.name}</Text>
+            {g.habitual && !g.retired && <Badge tone="good">{t('gear.habitual')}</Badge>}
             {g.retired && <Badge>{t('gear.retired')}</Badge>}
           </View>
           <Text style={{ color: g.over_limit ? c.zone5 : c.fg, fontVariant: ['tabular-nums'] }}>
@@ -100,6 +111,7 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
   const [brand, setBrand] = useState(gear?.brand ?? '');
   const [model, setModel] = useState(gear?.model ?? '');
   const [sports, setSports] = useState<string[]>(gear?.sports ?? []);
+  const [habitual, setHabitual] = useState(gear?.habitual ?? false);
   const [initial, setInitial] = useState(gear ? String(Math.round(gear.initial_m / 1000)) : '0');
   const [limit, setLimit] = useState(
     gear?.limit_m ? String(Math.round(gear.limit_m / 1000)) : gear ? '' : '800',
@@ -119,6 +131,7 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
         sports: sports as ('run' | 'ride')[],
         initial_m: km(initial || '0'),
         limit_m: limit.trim() ? km(limit) : null,
+        habitual,
       };
       const { error } = gear
         ? await api.PATCH('/api/gear/{gear_id}', {
@@ -159,6 +172,12 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
         onChange={setKind}
         options={(['shoe', 'bike', 'other'] as const).map((k) => ({ value: k, label: t(`gear.kind.${k}`) }))}
       />
+      {!gear?.retired && (
+        <>
+          <SwitchRow label={t('gear.habitual')} value={habitual} onChange={setHabitual} />
+          <Muted>{t('gear.habitualHelp')}</Muted>
+        </>
+      )}
       <Field label={t('gear.brand')} value={brand} onChangeText={setBrand} maxLength={120} />
       <Field label={t('gear.model')} value={model} onChangeText={setModel} maxLength={120} />
       <Field label={t('gear.initial')} value={initial} onChangeText={setInitial} keyboardType="numeric" />

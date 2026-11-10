@@ -12,6 +12,12 @@ export const keys = {
   /** "0" when the person turned the fingerprint lock off. */
   biometricLock: 'zankup.biometricLock',
   queryCache: 'zankup.queryCache',
+  /** The newest activity this phone has already announced (LatestActivity). */
+  latestSeen: 'zankup.latestSeen',
+  /** "1" when Zankup Coach's summary is folded on the activity screens. */
+  coachFolded: 'zankup.coachFolded',
+  /** "1" when the physical data on You are hidden behind the eye. */
+  physicalHidden: 'zankup.physicalHidden',
 } as const;
 
 export const storage = Storage;

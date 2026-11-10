@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildTrack, gradientExpression, indexAt, rampColour } from './track';
+import { buildTrack, gradientExpression, indexAt, rampColour, rangeOf } from './track';
 
 const track = buildTrack({
   t: [0, 10, 20, 30],
@@ -65,5 +65,14 @@ describe('profile axis', () => {
     expect(strength.totalX).toBe(120);
     expect(track.byTime).toBe(false);
     expect(track.totalX).toBe(150);
+  });
+});
+
+describe('the chart range', () => {
+  it('reaches a real fast stretch, and leaves out a lone spike', () => {
+    const ride = [...Array.from({ length: 980 }, () => 10), ...Array.from({ length: 20 }, () => 24)];
+    expect(rangeOf(ride, true)).toEqual([0, 24]);
+    const glitch = [...Array.from({ length: 999 }, () => 10), 90];
+    expect(rangeOf(glitch, true)[1]).toBe(10);
   });
 });

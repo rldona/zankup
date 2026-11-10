@@ -164,6 +164,30 @@ export function Heading({ children, first }: { children: ReactNode; first?: bool
   return <Text style={[styles.heading, { color: c.fg }, first && { marginTop: 0 }]}>{children}</Text>;
 }
 
+/**
+ * The title at the top of a card (Zones, Splits, Power curve…): no gap above, beyond the card's own
+ * padding, and the same room below as the activity's chart cards; `right` sits on its line.
+ */
+export function CardTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
+  return (
+    <View
+      style={{
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+      }}
+    >
+      <View style={{ flexShrink: 1 }}>
+        <Heading first>{children}</Heading>
+      </View>
+      {/* What changes the card (chips such as Hours | Distance), on the title's line. */}
+      {right}
+    </View>
+  );
+}
+
 export function Muted({
   children,
   style,
@@ -248,8 +272,8 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: primary ? accent(c) : c.surface,
-          borderColor: primary ? 'transparent' : c.line,
+          backgroundColor: primary ? accent(c) : 'transparent',
+          borderColor: primary ? 'transparent' : c.muted,
           opacity: disabled ? 0.5 : pressed ? 0.8 : 1,
         },
       ]}
@@ -269,7 +293,7 @@ export function Button({
 export function Field({ label, ...props }: TextInputProps & { label: string }) {
   const c = useTheme();
   return (
-    <View style={{ gap: 6 }}>
+    <View style={{ gap: 10 }}>
       <Text style={{ color: c.fg, fontWeight: '600' }}>{label}</Text>
       <TextInput
         accessibilityLabel={label}
@@ -528,8 +552,9 @@ export const styles = StyleSheet.create({
   statValue: { fontSize: 17, fontWeight: '700', fontVariant: ['tabular-nums'] },
   statLabel: { fontSize: 11, marginTop: 2, textTransform: 'uppercase' },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
+  /** Pill-shaped, so a button never reads as a field (fields keep their soft corners and fill). */
   button: {
-    borderRadius: 12,
+    borderRadius: 999,
     borderWidth: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,

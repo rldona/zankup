@@ -21,8 +21,8 @@ import {
   type Series,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
@@ -93,11 +93,23 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         : m === 'power'
           ? `${Math.round(v)} W`
           : format.elevation(v);
+  // The charts come once the screen has slid in, so the map and the figures show first.
+  const navigation = useNavigation();
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const settle = () => setSettled(true);
+    const off = navigation.addListener('transitionEnd' as never, settle);
+    const fallback = setTimeout(settle, 450);
+    return () => {
+      off();
+      clearTimeout(fallback);
+    };
+  }, [navigation]);
   const charts = useMemo(
-    () => (series && track ? chartSeries(series, sport, pace, units, format, c) : []),
+    () => (settled && series && track ? chartSeries(series, sport, pace, units, format, c) : []),
     // format and the colours change with the settings and the theme, both already in the keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [series, track, sport, pace, units, c],
+    [settled, series, track, sport, pace, units, c],
   );
   const replayTo = useCallback(
     (i: number) => {
@@ -409,8 +421,7 @@ function chartSeries(
       ? `${t('chart.average')} ${text(usable.reduce((a, b) => a + b, 0) / usable.length)}`
       : '–';
   };
-  const texts = (values: (number | null)[], text: (v: number) => string) =>
-    values.map((v) => (v == null ? '–' : text(v)));
+  const decimal = (1.5).toLocaleString(locale).charAt(1);
   const out: ChartSeries[] = [];
   const feet = units === 'imperial' ? 3.28084 : 1;
 
@@ -421,7 +432,7 @@ function chartSeries(
       label: t('metric.alt'),
       color: String(c.muted),
       values,
-      text: texts(alt, (v) => format.elevation(v)),
+      readout: { kind: 'int', suffix: units === 'imperial' ? ' ft' : ' m', decimal },
       average:
         format.elevation(Math.max(...alt.filter((v): v is number => v != null))) + ` ${t('chart.max')}`,
     });
@@ -440,7 +451,7 @@ function chartSeries(
             color: String(c.accent),
             // Minutes per km (or mile); standing still has no pace.
             values: speed.map((v) => (v == null || v < 0.5 ? null : unit / v / 60)),
-            text: texts(speed, (v) => (v < 0.5 ? '–' : text(v))),
+            readout: { kind: 'pace', suffix: units === 'imperial' ? ' /mi' : ' /km', decimal },
             average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
             inverted: true,
             tick: (v) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`,
@@ -449,7 +460,7 @@ function chartSeries(
             label: t('metric.speed'),
             color: String(c.accent),
             values: speed.map((v) => (v == null ? null : (v * 3600) / unit)),
-            text: texts(speed, text),
+            readout: { kind: 'dec1', suffix: units === 'imperial' ? ' mph' : ' km/h', decimal },
             average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
             fromZero: true,
           },
@@ -463,7 +474,7 @@ function chartSeries(
       label: t('metric.hr'),
       color: c.zone5,
       values: hr,
-      text: texts(hr, text),
+      readout: { kind: 'int', suffix: ' bpm', decimal },
       average: average(hr, text),
     });
   }
@@ -475,7 +486,7 @@ function chartSeries(
       label: t('metric.power'),
       color: String(c.ride),
       values: power,
-      text: texts(power, text),
+      readout: { kind: 'int', suffix: ' W', decimal },
       average: average(series.power ?? power, text),
       fromZero: true,
     });
@@ -489,7 +500,7 @@ function chartSeries(
       label: t('metric.cad'),
       color: c.zone4,
       values: cad,
-      text: texts(cad, text),
+      readout: { kind: 'int', suffix: ` ${per}`, decimal },
       average: average(series.cad, text),
     });
   }

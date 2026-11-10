@@ -64,7 +64,7 @@ export const RouteMap = memo(function RouteMap({
         onDidFinishLoadingMap={onReady}
       >
         {bounds && (
-          <Camera initialViewState={{ bounds, padding: { top: 32, right: 32, bottom: 32, left: 32 } }} />
+          <Camera initialViewState={{ bounds, padding: { top: 40, right: 60, bottom: 64, left: 40 } }} />
         )}
         <GeoJSONSource id="route" data={route} tolerance={0} lineMetrics>
           <Layer

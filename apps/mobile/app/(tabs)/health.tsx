@@ -19,13 +19,14 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../../src/auth';
+import { HealthSkeleton } from '../../src/Skeleton';
 import { Chart } from '../../src/charts';
 import { lastRead, readAndSend } from '../../src/healthConnect';
 import { Icon, SourceIcon, SpinningIcon } from '../../src/Icon';
 import { MenuButton } from '../../src/Menu';
 import { locale, t } from '../../src/i18n';
 import { useTheme } from '../../src/theme';
-import { Button, Card, Heading, Loading, Muted, Screen, styles as ui } from '../../src/ui';
+import { Button, Card, Heading, Muted, Screen, styles as ui } from '../../src/ui';
 
 const PERIODS = ['30', '90', '365'] as const;
 type Period = (typeof PERIODS)[number];
@@ -148,7 +149,7 @@ export default function HealthScreen() {
     >
       {sync.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
 
-      {days.isPending && <Loading />}
+      {days.isPending && <HealthSkeleton />}
       {days.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
       {days.isSuccess && list.length === 0 && (
         <Card>

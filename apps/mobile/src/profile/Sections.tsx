@@ -25,6 +25,7 @@ import { Alert, Image, Pressable, Text, View } from 'react-native';
 
 import { useApi, useAuth } from '../auth';
 import { Sheet } from '../detail/Tools';
+import { GoalsSkeleton } from '../Skeleton';
 import { Icon } from '../Icon';
 import {
   ageOn,
@@ -372,7 +373,7 @@ export function Goals({ withForm = true, editing = false }: { withForm?: boolean
     },
     onSuccess: refresh,
   });
-  if (!goals.data) return null;
+  if (!goals.data) return <GoalsSkeleton />;
   return (
     <>
       {goals.data.length === 0 && <Muted>{t('goals.empty')}</Muted>}

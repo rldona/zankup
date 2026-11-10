@@ -1,7 +1,6 @@
 /** Small building blocks shared by the screens, drawn with the theme's tokens. */
 import { useEffect, useState, type ReactNode } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Easing,
   Pressable,
@@ -16,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PageSkeleton } from './Skeleton';
 import { dynamicAccent, dynamicOnAccent, useTheme, type Palette } from './theme';
 
 const scheme = (c: Palette) => (c.scheme === 'dark' ? 'dark' : 'light');
@@ -208,11 +208,12 @@ export function Field({ label, ...props }: TextInputProps & { label: string }) {
   );
 }
 
+/** While a screen's data loads: the shape of its cards, pulsing (see Skeleton). */
 export function Loading() {
   const c = useTheme();
   return (
-    <View style={[styles.centered, { backgroundColor: c.bg }]}>
-      <ActivityIndicator color={c.accent} />
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <PageSkeleton />
     </View>
   );
 }

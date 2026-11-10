@@ -33,6 +33,7 @@ import { RouteMap } from '../../src/detail/RouteMap';
 import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../../src/detail/Sections';
 import { Strength } from '../../src/detail/Strength';
 import { MapControls } from '../../src/detail/MapControls';
+import { ActivitySkeleton } from '../../src/Skeleton';
 import { EditActivity, metaLine, Photos, SaveSegment, useReplay } from '../../src/detail/Tools';
 import { Icon, SportIcon } from '../../src/Icon';
 import { buildTrack, sectionStats, type SectionStats } from '../../src/detail/track';
@@ -42,7 +43,7 @@ import { asSport, useFormat, useHrMax, useUnits } from '../../src/prefs';
 import { webOrigin } from '../../src/links';
 import { instanceUrl } from '../../src/session';
 import { useTheme } from '../../src/theme';
-import { accent, onAccent, Card, Empty, Heading, Loading, Muted, Stat, styles as ui } from '../../src/ui';
+import { accent, onAccent, Card, Empty, Heading, Muted, Stat, styles as ui } from '../../src/ui';
 
 export default function ActivityScreen() {
   const id = Number(useLocalSearchParams<{ id: string }>().id);
@@ -50,7 +51,7 @@ export default function ActivityScreen() {
   const activity = useQuery({ ...activityQuery(api, id), enabled: Number.isInteger(id) });
   if (activity.data) return <Detail activity={activity.data} />;
   if (activity.isError) return <Empty>{t('activity.notFound')}</Empty>;
-  return <Loading />;
+  return <ActivitySkeleton />;
 }
 
 function Detail({ activity: a }: { activity: ActivityDetail }) {

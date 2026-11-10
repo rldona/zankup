@@ -2713,3 +2713,121 @@ svg.source {
   align-items: center;
   gap: 8px;
 }
+
+/*
+ * The app's visual language (OS-902), in one place: cards with 16 px corners and a hairline border, the
+ * card title inside the card with its chips or figure on its line (`CardTitle`), pill-shaped buttons
+ * (quiet outlined ones, the accent for the main action) so a button never reads as a field, fields with
+ * soft corners and room under their label, and choices filled with the accent as on the phone.
+ */
+.panel {
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.ph {
+  margin-bottom: 12px;
+  gap: 8px 12px;
+}
+
+.ph h2 {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.page h2 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 22px 0 10px;
+}
+
+.page .panel h2,
+.page .ph h2 {
+  margin: 0;
+}
+
+button {
+  border-radius: 999px;
+  background: transparent;
+  border-color: var(--muted);
+  padding: 7px 16px;
+  font-weight: 600;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+button.primary,
+button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
+}
+
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+button.block {
+  border-radius: 999px;
+  padding: 12px 16px;
+}
+
+button.link,
+button.link:hover:not(:disabled) {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+input,
+select,
+textarea {
+  border-radius: 12px;
+  padding: 9px 12px;
+}
+
+.field {
+  gap: 10px;
+}
+
+.field > span > b,
+.field > b {
+  font-weight: 600;
+}
+
+.seg {
+  border-radius: 999px;
+  border-color: var(--line);
+}
+
+.seg button {
+  border-radius: 0;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.seg button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.seg button[aria-pressed='true'],
+.seg button[aria-pressed='true']:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.chip {
+  border-color: var(--line);
+  background: var(--surface);
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.chip[aria-pressed='true'],
+.chip[aria-pressed='true']:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
+}

@@ -91,42 +91,49 @@ export function GoalCard({
   const [chart, setChart] = useState(false);
   return (
     <Card>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ color: c.fg, fontWeight: '700' }}>
-          {t(`goals.period.${goal.period}` as MessageKey)} ·{' '}
-          {goal.sport ? t(`sport.${asSport(goal.sport)}`) : t('goals.allSports')}
-        </Text>
-        <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-          {Math.round(share * 100)} %
-        </Text>
-      </View>
-      <ProgressBar value={share} max={1} label={t('goals.target')} />
-      <Text style={{ color: c.fg, fontVariant: ['tabular-nums'] }}>
-        <Text style={{ fontWeight: '700' }}>{goalValue(goal, goal.current, format)}</Text> /{' '}
-        {goalValue(goal, goal.target, format)}
-      </Text>
-      {/* Nothing done yet: no projection to speak of. */}
-      {(done || goal.current > 0) && (
-        <Muted>
-          {done
-            ? t('goals.done')
-            : t(goal.projection >= goal.target ? 'goals.onTrack' : 'goals.behind', {
-                projection: goalValue(goal, goal.projection, format),
-              })}
-        </Muted>
-      )}
-      {/* The day-by-day chart waits behind a link, folded at first. */}
+      {/* The whole card opens and closes the day-by-day chart, folded at first. The chart itself sits
+          outside the touch area, so reading it with a finger never folds it. */}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: chart }}
+        accessibilityHint={t(chart ? 'goals.hideChart' : 'goals.showChart')}
         onPress={() => setChart(!chart)}
-        hitSlop={8}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' }}
+        style={({ pressed }) => ({ gap: 8, opacity: pressed ? 0.7 : 1 })}
       >
-        <Text style={{ color: c.accent, fontWeight: '600' }}>
-          {t(chart ? 'goals.hideChart' : 'goals.showChart')}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={{ color: c.fg, fontWeight: '700' }}>
+            {t(`goals.period.${goal.period}` as MessageKey)} ·{' '}
+            {goal.sport ? t(`sport.${asSport(goal.sport)}`) : t('goals.allSports')}
+          </Text>
+          <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+            {Math.round(share * 100)} %
+          </Text>
+        </View>
+        <ProgressBar value={share} max={1} label={t('goals.target')} />
+        <Text style={{ color: c.fg, fontVariant: ['tabular-nums'] }}>
+          <Text style={{ fontWeight: '700' }}>{goalValue(goal, goal.current, format)}</Text> /{' '}
+          {goalValue(goal, goal.target, format)}
         </Text>
-        <Icon name={chart ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} color={String(c.accent)} size={20} />
+        {/* Nothing done yet: no projection to speak of. */}
+        {(done || goal.current > 0) && (
+          <Muted>
+            {done
+              ? t('goals.done')
+              : t(goal.projection >= goal.target ? 'goals.onTrack' : 'goals.behind', {
+                  projection: goalValue(goal, goal.projection, format),
+                })}
+          </Muted>
+        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text style={{ color: c.accent, fontWeight: '600' }}>
+            {t(chart ? 'goals.hideChart' : 'goals.showChart')}
+          </Text>
+          <Icon
+            name={chart ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+            color={String(c.accent)}
+            size={20}
+          />
+        </View>
       </Pressable>
       {chart && (
         <GoalChart

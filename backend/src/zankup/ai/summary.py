@@ -71,8 +71,9 @@ def user_message(context: dict[str, Any], *, language: str, units: str) -> str:
 def maybe_queue_summary(db: Session, activity: Activity) -> bool:
     """After the engine computed an activity: queue its summary if AI is on and the activity is recent."""
     from zankup.core.config import get_settings
+    from zankup.instance_keys import effective
 
-    if not get_settings().integrations()["ai"]:
+    if not effective(get_settings(), db).integrations()["ai"]:
         return False
     if not ai_wants(db, activity.user_id, "summaries"):
         return False

@@ -17,6 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Alert, Linking, Share, Text, View } from 'react-native';
 
+import { ServiceKeyEditor } from './ServiceKey';
 import { useApi, useAuth } from '../auth';
 import { locale, t } from '../i18n';
 import { registerPush, unregisterPush, type PushResult } from '../push';
@@ -369,16 +370,9 @@ export function Garmin() {
   return (
     <Card>
       <Heading>{t('settings.garmin')}</Heading>
-      <View style={{ flexDirection: 'row' }}>
-        <Badge tone={garmin.configured ? 'good' : 'bad'}>
-          {garmin.configured ? t('settings.garminOn') : t('settings.garminOff')}
-        </Badge>
-      </View>
-      {garmin.key_expires_on && (
-        <Muted>
-          {t(garmin.expiring_soon ? 'settings.garminSoon' : 'settings.garminExpires', {
-            date: day(garmin.key_expires_on),
-          })}
+      {garmin.expiring_soon && garmin.key_expires_on && (
+        <Muted accessibilityRole="alert">
+          {t('settings.garminSoon', { date: day(garmin.key_expires_on) })}
         </Muted>
       )}
       <Muted>
@@ -387,6 +381,8 @@ export function Garmin() {
           : t('settings.never')}
         {garmin.last_error ? ` ${t('settings.lastError', { error: garmin.last_error })}` : ''}
       </Muted>
+      <Muted>{t('keys.garminHelp')}</Muted>
+      <ServiceKeyEditor name="garmin" />
     </Card>
   );
 }

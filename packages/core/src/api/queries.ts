@@ -71,6 +71,7 @@ export const queryKeys = {
   devices: ['devices'] as const,
   profile: ['profile'] as const,
   sources: ['sources'] as const,
+  keys: ['keys'] as const,
   passkeys: ['passkeys'] as const,
   syncs: ['syncs'] as const,
   providers: ['providers'] as const,
@@ -197,6 +198,16 @@ export function sourcesQuery(api: ApiClient) {
       unwrap(await api.GET('/api/sources', { signal })),
   };
 }
+
+/** The service keys (Garmin's, Anthropic's): set or not, where from, their last characters. */
+export function keysQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.keys,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/keys', { signal })),
+  };
+}
+
+export type ServiceKey = Json<'/api/keys', 'get'>[number];
 
 /** The passkeys registered for this account (OS-405). */
 export function passkeysQuery(api: ApiClient) {

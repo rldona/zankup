@@ -25,6 +25,7 @@ import { PrivacyZones } from '../settings/Privacy';
 import { ExportData } from './Library';
 import { useSaveSettings } from '../settings';
 import { useSetTheme, useThemeChoice } from '../theme';
+import { ServiceKeyForm } from '../settings/ServiceKey';
 
 // The "System" preview is half light, half dark: the two themes the device can pick between.
 const SPLIT = { '--light-bg': themes.light.bg, '--dark-bg': themes.dark.bg } as CSSProperties;
@@ -259,11 +260,11 @@ function Garmin() {
     <>
       <h2>{t('settings.garmin')}</h2>
       <div className="panel">
-        <p className={garmin.configured ? 'ok' : 'warn'}>
-          {garmin.configured ? t('settings.garminOn') : t('settings.garminOff')}
-          {garmin.key_expires_on &&
-            ` ${t(garmin.expiring_soon ? 'settings.garminSoon' : 'settings.garminExpires', { date: day(garmin.key_expires_on) })}`}
-        </p>
+        {garmin.expiring_soon && garmin.key_expires_on && (
+          <p className="warn" role="alert">
+            {t('settings.garminSoon', { date: day(garmin.key_expires_on) })}
+          </p>
+        )}
         <p className="note">
           {garmin.last_sync_at
             ? t('settings.lastSync', {
@@ -275,6 +276,8 @@ function Garmin() {
             : t('settings.never')}
           {garmin.last_error && ` ${t('settings.lastError', { error: garmin.last_error })}`}
         </p>
+        <p className="note">{t('keys.garminHelp')}</p>
+        <ServiceKeyForm name="garmin" />
       </div>
     </>
   );

@@ -61,3 +61,13 @@ def database(empty_database: str) -> str:
     """A new database migrated to the latest revision."""
     command.upgrade(alembic_config(empty_database), "head")
     return empty_database
+
+
+@pytest.fixture(autouse=True)
+def _fresh_instance_keys() -> Iterator[None]:
+    """Each test starts with no cached service keys (zankup.instance_keys caches for a few seconds)."""
+    from zankup import instance_keys
+
+    instance_keys.forget()
+    yield
+    instance_keys.forget()

@@ -3,7 +3,7 @@
  * previous period with their bars, consistency and sports, the longest, hardest and hilliest
  * activity, records and gear; moving between months and years.
  */
-import { formatDuration, reviewQuery, type Review } from '@zankup/core';
+import { formatDuration, reviewQuery, type Review, effortShown } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -187,27 +187,29 @@ function Cards({ data, format }: { data: Review; format: Format }) {
       {data.records.length > 0 && (
         <Card>
           <Heading>{t('review.records')}</Heading>
-          {data.records.map((r) => (
-            <Pressable
-              key={r.distance_key}
-              accessibilityRole="link"
-              onPress={() => open(r.activity_id)}
-              style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
-            >
-              <Text style={{ color: c.accent, fontWeight: '600' }}>
-                {effortName(r.distance_key)}
-                {r.previous_s ? (
-                  <Text style={{ color: c.muted, fontWeight: '400' }}>
-                    {' '}
-                    {t('review.beat', { previous: formatDuration(r.previous_s) })}
-                  </Text>
-                ) : null}
-              </Text>
-              <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-                {formatDuration(r.time_s)}
-              </Text>
-            </Pressable>
-          ))}
+          {data.records
+            .filter((r) => effortShown(r.distance_key, format.unit))
+            .map((r) => (
+              <Pressable
+                key={r.distance_key}
+                accessibilityRole="link"
+                onPress={() => open(r.activity_id)}
+                style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
+              >
+                <Text style={{ color: c.accent, fontWeight: '600' }}>
+                  {effortName(r.distance_key)}
+                  {r.previous_s ? (
+                    <Text style={{ color: c.muted, fontWeight: '400' }}>
+                      {' '}
+                      {t('review.beat', { previous: formatDuration(r.previous_s) })}
+                    </Text>
+                  ) : null}
+                </Text>
+                <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                  {formatDuration(r.time_s)}
+                </Text>
+              </Pressable>
+            ))}
         </Card>
       )}
       {data.gear.length > 0 && (

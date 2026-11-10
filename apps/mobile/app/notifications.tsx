@@ -2,7 +2,7 @@
  * Notifications (OS-527): what the engine noticed lately, the same events that send a notification:
  * a new record, an estimate going up, a risky jump in load. Each opens its activity when it has one.
  */
-import { eventsQuery } from '@zankup/core';
+import { eventsQuery, eventShown } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
@@ -23,7 +23,7 @@ export default function NotificationsScreen() {
   const format = useFormat();
   const events = useQuery(eventsQuery(api));
   if (events.isPending) return <Loading />;
-  const list = events.data ?? [];
+  const list = (events.data ?? []).filter((e) => eventShown(e, format.unit));
   return (
     <Screen header>
       {list.length === 0 && <Muted>{t('notifications.empty')}</Muted>}

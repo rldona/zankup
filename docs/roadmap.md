@@ -17,6 +17,7 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 | **6 · Multi-source health** | Sleep, HRV and daily data from Garmin and Google Health (Fitbit Air), without duplicates | Health dashboard | **M6: "I see my recovery, wherever it comes from"** |
 | **7 · AI assistant** | Summaries, analysis and natural-language questions with a small LLM (Claude Haiku 5.5) | Per-activity summary, weekly report and "Coach" chat | **M7: "I ask Zankup how I'm doing"** |
 | **8 · Several people, one Zankup** | More than one person on an instance, each with their own data and keys, and a first run that guides them | Welcome, sample-data screens and per-user keys | **M8: "someone else starts using my Zankup"** |
+| **9 · Web and app in step** | The web catches up with the app, adapted to a large screen, and the app takes what it lacks from the web | Home, activity charts, Goals, Stats, You and Settings on the web as on the app | **M9: "the web is as good as the app"** |
 
 **Size estimate:** S ≈ half a day · M ≈ 1–2 days · L ≈ 3–5 days. Rough totals: M1 ≈ 20–25 working days (phases 0 and 1), M2 ≈ another 30–35.
 
@@ -566,6 +567,63 @@ buffers it the answer arrives whole, which is acceptable at this length.
   - Rough numbers: one person with years of history ≈ 1 GB in total; a new one grows a few MB a month.
 
 **M8 is done when** someone the owner lets in signs up with e-mail, a passkey or Google, goes through the Welcome, sees the app with sample data and an "Enable now" on each section, brings in their activities with their own Garmin key or an import, and never sees the owner's data or settings.
+
+---
+
+## Phase 9 · Web and app in step → **M9**
+
+**Goal:** the web catches up with the app. Since November 2026 every screen was polished on the app first (Home, the activity's charts, Goals, Stats, You, Settings, the Coach, gear, skeletons, sign-in), so the web is now behind. The web gets the same features and the same visual language, **adapted to a large screen rather than copied**: wider layouts, hover where the phone has a tap, keyboard and mouse, side panels instead of bottom sheets.
+
+**Status (10 Nov 2026): planned.** Built from a screen-by-screen comparison of `apps/web` and `apps/mobile`. It is parity only as far as it makes sense: some things belong to one side.
+
+**Stays on the app only:** Health Connect, the home-screen widget, background sync, the device's fingerprint for the session, the keyboard and edge-to-edge handling, and the offline notice as a pill over the tab bar (the web keeps its own banner).
+
+**Stays on the web only:** the advanced search page with every filter (the app gets the useful filters, OS-919), the chart catalogue (`/catalogue`, a development page), the public shared-activity page (`/s/…`), downloading the original FIT/GPX/TCX file, the desktop split of list and detail, and the MCP token management (also on the app, but set up from a computer).
+
+**From the web to the app:** a few gaps run the other way and are part of this phase (OS-919).
+
+- **OS-901 · Decision: what each side keeps for itself** (S) · decision
+  - Write in architecture.md, under "Clients", the list above (app only, web only, both) and the rule for new work: a feature lands on both clients in the same block of work unless it is on one of those lists. The web's layout rule for large screens: content up to about 1100 px wide, two columns where the phone stacks cards (charts side by side, settings with their list on the left), hover replaces the phone's tap for chart readouts.
+- **OS-902 · The app's visual language on the web** (M) · depends on OS-901
+  - The shared card title inside every card with its chips or figure on the right (as `CardTitle` on the app), the same spacing above and below a chart and its legend, pill-shaped buttons with a quieter secondary style, the gap between a field's label and its control, and the hairline borders of the tiles. A single place in `index.css` (and tokens in `packages/core` where they are shared) instead of per-screen tweaks. Every screen afterwards uses it.
+- **OS-903 · Navigation like the app** (M) · depends on OS-901
+  - The web's sections follow the app's tabs: **Home, Activities, Health, Goals, You**, in the sidebar on desktop and in the tab bar on mobile, with Stats, Search, the Coach and Settings reached as on the app (from You, the Home header and the Activities header) while keeping their URLs. The feed moves from `/` to `/activities`, with the list beside the detail on desktop as today; old links keep working.
+- **OS-904 · Home** (L) · depends on OS-902 and OS-903
+  - The app's Home at `/`: this week with the streak, the last day with activities shown only when it is today or yesterday (one card per activity, side by side on desktop instead of swiped), that day's steps, heart rate and HRV (the health card stays even without activities), the last seven days by sport with the health averages, and the metrics (VO₂ max, FTP with W/kg, today's steps, training load). The Coach and notifications in the header. On desktop the widgets sit in a grid.
+- **OS-905 · Loading skeletons** (S) · depends on OS-902
+  - The shapes of what is coming (feed cards, activity, Health, Stats, You) while data loads, as on the app, instead of "Loading…"; and the screens fall back to what was kept when the server is unreachable, without a skeleton over data that is already there.
+- **OS-906 · The latest activity, on arrival** (M) · depends on OS-903
+  - When a new activity has synced since the last visit (at most three days old), a panel on arrival, like the app's bottom sheet: its name and description to edit, its photos with the map beside them, the gear, OK and "Advanced editing". A dialog on desktop, a sheet on mobile; it shows once per activity, and the first visit only remembers.
+- **OS-907 · Activity: each chart on its own card** (L) · depends on OS-902
+  - The unified profile becomes one card per metric (altitude, heart rate, pace or speed, power, cadence…), each with its heading, its own readout and a footer of centred figures (average, max, NP and VI for power, ascent and descent, best pace, GAP…). On desktop the readout follows the mouse and a click pins it; on touch a tap shows it and a tap on it or its line hides it, as the app does. The section switch over the cards, with the section's figures and "save as segment" below them. Power in the light violet of every theme, the speed axis that does not clip on a descent (`rangeOf`, moved to `packages/core` from the app's `track.ts`), and the cursor shared with the map.
+- **OS-908 · Activity: the map's controls on the map** (M) · depends on OS-907
+  - As on the app: play and pause on the map, and an options button that opens what the route is coloured by (with its legend) and the replay speed, so nothing else sits around the map. The header under the map: sport icon, name, date, device and gear, then the figures in two columns and the Coach's summary, which folds with a chevron and remembers it.
+- **OS-909 · Activity: deleting it and the order of its sections** (S) · depends on OS-907
+  - "Delete activity" in the edit dialog, with a confirmation, using `DELETE /api/activities/{id}` (a Garmin activity is not brought back by the next sync). The sections in the app's order: on a ride the heart-rate zones follow the power curve and zones, on a run the splits follow the heart-rate zones; the description and best efforts at the end; every section with the shared card title.
+- **OS-910 · Gear: the habitual one** (S) · depends on OS-902
+  - Marking a pair of shoes or a bike as habitual (one per kind), shown first with the accent border and a "Habitual" badge, and used for new activities of that kind. You's "Gear" tab, which still says "soon", becomes the gear page.
+- **OS-911 · Goals** (M) · depends on OS-903
+  - Goals as their own section, as on the app: the pencil turns on editing (each goal can be changed or deleted) and the + adds one; a goal can be edited, not only deleted. Clicking a goal card opens and closes its evolution, the daily cumulative chart against the target (`GoalChart` on the app), with room between the text and the chart. The form groups each label with its options, with room between the blocks.
+- **OS-912 · Stats: the period and the cards** (M) · depends on OS-902
+  - The period as on the app: last 12 months, a year moved with arrows, a run of months from one to another, or all time. The cards as defined on the app: the volume and best-efforts chips on the title line, the volume total on the right, the aerobic-efficiency chart twice as tall, the summary against last year at the end, and a menu for the reviews, calendar, heatmap, routes and segments. Estimates leave Stats for their own page (OS-913) and goals for Goals (OS-911).
+- **OS-913 · Estimates as their own page** (S) · depends on OS-912
+  - The app's Estimates screen: the main ones (VO₂ max, FTP, threshold pace…) one card each, then the race predictions, reached from You. Replaces the panel in Stats and You's "Estimates" tab.
+- **OS-914 · You and Settings** (M) · depends on OS-903 and OS-910
+  - You as on the app: who you are (editable), a menu to Stats, Estimates, the Coach, Gear, Import, Account and Settings, then this year's summary with the physical data behind an eye that hides them (and remembers it). Settings in the app's sections (general, heart rate and zones, notifications, AI, privacy, health, your data, account), each with its own page; on desktop the list of sections on the left and the open one on the right. Account holds the sign-in methods, passkeys, Google, Garmin, sessions and signing out.
+- **OS-915 · The Coach** (S) · depends on OS-902
+  - As on the app: it opens at the top; a compact weekly report (chips, the recommendation in a soft box, "Read the full report"); "Write last week's report" only when there is none; two example questions under "Suggestions of questions you can ask"; the "the Coach can be wrong" note behind an info icon in the header; a taller, more visible question field; no intro text.
+- **OS-916 · Notifications page** (S) · depends on OS-904
+  - The bell in Home's header opens what the engine noticed lately (new records, estimates going up, risky load jumps), each opening its activity, as the app's Notifications screen. It replaces the events list in Stats.
+- **OS-917 · Health: what the app added** (S) · depends on OS-902
+  - Fetching the health history from Garmin from the Health settings (`POST /api/wellness/history`), the period in a menu in the header, the charts over the whole period with gaps where a day has no data, the chart titles inside the cards, and the sync button in the header.
+- **OS-918 · Sign-in** (S) · depends on OS-902
+  - The app's order: Google first, then the passkey, an "or", then e-mail and password with "Forgot it?"; the e-mail button quieter than Google's; the inputs and buttons styled apart; more room between the greeting and the first button.
+- **OS-919 · What the app is missing from the web** (M) · depends on OS-901
+  - The other direction, as far as it makes sense on a phone: the useful advanced-search filters in Activities (period, distance, time, elevation, with record, with description, with GPS), sorting the results and their summary; the share image (the 1080 × 1350 card of OS-408) next to the link when sharing an activity; and the "Now" figures (form, this week's load against the average) where they fit on Stats.
+- **OS-920 · Parity check** (S) · depends on every other ticket of the phase
+  - Go through both clients screen by screen, on a phone and on a desktop browser, with both languages and every theme, and note anything left; the web tests cover the new screens; architecture.md and the memory of what each side keeps are up to date.
+
+**M9 is done when** someone who uses the app every day opens the web on a computer and finds the same Home, activity, Health, Goals, Stats, You and Settings, laid out for the large screen, with nothing the app has that the web is missing except what OS-901 keeps for the app.
 
 ---
 

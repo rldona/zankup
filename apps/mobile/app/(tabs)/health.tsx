@@ -19,7 +19,8 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../../src/auth';
 import { Chart } from '../../src/charts';
-import { Icon, SourceIcon } from '../../src/Icon';
+import { lastRead, readAndSend } from '../../src/healthConnect';
+import { SourceIcon, SpinningIcon } from '../../src/Icon';
 import { locale, t } from '../../src/i18n';
 import { useTheme } from '../../src/theme';
 import { Button, Card, Choice, Heading, Loading, Muted, Screen, styles as ui } from '../../src/ui';
@@ -67,9 +68,15 @@ export default function HealthScreen() {
     return { start: isoDay(start), end: isoDay(end) };
   }, [period]);
   const days = useQuery(healthDaysQuery(api, range.start, range.end));
+  // Sync: the server fetches Garmin and Google Health in the background, and this phone sends what
+  // Health Connect has (when it was connected). The icon turns until the figures have been reloaded.
   const sync = useMutation({
-    mutationFn: async () => (await api.POST('/api/wellness/sync')).data,
-    onSuccess: () => setTimeout(() => void queryClient.invalidateQueries({ queryKey: ['wellness'] }), 8000),
+    mutationFn: async () => {
+      await api.POST('/api/wellness/sync');
+      if (lastRead()) await readAndSend(api, true).catch(() => null);
+      await new Promise((resolve) => setTimeout(resolve, 8000));
+      await queryClient.refetchQueries({ queryKey: ['wellness'] });
+    },
   });
 
   const list = days.data ?? [];
@@ -80,6 +87,7 @@ export default function HealthScreen() {
   return (
     <Screen
       title={t('nav.health')}
+      busy={sync.isPending}
       actions={
         <Pressable
           accessibilityRole="button"
@@ -88,9 +96,13 @@ export default function HealthScreen() {
           disabled={sync.isPending}
           hitSlop={10}
           onPress={() => sync.mutate()}
-          style={{ opacity: sync.isPending ? 0.4 : 1 }}
         >
-          <Icon name="sync" color={c.fg} size={26} />
+          <SpinningIcon
+            name="sync"
+            color={sync.isPending ? c.accent : c.fg}
+            size={26}
+            spinning={sync.isPending}
+          />
         </Pressable>
       }
     >
@@ -100,7 +112,7 @@ export default function HealthScreen() {
         onChange={setPeriod}
         options={PERIODS.map((p) => ({ value: p, label: t(`health.period.${p}`) }))}
       />
-      {sync.isSuccess && <Muted accessibilityRole="alert">{t('health.syncQueued')}</Muted>}
+      {sync.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
 
       {days.isPending && <Loading />}
       {days.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}

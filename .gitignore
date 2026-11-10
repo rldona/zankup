@@ -38,3 +38,7 @@ dist/
 # Playwright (OS-213)
 test-results/
 playwright-report/
+
+# Firebase service account keys (FCM_SERVICE_ACCOUNT lives in the server environment)
+*firebase-adminsdk*.json
+fcm-service-account.json

@@ -1,6 +1,6 @@
 /**
- * The sections of the Stats tab (OS-519), as in the PWA (OS-311, OS-315 to OS-323): "Now" (form, this
- * week's load, goals, what the engine noticed, estimates), then for the chosen period the summary
+ * The sections of Stats (OS-519), as in the PWA (OS-311, OS-315 to OS-323): the goal card, the
+ * estimates (their own screen, from You), the events' wording (Notifications), then for the period the summary
  * against last year, fitness and form, volume by sport, best-effort curves, records with their
  * progression, the year-over-year line, aerobic efficiency and the comparison with Strava.
  */
@@ -8,7 +8,6 @@ import {
   curvesQuery,
   efficiencyQuery,
   estimatesQuery,
-  eventsQuery,
   fitnessQuery,
   formatDuration,
   formatHoursMinutes,
@@ -18,7 +17,6 @@ import {
   stravaComparisonQuery,
   summaryQuery,
   volumeQuery,
-  weekQuery,
   type EstimateOut,
   type EventOut,
   type GoalOut,
@@ -51,11 +49,6 @@ import { Card, Choice, Heading, Muted, ProgressBar, Stat, styles as ui } from '.
 type Format = ReturnType<typeof useFormat>;
 export type Range = { from: string; to: string };
 
-const isoToday = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
 export function formLabel(tsb: number): MessageKey {
   if (tsb > 5) return 'stats.form.fresh';
   if (tsb > -10) return 'stats.form.neutral';
@@ -76,52 +69,6 @@ function ActivityLink({ id, children }: { id: number; children: string }) {
 }
 
 // --- now ------------------------------------------------------------------------------------------
-
-export function Now() {
-  const api = useApi();
-  const c = useTheme();
-  const [today] = useState(isoToday);
-  const week = useQuery(weekQuery(api, today));
-  const fitness = useQuery(fitnessQuery(api, {}));
-  const now = fitness.data?.at(-1);
-  const average = week.data
-    ? week.data.previous.reduce((s, w) => s + w.moving_s, 0) / (week.data.previous.length || 1)
-    : 0;
-  const share = week.data && average > 0 ? Math.round((week.data.this_week.moving_s / average) * 100) : null;
-  return (
-    <>
-      <Heading>{t('stats.now')}</Heading>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        {now && (
-          <Card style={{ flex: 1 }}>
-            <Text style={{ color: c.muted, fontSize: 12, textTransform: 'uppercase' }}>{t('stats.tsb')}</Text>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
-              {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
-            </Text>
-            <Muted>
-              {t(formLabel(now.tsb))} · {t('stats.ctl')} {now.ctl.toFixed(0)} · {t('stats.atl')}{' '}
-              {now.atl.toFixed(0)}
-            </Muted>
-          </Card>
-        )}
-        {week.data && (
-          <Card style={{ flex: 1 }}>
-            <Text style={{ color: c.muted, fontSize: 12, textTransform: 'uppercase' }}>
-              {t('stats.load')}
-            </Text>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
-              {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
-            </Text>
-            <ProgressBar value={Math.min(150, share ?? 0)} max={150} label={t('stats.load')} />
-            <Muted>{t('stats.loadNote', { average: formatHoursMinutes(average) })}</Muted>
-          </Card>
-        )}
-      </View>
-      <Events />
-      <Estimates />
-    </>
-  );
-}
 
 function goalValue(goal: { metric: string }, value: number, format: Format): string {
   if (goal.metric === 'distance') return format.distance(value);
@@ -213,34 +160,6 @@ export function eventText(e: EventOut, format: Format): string {
     });
   if (e.kind === 'ramp') return t('event.ramp', { ramp: String(p.ramp) });
   return e.kind;
-}
-
-function Events() {
-  const api = useApi();
-  const c = useTheme();
-  const format = useFormat();
-  const events = useQuery(eventsQuery(api));
-  if (!events.data?.length) return null;
-  return (
-    <Card>
-      <Heading>{t('stats.events')}</Heading>
-      {events.data.slice(0, 6).map((e) => {
-        const id = typeof e.payload.activity_id === 'number' ? e.payload.activity_id : null;
-        return (
-          <Pressable
-            key={e.id}
-            disabled={id == null}
-            accessibilityRole={id == null ? 'text' : 'link'}
-            onPress={() => id != null && open(id)}
-            style={{ flexDirection: 'row', paddingVertical: 4, gap: 8 }}
-          >
-            <Text style={{ color: c.fg, flex: 1 }}>{eventText(e, format)}</Text>
-            {id != null && <Text style={{ color: c.muted }}>›</Text>}
-          </Pressable>
-        );
-      })}
-    </Card>
-  );
 }
 
 export function Estimates() {

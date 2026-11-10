@@ -1,7 +1,7 @@
 /**
- * You (OS-508, OS-511, OS-523): who you are (editable), the way to the rest of the app (Stats, the
- * Coach when the server has a model, Gear, Import, Account, Settings), then this year's summary.
- * Estimates live in Stats; the account in Settings › Account.
+ * You (OS-508, OS-511, OS-523): who you are (editable), the way to the rest of the app (Stats,
+ * Estimates, the Coach when the server has a model, Gear, Import, Account, Settings), then this year's summary.
+ * The account lives in Settings › Account.
  */
 import { aiStatusQuery, meQuery, profileSummaryQuery } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
@@ -32,6 +32,11 @@ export default function ProfileScreen() {
           icon={<Icon name="bar_chart" color={c.fg} />}
           label={t('nav.stats')}
           onPress={() => router.push('/stats')}
+        />
+        <MenuRow
+          icon={<Icon name="speed" color={c.fg} />}
+          label={t('stats.estimates')}
+          onPress={() => router.push('/estimates')}
         />
         {ai.data?.available && (
           <MenuRow

@@ -28,7 +28,7 @@ const RUN = {
 describe('leaving an activity', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('does not crash when the profile chart goes away', async () => {
+  it("does not crash when the activity's charts go away", async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: Request) => {
@@ -58,7 +58,7 @@ describe('leaving an activity', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const router = createMemoryRouter(routes, { initialEntries: ['/activities/7'] });
     render(<App queryClient={queryClient} router={router} />);
-    await waitFor(() => expect(document.querySelector('.profile svg')).not.toBeNull(), { timeout: 4000 });
+    await waitFor(() => expect(document.querySelector('.chartcard svg')).not.toBeNull(), { timeout: 4000 });
 
     await act(() => router.navigate('/settings'));
     expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();

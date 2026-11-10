@@ -194,9 +194,11 @@ export function GoalChart({
                           key={`${v}-${i}`}
                           cx={x(i)}
                           cy={y(v)}
-                          r={1.8}
+                          r={radius}
                           color={c.muted}
-                          opacity={0.45}
+                          opacity={0.4}
+                          style="stroke"
+                          strokeWidth={1.5}
                         />
                       )),
                     )}

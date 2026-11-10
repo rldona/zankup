@@ -520,6 +520,8 @@
   "goals.doneEditing": "Hecho",
   "goals.edit": "Editar",
   "goals.editTitle": "Editar objetivo",
+  "goals.showChart": "Ver evolución",
+  "goals.hideChart": "Ocultar evolución",
   "goals.delete": "Borrar",
   "settings.zones": "Zonas",
   "settings.zoneModel": "Zonas de frecuencia cardiaca",

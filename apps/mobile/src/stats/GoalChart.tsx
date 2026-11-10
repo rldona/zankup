@@ -1,10 +1,10 @@
 /**
- * A goal day by day, drawn like a progress chart: a line through what was done so far each day of a
- * weekly goal (each day of a month, each month of a year) over a solid fill, ringed points in the
- * line's colour (with a faint dashed diagonal for a steady pace to the target), round values on the right
- * and the days underneath. Today's point is filled with a cursor; touching or sliding picks another.
- * Days still to come have no point. The days come from the calendar the Stats screen already reads,
- * so the server needs nothing new.
+ * A goal day by day: a line through what each day of a weekly goal added (each day of a month, each
+ * month of a year), down to zero on a day with nothing, over a solid fill, with the day's share of the
+ * target as a dashed line. Days with something done are green, the others grey rings; round values on
+ * the right and the days underneath. Today's point is picked with a cursor and the value above gives
+ * the day's amount and the total so far; touching or sliding picks another. Days still to come have no
+ * point. The days come from the calendar the Stats screen already reads, so the server needs nothing new.
  */
 import { calendarQuery, type CalendarDay, type GoalOut } from '@zankup/core';
 import { Canvas, Circle, DashPathEffect, Group, Line, Path, vec } from '@shopify/react-native-skia';
@@ -139,7 +139,11 @@ export function GoalChart({
   const bottom = height - 14;
   const axis = 52;
   const plot = Math.max(0, width - axis);
-  const scale = niceScale([0, Math.max(goal.target, ...points.map((p) => p.done)) || 1], 2);
+  // Each point is what that day (or month) added; the dashed line is its share of the target.
+  const share = points.length ? goal.target / points.length : goal.target;
+  // Sessions come whole: a count's axis goes at least to 2, so its marks are 0, 1, 2.
+  const floor = goal.metric === 'count' ? 2 : 0;
+  const scale = niceScale([0, Math.max(floor, share, ...points.map((p) => p.own)) || 1], 2);
   const [, hi] = scale.domain;
   const slot = points.length ? plot / points.length : 0;
   const x = (i: number) => slot * i + slot / 2;
@@ -149,9 +153,9 @@ export function GoalChart({
 
   const shown = points.slice(0, past);
   // The line starts from zero at the very start of the period, where the dashed diagonal starts.
-  const line = shown.length ? `M0 ${y(0)}${shown.map((p, i) => `L${x(i)} ${y(p.done)}`).join('')}` : '';
+  const line = shown.length ? `M0 ${y(0)}${shown.map((p, i) => `L${x(i)} ${y(p.own)}`).join('')}` : '';
   // No fill while nothing is done: a shape with no height breaks the whole canvas.
-  const area = shown.some((p) => p.done > 0) ? `${line}L${x(shown.length - 1)} ${bottom}L0 ${bottom}Z` : '';
+  const area = shown.some((p) => p.own > 0) ? `${line}L${x(shown.length - 1)} ${bottom}L0 ${bottom}Z` : '';
   const colour = String(c.accent);
 
   const pick = (px: number) => {
@@ -229,11 +233,11 @@ export function GoalChart({
                     ),
                   )}
                   <Line
-                    p1={vec(0, y(0))}
-                    p2={vec(plot, y(goal.target))}
+                    p1={vec(0, y(share))}
+                    p2={vec(plot, y(share))}
                     color={c.muted}
                     strokeWidth={1}
-                    opacity={0.5}
+                    opacity={0.7}
                   >
                     <DashPathEffect intervals={[4, 4]} />
                   </Line>
@@ -254,15 +258,15 @@ export function GoalChart({
                     const tint = p.own > 0 ? colour : c.muted;
                     return i === current ? (
                       <Group key={i}>
-                        <Circle cx={x(i)} cy={y(p.done)} r={radius * 2.2} color={tint} opacity={0.3} />
-                        <Circle cx={x(i)} cy={y(p.done)} r={radius + 1} color={tint} />
+                        <Circle cx={x(i)} cy={y(p.own)} r={radius * 2.2} color={tint} opacity={0.3} />
+                        <Circle cx={x(i)} cy={y(p.own)} r={radius + 1} color={tint} />
                       </Group>
                     ) : (
                       <Group key={i}>
-                        <Circle cx={x(i)} cy={y(p.done)} r={radius} color={c.surface} />
+                        <Circle cx={x(i)} cy={y(p.own)} r={radius} color={c.surface} />
                         <Circle
                           cx={x(i)}
-                          cy={y(p.done)}
+                          cy={y(p.own)}
                           r={radius}
                           color={tint}
                           style="stroke"

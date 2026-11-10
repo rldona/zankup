@@ -16,6 +16,7 @@ References: [architecture.md](architecture.md) · [findings.md](findings.md) · 
 | **5 · Android app (React Native)** | Expo app on the shared code, background sync and FCM (stack confirmed by the OS-501 proof of concept at the start of phase 2) | App on the Play Store (internal testing) | **M5: Android app** |
 | **6 · Multi-source health** | Sleep, HRV and daily data from Garmin and Google Health (Fitbit Air), without duplicates | Health dashboard | **M6: "I see my recovery, wherever it comes from"** |
 | **7 · AI assistant** | Summaries, analysis and natural-language questions with a small LLM (Claude Haiku 5.5) | Per-activity summary, weekly report and "Coach" chat | **M7: "I ask Zankup how I'm doing"** |
+| **8 · Several people, one Zankup** | More than one person on an instance, each with their own data and keys, and a first run that guides them | Welcome, sample-data screens and per-user keys | **M8: "someone else starts using my Zankup"** |
 
 **Size estimate:** S ≈ half a day · M ≈ 1–2 days · L ≈ 3–5 days. Rough totals: M1 ≈ 20–25 working days (phases 0 and 1), M2 ≈ another 30–35.
 
@@ -511,6 +512,57 @@ buffers it the answer arrives whole, which is acceptable at this length.
   - Works without an Anthropic key: the assistant you use brings its own model.
 
 **M7 is done when** every new activity arrives with its summary, the weekly report arrives on Monday and the Coach answers questions like "how am I doing for a 10K?" with correct numbers.
+
+## Phase 8 · Several people, one Zankup → **M8**
+
+**Goal:** more than one person can use the same instance (api.zankup.com), each with their own data, their own service keys and a first run that tells them exactly what to do, without the owner paying for anyone else's AI, e-mail or Garmin.
+
+**Status (10 Nov 2026): in design, not started.** It replaces the "one user per instance" decision (architecture.md, principle 5) that the owner made at the start and now wants to change. Every user-owned table already has `user_id` and every query filters by it (OS-D04), so the data model is ready; what changes is who can sign up, which settings belong to whom and what a new person sees.
+
+**Agreed so far:**
+- **Each user brings their own keys:** Garmin's Personal API key, Anthropic (the Coach) and Resend (e-mail alerts) become per-user instead of instance keys. The owner pays only for hosting: Railway compute, database, storage and backups, which grow slowly with each person.
+- **Sign-up and sign-in with Google or a passkey only.** Google verifies the e-mail and a passkey cannot be forgotten, so no account e-mails (verification, password reset) are needed and the instance needs no Resend of its own for other people. E-mail and password stay for the owner.
+- **Google OAuth:** sign-in asks only for basic scopes (`openid email profile`), which go to production with at most a light brand verification, as in LoverCast with Supabase. Cloud Google Health asks for sensitive health scopes, which need Google's full verification: other people use **Health Connect** on their phone instead, and cloud Google Health stays for the owner while the OAuth client is in Testing (its test users are added by hand, up to 100).
+- **An admin role** for the instance-wide settings (server keys and defaults, backups, alerts, sync interval…); everyone else sees only their own settings.
+- **A Welcome** that separates what is required from what is optional, with instructions and links for each required step.
+- **Sample-data screens:** until a section has real data it shows the app's structure with realistic sample data, faded, labelled "Example" and completely inactive, with an "Enable now" button that explains how to turn it on. Never a blank page or a row of zeros.
+
+**Open:** who can sign up: an invitation from the owner, a list of allowed e-mails, or open sign-up.
+
+**Not part of M8, decided elsewhere:** how the Android app is distributed. Today one APK signs in to api.zankup.com only (`OTHER_INSTANCES = false` in `SignIn.tsx`), and its notifications go through the owner's Firebase project, so another instance's users would get none; when distribution changes, either each self-hoster builds with their own Firebase project or api.zankup.com relays notifications for other instances.
+
+- **OS-801 · Decision: several users per instance** (S) · decision
+  - Update architecture.md (principle 5 and "No payments") and self-hosting.md: what is per user and what is per instance, the admin role, who pays for what, and why sign-up is Google or passkey only. Settle the open question on who can sign up.
+- **OS-802 · Admin role and the instance's settings** (M) · depends on OS-801
+  - An `is_admin` flag (the owner, from setup). `/api/instance` and the instance keys become admin-only; the Settings sections that hold them (Zankup Coach model and budget, backups, alerts, sync interval, Google Health switch) show only to the admin, on the app and the web. The scheduler stops assuming a single owner (`owner_email`) and works per user.
+- **OS-803 · Service keys per user** (L) · depends on OS-802
+  - Garmin, Anthropic and Resend keys move from `instance_keys` to per-user keys, encrypted the same way, with the instance's keys as the owner's (and, where the admin allows it, a fallback). Garmin's sync, health and expiry alerts, the Coach, summaries, the weekly report and the alerts all resolve the key of the user they work for. A migration moves today's instance keys to the owner.
+- **OS-804 · Sign-up with Google or a passkey** (M) · depends on OS-801
+  - A new person creates their account with Google (the account is created from the verified e-mail and `sub`) or with a passkey, according to the rule chosen in OS-801 (invitation, allowed e-mails or open). Today an unlinked Google account is rejected with a generic message; the message for someone without access should say the instance is private rather than "link it in your profile". Rate limits on sign-up.
+- **OS-805 · The Coach per user** (S) · depends on OS-803
+  - With the user's own Anthropic key: their own monthly budget and model, their own MCP tokens; without a key, the Coach stays hidden for that user only.
+- **OS-806 · E-mail alerts per user** (S) · depends on OS-803
+  - Garmin sync failures, key expiry and the weekly report by e-mail go out with the user's own Resend key to their own address; without it they arrive as app and web notifications only.
+- **OS-807 · Health sources for other people** (S) · depends on OS-802
+  - Health Connect on the phone as the main source for everyone; Garmin health with the user's own key; cloud Google Health offered only to the admin (or to the OAuth client's test users) until its verification is worth doing. The Health screen and its settings say which sources each person can use.
+- **OS-808 · Welcome** (L) · depends on OS-803 and OS-804
+  - A first run, on the app and the web, before the rest of the app:
+    1. **You** (required): name and photo (from Google when signing in with it), birth date, weight, max HR and sports. Without them there are no zones, load or reliable estimates.
+    2. **Your activities** (required, at least one): the Garmin Personal API key (where to get it in Garmin Connect, with the link; what to copy and paste; when it expires and how to renew it), importing FIT, GPX or TCX files (where each platform lets you download them), or the Strava export (how to request it on strava.com, how long it takes and uploading the ZIP).
+    3. **Optional**, clearly marked and each with what it adds: Zankup Coach (Anthropic key), e-mail alerts (Resend key), health (Health Connect, Garmin, Google Health).
+  - Anything optional can be skipped and turned on later from Settings; what is required keeps the first-steps card (OS-810) until it is done.
+- **OS-809 · Sample-data screens** (L) · depends on OS-808
+  - Until a section has real data it shows the app with realistic sample data: a week with a couple of runs and a ride, a night's sleep lanes, HRV and readiness charts, a goal halfway, VO₂ max and FTP. Faded and labelled **"Example"** so it is never taken for real data, and **completely inactive, with no logic**: static pictures that cannot be tapped (no opening the sample activity, no chart readout) and that call no API.
+  - Over each section, what it will hold ("Your activities will show here", "Here you'll see your sleep") and an **Enable now** button, the only thing that responds, which opens a dialog with that section's steps and links (connect Health Connect, add the Garmin key, import, "you need runs with heart rate"…).
+  - As soon as a section gets real data its sample goes; the others stay until they are turned on. Home, Activities, Health, Stats, Goals and the metrics cards, on the app and the web.
+- **OS-810 · First steps on Home** (M) · depends on OS-808
+  - A card that lists what is left (first activity, health connected, physical data, first goal…) and ticks itself off as each one happens; it goes when everything required is done.
+- **OS-811 · Running for several people** (M) · depends on OS-802
+  - Syncs, health fetches, metrics and backups per user without one person's history slowing everyone else (fair queues, limits per user), storage per user visible to the admin, and the edge's 429s (Railway) kept in mind: the apps already fall back to what they kept.
+- **OS-812 · Privacy for people who are not the owner** (M) · depends on OS-804
+  - A privacy policy page (what is stored, where, who can see it: the admin cannot read anyone else's data in the apps), self-service export and account deletion for every user (they exist for the owner), and deleting a user removes their files, photos and keys.
+
+**M8 is done when** someone the owner lets in signs up with Google or a passkey, goes through the Welcome, sees the app with sample data and an "Enable now" on each section, brings in their activities with their own Garmin key or an import, and never sees the owner's data or settings.
 
 ---
 

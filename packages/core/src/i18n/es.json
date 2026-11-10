@@ -880,6 +880,8 @@
   "weekly.pending": "Escribiéndose…",
   "weekly.failed": "No se pudo escribir el informe.",
   "weekly.recommendation": "Para la semana que viene",
+  "weekly.more": "Leer el informe completo",
+  "weekly.less": "Ver menos",
   "weekly.none": "El primer informe llega el lunes que viene.",
   "mcp.title": "Conectar un asistente de IA (MCP)",
   "mcp.help": "Claude o cualquier otro asistente que hable MCP puede preguntar a Zankup por tu entrenamiento, sólo lectura y con los mismos límites que el coach: números agregados, nunca tu ubicación. Crea un token y dáselo al asistente como bearer token para la URL del servidor.",

@@ -25,7 +25,7 @@ import { blocks, pieces, readEvents } from '../src/coach';
 import { locale, t } from '../src/i18n';
 import { accessToken, instanceUrl } from '../src/session';
 import { useTheme } from '../src/theme';
-import { accent, Body, Button, Card, Heading, Muted, onAccent, styles as ui } from '../src/ui';
+import { accent, Body, Button, Card, CardTitle, Muted, onAccent, styles as ui } from '../src/ui';
 
 type Turn = { role: 'user' | 'assistant'; content: string; error?: string };
 
@@ -77,31 +77,76 @@ function Weekly() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: weeklyReportsQuery(api).queryKey }),
   });
   const latest: WeeklyReport | undefined = reports.data?.[0];
+  // The long text waits behind a link: the headline, the highlights and next week's advice say most.
+  const [full, setFull] = useState(false);
   if (!reports.data) return null;
   return (
     <Card>
-      <Heading>{t('weekly.title')}</Heading>
-      {latest && <Muted>{t('weekly.week', { date: day(latest.week_start) })}</Muted>}
+      <CardTitle>{t('weekly.title')}</CardTitle>
+      {latest && (
+        <Muted style={{ marginTop: -8 }}>{t('weekly.week', { date: day(latest.week_start) })}</Muted>
+      )}
       {!latest && <Muted>{t('weekly.none')}</Muted>}
       {latest?.status === 'pending' && <Muted>{t('weekly.pending')}</Muted>}
       {latest?.status === 'failed' && <Muted accessibilityRole="alert">{t('weekly.failed')}</Muted>}
       {latest?.status === 'done' && (
         <>
-          <Text style={{ color: c.fg, fontSize: 16, fontWeight: '700' }}>{latest.headline}</Text>
-          <Body>{latest.summary}</Body>
-          {latest.highlights?.map((item) => (
-            <Body key={item}>• {item}</Body>
-          ))}
-          {latest.recommendation && (
-            <Body>
-              <Text style={{ fontWeight: '700' }}>{t('weekly.recommendation')}:</Text> {latest.recommendation}
-            </Body>
+          <Text style={{ color: c.fg, fontSize: 18, fontWeight: '700' }}>{latest.headline}</Text>
+          {(latest.highlights?.length ?? 0) > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {latest.highlights?.map((item) => (
+                <Text
+                  key={item}
+                  style={{
+                    color: c.fg,
+                    fontSize: 13,
+                    paddingHorizontal: 10,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                    backgroundColor: c.surface2,
+                  }}
+                >
+                  {item}
+                </Text>
+              ))}
+            </View>
           )}
+          {latest.recommendation && (
+            <View style={{ backgroundColor: c.accentSoft, borderRadius: 12, padding: 12, gap: 4 }}>
+              <Text style={{ color: c.fg, fontWeight: '700' }}>{t('weekly.recommendation')}</Text>
+              <Body>{latest.recommendation}</Body>
+            </View>
+          )}
+          {full && <Body>{latest.summary}</Body>}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: full }}
+            onPress={() => setFull(!full)}
+            hitSlop={8}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' }}
+          >
+            <Text style={{ color: c.accent, fontWeight: '600' }}>
+              {t(full ? 'weekly.less' : 'weekly.more')}
+            </Text>
+            <Icon
+              name={full ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+              color={String(c.accent)}
+              size={20}
+            />
+          </Pressable>
         </>
       )}
-      <Button onPress={() => write.mutate()} disabled={write.isPending}>
-        {write.isPending ? t('coach.thinking') : t('weekly.generate')}
-      </Button>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => write.mutate()}
+        disabled={write.isPending}
+        hitSlop={8}
+        style={{ alignSelf: 'center', paddingTop: 6, opacity: write.isPending ? 0.5 : 1 }}
+      >
+        <Text style={{ color: c.muted, fontSize: 13, textDecorationLine: 'underline' }}>
+          {write.isPending ? t('coach.thinking') : t('weekly.generate')}
+        </Text>
+      </Pressable>
       {write.isError && <Muted accessibilityRole="alert">{t('weekly.failed')}</Muted>}
     </Card>
   );
@@ -197,7 +242,10 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
           ref={scroll}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={ui.page}
-          onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
+          // Only a conversation follows its newest message: on opening, the report shows from the top.
+          onContentSizeChange={() => {
+            if (turns.length > 0) scroll.current?.scrollToEnd({ animated: true });
+          }}
         >
           {weekly && turns.length === 0 && <Weekly />}
           {budgetSpent && <Muted accessibilityRole="alert">{t('coach.budget')}</Muted>}

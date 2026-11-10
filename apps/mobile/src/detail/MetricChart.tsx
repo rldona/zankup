@@ -260,7 +260,7 @@ export const MetricChart = memo(function MetricChart({
             <Group transform={[{ translateX: left }]}>
               <Rect x={bandX} y={0} width={bandW} height={height} color={colors.band} />
               <Path path={fill} color={series.color} opacity={0.22} />
-              <Path path={line} color={series.color} style="stroke" strokeWidth={1.5} strokeJoin="round" />
+              <Path path={line} color={series.color} style="stroke" strokeWidth={2.2} strokeJoin="round" />
               <Line p1={p1} p2={p2} color={colors.cursor} strokeWidth={1.5} />
             </Group>
           </Canvas>

@@ -43,8 +43,8 @@ export function MenuButton<T extends string>({
               position: 'absolute',
               top: insets.top + 52,
               right: 12,
-              minWidth: 190,
-              paddingVertical: 6,
+              minWidth: 220,
+              paddingVertical: 8,
               borderRadius: 14,
               backgroundColor: c.surface,
               borderWidth: 1,
@@ -71,11 +71,13 @@ export function MenuButton<T extends string>({
                     alignItems: 'center',
                     gap: 12,
                     paddingHorizontal: 16,
-                    paddingVertical: 12,
+                    paddingVertical: 13,
                     backgroundColor: pressed ? c.surface2 : 'transparent',
                   })}
                 >
-                  <Text style={{ color: c.fg, fontSize: 16, flex: 1 }}>{o.label}</Text>
+                  <Text numberOfLines={1} style={{ color: c.fg, fontSize: 16, flexGrow: 1 }}>
+                    {o.label}
+                  </Text>
                   {on && <Icon name="check" color={c.accent} size={20} />}
                 </Pressable>
               );

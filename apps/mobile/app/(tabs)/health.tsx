@@ -94,6 +94,19 @@ export default function HealthScreen() {
   const lastNight = [...list].reverse().find((d) => d.sleep);
   const latest = list.at(-1);
   const nights = list.filter((d) => d.sleep);
+  // The charts run over the whole period chosen, a gap where a day has no data, so a year shows where
+  // the history starts instead of stretching the last weeks across the width.
+  const span = useMemo(() => {
+    const byDay = new Map((days.data ?? []).map((d) => [d.day, d]));
+    const out: HealthDay[] = [];
+    const day = new Date(`${range.start}T00:00:00Z`);
+    const last = new Date(`${range.end}T00:00:00Z`);
+    for (; day < last; day.setUTCDate(day.getUTCDate() + 1)) {
+      const key = day.toISOString().slice(0, 10);
+      out.push(byDay.get(key) ?? ({ day: key } as HealthDay));
+    }
+    return out;
+  }, [days.data, range]);
 
   return (
     <Screen
@@ -152,7 +165,7 @@ export default function HealthScreen() {
           <Heading>{t('health.sleep')}</Heading>
           <Card>
             <Chart
-              days={nights.map((d) => shortDay(d.day))}
+              days={span.map((d) => shortDay(d.day))}
               label={t('health.sleepSummary', {
                 hours: one(hours(nights.at(-1)?.sleep?.asleep_s)),
                 score: nights.at(-1)?.sleep?.score ?? '–',
@@ -164,25 +177,25 @@ export default function HealthScreen() {
                     {
                       label: t('health.stage.deep'),
                       color: c.sleepDeep,
-                      values: nights.map((d) => hours(d.sleep?.deep_s)),
+                      values: span.map((d) => hours(d.sleep?.deep_s)),
                     },
                     {
                       label: t('health.stage.rem'),
                       color: c.sleepRem,
-                      values: nights.map((d) => hours(d.sleep?.rem_s)),
+                      values: span.map((d) => hours(d.sleep?.rem_s)),
                     },
                     {
                       label: t('health.stage.light'),
                       color: c.sleepLight,
                       // A night without stages shows its whole sleep as light, as in the PWA.
-                      values: nights.map((d) =>
+                      values: span.map((d) =>
                         d.sleep?.deep_s != null ? hours(d.sleep.light_s) : hours(d.sleep?.asleep_s),
                       ),
                     },
                     {
                       label: t('health.stage.awake'),
                       color: c.sleepAwake,
-                      values: nights.map((d) => hours(d.sleep?.awake_s)),
+                      values: span.map((d) => hours(d.sleep?.awake_s)),
                     },
                   ],
                 },
@@ -190,7 +203,7 @@ export default function HealthScreen() {
                   kind: 'line',
                   label: t('health.score'),
                   color: c.fg,
-                  values: nights.map((d) => d.sleep?.score),
+                  values: span.map((d) => d.sleep?.score),
                   domain: [0, 100],
                 },
               ]}
@@ -203,20 +216,20 @@ export default function HealthScreen() {
           <Heading>{t('health.heart')}</Heading>
           <Card>
             <Chart
-              days={list.map((d) => shortDay(d.day))}
+              days={span.map((d) => shortDay(d.day))}
               label={`${t('health.hrv')} ${latest?.hrv?.value.toFixed(0) ?? '–'} ms, ${t('health.restingHr')} ${latest?.resting_hr?.value.toFixed(0) ?? '–'} bpm`}
               layers={[
                 {
                   kind: 'line',
                   label: `${t('health.hrv')} (ms)`,
                   color: c.hrv,
-                  values: list.map((d) => d.hrv?.value),
+                  values: span.map((d) => d.hrv?.value),
                 },
                 {
                   kind: 'line',
                   label: `${t('health.restingHr')} (bpm)`,
                   color: c.zone5,
-                  values: list.map((d) => d.resting_hr?.value),
+                  values: span.map((d) => d.resting_hr?.value),
                 },
               ]}
             />
@@ -224,7 +237,7 @@ export default function HealthScreen() {
           <Heading>{t('health.readinessAndForm')}</Heading>
           <Card>
             <Chart
-              days={list.map((d) => shortDay(d.day))}
+              days={span.map((d) => shortDay(d.day))}
               label={
                 latest?.readiness
                   ? `${t('health.readiness')} ${latest.readiness.score}`
@@ -237,12 +250,12 @@ export default function HealthScreen() {
                     {
                       label: t('stats.tsb'),
                       color: c.formPositive,
-                      values: list.map((d) => ((d.tsb ?? 0) >= 0 ? d.tsb : null)),
+                      values: span.map((d) => ((d.tsb ?? 0) >= 0 ? d.tsb : null)),
                     },
                     {
                       label: `${t('stats.tsb')} < 0`,
                       color: c.formNegative,
-                      values: list.map((d) => ((d.tsb ?? 0) < 0 ? d.tsb : null)),
+                      values: span.map((d) => ((d.tsb ?? 0) < 0 ? d.tsb : null)),
                     },
                   ],
                 },
@@ -250,7 +263,7 @@ export default function HealthScreen() {
                   kind: 'line',
                   label: t('health.readiness'),
                   color: c.accent,
-                  values: list.map((d) => d.readiness?.score),
+                  values: span.map((d) => d.readiness?.score),
                   domain: [0, 100],
                 },
               ]}

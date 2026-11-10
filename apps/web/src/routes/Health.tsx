@@ -18,6 +18,7 @@ import { SleepTiles, StageLanes } from '../health/SleepNight';
 import { locale, t } from '../i18n';
 import { useResolvedTheme } from '../theme';
 import { localToday } from '../week/today';
+import { HealthSkeleton } from '../Skeleton';
 
 const PERIODS = { '30': 30, '90': 90, '365': 365 } as const;
 type PeriodKey = keyof typeof PERIODS;
@@ -97,7 +98,7 @@ export function Health() {
         </button>
       </div>
 
-      {days.isPending && <p className="note">{t('common.loading')}</p>}
+      {days.isPending && <HealthSkeleton />}
       {days.isError && <p className="warn">{t('common.error')}</p>}
       {days.isSuccess && list.length === 0 && (
         <div className="panel empty">

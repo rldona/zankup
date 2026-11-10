@@ -8,6 +8,7 @@ import { Camera, GeoJSONSource, Layer, Map } from '@maplibre/maplibre-react-nati
 import { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 
+import { useMapCover } from '../MapCover';
 import { colouredSegments, lineFeature, positionAt, rampExpression, type Track } from './track';
 
 const STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/positron';
@@ -46,35 +47,40 @@ export const RouteMap = memo(function RouteMap({
     () => (bbox && bbox.length === 4 ? [bbox[1], bbox[0], bbox[3], bbox[2]] : undefined),
     [bbox],
   );
+  const { cover, reveal } = useMapCover(dark);
   return (
-    <Map
-      style={StyleSheet.absoluteFill}
-      mapStyle={dark ? STYLE_DARK : STYLE_LIGHT}
-      attribution
-      logo={false}
-      compass={false}
-      scaleBar={false}
-      touchRotate={false}
-      touchPitch={false}
-      onDidFinishLoadingMap={onReady}
-    >
-      {bounds && (
-        <Camera initialViewState={{ bounds, padding: { top: 32, right: 32, bottom: 32, left: 32 } }} />
-      )}
-      <GeoJSONSource id="route" data={route} tolerance={0}>
-        <Layer
-          type="line"
-          id="route-line"
-          layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{
-            'line-color': coloured && range ? rampExpression(range, colors.route) : colors.route,
-            'line-width': 3.5,
-          }}
-        />
-      </GeoJSONSource>
-      <SectionLine track={track} section={section} color={colors.section} />
-      <CursorPoint track={track} cursor={cursor} color={colors.cursor} />
-    </Map>
+    <>
+      <Map
+        style={StyleSheet.absoluteFill}
+        mapStyle={dark ? STYLE_DARK : STYLE_LIGHT}
+        attribution
+        logo={false}
+        compass={false}
+        scaleBar={false}
+        touchRotate={false}
+        touchPitch={false}
+        onDidFinishLoadingStyle={reveal}
+        onDidFinishLoadingMap={onReady}
+      >
+        {bounds && (
+          <Camera initialViewState={{ bounds, padding: { top: 32, right: 32, bottom: 32, left: 32 } }} />
+        )}
+        <GeoJSONSource id="route" data={route} tolerance={0}>
+          <Layer
+            type="line"
+            id="route-line"
+            layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+            paint={{
+              'line-color': coloured && range ? rampExpression(range, colors.route) : colors.route,
+              'line-width': 3.5,
+            }}
+          />
+        </GeoJSONSource>
+        <SectionLine track={track} section={section} color={colors.section} />
+        <CursorPoint track={track} cursor={cursor} color={colors.cursor} />
+      </Map>
+      {cover}
+    </>
   );
 });
 

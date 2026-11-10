@@ -5,7 +5,7 @@
  * What follows the finger (cursor line, value, section band) runs on the UI thread from shared values.
  */
 import { Canvas, DashPathEffect, Group, Line, Path, Rect, Skia, vec } from '@shopify/react-native-skia';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { type SharedValue, useAnimatedProps, useDerivedValue } from 'react-native-reanimated';
@@ -71,7 +71,7 @@ function rangeOf(values: (number | null)[], fromZero: boolean): [number, number]
   return hi > lo ? [lo, hi] : [lo, lo + 1];
 }
 
-export function MetricChart({
+export const MetricChart = memo(function MetricChart({
   track,
   series,
   width,
@@ -280,7 +280,7 @@ export function MetricChart({
       </GestureDetector>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 6 },

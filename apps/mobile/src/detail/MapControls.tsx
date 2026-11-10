@@ -25,6 +25,8 @@ type Props<M extends string> = {
 export function MapControls<M extends string>({ replay, metric, metrics, onMetric, legend }: Props<M>) {
   const c = useTheme();
   const [open, setOpen] = useState(false);
+  // The chip lights up at once, while the map catches up with the new colouring.
+  const [picked, setPicked] = useState<M | null>(null);
   const button = {
     width: 40,
     height: 40,
@@ -123,8 +125,11 @@ export function MapControls<M extends string>({ replay, metric, metrics, onMetri
                   <Text style={{ color: c.muted, fontSize: 13 }}>{t('activity.colourBy')}</Text>
                   <Choice
                     label={t('activity.colourBy')}
-                    value={metric}
-                    onChange={onMetric}
+                    value={picked ?? metric}
+                    onChange={(m) => {
+                      setPicked(m);
+                      onMetric(m);
+                    }}
                     options={metrics}
                   />
                 </View>

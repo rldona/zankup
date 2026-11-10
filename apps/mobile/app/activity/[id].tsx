@@ -22,7 +22,7 @@ import {
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
@@ -107,6 +107,12 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
     [cursor],
   );
 
+  const chartColors = useMemo(
+    () => ({ cursor: c.fg, band: `${String(c.accent)}33`, grid: c.line, muted: c.muted, fg: c.fg }),
+    [c],
+  );
+  // The chip answers at once; recolouring the route follows when the phone has a moment.
+  const chooseMetric = useCallback((m: Metric) => startTransition(() => setChosen(m)), []);
   const replay = useReplay(track?.t ?? NO_TIMES, replayTo);
   const inverted = pace && metric === 'speed';
 
@@ -222,7 +228,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             replay={replay}
             metric={metric}
             metrics={metrics.map((x) => ({ value: x, label: metricLabel(x) }))}
-            onMetric={setChosen}
+            onMetric={chooseMetric}
             legend={
               colouring && metric
                 ? {
@@ -286,13 +292,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
                 onSelection={onSelection}
                 unit={units === 'imperial' ? 1609.344 : 1000}
                 unitLabel={units === 'imperial' ? 'mi' : 'km'}
-                colors={{
-                  cursor: c.fg,
-                  band: `${String(c.accent)}33`,
-                  grid: c.line,
-                  muted: c.muted,
-                  fg: c.fg,
-                }}
+                colors={chartColors}
               />
             ))}
             {stats && (
@@ -350,11 +350,11 @@ function Figures({ main, more }: { main: [string, string][]; more: [string, stri
     return (
       <View style={{ flexDirection: 'row' }}>
         {[items.slice(0, half), items.slice(half)].map((column, n) => (
-          <View key={n} style={{ flex: 1, gap: 14 }}>
+          <View key={n} style={{ flex: 1, gap: 10 }}>
             {column.map(([label, value]) => (
               <View key={label} accessible style={{ alignItems: 'center' }}>
-                <Text style={{ color: c.muted, fontSize: 14 }}>{label}</Text>
-                <Text style={{ color: c.fg, fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                <Text style={{ color: c.muted, fontSize: 12 }}>{label}</Text>
+                <Text style={{ color: c.fg, fontSize: 19, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
                   {value}
                 </Text>
               </View>

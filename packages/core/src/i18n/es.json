@@ -150,8 +150,6 @@
   "activity.fig.ascent": "Desnivel positivo",
   "activity.fig.more": "Más datos",
   "activity.fig.less": "Menos datos",
-  "activity.equipmentUsed": "Equipo usado",
-  "activity.gearUsed": "Material usado",
   "activity.mapOptions": "Opciones del mapa",
   "activity.colourBy": "Colorear por",
   "activity.hint": "Pasa por la gráfica o por el recorrido. Arrastra sobre la gráfica para elegir un tramo.",

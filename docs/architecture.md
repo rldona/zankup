@@ -374,6 +374,8 @@ Until November 2026 the web led and the app followed; then the app took the lead
 
 **Large screens.** The web is not the phone stretched: content up to about 1100 px wide; two columns where the phone stacks cards (charts side by side, the list of Settings sections beside the open one, Home's widgets in a grid); hover replaces the phone's tap for a chart's readout, and a click pins it; dialogs and side panels instead of bottom sheets. Below 1024 px the web follows the phone's layout.
 
+**Phase 9 as built (Nov 2026).** The web has the app's sections (Home, Activities, Health, Goals, You), Home, the activity with one card per chart and its map controls, the latest activity on arrival, Goals with their daily chart, Stats with the app's period, Estimates, You and Settings in sections, the Coach, Notifications, skeletons and the sign-in order. What both draw is worked out once in `packages/core`: Home's figures (`domain/home.ts`), the activity's charts, axis range and figures (`analysis/charts.ts`, `domain/figures.ts`) and the goals' daily chart (`domain/goals.ts`). The app took from the web the useful search filters with their summary and "Now" on Stats; the share image on the phone is still to come.
+
 ### Monorepo structure
 
 ```

@@ -21,7 +21,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useApi } from '../../src/auth';
 import { Chart } from '../../src/charts';
 import { lastRead, readAndSend } from '../../src/healthConnect';
-import { SourceIcon, SpinningIcon } from '../../src/Icon';
+import { Icon, SourceIcon, SpinningIcon } from '../../src/Icon';
 import { MenuButton } from '../../src/Menu';
 import { locale, t } from '../../src/i18n';
 import { useTheme } from '../../src/theme';
@@ -115,6 +115,14 @@ export default function HealthScreen() {
               size={26}
               spinning={sync.isPending}
             />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('health.settings')}
+            hitSlop={10}
+            onPress={() => router.push('/settings/health')}
+          >
+            <Icon name="settings" color={c.fg} size={24} />
           </Pressable>
           <MenuButton
             label={t('stats.period')}

@@ -20,7 +20,7 @@ import { Text, View } from 'react-native';
 
 import { locale, t } from '../i18n';
 import { useTheme } from '../theme';
-import { Card, Heading, Muted } from '../ui';
+import { Card, CardTitle, Muted } from '../ui';
 
 export function Strength({ sets }: { sets: StrengthSet[] }) {
   const c = useTheme();
@@ -46,7 +46,7 @@ export function Strength({ sets }: { sets: StrengthSet[] }) {
   return (
     <>
       <Card>
-        <Heading>{t('strength.sets')}</Heading>
+        <CardTitle>{t('strength.sets')}</CardTitle>
         <Muted>
           {t('strength.summary', { sets: active, reps, volume: Math.round(volume).toLocaleString(locale) })}
         </Muted>
@@ -89,7 +89,7 @@ export function Strength({ sets }: { sets: StrengthSet[] }) {
         ))}
       </Card>
       <Card>
-        <Heading>{t('strength.muscles')}</Heading>
+        <CardTitle>{t('strength.muscles')}</CardTitle>
         <BodyMap worked={worked} />
         <Muted>
           {worked.size === 0

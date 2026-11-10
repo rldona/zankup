@@ -164,6 +164,18 @@ export function Heading({ children, first }: { children: ReactNode; first?: bool
   return <Text style={[styles.heading, { color: c.fg }, first && { marginTop: 0 }]}>{children}</Text>;
 }
 
+/**
+ * The title at the top of a card (Zones, Splits, Power curve…): no gap above, beyond the card's own
+ * padding, and the same room below as the activity's chart cards.
+ */
+export function CardTitle({ children }: { children: ReactNode }) {
+  return (
+    <View style={{ marginBottom: 12 }}>
+      <Heading first>{children}</Heading>
+    </View>
+  );
+}
+
 export function Muted({
   children,
   style,

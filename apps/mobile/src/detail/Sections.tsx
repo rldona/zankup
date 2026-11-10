@@ -21,7 +21,7 @@ import { useApi } from '../auth';
 import { Chart, type Layer } from '../charts';
 import { t } from '../i18n';
 import { useTheme, type Palette } from '../theme';
-import { Card, Heading, Muted } from '../ui';
+import { Card, CardTitle, Muted } from '../ui';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -120,7 +120,7 @@ export function Zones({
   if (!hrMax && !engine)
     return (
       <Card>
-        <Heading>{t('activity.zones')}</Heading>
+        <CardTitle>{t('activity.zones')}</CardTitle>
         <Muted>{t('activity.zonesNone')}</Muted>
       </Card>
     );
@@ -129,7 +129,7 @@ export function Zones({
   const limits = engine?.bounds ?? zoneLimits(hrMax ?? 190);
   return (
     <Card>
-      <Heading>{t('activity.zones')}</Heading>
+      <CardTitle>{t('activity.zones')}</CardTitle>
       <ZoneRows seconds={seconds} limits={limits} unit="bpm" />
       {!engine && hrMax && (
         <Muted>
@@ -163,7 +163,7 @@ export function BestEfforts({ activity, format }: { activity: ActivityDetail; fo
   if (!activity.best_efforts.length) return null;
   return (
     <Card>
-      <Heading>{t('activity.best')}</Heading>
+      <CardTitle>{t('activity.best')}</CardTitle>
       <Row muted cells={[t('feed.stat.distance'), t('feed.stat.time'), t('feed.stat.pace')]} />
       {activity.best_efforts.map((e) => (
         <Row
@@ -194,7 +194,7 @@ export function Laps({
   const power = activity.laps.some((l) => l.avg_power);
   return (
     <Card>
-      <Heading>{t('activity.laps')}</Heading>
+      <CardTitle>{t('activity.laps')}</CardTitle>
       <Row
         muted
         cells={[
@@ -239,7 +239,7 @@ export function Splits({
   let covered = 0;
   return (
     <Card>
-      <Heading>{t('activity.splits')}</Heading>
+      <CardTitle>{t('activity.splits')}</CardTitle>
       {activity.splits.map((s, i) => {
         covered += s.distance_m;
         return (
@@ -303,7 +303,7 @@ export function RouteAndSegments({ activity }: { activity: ActivityDetail }) {
       )}
       {segments.length > 0 && (
         <Card>
-          <Heading>{t('activity.segmentsTitle')}</Heading>
+          <CardTitle>{t('activity.segmentsTitle')}</CardTitle>
           {segments.map((s) => (
             <View key={s.segment_id} style={{ paddingVertical: 4 }}>
               <Text style={{ color: c.fg, fontWeight: '600' }}>{s.name}</Text>
@@ -351,10 +351,7 @@ export function Power({ activity }: { activity: ActivityDetail }) {
     <>
       {ticks.length > 1 && (
         <Card>
-          {/* The same room around the chart as the profile's chart cards. */}
-          <View style={{ marginBottom: 12 }}>
-            <Heading first>{t('activity.powerCurve')}</Heading>
-          </View>
+          <CardTitle>{t('activity.powerCurve')}</CardTitle>
           <Chart
             legendGap={18}
             days={ticks.map(label)}
@@ -365,7 +362,7 @@ export function Power({ activity }: { activity: ActivityDetail }) {
       )}
       {zones && bounds && (
         <Card>
-          <Heading>{t('activity.powerZones')}</Heading>
+          <CardTitle>{t('activity.powerZones')}</CardTitle>
           <ZoneRows seconds={zones} limits={bounds} unit="W" />
         </Card>
       )}

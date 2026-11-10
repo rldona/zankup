@@ -184,9 +184,22 @@ export function GoalChart({
             <Canvas style={{ width, height }}>
               {painted && (
                 <>
-                  {scale.ticks.map((v) => (
-                    <Line key={v} p1={vec(0, y(v))} p2={vec(plot, y(v))} color={c.line} strokeWidth={1} />
-                  ))}
+                  {/* The floor as a line; above it, a faint dot on every day at every mark of the axis. */}
+                  <Line p1={vec(0, y(0))} p2={vec(plot, y(0))} color={c.line} strokeWidth={1} />
+                  {scale.ticks
+                    .filter((v) => v > 0)
+                    .flatMap((v) =>
+                      points.map((_, i) => (
+                        <Circle
+                          key={`${v}-${i}`}
+                          cx={x(i)}
+                          cy={y(v)}
+                          r={1.8}
+                          color={c.muted}
+                          opacity={0.45}
+                        />
+                      )),
+                    )}
                   <Line
                     p1={vec(0, y(0))}
                     p2={vec(plot, y(goal.target))}

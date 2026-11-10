@@ -561,6 +561,9 @@ buffers it the answer arrives whole, which is acceptable at this length.
   - Syncs, health fetches, metrics and backups per user without one person's history slowing everyone else (fair queues, limits per user), storage per user visible to the admin, and the edge's 429s (Railway) kept in mind: the apps already fall back to what they kept.
 - **OS-812 · Privacy for people who are not the owner** (M) · depends on OS-804
   - A privacy policy page (what is stored, where, who can see it: the admin cannot read anyone else's data in the apps), self-service export and account deletion for every user (they exist for the owner), and deleting a user removes their files, photos and keys.
+- **OS-813 · Activity files and photos in object storage** (M) · depends on OS-801
+  - The original FIT, GPX and TCX files and the photos (today on the API's Railway volume: about 0.6 GB for the owner's whole history, against a 5 GB volume on the Hobby plan) move to S3-compatible storage, most likely Cloudflare R2: several times cheaper per GB than a Railway volume, no egress fees (photos and files are read often) and no size cap. The raw store and the photo store get an S3 implementation behind their current interfaces, existing files are migrated, and the API no longer depends on its disk, so it can run more than one replica. Postgres stays on Railway (about 0.4 GB for the owner; the per-second series are its bulk).
+  - Rough numbers: one person with years of history ≈ 1 GB in total; a new one grows a few MB a month.
 
 **M8 is done when** someone the owner lets in signs up with e-mail, a passkey or Google, goes through the Welcome, sees the app with sample data and an "Enable now" on each section, brings in their activities with their own Garmin key or an import, and never sees the owner's data or settings.
 

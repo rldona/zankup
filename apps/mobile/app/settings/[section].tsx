@@ -17,6 +17,12 @@ import { Account } from '../../src/profile/Sections';
 import { HealthSources } from '../../src/settings/HealthSources';
 import { ServiceKeyEditor } from '../../src/settings/ServiceKey';
 import { ThemePicker } from '../../src/settings/Themes';
+import {
+  AlertSettings,
+  BackupSettings,
+  CoachSettings,
+  GoogleHealthSwitch,
+} from '../../src/settings/Instance';
 import { PrivacyZones } from '../../src/settings/Privacy';
 import { useSaveSettings } from '../../src/settings/save';
 import {
@@ -51,13 +57,25 @@ export default function SettingsSectionScreen() {
           <Zones />
         </>
       )}
-      {section === 'notifications' && <Notifications />}
+      {section === 'notifications' && (
+        <>
+          <Notifications />
+          <Card>
+            <Heading first>{t('instance.alertsTitle')}</Heading>
+            <AlertSettings />
+          </Card>
+        </>
+      )}
       {section === 'ai' && (
         <>
           <Card>
             <Heading first>{t('keys.anthropic')}</Heading>
             <Muted>{t('keys.anthropicHelp')}</Muted>
             <ServiceKeyEditor name="anthropic" />
+          </Card>
+          <Card>
+            <Heading first>{t('instance.coachTitle')}</Heading>
+            <CoachSettings />
           </Card>
           <AiCard />
           <Mcp />
@@ -68,10 +86,22 @@ export default function SettingsSectionScreen() {
         <>
           <HealthHistory />
           <HealthConnectCard />
+          <Card>
+            <Heading first>{t('instance.googleHealthTitle')}</Heading>
+            <GoogleHealthSwitch />
+          </Card>
           <HealthSources />
         </>
       )}
-      {section === 'data' && <YourData />}
+      {section === 'data' && (
+        <>
+          <YourData />
+          <Card>
+            <Heading first>{t('instance.backupTitle')}</Heading>
+            <BackupSettings />
+          </Card>
+        </>
+      )}
       {section === 'account' && (
         <>
           {me.data && <Account me={me.data} />}

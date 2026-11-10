@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { locale, t } from '../i18n';
 import { useSaveSettings } from '../settings';
+import { CoachSettings } from './Instance';
 import { ServiceKeyForm } from './ServiceKey';
 
 const money = (value: number) =>
@@ -27,6 +28,7 @@ export function Ai() {
         <p className="note">{t('keys.anthropicHelp')}</p>
         <ServiceKeyForm name="anthropic" />
       </div>
+      <CoachSettings />
       {info && !info.available && <p className="note">{t('ai.off')}</p>}
       {info?.available && (
         <>

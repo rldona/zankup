@@ -155,7 +155,7 @@ def split(handlers: dict[str, Handler]) -> tuple[dict[str, Handler], dict[str, H
 
 def build_workers() -> list[Worker]:
     """A worker for long jobs and one for imports, sharing the connection pool."""
-    from zankup.alerts import email_sender
+    from zankup.alerts import lazy_email_sender
     from zankup.core.config import get_settings
     from zankup.db.session import get_engine
     from zankup.jobs.handlers import default_handlers
@@ -164,7 +164,9 @@ def build_workers() -> list[Worker]:
     settings = get_settings()
     sessions = sessionmaker(get_engine(), expire_on_commit=False)
     # No Garmin key here: the handlers read it for each job, so one saved from the apps works at once.
-    handlers = default_handlers(get_raw_store(settings), sessions, None, email_sender(settings), settings)
+    handlers = default_handlers(
+        get_raw_store(settings), sessions, None, lazy_email_sender(settings, sessions), settings
+    )
     base = f"{socket.gethostname()}:{os.getpid()}"
     return [
         Worker(sessions, kinds, name=f"{base}:{label}")

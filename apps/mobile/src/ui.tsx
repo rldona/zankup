@@ -1,7 +1,9 @@
 /** Small building blocks shared by the screens, drawn with the theme's tokens. */
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Pressable,
   ScrollView,
   Switch,
@@ -35,6 +37,7 @@ export function Screen({
   title,
   toolbar,
   actions,
+  busy = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
@@ -46,6 +49,8 @@ export function Screen({
   toolbar?: ReactNode;
   /** Buttons on the title's right (the calendar on Activities). */
   actions?: ReactNode;
+  /** Something is updating (a sync): a thin bar moves under the header, as Google Health does. */
+  busy?: boolean;
 }) {
   const c = useTheme();
   return (
@@ -58,6 +63,7 @@ export function Screen({
           {actions}
         </View>
       ) : null}
+      {title ? <BusyBar busy={busy} /> : null}
       {toolbar ? <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}>{toolbar}</View> : null}
       {scroll ? (
         // "handled": a tap on a button works at once, even with the keyboard open.
@@ -265,6 +271,51 @@ export function Choice<T extends string>({
         );
       })}
     </Wrapper>
+  );
+}
+
+/** An indeterminate bar for "updating": a segment sliding across, or 3 px of nothing when idle. */
+export function BusyBar({ busy }: { busy: boolean }) {
+  const c = useTheme();
+  const [x] = useState(() => new Animated.Value(0));
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    if (!busy) {
+      x.stopAnimation();
+      x.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.timing(x, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [busy, x]);
+  const translateX = x.interpolate({ inputRange: [0, 1], outputRange: [-width * 0.4, width] });
+  return (
+    <View
+      accessibilityRole="progressbar"
+      accessibilityState={{ busy }}
+      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
+      style={{ height: 3, overflow: 'hidden', backgroundColor: busy ? c.line : 'transparent' }}
+    >
+      {busy && (
+        <Animated.View
+          style={{
+            width: '40%',
+            height: 3,
+            borderRadius: 2,
+            backgroundColor: accent(c),
+            transform: [{ translateX }],
+          }}
+        />
+      )}
+    </View>
   );
 }
 

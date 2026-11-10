@@ -923,5 +923,6 @@
   "health.history.working": "Asking for the history…",
   "health.history.queued": "Under way: {sources}. The data will show up in Health as it arrives.",
   "health.history.hc": "Health Connect: {nights, plural, one {# night} other {# nights}} and {days, plural, one {# day} other {# days}} sent.",
-  "health.history.none": "No health source is connected."
+  "health.history.none": "No health source is connected.",
+  "stats.reviews": "Reviews"
 }

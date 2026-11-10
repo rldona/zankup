@@ -923,5 +923,6 @@
   "health.history.working": "Pidiendo el historial…",
   "health.history.queued": "En marcha: {sources}. Los datos irán apareciendo en Salud.",
   "health.history.hc": "Health Connect: {nights, plural, one {# noche} other {# noches}} y {days, plural, one {# día} other {# días}} enviados.",
-  "health.history.none": "No hay ninguna fuente de salud conectada."
+  "health.history.none": "No hay ninguna fuente de salud conectada.",
+  "stats.reviews": "Resúmenes"
 }

@@ -1,12 +1,12 @@
 /**
- * A three-dot menu for a header: the dots open a small list in the top-right corner, with the current
- * choice ticked (Health's period). Tapping outside closes it.
+ * A menu for a header: the three dots (or another icon) open a small list in the top-right corner,
+ * with the current choice ticked (Health's period, Stats' reviews). Tapping outside closes it.
  */
 import { useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { useTheme } from './theme';
 
 export function MenuButton<T extends string>({
@@ -14,7 +14,9 @@ export function MenuButton<T extends string>({
   value,
   options,
   onChange,
+  icon = 'more_vert',
 }: {
+  icon?: IconName;
   label: string;
   value: T;
   options: { value: T; label: string }[];
@@ -31,7 +33,7 @@ export function MenuButton<T extends string>({
         hitSlop={10}
         onPress={() => setOpen(true)}
       >
-        <Icon name="more_vert" color={c.fg} size={26} />
+        <Icon name={icon} color={c.fg} size={26} />
       </Pressable>
       <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={{ flex: 1 }} onPress={() => setOpen(false)}>

@@ -3718,3 +3718,103 @@ button.danger svg.i {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Stats (OS-912), as the app's: the period over everything, the cards two by two on a large screen. */
+.page.stats {
+  max-width: 1200px;
+}
+
+.periodbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin-bottom: 16px;
+}
+
+.periodbar .chips {
+  margin: 0;
+  padding: 0;
+}
+
+.steppers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper b {
+  min-width: 84px;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.stepper .iconbtn {
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+}
+
+.stepper .iconbtn:disabled {
+  opacity: 0.3;
+}
+
+.statgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr));
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.statgrid > .panel {
+  margin: 0;
+}
+
+.cardtotal {
+  text-align: right;
+  font-size: 17px;
+  font-weight: 700;
+  margin: -4px 0 6px;
+}
+
+.efficiency .spark {
+  height: 120px;
+}
+
+.menuwrap {
+  position: relative;
+}
+
+.popmenu {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  z-index: 5;
+  min-width: 220px;
+  display: grid;
+  padding: 8px 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.25);
+}
+
+.popmenu a {
+  padding: 12px 16px;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.popmenu a:hover {
+  background: var(--surface-2);
+}

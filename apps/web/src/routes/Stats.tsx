@@ -2,7 +2,7 @@ import {
   curvesQuery,
   efficiencyQuery,
   engineQuery,
-  estimatesQuery,
+  monthsRange,
   fitnessQuery,
   formatHoursMinutes,
   formatters,
@@ -35,23 +35,66 @@ import {
   VolumeChart,
 } from '../stats/charts';
 import { effortName } from '../stats/format';
-import { EstimatesPanel, EventsList, GoalsPanel } from '../stats/panels';
+import { EventsList } from '../stats/panels';
+import { MaterialIcon } from '../MaterialIcon';
+import { CardTitle, Menu } from '../ui';
 import { useResolvedTheme } from '../theme';
 import { localToday } from '../week/today';
 
+const MODES = ['last12', 'year', 'month', 'all'] as const;
+type Mode = (typeof MODES)[number];
+
+/** A month counted from year 0 (so one step is always one month), and back. */
+const monthIndex = (ym: string) => {
+  const [y = 0, m = 1] = ym.split('-').map(Number);
+  return y * 12 + m - 1;
+};
+const monthKey = (n: number) => `${Math.floor(n / 12)}-${String((n % 12) + 1).padStart(2, '0')}`;
+const monthLabel = (n: number) =>
+  new Date(Math.floor(n / 12), n % 12, 15)
+    .toLocaleDateString(locale, { month: 'short', year: 'numeric' })
+    .replace(' de ', ' ')
+    .replace('.', '');
+
 /**
- * Stats (OS-311, OS-321, OS-322, OS-320): "Now" (form today, this week, goals, estimates, what the
- * engine noticed), then everything for the chosen period: summary against last year, fitness and
- * form, volume, best-effort curves against all time, records and their progression, aerobic
- * efficiency and the year-over-year line. The period lives in the URL.
+ * The period in the URL (`?period=`): `last12`, `all`, a year (`2025`) or a run of months
+ * (`2025-03..2025-06`, or one month `2025-03`).
+ */
+function readPeriod(
+  value: string | null,
+  now: number,
+): { mode: Mode; year: number; from: number; to: number } {
+  const thisYear = Math.floor(now / 12);
+  const months = /^(\d{4}-\d{2})(?:\.\.(\d{4}-\d{2}))?$/.exec(value ?? '');
+  if (months) {
+    const from = monthIndex(months[1] ?? '');
+    const to = months[2] ? monthIndex(months[2]) : from;
+    return { mode: 'month', year: Math.floor(to / 12), from: Math.min(from, to), to: Math.max(from, to) };
+  }
+  if (/^\d{4}$/.test(value ?? '')) return { mode: 'year', year: Number(value), from: now, to: now };
+  return { mode: value === 'all' ? 'all' : 'last12', year: thisYear, from: now, to: now };
+}
+
+/**
+ * Stats (OS-311, OS-321, OS-322, OS-320, OS-912), as the app's: the period right above everything (the
+ * last 12 months, a year moved with arrows, a run of months from one to another, or all time), the
+ * reviews and the heatmap in the header, then the charts for the period, the summary against last year
+ * and the way to routes and segments. On a large screen the cards sit two by two.
  */
 export function Stats() {
   const [params, setParams] = useSearchParams();
-  const choice = params.get('period') ?? 'last12';
   const [today] = useState(() => new Date());
+  const now = today.getFullYear() * 12 + today.getMonth();
   const years = useQuery(yearsQuery(api));
   const first = years.data?.at(-1) ?? today.getFullYear();
-  const period = useMemo(() => periodOf(choice, today, first), [choice, today, first]);
+  const shown = readPeriod(params.get('period'), now);
+  const period = useMemo(
+    () =>
+      shown.mode === 'month'
+        ? monthsRange(shown.from, shown.to)
+        : periodOf(shown.mode === 'year' ? String(shown.year) : shown.mode, today, first),
+    [shown.mode, shown.from, shown.to, shown.year, today, first],
+  );
   const range = { from: period.from, to: period.to };
   const prefs = usePrefs();
   const format = useMemo(() => formatters(prefs), [prefs]);
@@ -60,47 +103,82 @@ export function Stats() {
     ...engineQuery(api),
     refetchInterval: (q) => (q.state.data?.running ? 3000 : false),
   });
-
-  const months = useMemo(() => {
-    if (!/^\d{4}$/.test(choice)) return [];
-    const y = Number(choice);
-    const last = y === today.getFullYear() ? today.getMonth() : 11;
-    return Array.from({ length: last + 1 }, (_, i) => `${y}-${String(i + 1).padStart(2, '0')}`);
-  }, [choice, today]);
+  const go = (value: string) => setParams({ period: value }, { replace: true });
+  const months = (from: number, to: number) =>
+    go(from === to ? monthKey(from) : `${monthKey(from)}..${monthKey(to)}`);
+  const choose = (mode: Mode) =>
+    mode === 'year' ? go(String(shown.year)) : mode === 'month' ? months(shown.to, shown.to) : go(mode);
+  const [reviews, setReviews] = useState(false);
 
   return (
     <section className="page stats">
-      <div className="statshead">
+      <div className="titlebar">
         <h1>{t('nav.stats')}</h1>
-        <label className="sortby">
-          {t('stats.period')}
-          <select
-            value={/^\d{4}-\d{2}$/.test(choice) ? choice.slice(0, 4) : choice}
-            onChange={(e) => setParams({ period: e.target.value }, { replace: true })}
+        <div className="menuwrap">
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label={t('stats.reviews')}
+            title={t('stats.reviews')}
+            aria-expanded={reviews}
+            onClick={() => setReviews(!reviews)}
           >
-            <option value="last12">{t('stats.period.last12')}</option>
-            <option value="all">{t('stats.period.all')}</option>
-            {(years.data ?? []).map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-          {(months.length > 0 || /^\d{4}-\d{2}$/.test(choice)) && (
-            <select
-              aria-label={t('search.date')}
-              value={/^\d{4}-\d{2}$/.test(choice) ? choice : ''}
-              onChange={(e) => setParams({ period: e.target.value || choice.slice(0, 4) }, { replace: true })}
-            >
-              <option value="">—</option>
-              {(months.length ? months : [choice]).map((m) => (
-                <option key={m} value={m}>
-                  {new Date(`${m}-15T12:00:00`).toLocaleDateString(locale, { month: 'long' })}
-                </option>
-              ))}
-            </select>
+            <MaterialIcon name="summarize" />
+          </button>
+          {reviews && (
+            <nav className="popmenu" aria-label={t('stats.reviews')}>
+              <Link to="/review/month">{t('review.monthLink')}</Link>
+              <Link to="/review/year">{t('review.yearLink')}</Link>
+            </nav>
           )}
-        </label>
+        </div>
+        <Link
+          to="/stats/heatmap"
+          className="iconbtn"
+          aria-label={t('stats.heatmap')}
+          title={t('stats.heatmap')}
+        >
+          <MaterialIcon name="layers" />
+        </Link>
+      </div>
+      <div className="periodbar">
+        <div className="chips" role="radiogroup" aria-label={t('stats.period')}>
+          {MODES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              className="chip"
+              role="radio"
+              aria-checked={shown.mode === m}
+              aria-pressed={shown.mode === m}
+              onClick={() => choose(m)}
+            >
+              {t(`stats.mode.${m}`)}
+            </button>
+          ))}
+        </div>
+        {shown.mode === 'year' && (
+          <Stepper
+            label={String(shown.year)}
+            back={shown.year > first ? () => go(String(shown.year - 1)) : null}
+            forward={shown.year < today.getFullYear() ? () => go(String(shown.year + 1)) : null}
+          />
+        )}
+        {shown.mode === 'month' && (
+          <div className="steppers">
+            <Stepper
+              label={monthLabel(shown.from)}
+              back={shown.from > first * 12 ? () => months(shown.from - 1, shown.to) : null}
+              forward={shown.from < shown.to ? () => months(shown.from + 1, shown.to) : null}
+            />
+            <span className="note">–</span>
+            <Stepper
+              label={monthLabel(shown.to)}
+              back={shown.to > shown.from ? () => months(shown.from, shown.to - 1) : null}
+              forward={shown.to < now ? () => months(shown.from, shown.to + 1) : null}
+            />
+          </div>
+        )}
       </div>
       {engine.data?.running && (
         <p className="offline" role="status">
@@ -110,36 +188,66 @@ export function Stats() {
 
       <Now theme={theme} />
 
+      <div className="statgrid">
+        <FitnessSection range={range} theme={theme} />
+        <Volume range={range} unit={period.unit} theme={theme} format={format} />
+        <Curves range={range} theme={theme} format={format} />
+        <RecordsSection range={range} theme={theme} />
+        <Progress
+          theme={theme}
+          distanceUnit={format.unit}
+          selected={shown.mode === 'year' || shown.mode === 'month' ? shown.year : today.getFullYear()}
+        />
+        <Efficiency range={range} />
+        <CompareWithStrava theme={theme} />
+      </div>
+      {/* The period's figures against the year before: a table, after the charts the period changes. */}
       <Summary range={range} format={format} />
 
-      <FitnessSection range={range} theme={theme} />
-
-      <Volume range={range} unit={period.unit} theme={theme} distanceUnit={format.unit} />
-
-      <Curves range={range} theme={theme} format={format} />
-
-      <RecordsSection range={range} theme={theme} />
-
-      <Progress
-        theme={theme}
-        distanceUnit={format.unit}
-        selected={Number(choice.slice(0, 4)) || today.getFullYear()}
+      <h2>{t('stats.links')}</h2>
+      <Menu
+        label={t('stats.links')}
+        items={[
+          { to: '/routes', icon: 'route', label: t('stats.routes') },
+          { to: '/segments', icon: 'timeline', label: t('stats.segments') },
+        ]}
       />
-
-      <Efficiency range={range} />
-
-      <CompareWithStrava theme={theme} />
-
-      <nav className="panel statlinks" aria-label={t('stats.links')}>
-        <Link to="/review/month">{t('review.monthLink')} ›</Link>
-        <Link to="/review/year">{t('review.yearLink')} ›</Link>
-        <Link to="/health">{t('nav.health')} ›</Link>
-        <Link to="/stats/calendar">{t('stats.calendar')} ›</Link>
-        <Link to="/stats/heatmap">{t('stats.heatmap')} ›</Link>
-        <Link to="/routes">{t('stats.routes')} ›</Link>
-        <Link to="/segments">{t('stats.segments')} ›</Link>
-      </nav>
     </section>
+  );
+}
+
+/** The year or month shown, with an arrow on each side; an arrow at the end of the history is off. */
+function Stepper({
+  label,
+  back,
+  forward,
+}: {
+  label: string;
+  back: (() => void) | null;
+  forward: (() => void) | null;
+}) {
+  return (
+    <div className="stepper">
+      <button
+        type="button"
+        className="iconbtn"
+        aria-label={t('stats.previous')}
+        disabled={!back}
+        onClick={back ?? undefined}
+      >
+        <MaterialIcon name="chevron_left" />
+      </button>
+      <b>{label}</b>
+      <button
+        type="button"
+        className="iconbtn"
+        aria-label={t('stats.next')}
+        disabled={!forward}
+        onClick={forward ?? undefined}
+      >
+        <MaterialIcon name="chevron_right" />
+      </button>
+    </div>
   );
 }
 
@@ -147,7 +255,6 @@ function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
   const [today] = useState(localToday);
   const week = useQuery(weekQuery(api, today));
   const fitness = useQuery(fitnessQuery(api, {}));
-  const estimates = useQuery(estimatesQuery(api));
   const now = fitness.data?.at(-1);
   const average = week.data
     ? week.data.previous.reduce((s, w) => s + w.moving_s, 0) / (week.data.previous.length || 1)
@@ -182,14 +289,7 @@ function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
           </article>
         )}
       </div>
-      <GoalsPanel />
       <EventsList />
-      {estimates.data && (
-        <>
-          <h2>{t('stats.estimates')}</h2>
-          <EstimatesPanel estimates={estimates.data} />
-        </>
-      )}
     </>
   );
 }
@@ -211,9 +311,7 @@ function Summary({
   };
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('stats.summaryTitle')}</h2>
-      </div>
+      <CardTitle>{t('stats.summaryTitle')}</CardTitle>
       <dl className="kpis num">
         <div className="kpi">
           <dd>{current.count.toLocaleString(locale)}</dd>
@@ -261,9 +359,7 @@ function FitnessSection({
   const days: FitnessDay[] = fitness.data ?? [];
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('stats.fitness')}</h2>
-      </div>
+      <CardTitle>{t('stats.fitness')}</CardTitle>
       {days.length ? <FitnessChart days={days} theme={theme} /> : <p className="note">{t('stats.empty')}</p>}
       <p className="note">{t('stats.fitnessNote')}</p>
     </section>
@@ -274,36 +370,51 @@ function Volume({
   range,
   unit,
   theme,
-  distanceUnit,
+  format,
 }: {
   range: { from: string; to: string };
   unit: 'day' | 'week' | 'month' | 'year';
   theme: ReturnType<typeof useResolvedTheme>;
-  distanceUnit: 'km' | 'mi';
+  format: ReturnType<typeof formatters>;
 }) {
   const [metric, setMetric] = useState<'time' | 'distance'>('time');
   const volume = useQuery(volumeQuery(api, range, unit));
+  const total = (volume.data ?? []).reduce(
+    (s, b) => s + (metric === 'time' ? b.totals.moving_s : b.totals.distance_m),
+    0,
+  );
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('stats.volume')}</h2>
-        <div className="seg" role="group" aria-label={t('stats.volume')}>
-          <button type="button" aria-pressed={metric === 'time'} onClick={() => setMetric('time')}>
-            {t('stats.hours')}
-          </button>
-          <button type="button" aria-pressed={metric === 'distance'} onClick={() => setMetric('distance')}>
-            {t('stats.distanceUnit')}
-          </button>
-        </div>
-      </div>
-      {volume.data && (
-        <VolumeChart
-          buckets={volume.data}
-          metric={metric}
-          unit={unit}
-          theme={theme}
-          distanceUnit={distanceUnit}
-        />
+      {/* As on the app: the choice on the title's line, the period's total on the right above the chart. */}
+      <CardTitle
+        right={
+          <div className="seg" role="group" aria-label={t('stats.volume')}>
+            <button type="button" aria-pressed={metric === 'time'} onClick={() => setMetric('time')}>
+              {t('stats.hours')}
+            </button>
+            <button type="button" aria-pressed={metric === 'distance'} onClick={() => setMetric('distance')}>
+              {t('stats.distanceUnit')}
+            </button>
+          </div>
+        }
+      >
+        {t('stats.volume')}
+      </CardTitle>
+      {volume.data && volume.data.length > 0 && (
+        <>
+          <p className="cardtotal num">
+            {metric === 'time'
+              ? formatHoursMinutes(total)
+              : `${Math.round(total / (format.unit === 'km' ? 1000 : 1609.344)).toLocaleString(locale)} ${format.unit}`}
+          </p>
+          <VolumeChart
+            buckets={volume.data}
+            metric={metric}
+            unit={unit}
+            theme={theme}
+            distanceUnit={format.unit}
+          />
+        </>
       )}
     </section>
   );
@@ -369,9 +480,7 @@ function RecordsSection({
     });
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('stats.records')}</h2>
-      </div>
+      <CardTitle>{t('stats.records')}</CardTitle>
       <div className="scroll" tabIndex={0} role="region" aria-label={t('stats.records')}>
         <table className="num">
           <thead>
@@ -434,9 +543,7 @@ function Progress({
   if (!lines.data?.length) return null;
   return (
     <section className="panel">
-      <div className="ph">
-        <h2>{t('stats.progress')}</h2>
-      </div>
+      <CardTitle>{t('stats.progress')}</CardTitle>
       <ProgressChart lines={lines.data} selected={selected} theme={theme} distanceUnit={distanceUnit} />
       <p className="note">{t('stats.progressNote')}</p>
     </section>
@@ -457,7 +564,9 @@ function Efficiency({ range }: { range: { from: string; to: string } }) {
         <h2>{t('stats.efficiency')}</h2>
         <span className="num">{`${change > 0 ? '+' : ''}${change.toFixed(1)} %`}</span>
       </div>
-      <SparklineRow values={values} />
+      <div className="efficiency">
+        <SparklineRow values={values} />
+      </div>
       <p className="note">{t('stats.efficiencyNote')}</p>
     </section>
   );

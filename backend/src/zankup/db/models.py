@@ -820,13 +820,14 @@ class ApiToken(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
-INSTANCE_KEYS = ("garmin", "anthropic")
+INSTANCE_KEYS = ("garmin", "anthropic", "resend", "backup_s3")
 
 
 class InstanceKey(Timestamps, Base):
-    """A service key set from the apps instead of the environment: Garmin's Personal API key or
-    Anthropic's. Encrypted with zankup.health.crypto and never sent back; only its last characters are
-    shown. A key here wins over the environment variable (see zankup.instance_keys)."""
+    """A service key set from the apps instead of the environment: Garmin's Personal API key,
+    Anthropic's, Resend's (e-mail) or the backups' S3 secret. Encrypted with zankup.health.crypto and
+    never sent back; only its last characters are shown. A key here wins over the environment
+    variable (see zankup.instance_keys)."""
 
     __tablename__ = "instance_keys"
     __table_args__ = (CheckConstraint(_in("name", INSTANCE_KEYS), name="name"),)
@@ -835,3 +836,14 @@ class InstanceKey(Timestamps, Base):
     secret: Mapped[bytes] = mapped_column(LargeBinary)
     last4: Mapped[str] = mapped_column(String(4), comment="The key's last characters, to recognise it")
     expires_on: Mapped[date | None] = mapped_column(Date, comment="When the key stops working, if known")
+
+
+class InstanceSetting(Timestamps, Base):
+    """One of the instance's settings set from the apps instead of the environment (the AI model and
+    budget, the sync interval, backups, alerts...). The value is JSON; a row here wins over the
+    environment (see zankup.instance_keys). Secrets go in InstanceKey instead."""
+
+    __tablename__ = "instance_settings"
+
+    name: Mapped[str] = mapped_column(String(40), primary_key=True)
+    value: Mapped[Any] = mapped_column(JSONB)

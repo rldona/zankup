@@ -19,6 +19,7 @@ import { Alert, Linking, Share, Text, View } from 'react-native';
 
 import * as Clipboard from 'expo-clipboard';
 
+import { SyncInterval } from './Instance';
 import { ServiceKeyEditor } from './ServiceKey';
 import { useApi, useAuth } from '../auth';
 import { Icon } from '../Icon';
@@ -416,6 +417,7 @@ export function Garmin() {
           : t('settings.never')}
         {garmin.last_error ? ` ${t('settings.lastError', { error: garmin.last_error })}` : ''}
       </Muted>
+      <SyncInterval />
       <Muted>{t('keys.garminHelp')}</Muted>
       <ServiceKeyEditor name="garmin" />
     </Card>

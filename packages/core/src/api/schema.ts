@@ -1884,7 +1884,7 @@ export interface paths {
     };
     /**
      * List Keys
-     * @description Garmin's and Anthropic's keys: set or not, where from, and their last characters.
+     * @description The service keys: set or not, where from, and their last characters.
      */
     get: operations['listKeys'];
     put?: never;
@@ -1917,6 +1917,31 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/api/instance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Instance
+     * @description The settings the apps can change, each with its value in force and where it comes from.
+     */
+    get: operations['getInstance'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Update Instance
+     * @description Change some settings; null for one removes the value saved here, so the environment's (or the
+     *     default) applies again. A value the environment would refuse answers 422.
+     */
+    patch: operations['updateInstance'];
     trace?: never;
   };
   '/api/health': {
@@ -3062,6 +3087,16 @@ export interface components {
       /** Error */
       error: string;
     };
+    /** InstanceOut */
+    InstanceOut: {
+      /** Settings */
+      settings: components['schemas']['SettingOut'][];
+      /**
+       * Models
+       * @description The AI models the budget knows the price of
+       */
+      models: components['schemas']['ModelOut'][];
+    };
     /** KeyIn */
     KeyIn: {
       /** Value */
@@ -3078,7 +3113,7 @@ export interface components {
        * Name
        * @enum {string}
        */
-      name: 'garmin' | 'anthropic';
+      name: 'garmin' | 'anthropic' | 'resend' | 'backup_s3';
       /** Configured */
       configured: boolean;
       /**
@@ -3205,6 +3240,21 @@ export interface components {
        * @default Android
        */
       device_name: string;
+    };
+    /** ModelOut */
+    ModelOut: {
+      /** Id */
+      id: string;
+      /**
+       * Input Usd
+       * @description USD per million input tokens
+       */
+      input_usd: number;
+      /**
+       * Output Usd
+       * @description USD per million output tokens
+       */
+      output_usd: number;
     };
     /**
      * MonthTotals
@@ -4014,6 +4064,22 @@ export interface components {
        * @description FIT exercise category, e.g. squat; null when unknown
        */
       category: string | null;
+    };
+    /** SettingOut */
+    SettingOut: {
+      /** Name */
+      name: string;
+      /**
+       * Value
+       * @description The value in force
+       */
+      value: unknown;
+      /**
+       * Source
+       * @description Saved from the apps, the environment's, or the built-in default
+       * @enum {string}
+       */
+      source: 'app' | 'env' | 'default';
     };
     /** SetupDone */
     SetupDone: {
@@ -8006,7 +8072,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        name: 'garmin' | 'anthropic';
+        name: 'garmin' | 'anthropic' | 'resend' | 'backup_s3';
       };
       cookie?: never;
     };
@@ -8041,7 +8107,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        name: 'garmin' | 'anthropic';
+        name: 'garmin' | 'anthropic' | 'resend' | 'backup_s3';
       };
       cookie?: never;
     };
@@ -8054,6 +8120,61 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['KeyStatus'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InstanceOut'];
+        };
+      };
+    };
+  };
+  updateInstance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          [key: string]: unknown;
+        };
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InstanceOut'];
         };
       };
       /** @description Validation Error */

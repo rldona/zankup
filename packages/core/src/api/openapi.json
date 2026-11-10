@@ -5042,7 +5042,7 @@
           "keys"
         ],
         "summary": "List Keys",
-        "description": "Garmin's and Anthropic's keys: set or not, where from, and their last characters.",
+        "description": "The service keys: set or not, where from, and their last characters.",
         "operationId": "listKeys",
         "responses": {
           "200": {
@@ -5078,7 +5078,9 @@
             "schema": {
               "enum": [
                 "garmin",
-                "anthropic"
+                "anthropic",
+                "resend",
+                "backup_s3"
               ],
               "type": "string",
               "title": "Name"
@@ -5133,7 +5135,9 @@
             "schema": {
               "enum": [
                 "garmin",
-                "anthropic"
+                "anthropic",
+                "resend",
+                "backup_s3"
               ],
               "type": "string",
               "title": "Name"
@@ -5147,6 +5151,70 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/KeyStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/instance": {
+      "get": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Get Instance",
+        "description": "The settings the apps can change, each with its value in force and where it comes from.",
+        "operationId": "getInstance",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceOut"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Update Instance",
+        "description": "Change some settings; null for one removes the value saved here, so the environment's (or the\ndefault) applies again. A value the environment would refuse answers 422.",
+        "operationId": "updateInstance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Changes"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceOut"
                 }
               }
             }
@@ -8428,6 +8496,31 @@
         ],
         "title": "ImportProblem"
       },
+      "InstanceOut": {
+        "properties": {
+          "settings": {
+            "items": {
+              "$ref": "#/components/schemas/SettingOut"
+            },
+            "type": "array",
+            "title": "Settings"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelOut"
+            },
+            "type": "array",
+            "title": "Models",
+            "description": "The AI models the budget knows the price of"
+          }
+        },
+        "type": "object",
+        "required": [
+          "settings",
+          "models"
+        ],
+        "title": "InstanceOut"
+      },
       "KeyIn": {
         "properties": {
           "value": {
@@ -8462,7 +8555,9 @@
             "type": "string",
             "enum": [
               "garmin",
-              "anthropic"
+              "anthropic",
+              "resend",
+              "backup_s3"
             ],
             "title": "Name"
           },
@@ -8859,6 +8954,31 @@
           "id_token"
         ],
         "title": "MobileSignIn"
+      },
+      "ModelOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "input_usd": {
+            "type": "number",
+            "title": "Input Usd",
+            "description": "USD per million input tokens"
+          },
+          "output_usd": {
+            "type": "number",
+            "title": "Output Usd",
+            "description": "USD per million output tokens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "input_usd",
+          "output_usd"
+        ],
+        "title": "ModelOut"
       },
       "MonthTotals": {
         "properties": {
@@ -11027,6 +11147,35 @@
         ],
         "title": "SetOut",
         "description": "A strength set (OS-225)."
+      },
+      "SettingOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "title": "Value",
+            "description": "The value in force"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "app",
+              "env",
+              "default"
+            ],
+            "title": "Source",
+            "description": "Saved from the apps, the environment's, or the built-in default"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "value",
+          "source"
+        ],
+        "title": "SettingOut"
       },
       "SetupDone": {
         "properties": {

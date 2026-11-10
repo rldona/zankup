@@ -72,6 +72,7 @@ export const queryKeys = {
   profile: ['profile'] as const,
   sources: ['sources'] as const,
   keys: ['keys'] as const,
+  instance: ['instance'] as const,
   passkeys: ['passkeys'] as const,
   syncs: ['syncs'] as const,
   providers: ['providers'] as const,
@@ -208,6 +209,18 @@ export function keysQuery(api: ApiClient) {
 }
 
 export type ServiceKey = Json<'/api/keys', 'get'>[number];
+
+/** The instance's settings the apps can change, each with its value and where it comes from. */
+export function instanceQuery(api: ApiClient) {
+  return {
+    queryKey: queryKeys.instance,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/instance', { signal })),
+  };
+}
+
+export type InstanceSettings = Json<'/api/instance', 'get'>;
+export type InstanceSetting = InstanceSettings['settings'][number];
 
 /** The passkeys registered for this account (OS-405). */
 export function passkeysQuery(api: ApiClient) {

@@ -216,7 +216,7 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
           gap: 8,
           marginTop: 12,
           paddingVertical: 12,
-          borderRadius: 12,
+          borderRadius: 999,
           borderWidth: 1,
           borderColor: c.zone5,
           opacity: remove.isPending ? 0.5 : 1,

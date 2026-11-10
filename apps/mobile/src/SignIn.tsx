@@ -27,6 +27,7 @@ import {
 import { CodeBoxes, ErrorBox, PasswordField } from './signin/Fields';
 import { Setup } from './signin/Setup';
 import { challengeExpired, validEmail } from './signin/rules';
+import { keys, storage } from './storage';
 import { useTheme } from './theme';
 import { Wordmark } from './Wordmark';
 import { Button, Field, Muted, Screen } from './ui';
@@ -38,15 +39,23 @@ type Step =
   | { kind: 'forgot' }
   | { kind: 'setup' };
 
+/**
+ * Choosing another instance (your own server) on the sign-in screen. Hidden for now: the app signs in to
+ * api.zankup.com only. Set to true to offer it again.
+ */
+const OTHER_INSTANCES = false;
+
 const message = (failure: unknown) => (failure instanceof SignInError ? failure.message : t('common.error'));
 
 export function SignIn({ onSignedIn }: { onSignedIn: (session: Session) => void }) {
-  const [baseUrl, setBaseUrl] = useState(instanceUrl());
+  const [baseUrl, setBaseUrl] = useState(instanceUrl() ?? (OTHER_INSTANCES ? null : DEFAULT_INSTANCE));
   const [step, setStep] = useState<Step>({ kind: baseUrl ? 'password' : 'instance' });
   const [googleClient, setGoogleClient] = useState<string | null>(null);
 
   useEffect(() => {
     if (!baseUrl) return;
+    // Without the instance step, the default one is kept as if it had been chosen.
+    if (!instanceUrl()) void storage.setItem(keys.instance, baseUrl);
     let live = true;
     // A brand-new instance has nobody to sign in yet: straight to creating the account.
     void setupOpen(baseUrl).then((open) => live && open && setStep({ kind: 'setup' }));
@@ -252,10 +261,9 @@ function PasswordStep({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 10,
-            borderRadius: 12,
+            borderRadius: 999,
             borderWidth: 1,
-            borderColor: c.line,
-            backgroundColor: c.surface,
+            borderColor: c.muted,
             paddingVertical: 12,
             opacity: busy !== null ? 0.5 : pressed ? 0.8 : 1,
           })}
@@ -294,10 +302,12 @@ function PasswordStep({
       <Button disabled={busy !== null} onPress={submit}>
         {busy === 'password' ? t('common.loading') : t('signIn.submit')}
       </Button>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingTop: 4 }}>
-        <Muted style={{ flex: 1 }}>{baseUrl.replace(/^https?:\/\//, '')}</Muted>
-        <LinkButton onPress={onChangeInstance}>{t('mobile.changeInstance')}</LinkButton>
-      </View>
+      {OTHER_INSTANCES && (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingTop: 4 }}>
+          <Muted style={{ flex: 1 }}>{baseUrl.replace(/^https?:\/\//, '')}</Muted>
+          <LinkButton onPress={onChangeInstance}>{t('mobile.changeInstance')}</LinkButton>
+        </View>
+      )}
     </>
   );
 }

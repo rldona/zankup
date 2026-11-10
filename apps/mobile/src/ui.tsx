@@ -248,8 +248,8 @@ export function Button({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: primary ? accent(c) : c.surface,
-          borderColor: primary ? 'transparent' : c.line,
+          backgroundColor: primary ? accent(c) : 'transparent',
+          borderColor: primary ? 'transparent' : c.muted,
           opacity: disabled ? 0.5 : pressed ? 0.8 : 1,
         },
       ]}
@@ -528,8 +528,9 @@ export const styles = StyleSheet.create({
   statValue: { fontSize: 17, fontWeight: '700', fontVariant: ['tabular-nums'] },
   statLabel: { fontSize: 11, marginTop: 2, textTransform: 'uppercase' },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
+  /** Pill-shaped, so a button never reads as a field (fields keep their soft corners and fill). */
   button: {
-    borderRadius: 12,
+    borderRadius: 999,
     borderWidth: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,

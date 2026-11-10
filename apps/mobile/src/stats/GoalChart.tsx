@@ -9,7 +9,7 @@
 import { calendarQuery, type CalendarDay, type GoalOut } from '@zankup/core';
 import { Canvas, Circle, DashPathEffect, Group, Line, Path, vec } from '@shopify/react-native-skia';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
@@ -112,6 +112,17 @@ export function GoalChart({
   // Today on the phone's calendar, fixed while the card is on screen.
   const [today] = useState(() => iso(new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)));
   const [picked, setPicked] = useState<number | null>(null);
+  // On Android a canvas that draws before its surface exists stays blank, and these never redraw on
+  // their own: the drawing comes a moment after the canvas, which then paints it.
+  const [painted, setPainted] = useState(false);
+  useEffect(() => {
+    if (!width) return;
+    // Two frames: the canvas gets its surface in the first, the drawing lands in the second.
+    let id = requestAnimationFrame(() => {
+      id = requestAnimationFrame(() => setPainted(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [width]);
   const calendar = useQuery(calendarQuery(api, { from: goal.start, to: goal.end }));
   if (!calendar.data) return <View style={{ height: 150 }} />;
   const points = goalPoints(goal, calendar.data, today);
@@ -156,7 +167,8 @@ export function GoalChart({
   const at = current >= 0 ? points[current] : null;
 
   return (
-    <View accessible={false} style={{ gap: 4 }}>
+    // Everything shows together once drawn, so the labels never appear ahead of the chart.
+    <View accessible={false} style={{ gap: 4, opacity: painted ? 1 : 0 }}>
       {at && (
         <Text style={{ color: c.muted, fontSize: 12 }}>
           {at.when} ·{' '}
@@ -169,44 +181,53 @@ export function GoalChart({
         <View collapsable={false} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height }}>
           {width > 0 && (
             <Canvas style={{ width, height }}>
-              {scale.ticks.map((v) => (
-                <Line key={v} p1={vec(0, y(v))} p2={vec(plot, y(v))} color={c.line} strokeWidth={1} />
-              ))}
-              <Line
-                p1={vec(0, y(0))}
-                p2={vec(plot, y(goal.target))}
-                color={c.muted}
-                strokeWidth={1}
-                opacity={0.5}
-              >
-                <DashPathEffect intervals={[4, 4]} />
-              </Line>
-              {area ? <Path path={area} color={colour} opacity={0.35} /> : null}
-              {line ? (
-                <Path path={line} style="stroke" strokeWidth={3} strokeJoin="round" color={colour} />
-              ) : null}
-              {at && (
-                <Line p1={vec(x(current), top)} p2={vec(x(current), bottom)} color={c.fg} strokeWidth={2} />
-              )}
-              {shown.map((p, i) =>
-                i === current ? (
-                  <Group key={i}>
-                    <Circle cx={x(i)} cy={y(p.done)} r={radius * 2.2} color={colour} opacity={0.3} />
-                    <Circle cx={x(i)} cy={y(p.done)} r={radius + 1} color={colour} />
-                  </Group>
-                ) : (
-                  <Group key={i}>
-                    <Circle cx={x(i)} cy={y(p.done)} r={radius} color={c.surface} />
-                    <Circle
-                      cx={x(i)}
-                      cy={y(p.done)}
-                      r={radius}
-                      color={colour}
-                      style="stroke"
-                      strokeWidth={2.5}
+              {painted && (
+                <>
+                  {scale.ticks.map((v) => (
+                    <Line key={v} p1={vec(0, y(v))} p2={vec(plot, y(v))} color={c.line} strokeWidth={1} />
+                  ))}
+                  <Line
+                    p1={vec(0, y(0))}
+                    p2={vec(plot, y(goal.target))}
+                    color={c.muted}
+                    strokeWidth={1}
+                    opacity={0.5}
+                  >
+                    <DashPathEffect intervals={[4, 4]} />
+                  </Line>
+                  {area ? <Path path={area} color={colour} opacity={0.35} /> : null}
+                  {line ? (
+                    <Path path={line} style="stroke" strokeWidth={3} strokeJoin="round" color={colour} />
+                  ) : null}
+                  {at && (
+                    <Line
+                      p1={vec(x(current), top)}
+                      p2={vec(x(current), bottom)}
+                      color={c.fg}
+                      strokeWidth={2}
                     />
-                  </Group>
-                ),
+                  )}
+                  {shown.map((p, i) =>
+                    i === current ? (
+                      <Group key={i}>
+                        <Circle cx={x(i)} cy={y(p.done)} r={radius * 2.2} color={colour} opacity={0.3} />
+                        <Circle cx={x(i)} cy={y(p.done)} r={radius + 1} color={colour} />
+                      </Group>
+                    ) : (
+                      <Group key={i}>
+                        <Circle cx={x(i)} cy={y(p.done)} r={radius} color={c.surface} />
+                        <Circle
+                          cx={x(i)}
+                          cy={y(p.done)}
+                          r={radius}
+                          color={colour}
+                          style="stroke"
+                          strokeWidth={2.5}
+                        />
+                      </Group>
+                    ),
+                  )}
+                </>
               )}
             </Canvas>
           )}

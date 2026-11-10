@@ -1,6 +1,6 @@
 /**
  * One series of an activity over its distance (or time), drawn with Skia as Garmin does: a filled
- * area under the line, round values on the left, a grid and the distance underneath. Every chart of
+ * area, round values on the left, a grid and the distance underneath. Every chart of
  * the activity shares the cursor and the section, so dragging on one moves them all and the map.
  * What follows the finger (cursor line, value, section band) runs on the UI thread from shared values.
  */
@@ -121,8 +121,7 @@ export const MetricChart = memo(function MetricChart({
   // The area always fills down to the bottom edge, as Garmin draws a pace too.
   const base = PAD + plotH;
 
-  const { line, fill } = useMemo(() => {
-    const path = Skia.PathBuilder.Make();
+  const fill = useMemo(() => {
     const area = Skia.PathBuilder.Make();
     const columns = Math.max(2, Math.round(plotW));
     let started = false;
@@ -133,21 +132,17 @@ export const MetricChart = memo(function MetricChart({
       if (v == null) continue;
       const y = yOf(v);
       if (!started) {
-        path.moveTo(x, y);
         area.moveTo(x, base);
         area.lineTo(x, y);
         started = true;
-      } else {
-        path.lineTo(x, y);
-        area.lineTo(x, y);
-      }
+      } else area.lineTo(x, y);
       lastX = x;
     }
     if (started) {
       area.lineTo(lastX, base);
       area.close();
     }
-    return { line: path.build(), fill: area.build() };
+    return area.build();
     // yOf and base follow from the scale.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track, series.values, plotW, plotH, lo, hi, series.inverted]);
@@ -259,8 +254,7 @@ export const MetricChart = memo(function MetricChart({
             ))}
             <Group transform={[{ translateX: left }]}>
               <Rect x={bandX} y={0} width={bandW} height={height} color={colors.band} />
-              <Path path={fill} color={series.color} opacity={0.22} />
-              <Path path={line} color={series.color} style="stroke" strokeWidth={3} strokeJoin="round" />
+              <Path path={fill} color={series.color} opacity={0.75} />
               <Line p1={p1} p2={p2} color={colors.cursor} strokeWidth={1.5} />
             </Group>
           </Canvas>

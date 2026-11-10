@@ -1,7 +1,7 @@
 /**
  * Activity detail (OS-504, OS-516 to OS-518): the map with the route coloured by a metric, every
- * figure the PWA shows, the elevation and heart-rate profile with a cursor that follows the finger
- * (synced with the map, on the UI thread), section selection saved as a segment, replay, photos, HR
+ * figure the PWA shows, one chart per series (altitude, pace or speed, heart rate, power, cadence) sharing
+ * a cursor that follows the finger (synced with the map, on the UI thread), section selection saved as a segment, replay, photos, HR
  * and power zones, best efforts, laps, splits, the power curve, strength sets, editing and sharing.
  * The series come from the phone when kept (OS-505).
  */
@@ -14,6 +14,7 @@ import {
   metricValues,
   quantile,
   RAMP,
+  smooth,
   usesPace,
   type ActivityDetail,
   type Metric,
@@ -27,7 +28,7 @@ import { useSharedValue } from 'react-native-reanimated';
 
 import { SummaryCard } from '../../src/Ai';
 import { useApi } from '../../src/auth';
-import { Profile } from '../../src/detail/Profile';
+import { type ChartSeries, MetricChart } from '../../src/detail/MetricChart';
 import { RouteMap } from '../../src/detail/RouteMap';
 import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../../src/detail/Sections';
 import { Strength } from '../../src/detail/Strength';
@@ -102,6 +103,12 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         : m === 'power'
           ? `${Math.round(v)} W`
           : format.elevation(v);
+  const charts = useMemo(
+    () => (series && track ? chartSeries(series, sport, pace, units, format, c) : []),
+    // format and the colours change with the settings and the theme, both already in the keys.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [series, track, sport, pace, units, c],
+  );
   const replayTo = useCallback(
     (i: number) => {
       cursor.set(i);
@@ -283,27 +290,29 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
                 </Text>
               </Pressable>
             </View>
-            <Profile
-              track={track}
-              width={width - 60}
-              height={150}
-              cursor={cursor}
-              selection={selection}
-              selecting={selecting}
-              onCursor={onCursor}
-              onSelection={onSelection}
-              colors={{
-                alt: c.muted,
-                altFill: `${c.muted}33`,
-                hr: c.zone5,
-                cursor: c.fg,
-                band: `${String(c.accent)}33`,
-                text: c.fg,
-                grid: c.line,
-                muted: c.muted,
-              }}
-              labels={{ alt: t('metric.alt'), hr: t('metric.hr') }}
-            />
+            {charts.map((chart) => (
+              <MetricChart
+                key={chart.label}
+                track={track}
+                series={chart}
+                width={width - 60}
+                height={110}
+                cursor={cursor}
+                selection={selection}
+                selecting={selecting}
+                onCursor={onCursor}
+                onSelection={onSelection}
+                unit={units === 'imperial' ? 1609.344 : 1000}
+                unitLabel={units === 'imperial' ? 'mi' : 'km'}
+                colors={{
+                  cursor: c.fg,
+                  band: `${String(c.accent)}33`,
+                  grid: c.line,
+                  muted: c.muted,
+                  fg: c.fg,
+                }}
+              />
+            ))}
             {stats && (
               <View style={ui.stats}>
                 <Stat label={t('feed.stat.distance')} value={format.distance(stats.distance)} />
@@ -340,4 +349,110 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
       {editing && <EditActivity activity={a} onClose={() => setEditing(false)} />}
     </ScrollView>
   );
+}
+
+type Format = ReturnType<typeof useFormat>;
+
+/** The charts an activity has data for, in the order Garmin shows them, each in the unit it is read in. */
+function chartSeries(
+  series: Series,
+  sport: ReturnType<typeof asSport>,
+  pace: boolean,
+  units: 'metric' | 'imperial',
+  format: Format,
+  c: ReturnType<typeof useTheme>,
+): ChartSeries[] {
+  const has = (values: (number | null)[] | null | undefined): values is (number | null)[] =>
+    !!values?.some((v) => v != null && v > 0);
+  const average = (values: (number | null)[], text: (v: number) => string) => {
+    const usable = values.filter((v): v is number => v != null && v > 0);
+    return usable.length
+      ? `${t('chart.average')} ${text(usable.reduce((a, b) => a + b, 0) / usable.length)}`
+      : '–';
+  };
+  const texts = (values: (number | null)[], text: (v: number) => string) =>
+    values.map((v) => (v == null ? '–' : text(v)));
+  const out: ChartSeries[] = [];
+  const feet = units === 'imperial' ? 3.28084 : 1;
+
+  const alt = series.alt;
+  if (alt?.some((v) => v != null)) {
+    const values = alt.map((v) => (v == null ? null : v * feet));
+    out.push({
+      label: t('metric.alt'),
+      color: String(c.muted),
+      values,
+      text: texts(alt, (v) => format.elevation(v)),
+      average:
+        format.elevation(Math.max(...alt.filter((v): v is number => v != null))) + ` ${t('chart.max')}`,
+    });
+  }
+
+  const speed = metricValues(series, 'speed');
+  if (has(speed)) {
+    const unit = units === 'imperial' ? 1609.344 : 1000;
+    const text = (v: number) => format.speedFor(v, pace);
+    const moving = speed.filter((v): v is number => v != null && v > 0.5);
+    const mean = moving.length ? moving.reduce((a, b) => a + b, 0) / moving.length : 0;
+    out.push(
+      pace
+        ? {
+            label: t('metric.pace'),
+            color: String(c.accent),
+            // Minutes per km (or mile); standing still has no pace.
+            values: speed.map((v) => (v == null || v < 0.5 ? null : unit / v / 60)),
+            text: texts(speed, (v) => (v < 0.5 ? '–' : text(v))),
+            average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
+            inverted: true,
+            tick: (v) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`,
+          }
+        : {
+            label: t('metric.speed'),
+            color: String(c.accent),
+            values: speed.map((v) => (v == null ? null : (v * 3600) / unit)),
+            text: texts(speed, text),
+            average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
+            fromZero: true,
+          },
+    );
+  }
+
+  const hr = series.hr;
+  if (has(hr)) {
+    const text = (v: number) => `${Math.round(v)} bpm`;
+    out.push({
+      label: t('metric.hr'),
+      color: c.zone5,
+      values: hr,
+      text: texts(hr, text),
+      average: average(hr, text),
+    });
+  }
+
+  const power = metricValues(series, 'power');
+  if (has(power)) {
+    const text = (v: number) => `${Math.round(v)} W`;
+    out.push({
+      label: t('metric.power'),
+      color: String(c.ride),
+      values: power,
+      text: texts(power, text),
+      average: average(series.power ?? power, text),
+      fromZero: true,
+    });
+  }
+
+  if (has(series.cad)) {
+    const cad = smooth(series.cad);
+    const per = sport === 'ride' ? 'rpm' : t('chart.spm');
+    const text = (v: number) => `${Math.round(v)} ${per}`;
+    out.push({
+      label: t('metric.cad'),
+      color: c.zone4,
+      values: cad,
+      text: texts(cad, text),
+      average: average(series.cad, text),
+    });
+  }
+  return out;
 }

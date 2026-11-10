@@ -26,7 +26,15 @@ import { Alert, Image, Pressable, Text, View } from 'react-native';
 import { useApi, useAuth } from '../auth';
 import { Sheet } from '../detail/Tools';
 import { Icon } from '../Icon';
-import { ageOn, goalInput, goalTarget, initials, validDate } from './helpers';
+import {
+  ageOn,
+  fromDayMonthYear,
+  goalInput,
+  goalTarget,
+  initials,
+  toDayMonthYear,
+  typeDayMonthYear,
+} from './helpers';
 import { effortName } from '../estimates';
 import { locale, t } from '../i18n';
 import { asSport, useFormat, useHrMax } from '../prefs';
@@ -145,19 +153,21 @@ export function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
   const [form, setForm] = useState({
     display_name: me.display_name ?? '',
     location: me.location ?? '',
-    birth_date: me.birth_date ?? '',
+    // Shown and typed as DD/MM/YYYY; sent as YYYY-MM-DD.
+    birth_date: me.birth_date ? toDayMonthYear(me.birth_date) : '',
     sex: me.sex ?? '',
     weight_kg: me.weight_kg?.toString() ?? '',
     height_cm: me.height_cm?.toString() ?? '',
   });
   const save = useMutation({
     mutationFn: async () => {
-      if (form.birth_date && !validDate(form.birth_date)) throw new Error(t('mobile.invalidDate'));
+      const birth = form.birth_date ? fromDayMonthYear(form.birth_date) : null;
+      if (form.birth_date && !birth) throw new Error(t('mobile.invalidDate'));
       const { data, error } = await api.PATCH('/api/auth/me', {
         body: {
           ...(form.display_name.trim() ? { display_name: form.display_name.trim() } : {}),
           location: form.location.trim() || null,
-          birth_date: form.birth_date || null,
+          birth_date: birth,
           sex: (form.sex || null) as Me['sex'],
           weight_kg: form.weight_kg ? Number(form.weight_kg.replace(',', '.')) : null,
           height_cm: form.height_cm ? Number(form.height_cm) : null,
@@ -193,9 +203,10 @@ export function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
       <Field
         label={t('profile.birth')}
         placeholder={t('mobile.dateFormat')}
-        keyboardType="numbers-and-punctuation"
+        keyboardType="number-pad"
         maxLength={10}
-        {...field('birth_date')}
+        value={form.birth_date}
+        onChangeText={(text) => setForm({ ...form, birth_date: typeDayMonthYear(text) })}
       />
       <Text style={{ color: c.fg, fontWeight: '600' }}>{t('profile.sex')}</Text>
       <Choice

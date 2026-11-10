@@ -17,7 +17,16 @@ import { Icon } from '../Icon';
 import { t } from '../i18n';
 import { accessToken, instanceUrl } from '../session';
 import { useTheme } from '../theme';
-import { Button, Choice, Field, Heading, Muted, styles as ui } from '../ui';
+import {
+  Button,
+  Choice,
+  Field,
+  Heading,
+  KeyboardSpace,
+  Muted,
+  styles as ui,
+  useFieldAboveKeyboard,
+} from '../ui';
 import { indexAt } from './track';
 
 function useRefreshActivity(id: number) {
@@ -59,6 +68,7 @@ export function Sheet({
   footer?: React.ReactNode;
 }) {
   const c = useTheme();
+  const keyboard = useFieldAboveKeyboard();
   return (
     <Modal animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
@@ -68,7 +78,7 @@ export function Sheet({
             <Text style={{ color: c.accent, fontSize: 16, fontWeight: '600' }}>{t('common.close')}</Text>
           </Pressable>
         </View>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={ui.page}>
+        <ScrollView {...keyboard} keyboardShouldPersistTaps="handled" contentContainerStyle={ui.page}>
           {children}
         </ScrollView>
         {footer ? (
@@ -93,6 +103,7 @@ export function Sheet({
             ))}
           </View>
         ) : null}
+        <KeyboardSpace />
       </SafeAreaView>
     </Modal>
   );

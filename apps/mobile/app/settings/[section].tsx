@@ -3,7 +3,7 @@
  * zones, notifications, the AI assistant and MCP tokens, privacy zones, health sources (with Health
  * Connect, OS-607), your data, and security and sessions (biometrics, OS-503; Garmin; devices).
  */
-import { meQuery, settingsQuery, THEME_CHOICES, type Locale, type MessageKey } from '@zankup/core';
+import { meQuery, settingsQuery, type Locale, type MessageKey } from '@zankup/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useContext, useEffect, useState } from 'react';
@@ -16,6 +16,7 @@ import { SETTINGS_SECTIONS, type SettingsSection } from '../../src/links';
 import { Account } from '../../src/profile/Sections';
 import { HealthSources } from '../../src/settings/HealthSources';
 import { ServiceKeyEditor } from '../../src/settings/ServiceKey';
+import { ThemePicker } from '../../src/settings/Themes';
 import { PrivacyZones } from '../../src/settings/Privacy';
 import { useSaveSettings } from '../../src/settings/save';
 import {
@@ -124,12 +125,7 @@ function General() {
       />
       <Heading>{t('settings.appearance')}</Heading>
       <Muted>{t('settings.themeHelp')}</Muted>
-      <Choice
-        label={t('settings.appearance')}
-        value={theme.choice}
-        onChange={theme.setChoice}
-        options={THEME_CHOICES.map((choice) => ({ value: choice, label: t(`theme.${choice}`) }))}
-      />
+      <ThemePicker value={theme.choice} onChange={theme.setChoice} />
     </Card>
   );
 }

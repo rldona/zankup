@@ -17,8 +17,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Alert, Linking, Share, Text, View } from 'react-native';
 
+import * as Clipboard from 'expo-clipboard';
+
 import { ServiceKeyEditor } from './ServiceKey';
 import { useApi, useAuth } from '../auth';
+import { Icon } from '../Icon';
 import { locale, t } from '../i18n';
 import { registerPush, unregisterPush, type PushResult } from '../push';
 import { instanceUrl } from '../session';
@@ -237,6 +240,26 @@ export function Notifications() {
 // --- MCP tokens ------------------------------------------------------------------------------------
 
 /** Personal tokens for the read-only MCP server (OS-709): create one (shown once), list and revoke. */
+/** Copies a value (a token) to the clipboard, and says so for a moment. */
+function CopyButton({ value }: { value: string }) {
+  const c = useTheme();
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      primary
+      icon={<Icon name={copied ? 'check' : 'content_copy'} color={String(c.accentFg)} size={18} />}
+      onPress={() => {
+        void Clipboard.setStringAsync(value).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
+      }}
+    >
+      {copied ? t('common.copied') : t('common.copy')}
+    </Button>
+  );
+}
+
 export function Mcp() {
   const api = useApi();
   const c = useTheme();
@@ -287,7 +310,19 @@ export function Mcp() {
           <Text selectable style={{ color: c.fg, fontFamily: 'monospace' }}>
             {created.token}
           </Text>
-          <Button onPress={() => void Share.share({ message: created.token })}>{t('mobile.share')}</Button>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <CopyButton value={created.token} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                icon={<Icon name="share" color={c.fg} size={18} />}
+                onPress={() => void Share.share({ message: created.token })}
+              >
+                {t('mobile.share')}
+              </Button>
+            </View>
+          </View>
         </View>
       )}
       {tokens.data?.length === 0 && <Muted>{t('mcp.none')}</Muted>}

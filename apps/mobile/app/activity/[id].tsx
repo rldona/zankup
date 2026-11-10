@@ -46,6 +46,7 @@ import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../..
 import { Strength } from '../../src/detail/Strength';
 import { MapControls } from '../../src/detail/MapControls';
 import { ActivitySkeleton } from '../../src/Skeleton';
+import { ActionMenu } from '../../src/Menu';
 import { drawCard, shareCard } from '../../src/share/card';
 import { EditActivity, metaLine, Photos, SaveSegment, useReplay } from '../../src/detail/Tools';
 import { Icon, SportIcon } from '../../src/Icon';
@@ -202,13 +203,6 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
       Alert.alert(t('common.error'));
     }
   };
-  const share = () =>
-    Alert.alert(t('activity.share'), undefined, [
-      { text: t('share.image'), onPress: () => void shareImage() },
-      { text: t('share.link'), onPress: () => void shareLink() },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: 32 }}>
       <Stack.Screen
@@ -224,14 +218,14 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
               >
                 <Icon name="edit_square" color={c.fg} />
               </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('activity.share')}
-                hitSlop={10}
-                onPress={() => void share()}
-              >
-                <Icon name="share" color={c.fg} />
-              </Pressable>
+              <ActionMenu
+                label={t('activity.share')}
+                icon="share"
+                actions={[
+                  { icon: 'image', label: t('share.image'), onPress: () => void shareImage() },
+                  { icon: 'link', label: t('share.link'), onPress: () => void shareLink() },
+                ]}
+              />
             </View>
           ),
         }}

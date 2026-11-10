@@ -32,7 +32,8 @@ import { type ChartSeries, MetricChart } from '../../src/detail/MetricChart';
 import { RouteMap } from '../../src/detail/RouteMap';
 import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../../src/detail/Sections';
 import { Strength } from '../../src/detail/Strength';
-import { EditActivity, metaLine, Photos, Replay, SaveSegment } from '../../src/detail/Tools';
+import { MapControls } from '../../src/detail/MapControls';
+import { EditActivity, metaLine, Photos, SaveSegment, useReplay } from '../../src/detail/Tools';
 import { Icon, SportIcon } from '../../src/Icon';
 import { buildTrack, sectionStats, type SectionStats } from '../../src/detail/track';
 import { locale, t } from '../../src/i18n';
@@ -45,7 +46,6 @@ import {
   accent,
   onAccent,
   Card,
-  Choice,
   Empty,
   Heading,
   Loading,
@@ -116,6 +116,9 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
     },
     [cursor],
   );
+
+  const replay = useReplay(track?.t ?? NO_TIMES, replayTo);
+  const inverted = pace && metric === 'speed';
 
   // The map cursor follows the finger through JS: one update per frame at most.
   const pending = useRef<number | null>(null);
@@ -220,6 +223,22 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             values={colouring?.values}
             range={colouring?.range}
           />
+          <MapControls
+            replay={replay}
+            metric={metric}
+            metrics={metrics.map((x) => ({ value: x, label: metricLabel(x) }))}
+            onMetric={setChosen}
+            legend={
+              colouring && metric
+                ? {
+                    // A pace reads best first: the fast end of the ramp is the low pace.
+                    low: formatMetric(metric, inverted ? colouring.range[1] : colouring.range[0]),
+                    high: formatMetric(metric, inverted ? colouring.range[0] : colouring.range[1]),
+                    colours: inverted ? [...RAMP].reverse() : RAMP,
+                  }
+                : null
+            }
+          />
         </View>
       )}
       <View style={ui.page}>
@@ -236,34 +255,6 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             {meta ? <Muted>{meta}</Muted> : null}
           </View>
         </View>
-        {track?.hasGps && metrics.length > 1 && (
-          <View style={{ gap: 6 }}>
-            <Choice
-              label={t('activity.colourBy')}
-              value={metric ?? 'speed'}
-              onChange={setChosen}
-              options={metrics.map((x) => ({ value: x, label: metricLabel(x) }))}
-            />
-            {colouring && metric && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} accessible={false}>
-                <Muted>
-                  {formatMetric(metric, pace && metric === 'speed' ? colouring.range[1] : colouring.range[0])}
-                </Muted>
-                <View
-                  style={{ flex: 1, flexDirection: 'row', height: 6, borderRadius: 3, overflow: 'hidden' }}
-                >
-                  {(pace && metric === 'speed' ? [...RAMP].reverse() : RAMP).map((colour) => (
-                    <View key={colour} style={{ flex: 1, backgroundColor: colour }} />
-                  ))}
-                </View>
-                <Muted>
-                  {formatMetric(metric, pace && metric === 'speed' ? colouring.range[0] : colouring.range[1])}
-                </Muted>
-              </View>
-            )}
-          </View>
-        )}
-        {track?.hasGps && track.n > 1 && <Replay times={track.t} onIndex={replayTo} />}
         <View style={ui.stats}>
           {figures.map(([label, value]) => (
             <Stat key={label} label={label} value={value} />
@@ -356,6 +347,8 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
     </ScrollView>
   );
 }
+
+const NO_TIMES: number[] = [];
 
 type Format = ReturnType<typeof useFormat>;
 

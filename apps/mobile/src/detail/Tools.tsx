@@ -274,13 +274,17 @@ export function Photos({ activity }: { activity: ActivityDetail }) {
   );
 }
 
-const SPEEDS = [10, 30, 100] as const;
+export const SPEEDS = [10, 30, 100] as const;
+export type ReplaySpeed = (typeof SPEEDS)[number];
 
-/** Replay (OS-414 on the phone): moves the shared cursor along the activity at 10× to 100×. */
-export function Replay({ times, onIndex }: { times: number[]; onIndex: (index: number) => void }) {
+/**
+ * Replay (OS-414 on the phone): moves the shared cursor along the activity at 10× to 100×. A hook, so
+ * the play button can sit on the map and the speed in the map's options.
+ */
+export function useReplay(times: number[], onIndex: (index: number) => void) {
   const total = times[times.length - 1] ?? 0;
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(30);
+  const [speed, setSpeed] = useState<ReplaySpeed>(30);
   const position = useRef(0);
   const report = useRef(onIndex);
   useEffect(() => {
@@ -301,28 +305,11 @@ export function Replay({ times, onIndex }: { times: number[]; onIndex: (index: n
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
   }, [playing, speed, times, total]);
-  return (
-    <View
-      accessibilityRole="toolbar"
-      accessibilityLabel={t('replay.title')}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
-    >
-      <Button
-        onPress={() => {
-          if (!playing && position.current >= total) position.current = 0;
-          setPlaying(!playing);
-        }}
-      >
-        {playing ? t('replay.pause') : t('replay.play')}
-      </Button>
-      <Choice
-        label={t('replay.speed')}
-        value={String(speed)}
-        onChange={(v) => setSpeed(Number(v) as (typeof SPEEDS)[number])}
-        options={SPEEDS.map((s) => ({ value: String(s), label: `${s}×` }))}
-      />
-    </View>
-  );
+  const toggle = () => {
+    if (!playing && position.current >= total) position.current = 0;
+    setPlaying(!playing);
+  };
+  return { playing, toggle, speed, setSpeed };
 }
 
 /** Save the selected section as a personal segment (OS-325). */

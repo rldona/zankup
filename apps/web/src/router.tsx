@@ -3,6 +3,8 @@ import { createBrowserRouter, type RouteObject } from 'react-router';
 import { Activity } from './routes/Activity';
 import { AppError } from './routes/AppError';
 import { Feed, PickActivity } from './routes/Feed';
+import { Goals } from './routes/Goals';
+import { Home } from './routes/Home';
 import { Health } from './routes/Health';
 import { NotFound } from './routes/NotFound';
 import { Profile } from './routes/Profile';
@@ -31,13 +33,16 @@ import {
 
 /** Every screen. Public: sign-in, setup, password recovery and shared activities (/s/…). */
 const screens: RouteObject[] = [
+  { index: true, element: <Home /> },
   {
+    path: 'activities',
     element: <Feed />,
     children: [
       { index: true, element: <PickActivity /> },
-      { path: 'activities/:id', element: <Activity /> },
+      { path: ':id', element: <Activity /> },
     ],
   },
+  { path: 'goals', element: <Goals /> },
   { path: 'search', element: <Search /> },
   { path: 'stats', element: <Stats /> },
   { path: 'stats/calendar', element: <TrainingCalendar /> },

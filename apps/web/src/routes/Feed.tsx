@@ -22,7 +22,7 @@ import { Link, NavLink, Outlet, useMatch, useSearchParams } from 'react-router';
 import { api } from '../api';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
-import { WeekHeader } from '../week/WeekHeader';
+import { MaterialIcon } from '../MaterialIcon';
 import { SportGlyph, SportIcon } from '../SportIcon';
 
 type Format = ReturnType<typeof formatters>;
@@ -67,10 +67,23 @@ export function Feed() {
   return (
     <div className={`feedwrap${detail ? ' detail' : ''}`}>
       <section className="feedcol" ref={column}>
-        <WeekHeader />
-        <h1>
-          {t('feed.title')} <Since months={sport ? allMonths.data : months.data} />
-        </h1>
+        <div className="titlebar">
+          <h1>
+            {t('feed.title')} <Since months={sport ? allMonths.data : months.data} />
+          </h1>
+          {/* As the app's Activities header: the search and the training calendar. */}
+          <Link to="/search" className="iconbtn" aria-label={t('nav.search')} title={t('nav.search')}>
+            <MaterialIcon name="search" />
+          </Link>
+          <Link
+            to="/stats/calendar"
+            className="iconbtn"
+            aria-label={t('stats.calendar')}
+            title={t('stats.calendar')}
+          >
+            <MaterialIcon name="calendar_month" />
+          </Link>
+        </div>
         <div className="chips" role="group" aria-label={t('feed.sports')}>
           <button type="button" className="chip" aria-pressed={sport === null} onClick={() => pick(null)}>
             {t('feed.all')}

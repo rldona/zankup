@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -124,12 +124,10 @@ const ndjson = (events: object[]) =>
 describe('phase 7: the AI assistant', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('shows the Coach in the sidebar only when this server has a model and the switch is on', async () => {
+  it("shows the Coach in Home's header only when this server has a model and the switch is on", async () => {
     mockApi();
     renderAt('/');
-    const [sidebar] = await screen.findAllByRole('navigation', { name: 'Main' });
-    if (!sidebar) throw new Error('missing navigation');
-    await waitFor(() => expect(within(sidebar).getByRole('link', { name: 'Coach' })).toBeInTheDocument());
+    expect(await screen.findByRole('link', { name: 'Coach' })).toHaveAttribute('href', '/coach');
     vi.unstubAllGlobals();
     mockApi({
       '/api/ai/status': () => Response.json({ ...STATUS, available: false, model: null, budget: null }),

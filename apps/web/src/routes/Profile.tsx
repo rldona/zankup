@@ -1,4 +1,5 @@
 import {
+  aiStatusQuery,
   estimatesQuery,
   formatHoursMinutes,
   formatters,
@@ -26,6 +27,7 @@ import { deviceName } from '../signin/device';
 import { attestationJson, creationOptions, passkeysSupported } from '../signin/webauthn';
 import { SportIcon } from '../SportIcon';
 import { EstimatesPanel, GoalsPanel } from '../stats/panels';
+import { Menu } from '../ui';
 
 const TABS = ['summary', 'goals', 'estimates', 'gear', 'account'] as const;
 type Tab = (typeof TABS)[number];
@@ -44,6 +46,7 @@ const day = (iso: string) =>
 export function Profile() {
   const me = useQuery(meQuery(api));
   const summary = useQuery(profileSummaryQuery(api));
+  const ai = useQuery({ ...aiStatusQuery(api), retry: false });
   const [params, setParams] = useSearchParams();
   const tab: Tab = (TABS as readonly string[]).includes(params.get('tab') ?? '')
     ? (params.get('tab') as Tab)
@@ -56,6 +59,20 @@ export function Profile() {
     <section className="page profile">
       <Header me={me.data} summary={summary.data} onEdit={() => setEditing(true)} />
       {editing && <EditProfile me={me.data} onDone={() => setEditing(false)} />}
+      <Menu
+        label={t('nav.you')}
+        items={[
+          { to: '/stats', icon: 'bar_chart', label: t('nav.stats') },
+          { to: '/profile?tab=estimates', icon: 'speed', label: t('stats.estimates') },
+          ...(ai.data?.available && ai.data.enabled
+            ? [{ to: '/coach', icon: 'wand_stars' as const, label: t('coach.title') }]
+            : []),
+          { to: '/gear', icon: 'footprint', label: t('gear.title') },
+          { to: '/settings/import', icon: 'upload', label: t('import.title') },
+          { to: '/profile?tab=account', icon: 'account_circle', label: t('profile.tab.account') },
+          { to: '/settings', icon: 'settings', label: t('nav.settings') },
+        ]}
+      />
       {summary.data && <YearNumbers summary={summary.data} />}
       <div className="tabs" role="tablist">
         {TABS.map((name) => (

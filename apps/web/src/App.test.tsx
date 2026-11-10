@@ -81,7 +81,7 @@ describe('app skeleton', () => {
             })
           : Response.json({ items: [RUN], next_cursor: 'abc' }),
     });
-    renderAt('/');
+    renderAt('/activities');
     expect(await screen.findByText('Morning run')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
     expect(await screen.findByText('Older ride')).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('app skeleton', () => {
           next_cursor: null,
         }),
     });
-    const router = renderAt('/');
+    const router = renderAt('/activities');
     const months = await screen.findAllByRole('heading', { level: 2 });
     expect(months.map((h) => h.textContent)).toEqual([
       'November 20263 activities · 21 km · 2 h 3 min',
@@ -146,7 +146,7 @@ describe('app skeleton', () => {
       '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
       '/api/activities/7': () => Response.json({ ...RUN, laps: [], splits: [], best_efforts: [] }),
     });
-    const router = renderAt('/');
+    const router = renderAt('/activities');
     await userEvent.click(await screen.findByRole('link', { name: /Morning run/ }));
     expect(await screen.findByRole('heading', { name: 'Morning run' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/activities/7');
@@ -276,13 +276,18 @@ describe('app skeleton', () => {
     const [sidebar, tabbar] = await screen.findAllByRole('navigation', { name: 'Main' });
     if (!sidebar || !tabbar) throw new Error('missing navigation');
     const names = (nav: HTMLElement) => Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
-    expect(names(sidebar)).toEqual(['Activities', 'Search', 'Stats', 'Health', 'Profile', 'Settings']);
-    expect(names(tabbar)).toEqual(['Feed', 'Search', 'Stats', 'Sync', 'You']);
-    expect(sidebar.querySelector('a.on')?.textContent).toBe('Activities');
+    // The app's tabs (OS-903), on both.
+    expect(names(sidebar)).toEqual(['Home', 'Feed', 'Health', 'Goals', 'You']);
+    expect(names(tabbar)).toEqual(names(sidebar));
+    expect(sidebar.querySelector('a.on')?.textContent).toBe('Home');
 
-    await userEvent.click(within(tabbar).getByRole('link', { name: 'Search' }));
+    await userEvent.click(within(tabbar).getByRole('link', { name: 'Feed' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/activities'));
+    // Search is reached from the Activities header, and stays under Activities.
+    await userEvent.click(await screen.findByRole('link', { name: 'Search' }));
     expect(await screen.findByRole('searchbox', { name: 'Search' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/search');
+    expect(sidebar.querySelector('a.on')?.textContent).toBe('Feed');
   });
 
   it('keeps the feed beside the detail on wide screens', async () => {
@@ -297,7 +302,7 @@ describe('app skeleton', () => {
     expect(item).toHaveClass('on'); // the open activity is marked in the list
     expect(document.querySelector('.feedwrap')).toHaveClass('detail'); // mobile shows only the detail
     for (const nav of screen.getAllByRole('navigation', { name: 'Main' })) {
-      expect(nav.querySelector('a.on')).toHaveAttribute('href', '/'); // still in the feed section
+      expect(nav.querySelector('a.on')).toHaveAttribute('href', '/activities'); // still in Activities
     }
   });
 

@@ -69,7 +69,7 @@ export function Screen({
         // "handled": a tap on a button works at once, even with the keyboard open.
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[styles.page, title ? { paddingTop: 4 } : null]}
+          contentContainerStyle={[styles.page, title ? { paddingTop: 12 } : null]}
         >
           {children}
         </ScrollView>

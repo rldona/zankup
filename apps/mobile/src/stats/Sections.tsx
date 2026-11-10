@@ -26,6 +26,9 @@ import {
   weekQuery,
   yearColours,
   effortShown,
+  alpha,
+  compare,
+  comparisonYears,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -257,34 +260,70 @@ export function Summary({ range }: { range: Range }) {
   const summary = useQuery(summaryQuery(api, range));
   if (!summary.data) return null;
   const { current, previous } = summary.data;
-  const change = (now: number, before: number) => {
-    if (!before) return t('stats.noPrevious');
-    const percent = Math.round(((now - before) / before) * 100);
-    return t('stats.vsLastYear', { sign: percent > 0 ? '+' : '', percent });
-  };
-  const rows: [string, string, string][] = [
-    [t('feed.title'), current.count.toLocaleString(locale), change(current.count, previous.count)],
-    [
-      t('feed.stat.distance'),
-      format.distance(current.distance_m),
-      change(current.distance_m, previous.distance_m),
-    ],
-    [t('feed.stat.time'), formatHoursMinutes(current.moving_s), change(current.moving_s, previous.moving_s)],
-    [t('feed.stat.ascent'), format.elevation(current.ascent_m), change(current.ascent_m, previous.ascent_m)],
-    [t('stats.load'), Math.round(current.load).toLocaleString(locale), change(current.load, previous.load)],
+  const years = comparisonYears(range);
+  const rows: [string, string, number, number][] = [
+    [t('feed.title'), current.count.toLocaleString(locale), current.count, previous.count],
+    [t('feed.stat.distance'), format.distance(current.distance_m), current.distance_m, previous.distance_m],
+    [t('feed.stat.time'), formatHoursMinutes(current.moving_s), current.moving_s, previous.moving_s],
+    [t('feed.stat.ascent'), format.elevation(current.ascent_m), current.ascent_m, previous.ascent_m],
+    [t('stats.load'), Math.round(current.load).toLocaleString(locale), current.load, previous.load],
   ];
+  const bar = (share: number, colour: string) => (
+    <View
+      style={{
+        height: 7,
+        borderRadius: 4,
+        backgroundColor: colour,
+        width: `${Math.max(share * 100, share ? 2 : 0)}%`,
+      }}
+    />
+  );
   return (
     <Card>
       <CardTitle>{t('stats.summaryTitle')}</CardTitle>
-      {rows.map(([label, value, delta]) => (
-        <View key={label} style={{ paddingVertical: 3 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Muted>{label}</Muted>
-            <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
+      {/* Each figure against the same period a year before: last year's bar, then this period's. */}
+      {rows.map(([label, value, now, before]) => {
+        const { percent, now: mine, before: theirs } = compare(now, before);
+        const tone =
+          percent == null || percent === 0 ? c.muted : percent > 0 ? c.formPositive : c.formNegative;
+        return (
+          <View key={label} style={{ paddingVertical: 6, gap: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Muted style={{ flex: 1, fontSize: 14 }}>{label}</Muted>
+              <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
+              {percent ? (
+                <Text
+                  style={{
+                    color: tone,
+                    backgroundColor: alpha(tone, 0.15),
+                    fontSize: 12,
+                    fontWeight: '600',
+                    paddingHorizontal: 8,
+                    paddingVertical: 1,
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {t('stats.change', { sign: percent > 0 ? '+' : '', percent })}
+                </Text>
+              ) : null}
+            </View>
+            {bar(theirs, alpha(c.muted, 0.45))}
+            {bar(mine, c.accent)}
           </View>
-          <Muted style={{ fontSize: 12 }}>{delta}</Muted>
-        </View>
-      ))}
+        );
+      })}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 6 }}>
+        {[
+          [String(years[0]), alpha(c.muted, 0.45)],
+          [String(years[1]), c.accent],
+        ].map(([label, colour]) => (
+          <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ width: 12, height: 7, borderRadius: 4, backgroundColor: colour }} />
+            <Muted style={{ fontSize: 12 }}>{label}</Muted>
+          </View>
+        ))}
+      </View>
     </Card>
   );
 }

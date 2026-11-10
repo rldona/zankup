@@ -4116,3 +4116,86 @@ h1.greeting {
   height: 10px;
   border-radius: 50%;
 }
+
+/* Stats' summary against the same period a year before (as the app): figure, change, two bars. */
+.compare {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.compare li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 4px;
+}
+
+.compare .clabel {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.compare .bar {
+  grid-column: 1 / -1;
+}
+
+.compare .pill,
+.compare .pill.up,
+.compare .pill.down {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 15%, transparent);
+}
+
+.compare .pill.up {
+  color: var(--form-positive);
+  background: color-mix(in srgb, var(--form-positive) 15%, transparent);
+}
+
+.compare .pill.down {
+  color: var(--form-negative);
+  background: color-mix(in srgb, var(--form-negative) 15%, transparent);
+}
+
+.compare .bar,
+.comparekey .bar {
+  display: block;
+  height: 7px;
+  border-radius: 4px;
+  min-width: 2px;
+}
+
+.compare .bar.now,
+.comparekey .bar.now {
+  background: var(--accent);
+}
+
+.compare .bar.before,
+.comparekey .bar.before {
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+.comparekey {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 12px 0 0;
+}
+
+.comparekey span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comparekey .bar {
+  display: inline-block;
+  width: 12px;
+}

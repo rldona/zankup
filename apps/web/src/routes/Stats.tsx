@@ -20,6 +20,8 @@ import {
   effortShown,
   themes,
   yearColours,
+  compare,
+  comparisonYears,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -304,46 +306,45 @@ function Summary({
   const summary = useQuery(summaryQuery(api, range));
   if (!summary.data) return null;
   const { current, previous } = summary.data;
-  const change = (now: number, before: number) => {
-    if (!before) return t('stats.noPrevious');
-    const percent = Math.round(((now - before) / before) * 100);
-    return t('stats.vsLastYear', { sign: percent > 0 ? '+' : '', percent });
-  };
+  const years = comparisonYears(range);
+  const rows: [string, string, number, number][] = [
+    [t('feed.title'), current.count.toLocaleString(locale), current.count, previous.count],
+    [t('feed.stat.distance'), format.distance(current.distance_m), current.distance_m, previous.distance_m],
+    [t('feed.stat.time'), formatHoursMinutes(current.moving_s), current.moving_s, previous.moving_s],
+    [t('feed.stat.ascent'), format.elevation(current.ascent_m), current.ascent_m, previous.ascent_m],
+    [t('stats.load'), Math.round(current.load).toLocaleString(locale), current.load, previous.load],
+  ];
   return (
     <section className="panel">
       <CardTitle>{t('stats.summaryTitle')}</CardTitle>
-      <dl className="kpis num">
-        <div className="kpi">
-          <dd>{current.count.toLocaleString(locale)}</dd>
-          <dt>
-            {t('feed.title')} · {change(current.count, previous.count)}
-          </dt>
-        </div>
-        <div className="kpi">
-          <dd>{format.distance(current.distance_m)}</dd>
-          <dt>
-            {t('feed.stat.distance')} · {change(current.distance_m, previous.distance_m)}
-          </dt>
-        </div>
-        <div className="kpi">
-          <dd>{formatHoursMinutes(current.moving_s)}</dd>
-          <dt>
-            {t('feed.stat.time')} · {change(current.moving_s, previous.moving_s)}
-          </dt>
-        </div>
-        <div className="kpi">
-          <dd>{format.elevation(current.ascent_m)}</dd>
-          <dt>
-            {t('feed.stat.ascent')} · {change(current.ascent_m, previous.ascent_m)}
-          </dt>
-        </div>
-        <div className="kpi">
-          <dd>{Math.round(current.load).toLocaleString(locale)}</dd>
-          <dt>
-            {t('stats.load')} · {change(current.load, previous.load)}
-          </dt>
-        </div>
-      </dl>
+      {/* Each figure against the same period a year before, as the app: last year's bar, then this period's. */}
+      <ul className="compare num">
+        {rows.map(([label, value, now, before]) => {
+          const { percent, now: mine, before: theirs } = compare(now, before);
+          const tone = percent == null || percent === 0 ? '' : percent > 0 ? ' up' : ' down';
+          return (
+            <li key={label}>
+              <span className="clabel">{label}</span>
+              <b>{value}</b>
+              {percent ? ( // no pill when nothing changed
+                <span className={`pill${tone}`}>
+                  {t('stats.change', { sign: percent > 0 ? '+' : '', percent })}
+                </span>
+              ) : null}
+              <i className="bar before" style={{ width: `${theirs * 100}%` }} />
+              <i className="bar now" style={{ width: `${mine * 100}%` }} />
+            </li>
+          );
+        })}
+      </ul>
+      <p className="comparekey note">
+        <span>
+          <i className="bar before" /> {years[0]}
+        </span>
+        <span>
+          <i className="bar now" /> {years[1]}
+        </span>
+      </p>
     </section>
   );
 }

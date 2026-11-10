@@ -19,3 +19,4 @@ export * from './domain/sleep';
 export * from './domain/home';
 export * from './domain/figures';
 export * from './domain/goals';
+export * from './domain/shareCard';

@@ -12,6 +12,7 @@ Photos are uploaded as the raw image body (the app resizes them first, so they s
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import Literal
 
@@ -22,8 +23,11 @@ from sqlalchemy import func, select, update
 from zankup.api.routing import protected_router
 from zankup.auth.deps import AppSettings, CurrentUser, DbSession
 from zankup.db.models import GEAR_KINDS, Activity, Gear, Photo
-from zankup.engine.run import queue_activity, queue_user
+from zankup.engine.run import queue_activity, queue_full, queue_user
 from zankup.photos import PhotoError, get_photo_store
+from zankup.sync.orchestrator import forget_on_sync
+
+log = logging.getLogger(__name__)
 
 router = protected_router(tags=["library"])
 
@@ -84,6 +88,32 @@ def edit_activity(activity_id: int, body: ActivityEdit, db: DbSession, user: Cur
         gear_id=activity.gear_id,
         edited_fields=activity.edited_fields or [],
     )
+
+
+@router.delete("/api/activities/{activity_id}", operation_id="deleteActivity", status_code=204)
+def delete_activity(activity_id: int, db: DbSession, user: CurrentUser, settings: AppSettings) -> Response:
+    """Delete an activity with everything derived from it (streams, laps, metrics, photos, shares…).
+
+    A Garmin activity is remembered as deleted, so the next sync does not bring it back. The original
+    file stays in the raw store, which is never rewritten. Records, estimates and the form are
+    recomputed without it.
+    """
+    activity = db.scalar(select(Activity).where(Activity.id == activity_id, Activity.user_id == user.id))
+    if activity is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Activity not found")
+    photos = list(db.scalars(select(Photo.key).where(Photo.activity_id == activity.id)))
+    if activity.source == "garmin":
+        forget_on_sync(db, user.id, activity.external_id)
+    db.delete(activity)
+    queue_full(db, user.id, "activity deleted")
+    db.commit()
+    store = get_photo_store(settings)
+    for key in photos:
+        try:
+            store.delete(key)
+        except OSError:
+            log.warning("Photo file not removed", extra={"key": key})
+    return Response(status_code=204)
 
 
 # --- gear ------------------------------------------------------------------------------------------

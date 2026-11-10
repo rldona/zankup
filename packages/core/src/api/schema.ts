@@ -492,7 +492,15 @@ export interface paths {
     get: operations['getActivity'];
     put?: never;
     post?: never;
-    delete?: never;
+    /**
+     * Delete Activity
+     * @description Delete an activity with everything derived from it (streams, laps, metrics, photos, shares…).
+     *
+     *     A Garmin activity is remembered as deleted, so the next sync does not bring it back. The original
+     *     file stays in the raw store, which is never rewritten. Records, estimates and the form are
+     *     recomputed without it.
+     */
+    delete: operations['deleteActivity'];
     options?: never;
     head?: never;
     /**
@@ -5457,6 +5465,35 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ActivityDetail'];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  deleteActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

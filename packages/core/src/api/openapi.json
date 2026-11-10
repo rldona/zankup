@@ -933,6 +933,40 @@
           }
         }
       },
+      "delete": {
+        "tags": [
+          "library"
+        ],
+        "summary": "Delete Activity",
+        "description": "Delete an activity with everything derived from it (streams, laps, metrics, photos, shares…).\n\nA Garmin activity is remembered as deleted, so the next sync does not bring it back. The original\nfile stays in the raw store, which is never rewritten. Records, estimates and the form are\nrecomputed without it.",
+        "operationId": "deleteActivity",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "tags": [
           "activities"

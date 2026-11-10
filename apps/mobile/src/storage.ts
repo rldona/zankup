@@ -14,6 +14,8 @@ export const keys = {
   queryCache: 'zankup.queryCache',
   /** The newest activity this phone has already announced (LatestActivity). */
   latestSeen: 'zankup.latestSeen',
+  /** "1" when Zankup Coach's summary is folded on the activity screens. */
+  coachFolded: 'zankup.coachFolded',
 } as const;
 
 export const storage = Storage;

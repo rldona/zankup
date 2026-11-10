@@ -392,7 +392,7 @@ export function Volume({ range, unit }: { range: Range; unit: 'day' | 'week' | '
       </CardTitle>
       {buckets.length > 0 && (
         <>
-          <Text style={[ui.statValue, { color: c.fg }]}>
+          <Text style={[ui.statValue, { color: c.fg, alignSelf: 'flex-end' }]}>
             {metric === 'time' ? formatHoursMinutes(total) : `${(total / scale).toFixed(0)} ${format.unit}`}
           </Text>
           <Chart

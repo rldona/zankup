@@ -13,6 +13,7 @@ import {
   queryKeys,
   sourcesQuery,
   SPORTS,
+  type GoalOut,
   type Me,
   type MessageKey,
   type ProfileSummary,
@@ -24,7 +25,8 @@ import { Alert, Image, Pressable, Text, View } from 'react-native';
 
 import { useApi, useAuth } from '../auth';
 import { Sheet } from '../detail/Tools';
-import { ageOn, goalTarget, initials, validDate } from './helpers';
+import { Icon } from '../Icon';
+import { ageOn, goalInput, goalTarget, initials, validDate } from './helpers';
 import { effortName } from '../estimates';
 import { locale, t } from '../i18n';
 import { asSport, useFormat, useHrMax } from '../prefs';
@@ -345,12 +347,13 @@ const goalName = (g: { period: string; sport: string | null }) =>
 // --- goals -----------------------------------------------------------------------------------------
 
 /** The goals; with `withForm`, the form to add one under them (the modal on the Goals tab does without). */
-export function Goals({ withForm = true }: { withForm?: boolean }) {
+export function Goals({ withForm = true, editing = false }: { withForm?: boolean; editing?: boolean }) {
   const api = useApi();
   const c = useTheme();
   const format = useFormat();
   const queryClient = useQueryClient();
   const goals = useQuery(goalsQuery(api));
+  const [changing, setChanging] = useState<GoalOut | null>(null);
   const refresh = () => void queryClient.invalidateQueries({ queryKey: goalsQuery(api).queryKey });
   const remove = useMutation({
     mutationFn: async (id: number) => {
@@ -364,50 +367,97 @@ export function Goals({ withForm = true }: { withForm?: boolean }) {
       {goals.data.length === 0 && <Muted>{t('goals.empty')}</Muted>}
       {goals.data.map((g) => (
         <GoalCard key={g.id} goal={g} format={format}>
-          <Pressable
-            accessibilityRole="button"
-            disabled={remove.isPending}
-            onPress={() =>
-              Alert.alert(goalName(g), undefined, [
-                { text: t('common.cancel'), style: 'cancel' },
-                { text: t('goals.delete'), style: 'destructive', onPress: () => remove.mutate(g.id) },
-              ])
-            }
-          >
-            <Text style={{ color: c.accent, fontWeight: '600' }}>{t('goals.delete')}</Text>
-          </Pressable>
+          {editing && (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Button icon={<Icon name="edit" color={c.fg} size={18} />} onPress={() => setChanging(g)}>
+                {t('goals.edit')}
+              </Button>
+              <Button
+                icon={<Icon name="delete" color={c.fg} size={18} />}
+                disabled={remove.isPending}
+                onPress={() =>
+                  Alert.alert(goalName(g), undefined, [
+                    { text: t('common.cancel'), style: 'cancel' },
+                    { text: t('goals.delete'), style: 'destructive', onPress: () => remove.mutate(g.id) },
+                  ])
+                }
+              >
+                {t('goals.delete')}
+              </Button>
+            </View>
+          )}
         </GoalCard>
       ))}
       {withForm && <GoalForm unit={format.unit} onDone={refresh} />}
+      {changing && (
+        <GoalForm
+          bare
+          goal={changing}
+          unit={format.unit}
+          onCancel={() => setChanging(null)}
+          onDone={() => {
+            refresh();
+            setChanging(null);
+          }}
+        />
+      )}
     </>
   );
 }
 
-/** Adding a goal; `bare` drops its card and heading, for a sheet that has its own title. */
+type Metric = 'distance' | 'time' | 'count';
+
+/**
+ * Adding a goal, or changing one (`goal`); `bare` drops its card and heading, for a sheet that has its
+ * own title. Strength has no distance, so it measures time or a number of sessions.
+ */
 export function GoalForm({
   unit,
   onDone,
   bare,
   onCancel,
+  goal,
 }: {
   unit: string;
   onDone: () => void;
   bare?: boolean;
-  /** In a sheet: Cancel and Add go to its fixed footer. */
+  /** In a sheet: Cancel and Add (or Save) go to its fixed footer. */
   onCancel?: () => void;
+  goal?: GoalOut;
 }) {
   const api = useApi();
-  const [period, setPeriod] = useState<'week' | 'month' | 'year'>('week');
-  const [metric, setMetric] = useState<'distance' | 'time' | 'count'>('distance');
-  const [sport, setSport] = useState('');
-  const [target, setTarget] = useState('');
+  const [period, setPeriod] = useState<'week' | 'month' | 'year'>(
+    (goal?.period as 'week' | 'month' | 'year' | undefined) ?? 'week',
+  );
+  const [metric, setMetric] = useState<Metric>((goal?.metric as Metric | undefined) ?? 'distance');
+  const [sport, setSport] = useState(goal?.sport ?? '');
+  const [target, setTarget] = useState(
+    goal ? String(Math.round(goalInput(goal.metric as Metric, goal.target, unit) * 100) / 100) : '',
+  );
   const value = Number(target.replace(',', '.'));
+  const metrics: Metric[] = sport === 'strength' ? ['time', 'count'] : ['distance', 'time', 'count'];
+  const chooseSport = (next: string) => {
+    setSport(next);
+    if (next === 'strength' && metric === 'distance') setMetric('time');
+  };
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await api.POST('/api/goals', {
-        body: { period, metric, sport: sport || null, target: goalTarget(metric, value, unit) },
-      });
+      const body = { period, metric, sport: sport || null, target: goalTarget(metric, value, unit) };
+      if (!goal) {
+        const { error } = await api.POST('/api/goals', { body });
+        if (error) throw new Error('goal');
+        return;
+      }
+      const path = { params: { path: { goal_id: goal.id } } };
+      const { error, response } = await api.PATCH('/api/goals/{goal_id}', { ...path, body });
+      // A server without PATCH yet (older than this app): the goal is replaced instead.
+      if (response.status === 405) {
+        const created = await api.POST('/api/goals', { body });
+        if (created.error) throw new Error('goal');
+        await api.DELETE('/api/goals/{goal_id}', path);
+        return;
+      }
       if (error) throw new Error('goal');
     },
     onSuccess: () => {
@@ -428,26 +478,22 @@ export function GoalForm({
           label: t(`goals.period.${p}`),
         }))}
       />
+      <Muted>{t('feed.sports')}</Muted>
+      <Choice
+        label={t('feed.sports')}
+        value={sport}
+        onChange={chooseSport}
+        options={[
+          { value: '', label: t('goals.allSports') },
+          ...SPORTS.filter((s) => s !== 'other').map((s) => ({ value: s as string, label: t(`sport.${s}`) })),
+        ]}
+      />
       <Muted>{t('goals.measure')}</Muted>
       <Choice
         label={t('goals.measure')}
         value={metric}
         onChange={setMetric}
-        options={(['distance', 'time', 'count'] as const).map((m) => ({
-          value: m,
-          label: t(`goals.metric.${m}`),
-        }))}
-      />
-      <Muted>{t('feed.sports')}</Muted>
-      <Choice
-        scroll
-        label={t('feed.sports')}
-        value={sport}
-        onChange={setSport}
-        options={[
-          { value: '', label: t('goals.allSports') },
-          ...SPORTS.filter((s) => s !== 'other').map((s) => ({ value: s as string, label: t(`sport.${s}`) })),
-        ]}
+        options={metrics.map((m) => ({ value: m, label: t(`goals.metric.${m}`) }))}
       />
       <Field
         label={`${t('goals.target')} (${metric === 'distance' ? unit : metric === 'time' ? 'h' : '#'})`}
@@ -457,7 +503,7 @@ export function GoalForm({
       />
       {!onCancel && (
         <Button primary disabled={!(value > 0) || save.isPending} onPress={() => save.mutate()}>
-          {t('goals.add')}
+          {goal ? t('settings.save') : t('goals.add')}
         </Button>
       )}
       {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
@@ -466,12 +512,12 @@ export function GoalForm({
   if (!onCancel) return form;
   return (
     <Sheet
-      title={t('goals.add')}
+      title={goal ? t('goals.editTitle') : t('goals.add')}
       onClose={onCancel}
       footer={
         <>
           <Button primary disabled={!(value > 0) || save.isPending} onPress={() => save.mutate()}>
-            {t('goals.add')}
+            {goal ? t('settings.save') : t('goals.add')}
           </Button>
           <Button onPress={onCancel}>{t('common.cancel')}</Button>
         </>

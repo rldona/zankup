@@ -98,6 +98,23 @@ def test_segments_routes_goals_events_and_engine(ctx: Ctx) -> None:  # noqa: F81
     ).json()
     assert goal["current"] > 0 and goal["projection"] >= goal["current"]
     assert [g["id"] for g in ctx.http.get("/api/goals").json()] == [goal["id"]]
+    changed = ctx.http.patch(
+        f"/api/goals/{goal['id']}",
+        json={"period": "week", "metric": "time", "sport": "strength", "target": 7200},
+    ).json()
+    assert (changed["id"], changed["period"], changed["metric"], changed["sport"], changed["target"]) == (
+        goal["id"],
+        "week",
+        "time",
+        "strength",
+        7200,
+    )
+    assert (
+        ctx.http.patch(
+            "/api/goals/999999", json={"period": "week", "metric": "time", "target": 1}
+        ).status_code
+        == 404
+    )
     assert ctx.http.delete(f"/api/goals/{goal['id']}").status_code == 204
     assert (
         ctx.http.post("/api/goals", json={"period": "day", "metric": "distance", "target": 1}).status_code

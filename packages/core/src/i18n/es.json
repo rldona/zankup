@@ -248,6 +248,8 @@
   "profile.since": "Desde {date}",
   "profile.records": "Récords",
   "profile.physical": "Datos físicos",
+  "profile.showPhysical": "Mostrar los datos físicos",
+  "profile.hidePhysical": "Ocultar los datos físicos",
   "profile.age": "Edad",
   "profile.years": "{count} años",
   "profile.gearSoon": "Las zapatillas y bicis con sus kilómetros y desgaste llegan con el motor de métricas (fase 3).",

@@ -16,6 +16,8 @@ export const keys = {
   latestSeen: 'zankup.latestSeen',
   /** "1" when Zankup Coach's summary is folded on the activity screens. */
   coachFolded: 'zankup.coachFolded',
+  /** "1" when the physical data on You are hidden behind the eye. */
+  physicalHidden: 'zankup.physicalHidden',
 } as const;
 
 export const storage = Storage;

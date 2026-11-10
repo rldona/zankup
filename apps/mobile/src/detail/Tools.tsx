@@ -13,6 +13,7 @@ import { Alert, Image, Modal, Pressable, ScrollView, Text, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useApi } from '../auth';
+import { Icon } from '../Icon';
 import { t } from '../i18n';
 import { accessToken, instanceUrl } from '../session';
 import { useTheme } from '../theme';
@@ -168,15 +169,21 @@ export function EditActivity({ activity, onClose }: { activity: ActivityDetail; 
           ...choices.map((g) => ({ value: String(g.id), label: g.name })),
         ]}
       />
+      <Text style={{ color: c.fg, fontWeight: '600' }}>{t('photos.title')}</Text>
+      <Photos activity={activity} editable />
       <Muted>{t('activity.editNote')}</Muted>
       {save.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
     </Sheet>
   );
 }
 
-/** The activity's photos, opening one full size to remove it, and adding new ones from the phone. */
-export function Photos({ activity }: { activity: ActivityDetail }) {
+/**
+ * The activity's photos, each opening full size. Editing the activity (`editable`) adds new ones from
+ * the phone and removes them.
+ */
+export function Photos({ activity, editable = false }: { activity: ActivityDetail; editable?: boolean }) {
   const api = useApi();
+  const c = useTheme();
   const refresh = useRefreshActivity(activity.id);
   const [open, setOpen] = useState<number | null>(null);
   const base = instanceUrl();
@@ -243,9 +250,15 @@ export function Photos({ activity }: { activity: ActivityDetail }) {
           ))}
         </ScrollView>
       )}
-      <Button disabled={add.isPending} onPress={() => void choose()}>
-        {add.isPending ? t('photos.uploading') : t('photos.add')}
-      </Button>
+      {editable && (
+        <Button
+          icon={<Icon name="photo_camera" color={c.fg} size={20} />}
+          disabled={add.isPending}
+          onPress={() => void choose()}
+        >
+          {add.isPending ? t('photos.uploading') : t('photos.add')}
+        </Button>
+      )}
       {add.isError && <Muted accessibilityRole="alert">{t('photos.error')}</Muted>}
       {current && (
         <Sheet title={current.caption ?? t('photos.title')} onClose={() => setOpen(null)}>
@@ -257,17 +270,23 @@ export function Photos({ activity }: { activity: ActivityDetail }) {
               aspectRatio: current.width && current.height ? current.width / current.height : 1,
             }}
           />
-          <Button
-            disabled={remove.isPending}
-            onPress={() =>
-              Alert.alert(t('photos.remove'), '', [
-                { text: t('common.cancel'), style: 'cancel' },
-                { text: t('photos.remove'), style: 'destructive', onPress: () => remove.mutate(current.id) },
-              ])
-            }
-          >
-            {t('photos.remove')}
-          </Button>
+          {editable && (
+            <Button
+              disabled={remove.isPending}
+              onPress={() =>
+                Alert.alert(t('photos.remove'), '', [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  {
+                    text: t('photos.remove'),
+                    style: 'destructive',
+                    onPress: () => remove.mutate(current.id),
+                  },
+                ])
+              }
+            >
+              {t('photos.remove')}
+            </Button>
+          )}
         </Sheet>
       )}
     </>

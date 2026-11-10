@@ -21,7 +21,7 @@ import {
   themes,
   yearColours,
   compare,
-  comparisonYears,
+  comparisonLabels,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -306,7 +306,7 @@ function Summary({
   const summary = useQuery(summaryQuery(api, range));
   if (!summary.data) return null;
   const { current, previous } = summary.data;
-  const years = comparisonYears(range);
+  const labels = comparisonLabels(range, locale, t); // null for All: nothing to compare with
   const rows: [string, string, number, number][] = [
     [t('feed.title'), current.count.toLocaleString(locale), current.count, previous.count],
     [t('feed.stat.distance'), format.distance(current.distance_m), current.distance_m, previous.distance_m],
@@ -326,25 +326,31 @@ function Summary({
             <li key={label}>
               <span className="clabel">{label}</span>
               <b>{value}</b>
-              {percent ? ( // no pill when nothing changed
+              {labels && percent ? ( // no pill when nothing changed
                 <span className={`pill${tone}`}>
                   {t('stats.change', { sign: percent > 0 ? '+' : '', percent })}
                 </span>
               ) : null}
-              <i className="bar before" style={{ width: `${theirs * 100}%` }} />
-              <i className="bar now" style={{ width: `${mine * 100}%` }} />
+              {labels && (
+                <>
+                  <i className="bar before" style={{ width: `${theirs * 100}%` }} />
+                  <i className="bar now" style={{ width: `${mine * 100}%` }} />
+                </>
+              )}
             </li>
           );
         })}
       </ul>
-      <p className="comparekey note">
-        <span>
-          <i className="bar before" /> {years[0]}
-        </span>
-        <span>
-          <i className="bar now" /> {years[1]}
-        </span>
-      </p>
+      {labels && (
+        <p className="comparekey note">
+          <span>
+            <i className="bar before" /> {labels[0]}
+          </span>
+          <span>
+            <i className="bar now" /> {labels[1]}
+          </span>
+        </p>
+      )}
     </section>
   );
 }

@@ -902,7 +902,6 @@
   "nav.home": "Inicio",
   "home.today": "Hoy",
   "home.yesterday": "Ayer",
-  "home.dayCount": "{day} ({count, plural, one {# actividad} other {# actividades}})",
   "home.last7": "Últimos 7 días",
   "home.metrics": "Métricas",
   "home.steps": "Pasos",

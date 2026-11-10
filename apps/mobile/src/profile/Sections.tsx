@@ -6,7 +6,6 @@
 import {
   formatDuration,
   formatHoursMinutes,
-  gearQuery,
   goalsQuery,
   passkeysQuery,
   providersQuery,
@@ -41,7 +40,7 @@ import { asSport, useFormat, useHrMax } from '../prefs';
 import { addPasskey, passkeysSupported, SignInError } from '../session';
 import { GoalCard } from '../stats/Sections';
 import { useTheme } from '../theme';
-import { Button, Card, Choice, Field, Heading, ListRow, Muted, ProgressBar, styles as ui } from '../ui';
+import { Button, Card, Choice, Field, Heading, ListRow, Muted, styles as ui } from '../ui';
 
 type Format = ReturnType<typeof useFormat>;
 
@@ -267,6 +266,19 @@ export function Summary({ me, summary }: { me: Me; summary: ProfileSummary }) {
   if (hrMax) physical.push(['settings.hrMax', `${hrMax} bpm`]);
   return (
     <>
+      {physical.length > 0 && (
+        <Card>
+          <Heading>{t('profile.physical')}</Heading>
+          <View style={ui.stats}>
+            {physical.map(([label, value]) => (
+              <View key={label} style={ui.stat}>
+                <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
+                <Text style={[ui.statLabel, { color: c.muted }]}>{t(label)}</Text>
+              </View>
+            ))}
+          </View>
+        </Card>
+      )}
       {summary.this_year.length > 0 && (
         <Card>
           <Heading>{t('profile.byYear')}</Heading>
@@ -300,54 +312,7 @@ export function Summary({ me, summary }: { me: Me; summary: ProfileSummary }) {
           </Pressable>
         ))}
       </Card>
-      {physical.length > 0 && (
-        <Card>
-          <Heading>{t('profile.physical')}</Heading>
-          <View style={ui.stats}>
-            {physical.map(([label, value]) => (
-              <View key={label} style={ui.stat}>
-                <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
-                <Text style={[ui.statLabel, { color: c.muted }]}>{t(label)}</Text>
-              </View>
-            ))}
-          </View>
-        </Card>
-      )}
-      <GearCard format={format} />
     </>
-  );
-}
-
-function GearCard({ format }: { format: Format }) {
-  const api = useApi();
-  const c = useTheme();
-  const gear = useQuery(gearQuery(api));
-  const active = (gear.data ?? []).filter((g) => !g.retired);
-  if (!active.length) return null;
-  return (
-    <Pressable accessibilityRole="link" onPress={() => router.push('/gear')}>
-      <Card>
-        <Heading>{t('gear.title')}</Heading>
-        {active.map((g) => (
-          <View key={g.id} style={{ gap: 4, paddingVertical: 4 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ color: c.fg, fontWeight: '600' }}>{g.name}</Text>
-              <Text style={{ color: g.over_limit ? c.zone5 : c.fg, fontVariant: ['tabular-nums'] }}>
-                {format.distance(g.distance_m)}
-              </Text>
-            </View>
-            {g.limit_m ? (
-              <ProgressBar
-                value={g.distance_m}
-                max={g.limit_m}
-                color={g.over_limit ? c.zone5 : c.accent}
-                label={g.name}
-              />
-            ) : null}
-          </View>
-        ))}
-      </Card>
-    </Pressable>
   );
 }
 
@@ -379,7 +344,10 @@ export function Goals({ withForm = true, editing = false }: { withForm?: boolean
         <GoalCard key={g.id} goal={g} format={format}>
           {editing && (
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Button icon={<Icon name="edit_square" color={c.fg} size={18} />} onPress={() => setChanging(g)}>
+              <Button
+                icon={<Icon name="edit_square" color={c.fg} size={18} />}
+                onPress={() => setChanging(g)}
+              >
                 {t('goals.edit')}
               </Button>
               <Button

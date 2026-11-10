@@ -1,22 +1,13 @@
 /**
  * A goal day by day, drawn like a progress chart: a line through what was done so far each day of a
- * weekly goal (each day of a month, each month of a year) over a soft fill, ringed points in the
+ * weekly goal (each day of a month, each month of a year) over a solid fill, ringed points in the
  * line's colour (with a faint dashed diagonal for a steady pace to the target), round values on the right
  * and the days underneath. Today's point is filled with a cursor; touching or sliding picks another.
  * Days still to come have no point. The days come from the calendar the Stats screen already reads,
  * so the server needs nothing new.
  */
 import { calendarQuery, type CalendarDay, type GoalOut } from '@zankup/core';
-import {
-  Canvas,
-  Circle,
-  DashPathEffect,
-  Group,
-  Line,
-  LinearGradient,
-  Path,
-  vec,
-} from '@shopify/react-native-skia';
+import { Canvas, Circle, DashPathEffect, Group, Line, Path, vec } from '@shopify/react-native-skia';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
@@ -142,8 +133,6 @@ export function GoalChart({
 
   const shown = points.slice(0, past);
   const line = shown.map((p, i) => `${i ? 'L' : 'M'}${x(i)} ${y(p.done)}`).join('');
-  // The fill fades from the line's highest point, so a low line still has its colour under it.
-  const peak = Math.min(bottom - 1, ...shown.map((p) => y(p.done)));
   const area = shown.length ? `${line}L${x(shown.length - 1)} ${bottom}L${x(0)} ${bottom}Z` : '';
   const colour = String(c.accent);
 
@@ -190,15 +179,7 @@ export function GoalChart({
               >
                 <DashPathEffect intervals={[4, 4]} />
               </Line>
-              {area ? (
-                <Path path={area}>
-                  <LinearGradient
-                    start={vec(0, peak)}
-                    end={vec(0, bottom)}
-                    colors={[`${colour}99`, `${colour}14`]}
-                  />
-                </Path>
-              ) : null}
+              {area ? <Path path={area} color={colour} opacity={0.35} /> : null}
               {line ? (
                 <Path path={line} style="stroke" strokeWidth={3} strokeJoin="round" color={colour} />
               ) : null}

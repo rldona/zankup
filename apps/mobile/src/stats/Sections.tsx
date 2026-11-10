@@ -44,7 +44,7 @@ import { Icon } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
 import { useTheme } from '../theme';
-import { Card, Choice, Heading, Muted, ProgressBar, Stat, styles as ui } from '../ui';
+import { Card, CardTitle, Choice, Heading, Muted, ProgressBar, Stat, styles as ui } from '../ui';
 
 type Format = ReturnType<typeof useFormat>;
 export type Range = { from: string; to: string };
@@ -178,7 +178,7 @@ export function Estimates() {
   if (!estimates.data.length)
     return (
       <Card>
-        <Heading>{t('stats.estimates')}</Heading>
+        <CardTitle>{t('stats.estimates')}</CardTitle>
         <Muted>{t('stats.estimatesEmpty')}</Muted>
       </Card>
     );
@@ -190,14 +190,22 @@ export function Estimates() {
       <Heading>{t('stats.estimates')}</Heading>
       {main.map((e) => (
         <Card key={e.kind}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Text style={{ color: c.fg, fontWeight: '600' }}>{estimateName(e.kind)}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ color: c.fg, fontSize: 17, fontWeight: '700' }}>{estimateName(e.kind)}</Text>
             <Text style={[ui.statValue, { color: c.fg, fontSize: 22 }]}>
               {estimateValue(e.kind, e.value, format)}
             </Text>
           </View>
           {e.history.length > 1 && (
             <Chart
+              legendGap={18}
               height={48}
               days={[]}
               label={estimateName(e.kind)}
@@ -226,7 +234,7 @@ export function Estimates() {
       ))}
       {races.length > 0 && (
         <Card>
-          <Heading>{t('stats.predictions')}</Heading>
+          <CardTitle>{t('stats.predictions')}</CardTitle>
           <Muted>{methodText(races[0]?.method ?? '')}</Muted>
           <View style={ui.stats}>
             {races.map((r) => (
@@ -266,7 +274,7 @@ export function Summary({ range }: { range: Range }) {
   ];
   return (
     <Card>
-      <Heading>{t('stats.summaryTitle')}</Heading>
+      <CardTitle>{t('stats.summaryTitle')}</CardTitle>
       {rows.map(([label, value, delta]) => (
         <View key={label} style={{ paddingVertical: 3 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -291,9 +299,10 @@ export function Fitness({ range }: { range: Range }) {
   const top = Math.max(1, ...days.flatMap((d) => [d.ctl, d.atl])) * 1.05;
   return (
     <Card>
-      <Heading>{t('stats.fitness')}</Heading>
+      <CardTitle>{t('stats.fitness')}</CardTitle>
       {days.length > 1 ? (
         <Chart
+          legendGap={18}
           days={days.map((d) => dayLabel(d.day))}
           label={`${t('stats.ctl')} ${days.at(-1)?.ctl.toFixed(0)}, ${t('stats.atl')} ${days.at(-1)?.atl.toFixed(0)}, ${t('stats.tsb')} ${days.at(-1)?.tsb.toFixed(0)}`}
           height={180}
@@ -366,7 +375,7 @@ export function Volume({ range, unit }: { range: Range; unit: 'day' | 'week' | '
   );
   return (
     <Card>
-      <Heading>{t('stats.volume')}</Heading>
+      <CardTitle>{t('stats.volume')}</CardTitle>
       <Choice
         label={t('stats.volume')}
         value={metric}
@@ -382,6 +391,7 @@ export function Volume({ range, unit }: { range: Range; unit: 'day' | 'week' | '
             {metric === 'time' ? formatHoursMinutes(total) : `${(total / scale).toFixed(0)} ${format.unit}`}
           </Text>
           <Chart
+            legendGap={18}
             days={buckets.map((b) => label(b.start))}
             height={170}
             label={t('stats.volume')}
@@ -439,7 +449,7 @@ export function Curves({ range }: { range: Range }) {
   const layers: Layer[] = lines.map((l) => ({ kind: 'line', ...l, domain }));
   return (
     <Card>
-      <Heading>{t('stats.curves')}</Heading>
+      <CardTitle>{t('stats.curves')}</CardTitle>
       <Choice
         label={t('stats.curves')}
         value={kind}
@@ -452,6 +462,7 @@ export function Curves({ range }: { range: Range }) {
       {durations.length > 1 ? (
         <>
           <Chart
+            legendGap={18}
             days={durations.map(DURATION_LABEL)}
             height={170}
             label={
@@ -490,7 +501,7 @@ export function Records({ range }: { range: Range }) {
   const progression = records.data.progression[chosen] ?? [];
   return (
     <Card>
-      <Heading>{t('stats.records')}</Heading>
+      <CardTitle>{t('stats.records')}</CardTitle>
       <View style={{ flexDirection: 'row' }}>
         {[t('feed.stat.distance'), t('stats.allTime'), t('stats.recordsPeriod')].map((h, i) => (
           <Text
@@ -533,6 +544,7 @@ export function Records({ range }: { range: Range }) {
             {t('stats.progression', { distance: effortName(chosen) })}
           </Text>
           <Chart
+            legendGap={18}
             days={progression.map((p) => shortDay(p.day))}
             height={120}
             label={progression.map((p) => `${shortDay(p.day)} ${formatDuration(p.time_s)}`).join(', ')}
@@ -567,8 +579,9 @@ export function Progress({ selected }: { selected: number }) {
   const sorted = [...lines.data].sort((a, b) => (a.year === selected ? 1 : b.year === selected ? -1 : 0));
   return (
     <Card>
-      <Heading>{t('stats.progress')}</Heading>
+      <CardTitle>{t('stats.progress')}</CardTitle>
       <Chart
+        legendGap={18}
         days={Array.from({ length: 366 }, (_, i) =>
           new Date(2024, 0, 1 + i).toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
         )}
@@ -619,13 +632,21 @@ export function Efficiency({ range }: { range: Range }) {
     ((mean(values.slice(-third)) - mean(values.slice(0, third))) / mean(values.slice(0, third))) * 100;
   return (
     <Card>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <Heading>{t('stats.efficiency')}</Heading>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 12,
+        }}
+      >
+        <Heading first>{t('stats.efficiency')}</Heading>
         <Text
           style={[ui.statValue, { color: c.fg }]}
         >{`${change > 0 ? '+' : ''}${change.toFixed(1)} %`}</Text>
       </View>
       <Chart
+        legendGap={18}
         days={[]}
         height={60}
         label={t('stats.efficiency')}
@@ -651,7 +672,7 @@ export function CompareWithStrava() {
     v == null ? '–' : v.toLocaleString(locale, { maximumFractionDigits: digits });
   return (
     <Card>
-      <Heading>{t('compare.title')}</Heading>
+      <CardTitle>{t('compare.title')}</CardTitle>
       <Choice
         label={t('compare.metric')}
         value={metric}

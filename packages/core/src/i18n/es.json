@@ -958,6 +958,7 @@
   "health.nightOf": "Sueño del {day}",
   "health.history.title": "Historial",
   "health.history.note": "Al conectar cada fuente, Zankup trajo sus últimos 30 días. Esto pide el último año a Garmin y a Google Health (en segundo plano: tarda unos minutos) y lo lee de Health Connect en este teléfono.",
+  "health.history.noteWeb": "Al conectar cada fuente, Zankup trajo sus últimos 30 días. Esto pide a Garmin y a Google Health el último año, en segundo plano: tarda unos minutos.",
   "health.history.bring": "Traer el último año",
   "health.history.working": "Pidiendo el historial…",
   "health.history.queued": "En marcha: {sources}. Los datos irán apareciendo en Salud.",

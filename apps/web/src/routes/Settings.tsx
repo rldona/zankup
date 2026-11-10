@@ -20,7 +20,7 @@ import { Link, Navigate, NavLink, useLocation, useParams } from 'react-router';
 import { api } from '../api';
 import { chosenLanguage, locale, switchLanguage, t } from '../i18n';
 import { Ai } from '../settings/Ai';
-import { HealthSources } from '../settings/Health';
+import { HealthHistory, HealthSources } from '../settings/Health';
 import { Mcp } from '../settings/Mcp';
 import { Notifications } from '../settings/Notifications';
 import { PrivacyZones } from '../settings/Privacy';
@@ -168,6 +168,7 @@ function SectionBody({ section }: { section: Section }) {
     case 'health':
       return (
         <>
+          <HealthHistory />
           <GoogleHealthSwitch />
           <HealthSources />
         </>

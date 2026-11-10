@@ -68,7 +68,7 @@ describe('sync', () => {
         return Response.json(state[0], { status: 202 });
       },
     });
-    renderAt('/');
+    renderAt('/activities');
     const [sidebar] = await screen.findAllByRole('button', { name: 'Sync' });
     if (!sidebar) throw new Error('no sync button');
     await userEvent.click(sidebar);

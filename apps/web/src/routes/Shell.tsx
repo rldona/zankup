@@ -1,10 +1,9 @@
-import { aiStatusQuery } from '@zankup/core';
-import { useQuery } from '@tanstack/react-query';
+import { MATERIAL_ICONS, type MaterialIcon as MaterialIconName, type MessageKey } from '@zankup/core';
 import { useState } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 
-import { api } from '../api';
-import { Icon, type IconName } from '../Icon';
+import { Icon } from '../Icon';
+import { MaterialIcon } from '../MaterialIcon';
 import { t } from '../i18n';
 import { Wordmark } from '../Wordmark';
 import { useSync } from '../sync';
@@ -12,29 +11,50 @@ import { useOnline } from '../offline';
 import { SyncProgress } from '../SyncProgress';
 import { useServerLanguage, useServerTheme } from '../theme';
 
-const SIDE: { to: string; icon: IconName; label: Parameters<typeof t>[0] }[] = [
-  { to: '/', icon: 'feed', label: 'feed.title' },
-  { to: '/search', icon: 'search', label: 'nav.search' },
-  { to: '/stats', icon: 'stats', label: 'nav.stats' },
-  { to: '/health', icon: 'health', label: 'nav.health' },
-  { to: '/coach', icon: 'coach', label: 'nav.coach' }, // only when this server has a model (phase 7)
-  { to: '/profile', icon: 'profile', label: 'nav.profile' },
-  { to: '/settings', icon: 'settings', label: 'nav.settings' },
+/**
+ * The sections, as the app's tabs (OS-903): Home, Activities, Health, Goals and You, in the sidebar on
+ * desktop and the tab bar on mobile. Stats, Search, the Coach and Settings are reached as on the app:
+ * from You, Home's header and the Activities header.
+ */
+const SECTIONS: { to: string; icon: MaterialIconName; label: MessageKey }[] = [
+  { to: '/', icon: 'home', label: 'nav.home' },
+  { to: '/activities', icon: 'cards_stack', label: 'nav.feed' },
+  { to: '/health', icon: 'favorite', label: 'nav.health' },
+  { to: '/goals', icon: 'flag', label: 'nav.goals' },
+  { to: '/profile', icon: 'person', label: 'nav.you' },
 ];
 
-const TABS: { to: string; icon: IconName; label: Parameters<typeof t>[0] }[] = [
-  { to: '/', icon: 'feed', label: 'nav.feed' },
-  { to: '/search', icon: 'search', label: 'nav.search' },
-  { to: '/stats', icon: 'stats', label: 'nav.stats' },
-  { to: '/sync', icon: 'sync', label: 'nav.sync' },
-  { to: '/profile', icon: 'profile', label: 'nav.you' },
-];
+/** Where each section's screens live, so it stays marked on them (an activity under Activities…). */
+const OWNS: Record<string, RegExp> = {
+  '/': /^\/(notifications|coach)?$/,
+  '/activities': /^\/(activities|search)(\/|$)/,
+  '/health': /^\/health(\/|$)/,
+  '/goals': /^\/goals(\/|$)/,
+  '/profile': /^\/(profile|stats|estimates|gear|settings|sync|review|routes|segments)(\/|$)/,
+};
 
-/** The feed section stays marked while an activity is open (its detail lives under the feed). */
-const classFor =
-  (to: string, pathname: string) =>
-  ({ isActive }: { isActive: boolean }) =>
-    isActive || (to === '/' && pathname.startsWith('/activities/')) ? 'on' : undefined;
+const sectionOf = (pathname: string) => SECTIONS.find((s) => OWNS[s.to]?.test(pathname))?.to;
+
+/** A section's icon, filled while it is the current one, as on the app. */
+function SectionIcon({ icon, on }: { icon: MaterialIconName; on: boolean }) {
+  const filled = `${icon}-fill`;
+  return <MaterialIcon name={on && filled in MATERIAL_ICONS ? (filled as MaterialIconName) : icon} />;
+}
+
+function Sections({ pathname }: { pathname: string }) {
+  const current = sectionOf(pathname);
+  return SECTIONS.map((item) => (
+    <Link
+      key={item.to}
+      to={item.to}
+      className={item.to === current ? 'on' : undefined}
+      aria-current={item.to === current ? 'page' : undefined}
+    >
+      <SectionIcon icon={item.icon} on={item.to === current} />
+      {t(item.label)}
+    </Link>
+  ));
+}
 
 /**
  * The signed-in frame (OS-202). Desktop: sidebar with the brand, sections and the sync button.
@@ -48,13 +68,12 @@ export function Shell() {
   const online = useOnline();
   const sync = useSync();
   const [sheet, setSheet] = useState(false);
-  const ai = useQuery({ ...aiStatusQuery(api), retry: false });
-  const side = SIDE.filter((item) => item.to !== '/coach' || (ai.data?.available && ai.data.enabled));
   const syncNow = () => {
     setSheet(true);
     if (!sync.running) sync.start.mutate(false);
   };
-  const nested = pathname.startsWith('/activities/') || pathname === '/settings' || pathname === '/coach';
+  // Back on mobile for every screen that is not a section's own.
+  const nested = !SECTIONS.some((s) => s.to === pathname);
 
   return (
     <div className="app">
@@ -63,12 +82,7 @@ export function Shell() {
           <Wordmark height="1rem" />
         </Link>
         <nav aria-label={t('nav.main')}>
-          {side.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.to === '/'} className={classFor(item.to, pathname)}>
-              <Icon name={item.icon} />
-              {t(item.label)}
-            </NavLink>
-          ))}
+          <Sections pathname={pathname} />
         </nav>
         <div className="grow" />
         <button type="button" className="syncbtn" onClick={syncNow} aria-busy={sync.running}>
@@ -134,12 +148,7 @@ export function Shell() {
       )}
 
       <nav className="tabbar" aria-label={t('nav.main')}>
-        {TABS.map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.to === '/'} className={classFor(item.to, pathname)}>
-            <Icon name={item.icon} />
-            {t(item.label)}
-          </NavLink>
-        ))}
+        <Sections pathname={pathname} />
       </nav>
     </div>
   );

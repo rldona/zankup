@@ -2831,3 +2831,85 @@ textarea {
   color: var(--accent-fg);
   border-color: transparent;
 }
+
+/* A screen's title with its actions on the right, as the app's headers (OS-903). */
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.titlebar h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.titlebar .iconbtn {
+  background: transparent;
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  color: var(--fg);
+}
+
+.titlebar .iconbtn:hover {
+  background: var(--surface-2);
+}
+
+.titlebar .iconbtn svg.i {
+  width: 24px;
+  height: 24px;
+}
+
+.tabbar a svg.i.m {
+  width: 26px;
+  height: 26px;
+}
+
+/* A card of rows that lead somewhere (You's menu), as the app's MenuRow. */
+.panel.menu {
+  padding: 0 16px;
+  display: grid;
+}
+
+.panel.menu a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel.menu a:last-child {
+  border-bottom: 0;
+}
+
+.panel.menu a > span {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.panel.menu a small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.panel.menu a > i {
+  color: var(--muted);
+  font-size: 20px;
+  font-style: normal;
+}
+
+.panel.menu a:hover b {
+  color: var(--accent);
+}
+
+.panel.menu svg.i {
+  width: 22px;
+  height: 22px;
+}

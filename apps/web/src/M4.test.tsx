@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -191,8 +191,9 @@ describe('phase 4 screens', () => {
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
       notifications: { ...NOTIFICATIONS, estimate: true },
     });
-    expect(screen.getByRole('heading', { name: 'Privacy zones' })).toBeInTheDocument();
-    expect(screen.getByText('Home')).toBeInTheDocument();
+    const zones = screen.getByRole('heading', { name: 'Privacy zones' }).closest('section');
+    if (!zones) throw new Error('no privacy zones section');
+    expect(within(zones).getByText('Home')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
     await waitFor(() =>
       expect(calls.filter((c) => c.method === 'PATCH').at(-1)?.body).toEqual({ privacy_zones: [] }),

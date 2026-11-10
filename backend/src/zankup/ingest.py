@@ -160,9 +160,12 @@ def same_start(
 
 
 def default_gear(session: Session, user_id: int, sport: str) -> int | None:
-    """The gear that new activities of this sport get (OS-410), if any."""
+    """The gear that new activities of this sport get (OS-410), if any: of the active gear that is the
+    default for this sport, the habitual one first, then the newest."""
     rows = session.scalars(
-        select(Gear).where(Gear.user_id == user_id, Gear.retired_at.is_(None)).order_by(Gear.id.desc())
+        select(Gear)
+        .where(Gear.user_id == user_id, Gear.retired_at.is_(None))
+        .order_by(Gear.habitual.desc(), Gear.id.desc())
     )
     return next((g.id for g in rows if sport in (g.sports or [])), None)
 

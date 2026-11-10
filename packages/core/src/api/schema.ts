@@ -2822,6 +2822,11 @@ export interface components {
       initial_m: number;
       /** Limit M */
       limit_m?: number | null;
+      /**
+       * Habitual
+       * @default false
+       */
+      habitual: boolean;
     };
     /** GearOut */
     GearOut: {
@@ -2843,6 +2848,11 @@ export interface components {
       limit_m: number | null;
       /** Retired */
       retired: boolean;
+      /**
+       * Habitual
+       * @description The one of its kind used most; preferred for new activities
+       */
+      habitual: boolean;
       /**
        * Distance M
        * @description Activities plus initial_m
@@ -2886,6 +2896,8 @@ export interface components {
       limit_m?: number | null;
       /** Retired */
       retired?: boolean | null;
+      /** Habitual */
+      habitual?: boolean | null;
     };
     /** GoalCreate */
     GoalCreate: {

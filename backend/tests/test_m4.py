@@ -28,7 +28,7 @@ from zankup.db.models import Activity, BestEffort, Gear, ImportRow, Job, Photo, 
 from zankup.fit.files import parse_file
 from zankup.fit.streams import decode_polyline
 from zankup.importer import Importer, strava_date
-from zankup.ingest import ingest_file
+from zankup.ingest import default_gear, ingest_file
 from zankup.jobs.handlers import default_handlers
 from zankup.jobs.worker import Worker
 from zankup.notify import _hkdf, encrypt, message, notify, vapid_header, vapid_key
@@ -702,3 +702,31 @@ def test_deleting_an_activity_removes_it_its_photos_and_keeps_the_sync_from_brin
         assert db.scalar(select(func.count()).select_from(Photo).where(Photo.activity_id == run_id)) == 0
         assert external_id in _known_ids(db, user_id)
         assert db.scalar(select(Job).where(Job.kind == "metrics_full", Job.status == "queued")) is not None
+
+
+def test_one_habitual_gear_per_kind_and_new_activities_prefer_it(ctx: Ctx) -> None:  # noqa: F811
+    def make(name: str, kind: str = "bike", **extra: Any) -> dict[str, Any]:
+        body = {"name": name, "kind": kind, "sports": ["ride" if kind == "bike" else "run"], **extra}
+        answer = ctx.http.post("/api/gear", json=body)
+        assert answer.status_code in (200, 201), answer.text
+        return answer.json()
+
+    def habitual() -> dict[str, bool]:
+        return {g["name"]: g["habitual"] for g in ctx.http.get("/api/gear").json()}
+
+    road = make("Road bike", habitual=True)
+    gravel = make("Gravel bike")
+    shoes = make("Shoes", kind="shoe", habitual=True)
+    assert road["habitual"] and not gravel["habitual"] and shoes["habitual"]
+
+    # The newest bike is the default for rides unless one is habitual.
+    with ctx.sessions.begin() as db:
+        assert default_gear(db, owner_id(ctx), "ride") == road["id"]
+    ctx.http.patch(f"/api/gear/{gravel['id']}", json={"habitual": True})
+    assert habitual() == {"Road bike": False, "Gravel bike": True, "Shoes": True}  # shoes keep theirs
+    with ctx.sessions.begin() as db:
+        assert default_gear(db, owner_id(ctx), "ride") == gravel["id"]
+
+    # Retiring it leaves no habitual bike.
+    ctx.http.patch(f"/api/gear/{gravel['id']}", json={"retired": True})
+    assert habitual()["Gravel bike"] is False

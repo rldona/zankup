@@ -345,7 +345,7 @@
   "search.sort.speed": "Velocidad",
   "search.ascending": "Ascendente",
   "search.descending": "Descendente",
-  "search.clear": "Quitar todo",
+  "search.clear": "Borrar la búsqueda",
   "search.remove": "Quitar el filtro {filter}",
   "search.summary": "{count, plural, =0 {Ninguna actividad} one {# actividad} other {# actividades}} · {distance} · {time} · {ascent}",
   "search.show": "{count, plural, =0 {Sin resultados} one {Ver # resultado} other {Ver # resultados}}",

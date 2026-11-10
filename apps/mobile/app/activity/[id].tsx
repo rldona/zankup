@@ -417,6 +417,9 @@ function Figures({ main, more }: { main: [string, string][]; more: [string, stri
 type Format = ReturnType<typeof useFormat>;
 
 /** The charts an activity has data for, each in the unit it is read in: power, speed (or pace), cadence, altitude and heart rate (left out of a ride, which has its zones). */
+/** Power in a light violet on every theme: the ride's blue and speed's accent can both be blue (Ocean). */
+const POWER_COLOUR = '#b197fc';
+
 function chartSeries(
   series: Series,
   sport: ReturnType<typeof asSport>,
@@ -496,7 +499,7 @@ function chartSeries(
     const text = (v: number) => `${Math.round(v)} W`;
     out.push({
       label: t('metric.power'),
-      color: String(c.ride),
+      color: POWER_COLOUR,
       values: power,
       readout: { kind: 'int', suffix: ' W', decimal },
       average: average(series.power ?? power, text),

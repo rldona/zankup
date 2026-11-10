@@ -149,7 +149,6 @@ export function Stats() {
               className="chip"
               role="radio"
               aria-checked={shown.mode === m}
-              aria-pressed={shown.mode === m}
               onClick={() => choose(m)}
             >
               {t(`stats.mode.${m}`)}

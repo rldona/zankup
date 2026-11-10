@@ -338,7 +338,6 @@ function GoalForm({
             className="chip"
             role="radio"
             aria-checked={o.value === current}
-            aria-pressed={o.value === current}
             onClick={() => onChange(o.value)}
           >
             {o.label}

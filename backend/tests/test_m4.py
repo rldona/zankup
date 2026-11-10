@@ -676,3 +676,29 @@ def test_a_strava_upload_imports_through_the_job(m4: tuple[Ctx, Settings], tmp_p
         assert (saved.created, saved.merged, saved.failed, saved.photos) == (3, 1, 0, 1), saved.errors
         assert db.scalar(select(func.count()).where(Activity.source == "strava")) == 3
     assert not path.exists()
+
+
+def test_deleting_an_activity_removes_it_its_photos_and_keeps_the_sync_from_bringing_it_back(
+    m4: tuple[Ctx, Settings],
+) -> None:
+    from zankup.sync.orchestrator import _known_ids
+
+    context, settings = m4
+    run_id = context.ids["run"]
+    photo = context.http.post(
+        f"/api/activities/{run_id}/photos", content=jpeg_with_gps(), headers={"Content-Type": "image/jpeg"}
+    ).json()
+    with context.sessions() as db:
+        key = db.get_one(Photo, photo["id"]).key
+        external_id, user_id = db.get_one(Activity, run_id).external_id, db.get_one(Activity, run_id).user_id
+    assert PhotoStore(settings.data_dir / "photos").path(key).exists()
+
+    assert context.http.delete(f"/api/activities/{context.other_id}").status_code == 404
+    assert context.http.delete(f"/api/activities/{run_id}").status_code == 204
+    assert context.http.get(f"/api/activities/{run_id}").status_code == 404
+    assert context.http.delete(f"/api/activities/{run_id}").status_code == 404
+    assert not PhotoStore(settings.data_dir / "photos").path(key).exists()
+    with context.sessions() as db:
+        assert db.scalar(select(func.count()).select_from(Photo).where(Photo.activity_id == run_id)) == 0
+        assert external_id in _known_ids(db, user_id)
+        assert db.scalar(select(Job).where(Job.kind == "metrics_full", Job.status == "queued")) is not None

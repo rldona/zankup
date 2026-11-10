@@ -339,6 +339,8 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         {series && sport !== 'ride' && (
           <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />
         )}
+        {/* On a run, the splits follow the heart-rate zones. */}
+        {sport === 'run' && <Splits activity={a} format={format} pace={pace} />}
         {(a.sets ?? []).length > 0 && <Strength sets={a.sets} />}
         <RouteAndSegments activity={a} />
         <Power activity={a} />
@@ -347,7 +349,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         )}
         <BestEfforts activity={a} format={format} />
         <Laps activity={a} format={format} pace={pace} />
-        <Splits activity={a} format={format} pace={pace} />
+        {sport !== 'run' && <Splits activity={a} format={format} pace={pace} />}
         {a.description ? (
           <Card>
             <Text style={{ color: c.fg }}>{a.description}</Text>

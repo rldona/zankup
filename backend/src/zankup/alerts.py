@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 import httpx
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from zankup.core.config import Settings
 from zankup.db.models import SyncRun
@@ -60,6 +60,22 @@ def email_sender(settings: Settings) -> Sender | None:
     if settings.resend_api_key is None or not settings.alert_email:
         return None
     return Email(settings.resend_api_key.get_secret_value(), settings.alert_from, settings.alert_email).send
+
+
+def lazy_email_sender(settings: Settings, sessions: sessionmaker[Session]) -> Sender:
+    """An alert sender for long-lived processes (the worker): Resend's key and the alert address are
+    read when each alert goes out, so values saved from the apps apply without a restart."""
+    from zankup.instance_keys import effective
+
+    def send(subject: str, text: str) -> None:
+        with sessions() as session:
+            sender = email_sender(effective(settings, session))
+        if sender is None:
+            log.info("Alert not sent: e-mail is not configured", extra={"subject": subject})
+            return
+        sender(subject, text)
+
+    return send
 
 
 def _finished(session: Session, user_id: int, limit: int) -> list[SyncRun]:

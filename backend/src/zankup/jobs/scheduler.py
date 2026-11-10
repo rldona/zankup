@@ -125,6 +125,8 @@ class Scheduler:
         self.garmin_health = syncs
         self.garmin_key_expires_on = current.garmin_key_expires_on if syncs else None
         self.weekly_hour = current.weekly_report_hour_utc if current.integrations()["ai"] else None
+        self.backup_hour = current.backup_hour_utc if current.integrations()["backups"] else None
+        self.google_health = current.integrations()["google_health"]
 
     def tick(self, when: datetime | None = None) -> int | None:
         """Queue this slot's sync and today's backup if they are not queued yet, and prune old finished

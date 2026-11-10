@@ -291,7 +291,7 @@ function PasswordStep({
       <View style={{ alignItems: 'flex-end' }}>
         <LinkButton onPress={onForgot}>{t('signIn.forgot')}</LinkButton>
       </View>
-      <Button primary disabled={busy !== null} onPress={submit}>
+      <Button disabled={busy !== null} onPress={submit}>
         {busy === 'password' ? t('common.loading') : t('signIn.submit')}
       </Button>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingTop: 4 }}>

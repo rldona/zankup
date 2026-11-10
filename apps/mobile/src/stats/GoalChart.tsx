@@ -131,7 +131,8 @@ export function GoalChart({
 
   const height = 120;
   const top = 10;
-  const bottom = height - 8;
+  // Room under the floor for the picked point's halo, so a day at zero is not cut by the edge.
+  const bottom = height - 14;
   const axis = 52;
   const plot = Math.max(0, width - axis);
   const scale = niceScale([0, Math.max(goal.target, ...points.map((p) => p.done)) || 1], 2);

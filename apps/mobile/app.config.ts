@@ -42,6 +42,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.health.READ_OXYGEN_SATURATION',
       'android.permission.health.READ_RESPIRATORY_RATE',
       'android.permission.health.READ_STEPS',
+      // Reading more than the 30 days before the permission was given (the year's history).
+      'android.permission.health.READ_HEALTH_DATA_HISTORY',
     ],
   },
   plugins: [

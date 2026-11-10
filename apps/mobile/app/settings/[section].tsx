@@ -3,14 +3,14 @@
  * zones, notifications, the AI assistant and MCP tokens, privacy zones, health sources (with Health
  * Connect, OS-607), your data, and security and sessions (biometrics, OS-503; Garmin; devices).
  */
-import { settingsQuery, THEME_CHOICES, type Locale } from '@zankup/core';
+import { settingsQuery, THEME_CHOICES, type Locale, type MessageKey } from '@zankup/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useContext, useEffect, useState } from 'react';
 
 import { AiCard } from '../../src/Ai';
 import { useAuth } from '../../src/auth';
-import { ask, available, lastRead, readAndSend, type ReadResult } from '../../src/healthConnect';
+import { ask, available, lastRead, readAndSend, readHistory, type ReadResult } from '../../src/healthConnect';
 import { locale, saveLanguage, t } from '../../src/i18n';
 import { SETTINGS_SECTIONS, type SettingsSection } from '../../src/links';
 import { HealthSources } from '../../src/settings/HealthSources';
@@ -56,6 +56,7 @@ export default function SettingsSectionScreen() {
       {section === 'privacy' && <PrivacyZones />}
       {section === 'health' && (
         <>
+          <HealthHistory />
           <HealthConnectCard />
           <HealthSources />
         </>
@@ -194,6 +195,52 @@ function Security() {
         />
       )}
       <Muted>{t('mobile.instanceIs', { url: instanceUrl() ?? '' })}</Muted>
+    </Card>
+  );
+}
+
+/**
+ * Each source brought 30 days when it was connected. This asks Garmin and Google Health for the last
+ * year (the server does it in the background) and reads it from Health Connect on this phone.
+ */
+function HealthHistory() {
+  const { api } = useAuth();
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const run = async () => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const { data } = await api.POST('/api/wellness/history');
+      const lines: string[] = [];
+      const queued = data?.queued ?? [];
+      if (queued.length)
+        lines.push(
+          t('health.history.queued', {
+            sources: queued.map((s) => t(`health.source.${s}` as MessageKey)).join(', '),
+          }),
+        );
+      if (lastRead()) {
+        const result = await readHistory(api).catch(() => null);
+        if (result) lines.push(t('health.history.hc', result));
+      }
+      setMessage(lines.length ? lines.join(' ') : t('health.history.none'));
+      void queryClient.invalidateQueries({ queryKey: ['wellness'] });
+    } catch {
+      setMessage(t('common.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card>
+      <Heading first>{t('health.history.title')}</Heading>
+      <Muted>{t('health.history.note')}</Muted>
+      <Button disabled={busy} onPress={() => void run()}>
+        {busy ? t('health.history.working') : t('health.history.bring')}
+      </Button>
+      {message && <Muted accessibilityRole="alert">{message}</Muted>}
     </Card>
   );
 }

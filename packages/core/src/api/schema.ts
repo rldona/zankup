@@ -1164,6 +1164,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/wellness/history': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Import History
+     * @description Bring the last year of health data from Garmin and Google Health, beyond the 30 days the first
+     *     sync fetched. It runs in the background; a source that is not connected is skipped.
+     */
+    post: operations['importHealthHistory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/wellness/sources/{source}/data': {
     parameters: {
       query?: never;
@@ -6643,6 +6664,28 @@ export interface operations {
     };
   };
   syncHealth: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            [key: string]: string[];
+          };
+        };
+      };
+    };
+  };
+  importHealthHistory: {
     parameters: {
       query?: never;
       header?: never;

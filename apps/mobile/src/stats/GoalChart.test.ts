@@ -4,7 +4,7 @@ vi.mock('@shopify/react-native-skia', () => ({}));
 vi.mock('react-native', () => ({}));
 vi.mock('../auth', () => ({}));
 vi.mock('../theme', () => ({}));
-vi.mock('../i18n', () => ({ locale: 'en' }));
+vi.mock('../i18n', () => ({ locale: 'en', t: (k: string) => k }));
 
 const { goalPoints } = await import('./GoalChart');
 

@@ -522,6 +522,7 @@
   "goals.editTitle": "Edit goal",
   "goals.showChart": "Show progress",
   "goals.hideChart": "Hide progress",
+  "goals.total": "{value} in all",
   "goals.delete": "Delete",
   "settings.zones": "Zones",
   "settings.zoneModel": "Heart rate zones",

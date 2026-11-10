@@ -520,6 +520,8 @@
   "goals.doneEditing": "Done",
   "goals.edit": "Edit",
   "goals.editTitle": "Edit goal",
+  "goals.showChart": "Show progress",
+  "goals.hideChart": "Hide progress",
   "goals.delete": "Delete",
   "settings.zones": "Zones",
   "settings.zoneModel": "Heart rate zones",

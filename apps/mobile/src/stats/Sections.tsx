@@ -43,6 +43,7 @@ import {
   RACES,
   shortDay,
 } from '../estimates';
+import { Icon } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
 import { useTheme } from '../theme';
@@ -142,6 +143,7 @@ export function GoalCard({
   const c = useTheme();
   const share = Math.min(1, goal.current / goal.target);
   const done = goal.current >= goal.target;
+  const [chart, setChart] = useState(false);
   return (
     <Card>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -154,17 +156,6 @@ export function GoalCard({
         </Text>
       </View>
       <ProgressBar value={share} max={1} label={t('goals.target')} />
-      <GoalChart
-        goal={goal}
-        value={(v) => goalValue(goal, v, format)}
-        tick={(v) =>
-          goal.metric === 'distance'
-            ? `${Math.round(v / (format.unit === 'km' ? 1000 : 1609.344))} ${format.unit}`
-            : goal.metric === 'time'
-              ? `${Math.round(v / 3600)} h`
-              : String(Math.round(v))
-        }
-      />
       <Text style={{ color: c.fg, fontVariant: ['tabular-nums'] }}>
         <Text style={{ fontWeight: '700' }}>{goalValue(goal, goal.current, format)}</Text> /{' '}
         {goalValue(goal, goal.target, format)}
@@ -178,6 +169,32 @@ export function GoalCard({
                 projection: goalValue(goal, goal.projection, format),
               })}
         </Muted>
+      )}
+      {/* The day-by-day chart waits behind a link, folded at first. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: chart }}
+        onPress={() => setChart(!chart)}
+        hitSlop={8}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' }}
+      >
+        <Text style={{ color: c.accent, fontWeight: '600' }}>
+          {t(chart ? 'goals.hideChart' : 'goals.showChart')}
+        </Text>
+        <Icon name={chart ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} color={String(c.accent)} size={20} />
+      </Pressable>
+      {chart && (
+        <GoalChart
+          goal={goal}
+          value={(v) => goalValue(goal, v, format)}
+          tick={(v) =>
+            goal.metric === 'distance'
+              ? `${Math.round(v / (format.unit === 'km' ? 1000 : 1609.344))} ${format.unit}`
+              : goal.metric === 'time'
+                ? `${Math.round(v / 3600)} h`
+                : String(Math.round(v))
+          }
+        />
       )}
       {children}
     </Card>

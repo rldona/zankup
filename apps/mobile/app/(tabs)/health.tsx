@@ -4,12 +4,10 @@
  * 365 days, with the form (TSB) from training next to readiness.
  */
 import {
-  formatHoursMinutes,
   healthDaysQuery,
   healthNightQuery,
   relativeDay,
   type HealthDay,
-  type HealthNight,
   type HealthSourceName,
   type MessageKey,
 } from '@zankup/core';
@@ -20,6 +18,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../../src/auth';
 import { HealthSkeleton } from '../../src/Skeleton';
+import { SleepTiles, StageLanes } from '../../src/SleepNight';
 import { Chart } from '../../src/charts';
 import { lastRead, readAndSend } from '../../src/healthConnect';
 import { Icon, SourceIcon, SpinningIcon } from '../../src/Icon';
@@ -30,7 +29,6 @@ import { Button, Card, Heading, Muted, Screen, styles as ui } from '../../src/ui
 
 const PERIODS = ['30', '90', '365'] as const;
 type Period = (typeof PERIODS)[number];
-const STAGES = ['awake', 'rem', 'light', 'deep'] as const;
 
 /** The phone's own calendar day, not UTC's. */
 const isoDay = (d: Date) =>
@@ -296,73 +294,19 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
           ? t('health.lastNight')
           : t('health.nightOf', { day: longDay(day.day) })}
       </Heading>
+      <SleepTiles sleep={sleep} />
       <Card>
-        <View style={{ flexDirection: 'row', gap: 24 }}>
-          <View>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>{sleep.score ?? '–'}</Text>
-            <Muted>{t('health.score')}</Muted>
-          </View>
-          <View>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>
-              {formatHoursMinutes(sleep.asleep_s ?? 0)}
-            </Text>
-            <Muted>
-              {t('health.asleep')} · {clock(sleep.start_utc)}–{clock(sleep.end_utc)}
-            </Muted>
-          </View>
-        </View>
-        {night.data && night.data.stages.length > 0 && <Hypnogram night={night.data} colors={stageColor} />}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-          {(['deep', 'rem', 'light', 'awake'] as const).map((stage) => {
-            const seconds = sleep[`${stage}_s`];
-            return seconds != null ? (
-              <View key={stage} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: stageColor[stage] }} />
-                <Text style={{ color: c.fg, fontSize: 13 }}>
-                  {t(`health.stage.${stage}`)}{' '}
-                  <Text style={{ fontWeight: '700' }}>{formatHoursMinutes(seconds)}</Text>
-                </Text>
-              </View>
-            ) : null;
-          })}
-        </View>
+        {night.data && night.data.stages.length > 0 ? (
+          <StageLanes night={night.data} sleep={sleep} colors={stageColor} />
+        ) : (
+          <Muted>
+            {t('health.asleep')} · {clock(sleep.start_utc)}–{clock(sleep.end_utc)}
+          </Muted>
+        )}
         <Muted>{longDay(day.day)}</Muted>
         <Corner source={sleep.source} label={from(sleep.source, sleep.others)} />
       </Card>
     </>
-  );
-}
-
-/** The night's stages as four lanes (awake on top, deep at the bottom). */
-function Hypnogram({
-  night,
-  colors,
-}: {
-  night: HealthNight;
-  colors: Record<(typeof STAGES)[number], string>;
-}) {
-  const c = useTheme();
-  const total = night.stages.reduce((end, s) => Math.max(end, s.offset_s + s.duration_s), 0) || 1;
-  return (
-    <View
-      accessible
-      accessibilityLabel={t('health.stagesLabel')}
-      style={{ height: 72, borderRadius: 8, backgroundColor: c.surface2, overflow: 'hidden' }}
-    >
-      {night.stages.map((s, i) => (
-        <View
-          key={i}
-          style={{
-            position: 'absolute',
-            left: `${(s.offset_s / total) * 100}%`,
-            width: `${Math.max(0.3, (s.duration_s / total) * 100)}%`,
-            top: `${STAGES.indexOf(s.stage) * 25}%`,
-            height: '25%',
-            backgroundColor: colors[s.stage],
-          }}
-        />
-      ))}
-    </View>
   );
 }
 

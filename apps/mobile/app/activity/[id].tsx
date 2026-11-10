@@ -14,7 +14,8 @@ import {
   metricValues,
   quantile,
   RAMP,
-  smooth,
+  activityCharts,
+  POWER_COLOUR,
   usesPace,
   type ActivityDetail,
   type Metric,
@@ -443,10 +444,7 @@ function Figures({ main, more }: { main: [string, string][]; more: [string, stri
 
 type Format = ReturnType<typeof useFormat>;
 
-/** The charts an activity has data for, each in the unit it is read in: power, speed (or pace), cadence, altitude and heart rate (left out of a ride, which has its zones). */
-/** Power in a light violet on every theme: the ride's blue and speed's accent can both be blue (Ocean). */
-const POWER_COLOUR = '#b197fc';
-
+/** The charts the activity has (packages/core, shared with the web), in the app's colours and readout. */
 function chartSeries(
   series: Series,
   sport: ReturnType<typeof asSport>,
@@ -456,164 +454,21 @@ function chartSeries(
   c: ReturnType<typeof useTheme>,
   a: ActivityDetail | undefined,
 ): ChartSeries[] {
-  const usable = (values: (number | null)[]) => values.filter((v): v is number => v != null && v > 0);
-  const maxOf = (values: (number | null)[]) => Math.max(...usable(values));
-  const minOf = (values: (number | null)[]) => Math.min(...values.filter((v): v is number => v != null));
-  const avgOf = (values: (number | null)[]) => {
-    const u = usable(values);
-    return u.length ? u.reduce((x, y) => x + y, 0) / u.length : 0;
-  };
-  const has = (values: (number | null)[] | null | undefined): values is (number | null)[] =>
-    !!values?.some((v) => v != null && v > 0);
-  const average = (values: (number | null)[], text: (v: number) => string) => {
-    const usable = values.filter((v): v is number => v != null && v > 0);
-    return usable.length
-      ? `${t('chart.average')} ${text(usable.reduce((a, b) => a + b, 0) / usable.length)}`
-      : '–';
-  };
   const decimal = (1.5).toLocaleString(locale).charAt(1);
-  const out: ChartSeries[] = [];
-  const feet = units === 'imperial' ? 3.28084 : 1;
-
-  const alt = series.alt;
-  if (alt?.some((v) => v != null)) {
-    const values = alt.map((v) => (v == null ? null : v * feet));
-    out.push({
-      label: t('metric.alt'),
-      color: String(c.muted),
-      values,
-      readout: { kind: 'int', suffix: units === 'imperial' ? ' ft' : ' m', decimal },
-      average:
-        format.elevation(Math.max(...alt.filter((v): v is number => v != null))) + ` ${t('chart.max')}`,
-      footer: [
-        ...(a?.ascent_m != null
-          ? ([[t('chart.ascent'), format.elevation(a.ascent_m)]] as [string, string][])
-          : []),
-        ...(a?.descent_m != null
-          ? ([[t('chart.descent'), format.elevation(a.descent_m)]] as [string, string][])
-          : []),
-        [t('chart.min'), format.elevation(minOf(alt))],
-        [t('chart.maxFull'), format.elevation(Math.max(...alt.filter((v): v is number => v != null)))],
-      ],
-    });
-  }
-
-  const speed = metricValues(series, 'speed');
-  if (has(speed)) {
-    const unit = units === 'imperial' ? 1609.344 : 1000;
-    const text = (v: number) => format.speedFor(v, pace);
-    const moving = speed.filter((v): v is number => v != null && v > 0.5);
-    const mean = moving.length ? moving.reduce((a, b) => a + b, 0) / moving.length : 0;
-    out.push(
-      pace
-        ? {
-            label: t('metric.pace'),
-            color: String(c.accent),
-            // Minutes per km (or mile); standing still has no pace.
-            values: speed.map((v) => (v == null || v < 0.5 ? null : unit / v / 60)),
-            readout: { kind: 'pace', suffix: units === 'imperial' ? ' /mi' : ' /km', decimal },
-            average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
-            inverted: true,
-            tick: (v) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`,
-            footer: [
-              [t('chart.avgFull'), mean ? text(mean) : '–'],
-              [t('chart.bestPace'), moving.length ? text(Math.max(...moving)) : '–'],
-              ...(a?.metrics?.gap_speed
-                ? ([[t('chart.gap'), format.pace(a.metrics.gap_speed)]] as [string, string][])
-                : []),
-            ],
-          }
-        : {
-            label: t('metric.speed'),
-            color: String(c.accent),
-            values: speed.map((v) => (v == null ? null : (v * 3600) / unit)),
-            readout: { kind: 'dec1', suffix: units === 'imperial' ? ' mph' : ' km/h', decimal },
-            average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
-            fromZero: true,
-            footer: [
-              [t('chart.avgFull'), mean ? text(mean) : '–'],
-              [t('chart.maxFull'), moving.length ? text(Math.max(...moving)) : '–'],
-            ],
-          },
-    );
-  }
-
-  const hr = series.hr;
-  if (has(hr)) {
-    const text = (v: number) => `${Math.round(v)} bpm`;
-    out.push({
-      label: t('metric.hr'),
-      color: c.zone5,
-      values: hr,
-      readout: { kind: 'int', suffix: ' bpm', decimal },
-      average: average(hr, text),
-      footer: [
-        [t('chart.avgFull'), text(a?.avg_hr ?? avgOf(hr))],
-        [t('chart.maxFull'), text(a?.max_hr ?? maxOf(hr))],
-        ...(a?.metrics?.trimp != null
-          ? ([[t('chart.effort'), Math.round(a.metrics.trimp).toLocaleString(locale)]] as [string, string][])
-          : []),
-      ],
-    });
-  }
-
-  const power = metricValues(series, 'power');
-  if (has(power)) {
-    const text = (v: number) => `${Math.round(v)} W`;
-    out.push({
-      label: t('metric.power'),
-      color: POWER_COLOUR,
-      values: power,
-      readout: { kind: 'int', suffix: ' W', decimal },
-      average: average(series.power ?? power, text),
-      fromZero: true,
-      footer: [
-        [t('chart.avgFull'), text(a?.avg_power ?? avgOf(series.power ?? power))],
-        [t('chart.maxFull'), text(maxOf(series.power ?? power))],
-        ...(a?.normalized_power
-          ? ([
-              [t('chart.np'), text(a.normalized_power)],
-              ...(a.avg_power
-                ? [
-                    [
-                      t('chart.vi'),
-                      (a.normalized_power / a.avg_power).toLocaleString(locale, { maximumFractionDigits: 2 }),
-                    ],
-                  ]
-                : []),
-            ] as [string, string][])
-          : []),
-      ],
-    });
-  }
-
-  if (has(series.cad)) {
-    const cad = smooth(series.cad);
-    const per = sport === 'ride' ? 'rpm' : t('chart.spm');
-    const text = (v: number) => `${Math.round(v)} ${per}`;
-    out.push({
-      label: t('metric.cad'),
-      color: c.zone4,
-      values: cad,
-      readout: { kind: 'int', suffix: ` ${per}`, decimal },
-      average: average(series.cad, text),
-      footer: [
-        [t('chart.avgFull'), text(avgOf(series.cad))],
-        [t('chart.maxFull'), text(maxOf(series.cad))],
-      ],
-    });
-  }
-  const order = [
-    t('metric.power'),
-    t('metric.speed'),
-    t('metric.pace'),
-    t('metric.cad'),
-    t('metric.alt'),
-    t('metric.hr'),
-  ];
-  return out
-    .filter((chart) => sport !== 'ride' || chart.label !== t('metric.hr'))
-    .sort((x, y) => order.indexOf(x.label) - order.indexOf(y.label));
+  return activityCharts(series, { sport, pace, units, format, activity: a, t, locale }).map((chart) => ({
+    label: chart.label,
+    color: chart.colour === 'power' ? POWER_COLOUR : String(c[chart.colour]),
+    values: chart.values,
+    readout: { ...chart.readout, decimal },
+    average: '',
+    inverted: chart.inverted,
+    fromZero: chart.fromZero,
+    footer: chart.footer,
+    tick:
+      chart.readout.kind === 'pace'
+        ? (v: number) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`
+        : undefined,
+  }));
 }
 
 /**

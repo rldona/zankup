@@ -3277,3 +3277,60 @@ textarea {
     transform: translateY(100%);
   }
 }
+
+/* The activity's charts, one card each (OS-907), as the app's: side by side on a large screen. */
+.profilehead {
+  margin: 20px 0 10px;
+}
+
+.profilehead h2 {
+  flex: 1;
+  margin: 0;
+}
+
+.chartgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.chartgrid .panel {
+  margin: 0;
+}
+
+.chartfoot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 28px;
+  margin: 18px 0 2px;
+}
+
+.chartfoot > div {
+  display: grid;
+  justify-items: center;
+  min-width: 64px;
+}
+
+.chartfoot dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.chartfoot dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sectionfigs .save,
+.sectionfigs form {
+  margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+  .chartgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

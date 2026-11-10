@@ -218,7 +218,13 @@ describe('app skeleton', () => {
     expect(await kpis.findByRole('heading', { name: 'Morning run' })).toBeInTheDocument();
     expect(detail).toHaveTextContent('fēnix 6X Pro');
     expect(kpis.getByText('6.00 km').nextElementSibling).toHaveTextContent('Distance');
-    expect(kpis.getByText('171 bpm')).toBeInTheDocument();
+    expect(kpis.getAllByText('171 bpm')).toHaveLength(2); // the figures, and the heart rate chart's footer
+
+    // One card per chart, each with its own footer (OS-907).
+    const hr = kpis.getByRole('heading', { name: 'Heart rate' }).closest('article');
+    expect(hr).toHaveTextContent('Maximum171 bpm');
+    expect(kpis.getByRole('heading', { name: 'Pace' })).toBeInTheDocument();
+    expect(kpis.getByRole('heading', { name: 'Altitude' }).closest('article')).toHaveTextContent('Ascent');
 
     // Without WebGL (jsdom), the route's shape stands in for the map.
     expect(await kpis.findByText(/The map needs WebGL/)).toBeInTheDocument();

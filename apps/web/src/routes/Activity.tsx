@@ -1,4 +1,5 @@
 import {
+  activityCharts,
   ApiError,
   activityQuery,
   curvesQuery,
@@ -27,12 +28,12 @@ import {
   themes,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { api } from '../api';
 import { ZoneBar } from '../charts/static';
-import { Profile } from '../detail/Profile';
+import { ChartCard } from '../detail/ChartCard';
 import { Replay } from '../detail/Replay';
 import { ActivityActions, Meta, Photos } from '../detail/Tools';
 import { RouteMap } from '../detail/RouteMap';
@@ -44,6 +45,7 @@ import { usePrefs } from '../prefs';
 import { SportIcon } from '../SportIcon';
 import { useResolvedTheme } from '../theme';
 import { ActivitySkeleton, ChartSkeleton, Pulse } from '../Skeleton';
+import { CardTitle } from '../ui';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -122,7 +124,7 @@ function Detail({ activity }: { activity: ActivityDetail }) {
           pace={pace}
           format={format}
           units={prefs.units}
-          activityId={activity.id}
+          activity={activity}
         />
       )}
 
@@ -228,14 +230,14 @@ function RoutePanel({
   pace,
   format,
   units,
-  activityId,
+  activity,
 }: {
   series: Series;
   sport: Sport;
   pace: boolean;
   format: Format;
   units: 'metric' | 'imperial';
-  activityId: number;
+  activity: ActivityDetail;
 }) {
   const theme = useResolvedTheme();
   const metrics = useMemo(() => availableMetrics(series), [series]);
@@ -243,7 +245,12 @@ function RoutePanel({
   const metric = chosen && metrics.includes(chosen) ? chosen : (metrics[0] ?? null);
   const [hover, setHover] = useState<number | null>(null);
   const [section, setSection] = useState<[number, number] | null>(null);
+  const [selecting, setSelecting] = useState(false);
   const hasMap = useMemo(() => trackPoints(series).length > 1, [series]);
+  const charts = useMemo(
+    () => activityCharts(series, { sport, pace, units, format, activity, t, locale }),
+    [series, sport, pace, units, format, activity],
+  );
 
   const formatMetric = useCallback(
     (m: Metric, v: number) => {
@@ -273,60 +280,87 @@ function RoutePanel({
   const label = (m: Metric) => t(m === 'speed' ? (pace ? 'metric.pace' : 'metric.speed') : `metric.${m}`);
 
   return (
-    <section className="panel route">
-      <div className="ph">
-        <h2>{hasMap ? t('activity.route') : t('activity.profile')}</h2>
-        {metrics.length > 1 && (
-          <div className="seg" role="group" aria-label={t('activity.colourBy')}>
-            {metrics.map((m) => (
-              <button key={m} type="button" aria-pressed={m === metric} onClick={() => setMetric(m)}>
-                {label(m)}
-              </button>
+    <>
+      {hasMap && (
+        <section className="panel route">
+          <div className="ph">
+            <h2>{t('activity.route')}</h2>
+            {metrics.length > 1 && (
+              <div className="seg" role="group" aria-label={t('activity.colourBy')}>
+                {metrics.map((m) => (
+                  <button key={m} type="button" aria-pressed={m === metric} onClick={() => setMetric(m)}>
+                    {label(m)}
+                  </button>
+                ))}
+              </div>
+            )}
+            {legend && (
+              <div className="legend num" aria-hidden="true">
+                <span>{pace && metric === 'speed' ? legend.max : legend.min}</span>
+                <i style={{ background: `linear-gradient(90deg, ${RAMP.join(', ')})` }} />
+                <span>{pace && metric === 'speed' ? legend.min : legend.max}</span>
+              </div>
+            )}
+          </div>
+          <Replay series={series} index={hover} onIndex={setHover} />
+          <RouteMap
+            series={series}
+            metric={metric}
+            theme={theme}
+            hover={hover}
+            section={section}
+            onHover={setHover}
+            colour={sportColour(theme, sport)}
+          />
+        </section>
+      )}
+      {charts.length > 0 && (
+        <>
+          {/* Each chart on its own card, under one heading with the section switch (as on the app). */}
+          <div className="titlebar profilehead">
+            <h2>{t('activity.profile')}</h2>
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={selecting}
+              onClick={() => {
+                // Turning "Section" off drops the band, its figures and the map's highlight.
+                if (selecting) setSection(null);
+                setSelecting(!selecting);
+              }}
+            >
+              {t('mobile.selectSection')}
+            </button>
+          </div>
+          {selecting && !section && <p className="note">{t('activity.sectionHint')}</p>}
+          <div className="chartgrid">
+            {charts.map((chart) => (
+              <ChartCard
+                key={chart.key}
+                chart={chart}
+                series={series}
+                units={units}
+                theme={theme}
+                section={section}
+                selecting={selecting}
+                onHover={setHover}
+                onSection={setSection}
+              />
             ))}
           </div>
-        )}
-        {hasMap && legend && (
-          <div className="legend num" aria-hidden="true">
-            <span>{pace && metric === 'speed' ? legend.max : legend.min}</span>
-            <i style={{ background: `linear-gradient(90deg, ${RAMP.join(', ')})` }} />
-            <span>{pace && metric === 'speed' ? legend.min : legend.max}</span>
-          </div>
-        )}
-      </div>
-      {hasMap && <Replay series={series} index={hover} onIndex={setHover} />}
-      {hasMap && (
-        <RouteMap
-          series={series}
-          metric={metric}
-          theme={theme}
-          hover={hover}
-          section={section}
-          onHover={setHover}
-          colour={sportColour(theme, sport)}
-        />
+          {section && (
+            <SectionFigures
+              series={series}
+              section={section}
+              format={format}
+              pace={pace}
+              onClear={() => setSection(null)}
+              activityId={activity.id}
+            />
+          )}
+        </>
       )}
-      <Profile
-        series={series}
-        metric={metric}
-        pace={pace}
-        units={units}
-        theme={theme}
-        hover={hover}
-        section={section}
-        onHover={setHover}
-        onSection={setSection}
-        format={formatMetric}
-      />
-      <Readout
-        series={series}
-        hover={hover}
-        section={section}
-        format={format}
-        pace={pace}
-        onClear={() => setSection(null)}
-        activityId={activityId}
-      />
-    </section>
+    </>
   );
 }
 
@@ -334,9 +368,9 @@ function sportColour(theme: ThemeName, sport: Sport): string {
   return themes[theme][sport];
 }
 
-function Readout({
+/** The selected section's figures, with "save as segment" when it has a track (OS-216, OS-308). */
+function SectionFigures({
   series,
-  hover,
   section,
   format,
   pace,
@@ -344,54 +378,51 @@ function Readout({
   activityId,
 }: {
   series: Series;
-  hover: number | null;
-  section: [number, number] | null;
+  section: [number, number];
   format: Format;
   pace: boolean;
   onClear: () => void;
   activityId: number;
 }) {
-  if (section) {
-    const s = sectionStats(series, section[0], section[1]);
-    return (
-      <div className="readout section num" aria-live="polite">
-        <b>{t('activity.section')}</b>
-        {s.distance_m != null && <span>{format.distance(s.distance_m)}</span>}
-        <span>{formatDuration(s.time_s)}</span>
-        {s.speed != null && <span>{format.speedFor(s.speed, pace)}</span>}
-        {s.avg_hr != null && <span>{s.avg_hr} bpm</span>}
-        {s.avg_power != null && <span>{s.avg_power} W</span>}
-        {s.ascent_m != null && (
-          <span>
-            +{format.elevation(s.ascent_m)} / −{format.elevation(s.descent_m ?? 0)}
-          </span>
-        )}
-        <button type="button" className="link" onClick={onClear}>
-          {t('activity.clearSection')}
-        </button>
-        {series.lat?.some((v) => v != null) && <SaveSegment activityId={activityId} section={section} />}
-      </div>
-    );
-  }
-  if (hover == null) return <p className="readout note">{t('activity.hint')}</p>;
-  const parts: ReactNode[] = [];
-  const dist = series.dist?.[hover];
-  if (dist != null) parts.push(format.distance(dist));
-  parts.push(formatDuration(series.t[hover] ?? 0));
-  const speed = metricValues(series, 'speed')?.[hover];
-  if (speed != null && speed > 0) parts.push(format.speedFor(speed, pace));
-  const hr = series.hr?.[hover];
-  if (hr != null) parts.push(`${hr} bpm`);
-  const power = series.power?.[hover];
-  if (power != null) parts.push(`${power} W`);
-  const alt = series.alt?.[hover];
-  if (alt != null) parts.push(format.elevation(alt));
+  const s = sectionStats(series, section[0], section[1]);
+  const figures: [string, string][] = [
+    ...(s.distance_m != null
+      ? ([[t('feed.stat.distance'), format.distance(s.distance_m)]] as [string, string][])
+      : []),
+    [t('feed.stat.time'), formatDuration(s.time_s)],
+    ...(s.speed != null
+      ? ([[t(pace ? 'feed.stat.pace' : 'feed.stat.speed'), format.speedFor(s.speed, pace)]] as [
+          string,
+          string,
+        ][])
+      : []),
+    ...(s.ascent_m != null
+      ? ([[t('feed.stat.ascent'), format.elevation(s.ascent_m)]] as [string, string][])
+      : []),
+    ...(s.avg_hr != null ? ([[t('feed.stat.hr'), `${s.avg_hr} bpm`]] as [string, string][]) : []),
+    ...(s.avg_power != null ? ([[t('activity.power'), `${s.avg_power} W`]] as [string, string][]) : []),
+  ];
   return (
-    <p className="readout num">
-      {parts.map((p, i) => (
-        <span key={i}>{p}</span>
-      ))}
-    </p>
+    <section className="panel sectionfigs" aria-live="polite">
+      <CardTitle
+        right={
+          <button type="button" className="link" onClick={onClear}>
+            {t('activity.clearSection')}
+          </button>
+        }
+      >
+        {t('activity.section')}
+      </CardTitle>
+      <dl className="chartfoot num">
+        {figures.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {series.lat?.some((v) => v != null) && <SaveSegment activityId={activityId} section={section} />}
+    </section>
   );
 }
 

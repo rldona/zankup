@@ -437,6 +437,8 @@ The performance proof of concept (OS-501) runs at the start of phase 2. This pha
   - Account, two-step verification opened in the authenticator app on the same phone, recovery codes and loading the history. `POST /api/setup/totp` takes `client: "android"` and returns the app's tokens.
 - **OS-526 · Passkeys on the phone** (M) · depends on OS-405 and OS-503
   - Signing in and adding one with `react-native-passkey`. Release builds are signed with the owner's own key, published in `/.well-known/assetlinks.json` on the relying party's domain, whose `android:apk-key-hash` origin goes in `WEBAUTHN_ORIGINS`.
+- **OS-527 · Home and the phone's navigation** (M) · depends on OS-511
+  - Tabs: Home, Activities, Health, Goals and You. Home with This week, the last day with activities, the last seven days and the metrics; Sync, the Coach, Search and Notifications in its header; Material Symbols as the icon set.
 
 **M5 is done when** the Android app replaces the PWA on your phone, with reliable notifications and background sync.
 

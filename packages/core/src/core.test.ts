@@ -110,3 +110,13 @@ describe('tokens', () => {
     expect(themeCss('oled')).toMatch(/^\[data-theme="oled"\]\{color-scheme:dark;--radius:14px;/);
   });
 });
+
+describe('relativeDay', () => {
+  it('names today and yesterday, across a month', async () => {
+    const { relativeDay } = await import('./format');
+    expect(relativeDay('2026-11-10', '2026-11-10')).toBe('today');
+    expect(relativeDay('2026-11-09', '2026-11-10')).toBe('yesterday');
+    expect(relativeDay('2026-02-28', '2026-03-01')).toBe('yesterday');
+    expect(relativeDay('2026-11-08', '2026-11-10')).toBe('other');
+  });
+});

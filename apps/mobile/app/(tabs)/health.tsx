@@ -7,6 +7,7 @@ import {
   formatHoursMinutes,
   healthDaysQuery,
   healthNightQuery,
+  relativeDay,
   type HealthDay,
   type HealthNight,
   type HealthSourceName,
@@ -39,6 +40,15 @@ const shortDay = (day: string) =>
   new Date(`${day}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 const longDay = (day: string) =>
   new Date(`${day}T12:00:00`).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** "Today, …" only when it is today; "Yesterday, …"; otherwise the date. */
+function dayTitle(day: string): string {
+  const when = relativeDay(day, isoDay(new Date()));
+  if (when === 'today') return t('health.today', { day: longDay(day) });
+  if (when === 'yesterday') return t('health.yesterday', { day: longDay(day) });
+  const text = longDay(day);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
 
 const sourceName = (source: HealthSourceName) => t(`health.source.${source}` as MessageKey);
 const from = (source: HealthSourceName, others: HealthSourceName[]) =>
@@ -259,7 +269,11 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
   } as const;
   return (
     <>
-      <Heading first>{t('health.lastNight')}</Heading>
+      <Heading first>
+        {relativeDay(day.day, isoDay(new Date())) === 'today'
+          ? t('health.lastNight')
+          : t('health.nightOf', { day: longDay(day.day) })}
+      </Heading>
       <Card>
         <View style={{ flexDirection: 'row', gap: 24 }}>
           <View>
@@ -344,7 +358,7 @@ function Today({ day }: { day: HealthDay }) {
   add('health.steps', day.steps, (n) => n.toLocaleString(locale));
   return (
     <>
-      <Heading>{t('health.today', { day: longDay(day.day) })}</Heading>
+      <Heading>{dayTitle(day.day)}</Heading>
       <Card>
         <Text style={{ color: c.fg, fontWeight: '600' }}>{t('health.readiness')}</Text>
         <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>{r ? r.score : '–'}</Text>

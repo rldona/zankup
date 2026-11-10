@@ -129,9 +129,15 @@ function renderAt(path: string) {
 }
 
 describe('phase 6: health', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
 
   it('shows last night with its stages, today and where each figure comes from', async () => {
+    // The fixtures' last night is the one to November 8: "Last night" only on that day.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-08T12:00:00'));
     mockApi();
     renderAt('/health');
     expect(await screen.findByRole('heading', { name: 'Last night' })).toBeInTheDocument();

@@ -1,22 +1,36 @@
 /**
- * A goal day by day: one dot per day of a weekly goal (per day of a month, per month of a year) at the
- * height of what was done so far, over a dashed line from zero to the target, the steady pace that
- * reaches it. A dot on or above the line is on track (filled), below it is behind (red), and the days
- * still to come wait as empty rings on the floor. The days come from the calendar the Stats screen
- * already reads, so the server needs nothing new.
+ * A goal day by day, drawn like a progress chart: a line through what was done so far each day of a
+ * weekly goal (each day of a month, each month of a year) over a soft fill, ringed points (green on
+ * track, red behind a steady pace to the target, the faint dashed diagonal), round values on the right
+ * and the days underneath. Today's point is filled with a cursor; touching or sliding picks another.
+ * Days still to come have no point. The days come from the calendar the Stats screen already reads,
+ * so the server needs nothing new.
  */
 import { calendarQuery, type CalendarDay, type GoalOut } from '@zankup/core';
-import { Canvas, Circle, DashPathEffect, Line, vec } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  Circle,
+  DashPathEffect,
+  Group,
+  Line,
+  LinearGradient,
+  Path,
+  vec,
+} from '@shopify/react-native-skia';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { useApi } from '../auth';
 import { locale } from '../i18n';
+import { niceScale } from '../charts';
 import { useTheme } from '../theme';
 
 export type GoalPoint = {
   label: string;
+  /** The point's day (or month) written out, for the value above the chart. */
+  when: string;
   /** What was done from the start of the period to the end of this point. */
   done: number;
   /** Where a steady pace would be by then. */
@@ -49,13 +63,14 @@ export function goalPoints(
   const length = Math.round((end.getTime() - start.getTime()) / 86_400_000);
   const byDay = new Map(days.map((d) => [d.day, dayAmount(goal, d)]));
   // Each point closes at the end of a day (week, month) or of a month (year).
-  const closes: { last: Date; label: string }[] = [];
+  const closes: { last: Date; label: string; when: string }[] = [];
   if (goal.period === 'year') {
     for (let m = 0; m < 12; m++) {
       const last = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + m + 1, 0));
       closes.push({
         last,
         label: last.toLocaleDateString(locale, { month: 'narrow', timeZone: 'UTC' }),
+        when: last.toLocaleDateString(locale, { month: 'long', timeZone: 'UTC' }),
       });
     }
   } else {
@@ -65,14 +80,20 @@ export function goalPoints(
         last: day,
         label:
           goal.period === 'week'
-            ? day.toLocaleDateString(locale, { weekday: 'narrow', timeZone: 'UTC' })
+            ? day.toLocaleDateString(locale, { weekday: 'short', timeZone: 'UTC' }).replace('.', '')
             : String(day.getUTCDate()),
+        when: day.toLocaleDateString(locale, {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'short',
+          timeZone: 'UTC',
+        }),
       });
     }
   }
   let done = 0;
   let cursor = new Date(start);
-  return closes.map(({ last, label }) => {
+  return closes.map(({ last, label, when }) => {
     for (; cursor <= last; cursor = new Date(cursor.getTime() + 86_400_000))
       done += byDay.get(iso(cursor)) ?? 0;
     const elapsed = Math.round((last.getTime() - start.getTime()) / 86_400_000) + 1;
@@ -80,72 +101,161 @@ export function goalPoints(
     // A day after today is still to come; so is a month of a yearly goal that has not begun.
     const future = goal.period === 'year' ? iso(last).slice(0, 7) > today.slice(0, 7) : iso(last) > today;
     const state: GoalPoint['state'] = future ? 'future' : done >= expected ? 'on' : 'behind';
-    return { label, done, expected, state };
+    return { label, when, done, expected, state };
   });
 }
 
-export function GoalChart({ goal }: { goal: GoalOut }) {
+export function GoalChart({
+  goal,
+  value,
+  tick,
+}: {
+  goal: GoalOut;
+  /** A value written in full (above the chart), and a round one for the axis. */
+  value: (v: number) => string;
+  tick: (v: number) => string;
+}) {
   const api = useApi();
   const c = useTheme();
   const [width, setWidth] = useState(0);
   // Today on the phone's calendar, fixed while the card is on screen.
   const [today] = useState(() => iso(new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)));
+  const [picked, setPicked] = useState<number | null>(null);
   const calendar = useQuery(calendarQuery(api, { from: goal.start, to: goal.end }));
-  if (!calendar.data) return <View style={{ height: 96 }} />;
+  if (!calendar.data) return <View style={{ height: 150 }} />;
   const points = goalPoints(goal, calendar.data, today);
-  const height = 72;
-  const pad = 8;
-  const top = Math.max(goal.target, ...points.map((p) => p.done)) || 1;
-  const slot = points.length ? width / points.length : 0;
+  const past = points.filter((p) => p.state !== 'future').length;
+  const current = Math.min(picked ?? past - 1, past - 1);
+
+  const height = 120;
+  const top = 10;
+  const bottom = height - 8;
+  const axis = 52;
+  const plot = Math.max(0, width - axis);
+  const scale = niceScale([0, Math.max(goal.target, ...points.map((p) => p.done)) || 1], 2);
+  const [, hi] = scale.domain;
+  const slot = points.length ? plot / points.length : 0;
   const x = (i: number) => slot * i + slot / 2;
-  const y = (v: number) => pad + (height - 2 * pad) * (1 - v / top);
-  const radius = Math.max(2.5, Math.min(6, slot * 0.28));
+  const y = (v: number) => bottom - (bottom - top) * (v / (hi || 1));
+  const radius = Math.max(3, Math.min(6, slot * 0.22));
   const labelEvery = points.length > 12 ? 5 : 1;
+
+  const shown = points.slice(0, past);
+  const line = shown.map((p, i) => `${i ? 'L' : 'M'}${x(i)} ${y(p.done)}`).join('');
+  const area = shown.length ? `${line}L${x(shown.length - 1)} ${bottom}L${x(0)} ${bottom}Z` : '';
+  const colour = String(c.accent);
+  const ring = (p: GoalPoint) => (p.state === 'on' ? colour : c.zone5);
+
+  const pick = (px: number) => {
+    if (!slot || !past) return;
+    setPicked(Math.max(0, Math.min(past - 1, Math.floor(px / slot))));
+  };
+  const gesture = Gesture.Race(
+    Gesture.Pan()
+      .runOnJS(true)
+      .activeOffsetX([-6, 6])
+      .failOffsetY([-12, 12])
+      .onStart((e) => pick(e.x))
+      .onUpdate((e) => pick(e.x)),
+    Gesture.Tap()
+      .runOnJS(true)
+      .onEnd((e) => pick(e.x)),
+  );
+  const at = current >= 0 ? points[current] : null;
+
   return (
-    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} accessible={false}>
-      {width > 0 && (
-        <Canvas style={{ width, height }}>
-          <Line p1={vec(0, y(0))} p2={vec(width, y(0))} color={c.line} strokeWidth={1} />
-          <Line p1={vec(0, y(goal.target))} p2={vec(width, y(goal.target))} color={c.line} strokeWidth={1}>
-            <DashPathEffect intervals={[3, 4]} />
-          </Line>
-          <Line
-            p1={vec(x(0) - slot / 2, y(0))}
-            p2={vec(x(points.length - 1) + slot / 2, y(goal.target))}
-            color={c.muted}
-            strokeWidth={1.5}
-            opacity={0.6}
-          >
-            <DashPathEffect intervals={[4, 4]} />
-          </Line>
-          {points.map((p, i) =>
-            p.state === 'future' ? (
-              <Circle
-                key={i}
-                cx={x(i)}
-                cy={y(0)}
-                r={radius}
-                color={c.line}
-                style="stroke"
-                strokeWidth={1.5}
-              />
-            ) : (
-              <Circle
-                key={i}
-                cx={x(i)}
-                cy={y(p.done)}
-                r={radius}
-                color={p.state === 'on' ? String(c.accent) : c.zone5}
-              />
-            ),
-          )}
-        </Canvas>
+    <View accessible={false} style={{ gap: 4 }}>
+      {at && (
+        <Text style={{ color: c.muted, fontSize: 12 }}>
+          {at.when} ·{' '}
+          <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+            {value(at.done)}
+          </Text>
+        </Text>
       )}
-      <View style={{ flexDirection: 'row' }}>
+      <GestureDetector gesture={gesture}>
+        <View collapsable={false} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height }}>
+          {width > 0 && (
+            <Canvas style={{ width, height }}>
+              {scale.ticks.map((v) => (
+                <Line key={v} p1={vec(0, y(v))} p2={vec(plot, y(v))} color={c.line} strokeWidth={1} />
+              ))}
+              <Line
+                p1={vec(0, y(0))}
+                p2={vec(plot, y(goal.target))}
+                color={c.muted}
+                strokeWidth={1}
+                opacity={0.5}
+              >
+                <DashPathEffect intervals={[4, 4]} />
+              </Line>
+              {area ? (
+                <Path path={area}>
+                  <LinearGradient
+                    start={vec(0, top)}
+                    end={vec(0, bottom)}
+                    colors={[`${colour}66`, `${colour}00`]}
+                  />
+                </Path>
+              ) : null}
+              {line ? (
+                <Path path={line} style="stroke" strokeWidth={3} strokeJoin="round" color={colour} />
+              ) : null}
+              {at && (
+                <Line p1={vec(x(current), top)} p2={vec(x(current), bottom)} color={c.fg} strokeWidth={2} />
+              )}
+              {shown.map((p, i) =>
+                i === current ? (
+                  <Group key={i}>
+                    <Circle cx={x(i)} cy={y(p.done)} r={radius * 2.2} color={ring(p)} opacity={0.3} />
+                    <Circle cx={x(i)} cy={y(p.done)} r={radius + 1} color={ring(p)} />
+                  </Group>
+                ) : (
+                  <Group key={i}>
+                    <Circle cx={x(i)} cy={y(p.done)} r={radius} color={c.surface} />
+                    <Circle
+                      cx={x(i)}
+                      cy={y(p.done)}
+                      r={radius}
+                      color={ring(p)}
+                      style="stroke"
+                      strokeWidth={2.5}
+                    />
+                  </Group>
+                ),
+              )}
+            </Canvas>
+          )}
+          {width > 0 &&
+            scale.ticks.map((v) => (
+              <Text
+                key={v}
+                style={{
+                  position: 'absolute',
+                  left: plot + 8,
+                  top: y(v) - 8,
+                  color: c.muted,
+                  fontSize: 11,
+                  fontVariant: ['tabular-nums'],
+                }}
+                numberOfLines={1}
+              >
+                {tick(v)}
+              </Text>
+            ))}
+        </View>
+      </GestureDetector>
+      <View style={{ flexDirection: 'row', width: plot }}>
         {points.map((p, i) => (
           <Text
             key={i}
-            style={{ flex: 1, textAlign: 'center', color: c.muted, fontSize: 10 }}
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              color: i === current ? c.fg : c.muted,
+              fontSize: 11,
+              fontWeight: i === current ? '700' : '400',
+            }}
             numberOfLines={1}
           >
             {i % labelEvery === 0 || i === points.length - 1 ? p.label : ''}

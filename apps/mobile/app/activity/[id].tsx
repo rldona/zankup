@@ -50,7 +50,7 @@ export default function ActivityScreen() {
   const api = useApi();
   const activity = useQuery({ ...activityQuery(api, id), enabled: Number.isInteger(id) });
   if (activity.data) return <Detail activity={activity.data} />;
-  if (activity.isError) return <Empty>{t('activity.notFound')}</Empty>;
+  if (activity.isError && !activity.data) return <Empty>{t('activity.notFound')}</Empty>;
   return <ActivitySkeleton />;
 }
 

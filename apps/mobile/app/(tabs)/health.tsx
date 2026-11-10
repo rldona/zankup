@@ -148,7 +148,7 @@ export default function HealthScreen() {
       {sync.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
 
       {days.isPending && <HealthSkeleton />}
-      {days.isError && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
+      {days.isError && !days.data && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
       {days.isSuccess && list.length === 0 && (
         <Card>
           <Text style={{ color: c.fg }}>{t('health.none')}</Text>

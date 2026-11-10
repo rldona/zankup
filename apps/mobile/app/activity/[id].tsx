@@ -145,7 +145,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
       setSection(range);
       setStats(range ? sectionStats(track, range[0], range[1]) : null);
     },
-    [track],
+    [track, setSection, setStats],
   );
 
   const moving = a.moving_s ?? a.duration_s;
@@ -275,7 +275,15 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Heading>{t('activity.profile')}</Heading>
               <Pressable
-                onPress={() => setSelecting((v) => !v)}
+                onPress={() => {
+                  // Turning "Section" off drops the band, its figures and the map's highlight.
+                  if (selecting) {
+                    selection.set(null);
+                    setSection(null);
+                    setStats(null);
+                  }
+                  setSelecting(!selecting);
+                }}
                 accessibilityRole="switch"
                 accessibilityState={{ checked: selecting }}
                 style={{

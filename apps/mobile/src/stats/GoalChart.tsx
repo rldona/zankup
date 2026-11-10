@@ -1,7 +1,7 @@
 /**
  * A goal day by day, drawn like a progress chart: a line through what was done so far each day of a
- * weekly goal (each day of a month, each month of a year) over a soft fill, ringed points (green on
- * track, red behind a steady pace to the target, the faint dashed diagonal), round values on the right
+ * weekly goal (each day of a month, each month of a year) over a soft fill, ringed points in the
+ * line's colour (with a faint dashed diagonal for a steady pace to the target), round values on the right
  * and the days underneath. Today's point is filled with a cursor; touching or sliding picks another.
  * Days still to come have no point. The days come from the calendar the Stats screen already reads,
  * so the server needs nothing new.
@@ -137,14 +137,13 @@ export function GoalChart({
   const slot = points.length ? plot / points.length : 0;
   const x = (i: number) => slot * i + slot / 2;
   const y = (v: number) => bottom - (bottom - top) * (v / (hi || 1));
-  const radius = Math.max(3, Math.min(6, slot * 0.22));
+  const radius = Math.max(2.5, Math.min(4.5, slot * 0.16));
   const labelEvery = points.length > 12 ? 5 : 1;
 
   const shown = points.slice(0, past);
   const line = shown.map((p, i) => `${i ? 'L' : 'M'}${x(i)} ${y(p.done)}`).join('');
   const area = shown.length ? `${line}L${x(shown.length - 1)} ${bottom}L${x(0)} ${bottom}Z` : '';
   const colour = String(c.accent);
-  const ring = (p: GoalPoint) => (p.state === 'on' ? colour : c.zone5);
 
   const pick = (px: number) => {
     if (!slot || !past) return;
@@ -207,8 +206,8 @@ export function GoalChart({
               {shown.map((p, i) =>
                 i === current ? (
                   <Group key={i}>
-                    <Circle cx={x(i)} cy={y(p.done)} r={radius * 2.2} color={ring(p)} opacity={0.3} />
-                    <Circle cx={x(i)} cy={y(p.done)} r={radius + 1} color={ring(p)} />
+                    <Circle cx={x(i)} cy={y(p.done)} r={radius * 2.2} color={colour} opacity={0.3} />
+                    <Circle cx={x(i)} cy={y(p.done)} r={radius + 1} color={colour} />
                   </Group>
                 ) : (
                   <Group key={i}>
@@ -217,7 +216,7 @@ export function GoalChart({
                       cx={x(i)}
                       cy={y(p.done)}
                       r={radius}
-                      color={ring(p)}
+                      color={colour}
                       style="stroke"
                       strokeWidth={2.5}
                     />

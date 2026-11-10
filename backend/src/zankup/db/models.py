@@ -24,6 +24,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -542,6 +543,14 @@ class Gear(Timestamps, Base):
     __table_args__ = (
         CheckConstraint(_in("kind", GEAR_KINDS), name="kind"),
         UniqueConstraint("user_id", "name"),
+        # One habitual pair of shoes, one habitual bike…: at most one per kind.
+        Index(
+            "uq_gear_habitual_kind",
+            "user_id",
+            "kind",
+            unique=True,
+            postgresql_where=text("habitual"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -557,6 +566,10 @@ class Gear(Timestamps, Base):
     limit_m: Mapped[float | None] = mapped_column(Float, comment="Warn when the mileage passes it")
     retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     strava_id: Mapped[str | None] = mapped_column(String(32))
+    habitual: Mapped[bool] = mapped_column(
+        server_default="false",
+        comment="The one of its kind used most: highlighted, and preferred for new activities",
+    )
 
 
 class Photo(Base):

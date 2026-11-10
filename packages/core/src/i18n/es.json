@@ -586,6 +586,8 @@
   "gear.empty": "Aún no hay material. Al importar una exportación de Strava se trae el tuyo.",
   "gear.none": "Ninguno",
   "gear.retired": "Retirado",
+  "gear.habitual": "Habitual",
+  "gear.habitualHelp": "El de su tipo que más usas: se destaca aquí y las actividades nuevas de sus deportes lo llevan primero. Solo uno por tipo (zapatillas, bici…): marcarlo desmarca el anterior.",
   "gear.retire": "Retirar",
   "gear.unretire": "Volver a usar",
   "gear.delete": "Eliminar",

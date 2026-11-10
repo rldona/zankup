@@ -7679,6 +7679,11 @@
               }
             ],
             "title": "Limit M"
+          },
+          "habitual": {
+            "type": "boolean",
+            "title": "Habitual",
+            "default": false
           }
         },
         "type": "object",
@@ -7749,6 +7754,11 @@
             "type": "boolean",
             "title": "Retired"
           },
+          "habitual": {
+            "type": "boolean",
+            "title": "Habitual",
+            "description": "The one of its kind used most; preferred for new activities"
+          },
           "distance_m": {
             "type": "number",
             "title": "Distance M",
@@ -7802,6 +7812,7 @@
           "initial_m",
           "limit_m",
           "retired",
+          "habitual",
           "distance_m",
           "activities",
           "moving_s",
@@ -7948,6 +7959,17 @@
               }
             ],
             "title": "Retired"
+          },
+          "habitual": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Habitual"
           }
         },
         "type": "object",

@@ -586,6 +586,8 @@
   "gear.empty": "No gear yet. Importing a Strava export brings yours.",
   "gear.none": "None",
   "gear.retired": "Retired",
+  "gear.habitual": "Habitual",
+  "gear.habitualHelp": "The one of its kind you use most: highlighted here, and new activities of its sports get it first. Only one per kind (shoes, bike…): marking it unmarks the previous one.",
   "gear.retire": "Retire",
   "gear.unretire": "Use again",
   "gear.delete": "Delete",

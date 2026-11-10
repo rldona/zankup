@@ -22,6 +22,7 @@ from zankup.alerts import email_sender
 from zankup.core.config import get_settings
 from zankup.core.logging import configure_logging
 from zankup.db.session import get_engine
+from zankup.instance_keys import effective
 from zankup.jobs.handlers import default_handlers
 from zankup.jobs.worker import Worker
 from zankup.storage import get_raw_store
@@ -49,10 +50,12 @@ def main(argv: list[str] | None = None) -> int:
 
     settings = get_settings()
     configure_logging(settings.log_level, settings.effective_log_format)
+    sessions = sessionmaker(get_engine(), expire_on_commit=False)
+    with sessions() as session:
+        settings = effective(settings, session)  # a key saved from the apps wins
     if settings.garmin_personal_api_key is None:
         print("GARMIN_PERSONAL_API_KEY is not set", file=sys.stderr)
         return 2
-    sessions = sessionmaker(get_engine(), expire_on_commit=False)
     with sessions.begin() as session:
         user_id = ensure_owner(session, settings.owner_email).id
     store = get_raw_store(settings)

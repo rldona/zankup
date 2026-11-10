@@ -202,6 +202,14 @@ def default_handlers(
     if sessions is not None and garmin_api_key:
         handlers["sync_garmin"] = sync_garmin(sessions, store, garmin_api_key, alert)
         handlers["sync_garmin_health"] = sync_garmin_health(sessions, garmin_api_key)
+    elif sessions is not None and settings is not None:
+        # The worker: the key is read for each job, so one saved from the apps works at once.
+        handlers["sync_garmin"] = _with_garmin_key(
+            settings, lambda key: sync_garmin(sessions, store, key, alert)
+        )
+        handlers["sync_garmin_health"] = _with_garmin_key(
+            settings, lambda key: sync_garmin_health(sessions, key)
+        )
     if sessions is not None and settings is not None and settings.integrations()["google_health"]:
         handlers["sync_google_health"] = sync_google_health(sessions, settings)
     if settings is not None:
@@ -213,17 +221,55 @@ def default_handlers(
         handlers["import_upload"] = import_upload(sessions, store, settings)
         handlers["export"] = export(sessions, store, settings)
     if settings is not None:
-        from zankup.ai.client import build_llm
+        from zankup.ai.summary import summary_handler
+        from zankup.ai.weekly import weekly_handler, weekly_poll_handler
 
-        llm = build_llm(settings)
-        if llm is not None:  # phase 7: hidden without a key
-            from zankup.ai.summary import summary_handler
-            from zankup.ai.weekly import weekly_handler, weekly_poll_handler
-
-            handlers["ai_summary"] = summary_handler(llm)
-            handlers["ai_weekly"] = weekly_handler(llm)
-            handlers["ai_weekly_poll"] = weekly_poll_handler(llm)
+        # The model's client is built from the key in force when each job runs; without one the AI
+        # jobs end quietly (phase 7: hidden without a key).
+        handlers["ai_summary"] = _with_llm(settings, summary_handler)
+        handlers["ai_weekly"] = _with_llm(settings, weekly_handler)
+        handlers["ai_weekly_poll"] = _with_llm(settings, weekly_poll_handler)
     return handlers
+
+
+def _with_garmin_key(settings: Settings, make: Callable[[str], Handler]) -> Handler:
+    """A Garmin handler built with the key in force for this job (saved from the apps, or the
+    environment's). Without a key the job ends: there is nothing to sync."""
+    from zankup.instance_keys import effective
+
+    def handle(session: Session, job: Job) -> None:
+        key = effective(settings, session).garmin_personal_api_key
+        if key is None:
+            log.info("Garmin sync skipped: no key", extra={"job_id": job.id})
+            return
+        make(key.get_secret_value())(session, job)
+
+    return handle
+
+
+_llms: dict[tuple[str, str, float], Any] = {}
+
+
+def _with_llm(settings: Settings, make: Callable[[Any], Handler]) -> Handler:
+    """An AI handler built with the client for the key in force (one client per key)."""
+    from zankup.ai.client import build_llm
+    from zankup.instance_keys import effective
+
+    def handle(session: Session, job: Job) -> None:
+        current = effective(settings, session)
+        if current.anthropic_api_key is None:
+            log.info("AI job skipped: no key", extra={"job_id": job.id, "kind": job.kind})
+            return
+        cache = (
+            current.anthropic_api_key.get_secret_value(),
+            current.ai_model,
+            current.ai_monthly_budget_usd,
+        )
+        if cache not in _llms:
+            _llms[cache] = build_llm(current)
+        make(_llms[cache])(session, job)
+
+    return handle
 
 
 def import_upload(sessions: sessionmaker[Session], store: RawStore, settings: Settings) -> Handler:

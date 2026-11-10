@@ -18,7 +18,18 @@ SESSION_COOKIE = "zankup_session"
 LAST_SEEN_EVERY = timedelta(minutes=5)
 
 DbSession = Annotated[Session, Depends(get_session)]
-AppSettings = Annotated[Settings, Depends(get_settings)]
+
+
+def app_settings(
+    base: Annotated[Settings, Depends(get_settings)], db: Annotated[Session, Depends(get_session)]
+) -> Settings:
+    """The settings with the service keys saved from the apps laid over the environment's."""
+    from zankup.instance_keys import effective
+
+    return effective(base, db)
+
+
+AppSettings = Annotated[Settings, Depends(app_settings)]
 
 
 def unauthorised() -> HTTPException:

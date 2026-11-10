@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { locale, t } from '../i18n';
 import { useSaveSettings } from '../settings';
+import { ServiceKeyForm } from './ServiceKey';
 
 const money = (value: number) =>
   new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(
@@ -22,6 +23,10 @@ export function Ai() {
   return (
     <>
       <h2 id="ai">{t('ai.title')}</h2>
+      <div className="panel">
+        <p className="note">{t('keys.anthropicHelp')}</p>
+        <ServiceKeyForm name="anthropic" />
+      </div>
       {info && !info.available && <p className="note">{t('ai.off')}</p>}
       {info?.available && (
         <>

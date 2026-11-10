@@ -135,7 +135,9 @@ describe('phase 7: the AI assistant', () => {
       '/api/ai/status': () => Response.json({ ...STATUS, available: false, model: null, budget: null }),
     });
     renderAt('/coach');
-    expect(await screen.findByText('Not set up on this server (ANTHROPIC_API_KEY).')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Zankup Coach turns on as soon as you save an Anthropic key above.'),
+    ).toBeInTheDocument();
   });
 
   it('answers a question as it streams, with the tools it used and links to activities', async () => {

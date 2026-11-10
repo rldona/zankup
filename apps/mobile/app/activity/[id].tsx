@@ -22,7 +22,15 @@ import {
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from 'react';
 import { Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
@@ -107,10 +115,10 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
     };
   }, [navigation]);
   const charts = useMemo(
-    () => (settled && series && track ? chartSeries(series, sport, pace, units, format, c) : []),
+    () => (settled && series && track ? chartSeries(series, sport, pace, units, format, c, a) : []),
     // format and the colours change with the settings and the theme, both already in the keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [settled, series, track, sport, pace, units, c],
+    [settled, series, track, sport, pace, units, c, a],
   );
   const replayTo = useCallback(
     (i: number) => {
@@ -121,7 +129,14 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
   );
 
   const chartColors = useMemo(
-    () => ({ cursor: c.fg, band: `${String(c.accent)}33`, grid: c.line, muted: c.muted, fg: c.fg }),
+    () => ({
+      cursor: c.fg,
+      band: `${String(c.accent)}33`,
+      grid: c.line,
+      muted: c.muted,
+      fg: c.fg,
+      tipBg: c.surface2,
+    }),
     [c],
   );
   // The chip answers at once; recolouring the route follows when the phone has a moment.
@@ -273,8 +288,16 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         <Figures main={main} more={more} />
         <SummaryCard activityId={a.id} />
         {track && track.n > 1 && (
-          <Card>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <>
+            {/* Each chart on its own card, under one heading with the section switch. */}
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: 12,
+              }}
+            >
               <Heading>{t('activity.profile')}</Heading>
               <Pressable
                 onPress={() => {
@@ -301,13 +324,11 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
               </Pressable>
             </View>
             {charts.map((chart) => (
-              <MetricChart
+              <ChartCard
                 key={chart.label}
                 track={track}
                 series={chart}
                 width={width - 60}
-                height={110}
-                cursor={cursor}
                 selection={selection}
                 selecting={selecting}
                 onCursor={onCursor}
@@ -317,24 +338,30 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
                 colors={chartColors}
               />
             ))}
-            {stats && (
-              <View style={ui.stats}>
-                <Stat label={t('feed.stat.distance')} value={format.distance(stats.distance)} />
-                <Stat label={t('feed.stat.time')} value={formatDuration(stats.time)} />
-                <Stat
-                  label={t(pace ? 'feed.stat.pace' : 'feed.stat.speed')}
-                  value={
-                    stats.distance > 0 ? format.speedFor(stats.distance / Math.max(stats.time, 1), pace) : '–'
-                  }
-                />
-                <Stat label={t('feed.stat.ascent')} value={format.elevation(stats.ascent)} />
-                {stats.avgHr != null && (
-                  <Stat label={t('feed.stat.hr')} value={`${Math.round(stats.avgHr)} bpm`} />
+            {(stats || (section && track.hasGps)) && (
+              <Card>
+                {stats && (
+                  <View style={ui.stats}>
+                    <Stat label={t('feed.stat.distance')} value={format.distance(stats.distance)} />
+                    <Stat label={t('feed.stat.time')} value={formatDuration(stats.time)} />
+                    <Stat
+                      label={t(pace ? 'feed.stat.pace' : 'feed.stat.speed')}
+                      value={
+                        stats.distance > 0
+                          ? format.speedFor(stats.distance / Math.max(stats.time, 1), pace)
+                          : '–'
+                      }
+                    />
+                    <Stat label={t('feed.stat.ascent')} value={format.elevation(stats.ascent)} />
+                    {stats.avgHr != null && (
+                      <Stat label={t('feed.stat.hr')} value={`${Math.round(stats.avgHr)} bpm`} />
+                    )}
+                  </View>
                 )}
-              </View>
+                {section && track.hasGps && <SaveSegment activityId={a.id} section={section} />}
+              </Card>
             )}
-            {section && track.hasGps && <SaveSegment activityId={a.id} section={section} />}
-          </Card>
+          </>
         )}
         <Photos activity={a} />
         {/* On a ride, heart-rate zones follow the power curve and zones. */}
@@ -427,7 +454,15 @@ function chartSeries(
   units: 'metric' | 'imperial',
   format: Format,
   c: ReturnType<typeof useTheme>,
+  a: ActivityDetail | undefined,
 ): ChartSeries[] {
+  const usable = (values: (number | null)[]) => values.filter((v): v is number => v != null && v > 0);
+  const maxOf = (values: (number | null)[]) => Math.max(...usable(values));
+  const minOf = (values: (number | null)[]) => Math.min(...values.filter((v): v is number => v != null));
+  const avgOf = (values: (number | null)[]) => {
+    const u = usable(values);
+    return u.length ? u.reduce((x, y) => x + y, 0) / u.length : 0;
+  };
   const has = (values: (number | null)[] | null | undefined): values is (number | null)[] =>
     !!values?.some((v) => v != null && v > 0);
   const average = (values: (number | null)[], text: (v: number) => string) => {
@@ -450,6 +485,16 @@ function chartSeries(
       readout: { kind: 'int', suffix: units === 'imperial' ? ' ft' : ' m', decimal },
       average:
         format.elevation(Math.max(...alt.filter((v): v is number => v != null))) + ` ${t('chart.max')}`,
+      footer: [
+        ...(a?.ascent_m != null
+          ? ([[t('chart.ascent'), format.elevation(a.ascent_m)]] as [string, string][])
+          : []),
+        ...(a?.descent_m != null
+          ? ([[t('chart.descent'), format.elevation(a.descent_m)]] as [string, string][])
+          : []),
+        [t('chart.min'), format.elevation(minOf(alt))],
+        [t('chart.maxFull'), format.elevation(Math.max(...alt.filter((v): v is number => v != null)))],
+      ],
     });
   }
 
@@ -470,6 +515,13 @@ function chartSeries(
             average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
             inverted: true,
             tick: (v) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`,
+            footer: [
+              [t('chart.avgFull'), mean ? text(mean) : '–'],
+              [t('chart.bestPace'), moving.length ? text(Math.max(...moving)) : '–'],
+              ...(a?.metrics?.gap_speed
+                ? ([[t('chart.gap'), format.pace(a.metrics.gap_speed)]] as [string, string][])
+                : []),
+            ],
           }
         : {
             label: t('metric.speed'),
@@ -478,6 +530,10 @@ function chartSeries(
             readout: { kind: 'dec1', suffix: units === 'imperial' ? ' mph' : ' km/h', decimal },
             average: mean ? `${t('chart.average')} ${text(mean)}` : '–',
             fromZero: true,
+            footer: [
+              [t('chart.avgFull'), mean ? text(mean) : '–'],
+              [t('chart.maxFull'), moving.length ? text(Math.max(...moving)) : '–'],
+            ],
           },
     );
   }
@@ -491,6 +547,13 @@ function chartSeries(
       values: hr,
       readout: { kind: 'int', suffix: ' bpm', decimal },
       average: average(hr, text),
+      footer: [
+        [t('chart.avgFull'), text(a?.avg_hr ?? avgOf(hr))],
+        [t('chart.maxFull'), text(a?.max_hr ?? maxOf(hr))],
+        ...(a?.metrics?.trimp != null
+          ? ([[t('chart.effort'), Math.round(a.metrics.trimp).toLocaleString(locale)]] as [string, string][])
+          : []),
+      ],
     });
   }
 
@@ -504,6 +567,23 @@ function chartSeries(
       readout: { kind: 'int', suffix: ' W', decimal },
       average: average(series.power ?? power, text),
       fromZero: true,
+      footer: [
+        [t('chart.avgFull'), text(a?.avg_power ?? avgOf(series.power ?? power))],
+        [t('chart.maxFull'), text(maxOf(series.power ?? power))],
+        ...(a?.normalized_power
+          ? ([
+              [t('chart.np'), text(a.normalized_power)],
+              ...(a.avg_power
+                ? [
+                    [
+                      t('chart.vi'),
+                      (a.normalized_power / a.avg_power).toLocaleString(locale, { maximumFractionDigits: 2 }),
+                    ],
+                  ]
+                : []),
+            ] as [string, string][])
+          : []),
+      ],
     });
   }
 
@@ -517,6 +597,10 @@ function chartSeries(
       values: cad,
       readout: { kind: 'int', suffix: ` ${per}`, decimal },
       average: average(series.cad, text),
+      footer: [
+        [t('chart.avgFull'), text(avgOf(series.cad))],
+        [t('chart.maxFull'), text(maxOf(series.cad))],
+      ],
     });
   }
   const order = [
@@ -530,4 +614,18 @@ function chartSeries(
   return out
     .filter((chart) => sport !== 'ride' || chart.label !== t('metric.hr'))
     .sort((x, y) => order.indexOf(x.label) - order.indexOf(y.label));
+}
+
+/**
+ * One of the activity's charts on a card of its own, as "Power curve": its heading, a taller chart and
+ * its own cursor and readout, so touching it leaves the other charts as they are (the map still
+ * follows). The section is shared.
+ */
+function ChartCard(props: Omit<ComponentProps<typeof MetricChart>, 'cursor' | 'height' | 'heading'>) {
+  const cursor = useSharedValue(-1);
+  return (
+    <Card>
+      <MetricChart {...props} cursor={cursor} height={170} heading />
+    </Card>
+  );
 }

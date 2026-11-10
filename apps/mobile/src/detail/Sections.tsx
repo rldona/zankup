@@ -351,8 +351,12 @@ export function Power({ activity }: { activity: ActivityDetail }) {
     <>
       {ticks.length > 1 && (
         <Card>
-          <Heading>{t('activity.powerCurve')}</Heading>
+          {/* The same room around the chart as the profile's chart cards. */}
+          <View style={{ marginBottom: 12 }}>
+            <Heading first>{t('activity.powerCurve')}</Heading>
+          </View>
           <Chart
+            legendGap={18}
             days={ticks.map(label)}
             label={`${t('activity.powerCurve')}: ${ticks.map((d) => `${label(d)} ${Math.round(at(curve, d) ?? 0)} W`).join(', ')}`}
             layers={curveLayers}

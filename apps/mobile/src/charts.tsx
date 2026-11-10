@@ -136,6 +136,7 @@ export function Chart({
   days,
   height = 160,
   label,
+  legendGap = 6,
 }: {
   layers: Layer[];
   /** One label per value: a few of them are written under the chart. */
@@ -143,6 +144,8 @@ export function Chart({
   height?: number;
   /** What the chart says, for TalkBack. */
   label: string;
+  /** Room between the chart and its legend (more on the activity's chart cards). */
+  legendGap?: number;
 }) {
   const c = useTheme();
   const [width, setWidth] = useState(0);
@@ -269,7 +272,7 @@ export function Chart({
   const muted = { color: c.muted, fontSize: 10, fontVariant: ['tabular-nums' as const] };
 
   return (
-    <View accessible accessibilityLabel={label} style={{ gap: 6, opacity: ready ? 1 : 0 }}>
+    <View accessible accessibilityLabel={label} style={{ gap: legendGap, opacity: ready ? 1 : 0 }}>
       <GestureDetector gesture={gesture}>
         <View
           collapsable={false}
@@ -410,7 +413,7 @@ export function Chart({
           )}
         </View>
       </GestureDetector>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
         {legend.map((item) => (
           <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: item.color }} />

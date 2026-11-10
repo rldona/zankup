@@ -1,14 +1,20 @@
 /**
  * One series of an activity over its distance (or time), drawn with Skia as Garmin does: a filled
  * area, round values on the left, a grid and the distance underneath. Every chart of
- * the activity shares the cursor and the section, so dragging on one moves them all and the map.
+ * the activity shares the section; each chart may have its own cursor (one card each) or share one.
  * What follows the finger (cursor line, value, section band) runs on the UI thread from shared values.
  */
 import { Canvas, DashPathEffect, Group, Line, Path, Rect, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { type SharedValue, useAnimatedProps, useDerivedValue } from 'react-native-reanimated';
+import Animated, {
+  type SharedValue,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useDerivedValue,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { niceScale, shortNumber } from '../charts';
@@ -63,6 +69,8 @@ export type ChartSeries = {
   inverted?: boolean;
   /** Keep the axis on zero (power, cadence); otherwise it hugs the values (altitude, heart rate). */
   fromZero?: boolean;
+  /** Figures under the chart on its own card: average, maximum, NP, ascent… */
+  footer?: [string, string][];
 };
 
 type Props = {
@@ -75,10 +83,12 @@ type Props = {
   selecting: boolean;
   onCursor: (index: number) => void;
   onSelection: (range: [number, number] | null, final: boolean) => void;
-  colors: { cursor: string; band: string; grid: string; muted: string; fg: string };
+  colors: { cursor: string; band: string; grid: string; muted: string; fg: string; tipBg?: string };
   /** The distance unit in metres (1000 or 1609.344), for the marks underneath. */
   unit: number;
   unitLabel: string;
+  /** On a card of its own: the label as the card's heading and a larger readout. */
+  heading?: boolean;
 };
 
 /** The range the axis covers: the 2nd to the 98th percentile, so a slow start or a GPS spike doesn't flatten the rest. */
@@ -104,6 +114,7 @@ export const MetricChart = memo(function MetricChart({
   colors,
   unit,
   unitLabel,
+  heading = false,
 }: Props) {
   const left = AXIS;
   const right = 8;
@@ -158,6 +169,10 @@ export const MetricChart = memo(function MetricChart({
     return total > 0 ? (dist[i] / total) * plotW : 0;
   };
 
+  // The tooltip's size (measured), to place it beside the cursor and to know a tap on it.
+  const tipWidth = useSharedValue(0);
+  const tipHeight = useSharedValue(0);
+
   // Sideways drags move the cursor; a vertical swipe is left to the screen's scroll.
   const pan = Gesture.Pan()
     .activeOffsetX([-4, 4])
@@ -184,8 +199,19 @@ export const MetricChart = memo(function MetricChart({
       'worklet';
       if (selecting && selection.value) scheduleOnRN(onSelection, selection.value, true);
     });
+  // As in the power curve: a tap shows or moves the tooltip; a tap on it or on its line hides it.
   const tap = Gesture.Tap().onEnd((e) => {
     'worklet';
+    if (heading && cursor.value >= 0) {
+      const x = xAtIndex(cursor.value) + left;
+      const at = x < width / 2 ? x + 8 : x - 8 - tipWidth.value;
+      const onTip = e.x >= at && e.x <= at + tipWidth.value && e.y <= tipHeight.value;
+      const onLine = Math.abs(e.x - x) <= 12; // the vertical line, with room for a finger
+      if (onTip || onLine) {
+        cursor.value = -1;
+        return;
+      }
+    }
     const i = indexAtX(e.x);
     cursor.value = i;
     scheduleOnRN(onCursor, i);
@@ -207,10 +233,39 @@ export const MetricChart = memo(function MetricChart({
   const values = series.values;
   const format = series.readout;
   const average = series.average;
+  // In the header: the value under the finger, or the average. On a card of its own the header keeps
+  // the average and the value goes in a tooltip by the cursor, as in the power curve.
   const readout = useAnimatedProps(() => {
     const i = cursor.value;
-    const text = i < 0 ? average : formatReadout(values[i], format);
+    const text = heading || i < 0 ? average : formatReadout(values[i], format);
     return { text, defaultValue: text };
+  });
+  const times = track.t;
+  const dists = track.dist;
+  const byTime = track.byTime;
+  const tipValue = useAnimatedProps(() => {
+    const i = cursor.value;
+    const text = i < 0 ? '' : formatReadout(values[i], format);
+    return { text, defaultValue: text };
+  });
+  const tipWhere = useAnimatedProps(() => {
+    const i = cursor.value;
+    if (i < 0) return { text: '', defaultValue: '' };
+    const secs = times[i] ?? 0;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const clock = h > 0 ? `${h}:${m < 10 ? '0' : ''}${m} h` : `${m} min`;
+    const km = (Math.round(((dists[i] ?? 0) / unit) * 10) / 10).toFixed(1).replace('.', format.decimal);
+    const text = byTime ? clock : `${km} ${unitLabel} · ${clock}`;
+    return { text, defaultValue: text };
+  });
+  // Beside the cursor: to its right in the left half, to its left in the right half (its width is
+  // measured, so it always ends 8 px from the line).
+  const tipStyle = useAnimatedStyle(() => {
+    const x = cursorX.value + left; // the cursor is measured from the plot, after the axis
+    if (cursor.value < 0) return { opacity: 0, transform: [{ translateX: 0 }] };
+    const at = x < width / 2 ? x + 8 : x - 8 - tipWidth.value;
+    return { opacity: 1, transform: [{ translateX: at }] };
   });
 
   const marks = axisMarks(total, track.byTime ? 60 : unit);
@@ -228,15 +283,27 @@ export const MetricChart = memo(function MetricChart({
 
   return (
     <View>
-      <View style={styles.head}>
-        <View style={[styles.dot, { backgroundColor: series.color }]} />
-        <Text style={{ color: colors.fg, fontSize: 13, fontWeight: '600', flex: 1 }}>{series.label}</Text>
-        <AnimatedText
-          editable={false}
-          underlineColorAndroid="transparent"
-          style={[styles.readout, { color: colors.fg }]}
-          animatedProps={readout}
-        />
+      <View style={[styles.head, heading && { marginBottom: 24 }]}>
+        {!heading && <View style={[styles.dot, { backgroundColor: series.color }]} />}
+        <Text
+          accessibilityRole={heading ? 'header' : undefined}
+          style={
+            heading
+              ? { color: colors.fg, fontSize: 17, fontWeight: '700', flex: 1 }
+              : { color: colors.fg, fontSize: 13, fontWeight: '600', flex: 1 }
+          }
+        >
+          {series.label}
+        </Text>
+        {/* On a card of its own the average is in the footer and the value in the tooltip. */}
+        {!heading && (
+          <AnimatedText
+            editable={false}
+            underlineColorAndroid="transparent"
+            style={[styles.readout, { color: colors.fg }]}
+            animatedProps={readout}
+          />
+        )}
       </View>
       <GestureDetector gesture={gesture}>
         <View collapsable={false} style={{ height: height + 16 }}>
@@ -258,6 +325,33 @@ export const MetricChart = memo(function MetricChart({
               <Line p1={p1} p2={p2} color={colors.cursor} strokeWidth={1.5} />
             </Group>
           </Canvas>
+          {heading && (
+            <Animated.View
+              pointerEvents="none"
+              onLayout={(e) => {
+                tipWidth.set(e.nativeEvent.layout.width);
+                tipHeight.set(e.nativeEvent.layout.height);
+              }}
+              style={[
+                styles.tip,
+                { backgroundColor: colors.tipBg ?? colors.grid, borderColor: colors.grid },
+                tipStyle,
+              ]}
+            >
+              <AnimatedText
+                editable={false}
+                underlineColorAndroid="transparent"
+                style={[styles.tipValue, { color: colors.fg }]}
+                animatedProps={tipValue}
+              />
+              <AnimatedText
+                editable={false}
+                underlineColorAndroid="transparent"
+                style={[styles.tipWhere, { color: colors.muted }]}
+                animatedProps={tipWhere}
+              />
+            </Animated.View>
+          )}
           {scale.ticks.map((v, i) => (
             <Text
               key={`y${i}`}
@@ -293,12 +387,37 @@ export const MetricChart = memo(function MetricChart({
           })}
         </View>
       </GestureDetector>
+      {heading && series.footer && series.footer.length > 0 && (
+        <View style={styles.footer}>
+          {series.footer.map(([label, value]) => (
+            <View key={label} style={{ minWidth: 64, alignItems: 'center' }}>
+              <Text style={{ color: colors.muted, fontSize: 11 }}>{label}</Text>
+              <Text
+                style={{ color: colors.fg, fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'] }}
+              >
+                {value}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  footer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 24, marginTop: 18 },
+  tip: {
+    position: 'absolute',
+    top: 0,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  tipValue: { fontSize: 13, fontWeight: '700', fontVariant: ['tabular-nums'], padding: 0 },
+  tipWhere: { fontSize: 11, fontVariant: ['tabular-nums'], padding: 0 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   readout: { fontSize: 13, fontWeight: '600', fontVariant: ['tabular-nums'], padding: 0, textAlign: 'right' },
   tick: { position: 'absolute' },

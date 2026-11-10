@@ -142,6 +142,8 @@ export function GoalChart({
 
   const shown = points.slice(0, past);
   const line = shown.map((p, i) => `${i ? 'L' : 'M'}${x(i)} ${y(p.done)}`).join('');
+  // The fill fades from the line's highest point, so a low line still has its colour under it.
+  const peak = Math.min(bottom - 1, ...shown.map((p) => y(p.done)));
   const area = shown.length ? `${line}L${x(shown.length - 1)} ${bottom}L${x(0)} ${bottom}Z` : '';
   const colour = String(c.accent);
 
@@ -191,9 +193,9 @@ export function GoalChart({
               {area ? (
                 <Path path={area}>
                   <LinearGradient
-                    start={vec(0, top)}
+                    start={vec(0, peak)}
                     end={vec(0, bottom)}
-                    colors={[`${colour}66`, `${colour}00`]}
+                    colors={[`${colour}99`, `${colour}14`]}
                   />
                 </Path>
               ) : null}

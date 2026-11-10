@@ -190,6 +190,25 @@ describe('sign-in', () => {
     });
   });
 
+  it("offers Google and the passkey first, then 'or' and the e-mail, as the app (OS-918)", async () => {
+    mockApi({
+      '/api/auth/me': signedOut,
+      '/api/setup': () => Response.json({ open: false }),
+      '/api/auth/google/providers': () => Response.json({ google: true }),
+    });
+    vi.stubGlobal('PublicKeyCredential', function PublicKeyCredential() {});
+    renderSignIn();
+    const google = await screen.findByRole('link', { name: 'Continue with Google' });
+    const passkey = screen.getByRole('button', { name: 'Sign in with a passkey' });
+    const or = screen.getByText('or');
+    const email = screen.getByLabelText('E-mail');
+    const submit = screen.getByRole('button', { name: 'Sign in' });
+    const order = [google, passkey, or, email, submit];
+    for (let n = 1; n < order.length; n++)
+      expect(order[n - 1]?.compareDocumentPosition(order[n] as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(submit).not.toHaveClass('primary'); // the quieter one
+  });
+
   it('hides the passkey option where the browser has no WebAuthn', async () => {
     mockApi({ '/api/auth/me': signedOut });
     renderSignIn();

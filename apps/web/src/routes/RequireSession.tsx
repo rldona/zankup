@@ -4,6 +4,7 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 
 import { api } from '../api';
 import { t } from '../i18n';
+import { PageSkeleton } from '../Skeleton';
 
 /** Renders the signed-in part of the app, or sends to /sign-in (keeping where you wanted to go). */
 export function RequireSession() {
@@ -15,7 +16,7 @@ export function RequireSession() {
     const next = location.pathname + location.search;
     return <Navigate to={`/sign-in${next === '/' ? '' : `?next=${encodeURIComponent(next)}`}`} replace />;
   }
-  if (me.isPending) return <p className="state">{t('common.loading')}</p>;
+  if (me.isPending) return <PageSkeleton />;
   if (me.isError)
     return (
       <p className="state" role="alert">

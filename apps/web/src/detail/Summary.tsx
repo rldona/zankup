@@ -1,5 +1,6 @@
 import { activitySummaryQuery, aiStatusQuery } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 import { api } from '../api';
 import { MaterialIcon } from '../MaterialIcon';
@@ -10,6 +11,25 @@ import { t } from '../i18n';
  * Before there is one, it says what the Coach will write and offers to; a written summary stays as it
  * is. Hidden when this server has no model, unless a summary exists.
  */
+const FOLDED_KEY = 'zankup-coach-folded';
+
+function readFolded(): boolean {
+  try {
+    return localStorage.getItem(FOLDED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeFolded(folded: boolean) {
+  try {
+    if (folded) localStorage.setItem(FOLDED_KEY, '1');
+    else localStorage.removeItem(FOLDED_KEY);
+  } catch {
+    // Storage blocked: it folds for this page only.
+  }
+}
+
 export function Summary({ activityId, name }: { activityId: number; name: string | null }) {
   const queryClient = useQueryClient();
   const status = useQuery({ ...aiStatusQuery(api), retry: false });
@@ -38,6 +58,7 @@ export function Summary({ activityId, name }: { activityId: number; name: string
       void queryClient.invalidateQueries({ queryKey: ['activities'] });
     },
   });
+  const [folded, setFolded] = useState(readFolded);
   const can = status.data?.available && status.data.enabled && status.data.summaries;
   const row = summary.data;
   if (!row && !can) return null;
@@ -52,51 +73,73 @@ export function Summary({ activityId, name }: { activityId: number; name: string
           <h2 id="summary-title">{t('summary.aiTitle')}</h2>
           <p className="note">{t('summary.aiSubtitle')}</p>
         </div>
+        {/* As on the app: the analysis folds away, and stays folded on every activity until opened. */}
+        <button
+          type="button"
+          className="mapbtn flat fold"
+          aria-expanded={!folded}
+          aria-controls="summary-body"
+          aria-label={t(folded ? 'summary.show' : 'summary.hide')}
+          title={t(folded ? 'summary.show' : 'summary.hide')}
+          onClick={() => {
+            writeFolded(!folded);
+            setFolded(!folded);
+          }}
+        >
+          <MaterialIcon name={folded ? 'keyboard_arrow_down' : 'keyboard_arrow_up'} />
+        </button>
       </div>
-      {!row && can && (
-        <>
-          <p className="desc">{t('summary.pitch')}</p>
-          <button type="button" className="primary" onClick={() => write.mutate()} disabled={write.isPending}>
-            <MaterialIcon name="wand_stars" />
-            {write.isPending ? t('summary.writing') : t('summary.write')}
-          </button>
-        </>
-      )}
-      {row && (
-        <>
-          <p className="desc">{row.summary}</p>
-          {row.highlights.length > 0 && (
-            <ul className="highlights">
-              {row.highlights.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          )}
-          {row.suggested_title && row.suggested_title !== name && (
-            <p className="note suggested">
-              {t('summary.suggested')}: <b>{row.suggested_title}</b>
-              {can && (
-                <>
-                  {' · '}
-                  <button
-                    type="button"
-                    className="link"
-                    onClick={() => rename.mutate(row.suggested_title)}
-                    disabled={rename.isPending}
-                  >
-                    {rename.isSuccess ? t('summary.titleUsed') : t('summary.useTitle')}
-                  </button>
-                </>
-              )}
-            </p>
-          )}
-        </>
-      )}
-      {(write.isError || rename.isError) && (
-        <p className="note" role="alert">
-          {t('summary.failed')}
-        </p>
-      )}
+      <div id="summary-body" hidden={folded}>
+        {!row && can && (
+          <>
+            <p className="desc">{t('summary.pitch')}</p>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => write.mutate()}
+              disabled={write.isPending}
+            >
+              <MaterialIcon name="wand_stars" />
+              {write.isPending ? t('summary.writing') : t('summary.write')}
+            </button>
+          </>
+        )}
+        {row && (
+          <>
+            <p className="desc">{row.summary}</p>
+            {row.highlights.length > 0 && (
+              <ul className="highlights">
+                {row.highlights.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            )}
+            {row.suggested_title && row.suggested_title !== name && (
+              <p className="note suggested">
+                {t('summary.suggested')}: <b>{row.suggested_title}</b>
+                {can && (
+                  <>
+                    {' · '}
+                    <button
+                      type="button"
+                      className="link"
+                      onClick={() => rename.mutate(row.suggested_title)}
+                      disabled={rename.isPending}
+                    >
+                      {rename.isSuccess ? t('summary.titleUsed') : t('summary.useTitle')}
+                    </button>
+                  </>
+                )}
+              </p>
+            )}
+          </>
+        )}
+        {(write.isError || rename.isError) && (
+          <p className="note" role="alert">
+            {t('summary.failed')}
+          </p>
+        )}
+      </div>
     </section>
   );
 }

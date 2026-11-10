@@ -11,6 +11,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
+import { MaterialIcon } from '../MaterialIcon';
+import { CardTitle } from '../ui';
+
 import { api } from '../api';
 import { HeartChart, ReadinessChart, SleepChart } from '../health/charts';
 import { sourceName } from '../health/names';
@@ -18,6 +21,7 @@ import { SleepTiles, StageLanes } from '../health/SleepNight';
 import { locale, t } from '../i18n';
 import { useResolvedTheme } from '../theme';
 import { localToday } from '../week/today';
+import { HealthSkeleton } from '../Skeleton';
 
 const PERIODS = { '30': 30, '90': 90, '365': 365 } as const;
 type PeriodKey = keyof typeof PERIODS;
@@ -75,35 +79,92 @@ export function Health() {
   const list = days.data ?? [];
   const lastNight = [...list].reverse().find((d) => d.sleep);
   const latest = list.at(-1);
+  // The charts run over the whole period chosen, a gap where a day has no data (as on the app), so a
+  // year shows where the history starts instead of stretching the last weeks across the width.
+  const span = useMemo(() => {
+    const byDay = new Map((days.data ?? []).map((d) => [d.day, d]));
+    const out: HealthDay[] = [];
+    const day = new Date(`${range.start}T00:00:00Z`);
+    const last = new Date(`${range.end}T00:00:00Z`);
+    for (; day < last; day.setUTCDate(day.getUTCDate() + 1)) {
+      const key = day.toISOString().slice(0, 10);
+      out.push(byDay.get(key) ?? ({ day: key } as HealthDay));
+    }
+    return out;
+  }, [days.data, range]);
+  const [menu, setMenu] = useState(false);
 
   return (
     <section className="page stats health">
-      <div className="statshead">
+      {/* As on the app: sync, the health settings and the period (in a menu) in the header. */}
+      <div className="titlebar">
         <h1>{t('nav.health')}</h1>
-        <div className="seg" role="group" aria-label={t('stats.period')}>
-          {(Object.keys(PERIODS) as PeriodKey[]).map((p) => (
-            <button
-              key={p}
-              type="button"
-              aria-pressed={p === period}
-              onClick={() => setParams({ days: p }, { replace: true })}
-            >
-              {t(`health.period.${p}` as MessageKey)}
-            </button>
-          ))}
-        </div>
-        <button type="button" disabled={sync.isPending} onClick={() => sync.mutate()}>
-          {sync.isSuccess ? t('health.syncQueued') : t('health.sync')}
+        <button
+          type="button"
+          className="iconbtn"
+          aria-label={t('health.sync')}
+          title={sync.isSuccess ? t('health.syncQueued') : t('health.sync')}
+          aria-busy={sync.isPending}
+          disabled={sync.isPending}
+          onClick={() => sync.mutate()}
+        >
+          <span className={sync.isPending ? 'spinning' : undefined}>
+            <MaterialIcon name="sync" />
+          </span>
         </button>
+        <Link
+          to="/settings/health"
+          className="iconbtn"
+          aria-label={t('health.settings')}
+          title={t('health.settings')}
+        >
+          <MaterialIcon name="settings" />
+        </Link>
+        <div className="menuwrap">
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label={t('stats.period')}
+            title={t('stats.period')}
+            aria-expanded={menu}
+            onClick={() => setMenu(!menu)}
+          >
+            <MaterialIcon name="more_vert" />
+          </button>
+          {menu && (
+            <div className="popmenu" role="menu" aria-label={t('stats.period')}>
+              {(Object.keys(PERIODS) as PeriodKey[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={p === period}
+                  onClick={() => {
+                    setParams({ days: p }, { replace: true });
+                    setMenu(false);
+                  }}
+                >
+                  {t(`health.period.${p}` as MessageKey)}
+                  {p === period && <MaterialIcon name="check" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+      {sync.isSuccess && (
+        <p className="note" role="status">
+          {t('health.syncQueued')}
+        </p>
+      )}
 
-      {days.isPending && <p className="note">{t('common.loading')}</p>}
+      {days.isPending && <HealthSkeleton />}
       {days.isError && <p className="warn">{t('common.error')}</p>}
       {days.isSuccess && list.length === 0 && (
         <div className="panel empty">
           <p>{t('health.none')}</p>
           <p className="note">
-            <Link to="/settings#health">{t('health.connect')} ›</Link>
+            <Link to="/settings/health">{t('health.connect')} ›</Link>
           </p>
         </div>
       )}
@@ -113,24 +174,26 @@ export function Health() {
 
       {list.length > 1 && (
         <>
-          <h2>{t('health.sleep')}</h2>
-          <div className="panel">
-            <SleepChart days={list} theme={theme} />
-          </div>
-          <h2>{t('health.heart')}</h2>
-          <div className="panel">
-            <HeartChart days={list} theme={theme} />
-          </div>
-          <h2>{t('health.readinessAndForm')}</h2>
-          <div className="panel">
-            <ReadinessChart days={list} theme={theme} />
-            <p className="note">{t('health.readinessNote')}</p>
+          <div className="statgrid">
+            <section className="panel">
+              <CardTitle>{t('health.sleep')}</CardTitle>
+              <SleepChart days={span} theme={theme} />
+            </section>
+            <section className="panel">
+              <CardTitle>{t('health.heart')}</CardTitle>
+              <HeartChart days={span} theme={theme} />
+            </section>
+            <section className="panel">
+              <CardTitle>{t('health.readinessAndForm')}</CardTitle>
+              <ReadinessChart days={span} theme={theme} />
+              <p className="note">{t('health.readinessNote')}</p>
+            </section>
           </div>
         </>
       )}
       {list.length > 0 && (
         <p className="note">
-          <Link to="/settings#health">{t('health.sourcesLink')} ›</Link>
+          <Link to="/settings/health">{t('health.sourcesLink')} ›</Link>
         </p>
       )}
     </section>

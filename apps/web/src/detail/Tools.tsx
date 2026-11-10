@@ -11,8 +11,11 @@ import {
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useNavigate } from 'react-router';
 
 import { api } from '../api';
+import { MaterialIcon } from '../MaterialIcon';
+import { CardTitle } from '../ui';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { drawCard, shareImage } from '../share/card';
@@ -23,10 +26,13 @@ export function Modal({
   title,
   onClose,
   children,
+  className,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** Another look for this dialog (the latest activity's is a sheet on a phone). */
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   // Removing the element ends the modal: no close() on unmount, which would fire onClose (and, with
@@ -36,7 +42,13 @@ export function Modal({
     if (dialog && !dialog.open) dialog.showModal?.();
   }, []);
   return (
-    <dialog ref={ref} className="modal" aria-label={title} onClose={onClose} onCancel={onClose}>
+    <dialog
+      ref={ref}
+      className={className ? `modal ${className}` : 'modal'}
+      aria-label={title}
+      onClose={onClose}
+      onCancel={onClose}
+    >
       <header className="ph">
         <h2>{title}</h2>
         <button type="button" className="link" onClick={onClose}>
@@ -98,6 +110,24 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
     event.preventDefault();
     save.mutate();
   };
+  // Deleting (OS-909), as on the app: after a confirmation, the activity goes with its photos, every
+  // list and figure is refreshed, and the feed shows again. Garmin does not bring it back.
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const remove = useMutation({
+    mutationFn: async () => {
+      const { error } = await api.DELETE('/api/activities/{activity_id}', {
+        params: { path: { activity_id: activity.id } },
+      });
+      if (error) throw new Error('delete');
+    },
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ['activity', activity.id] });
+      void queryClient.invalidateQueries();
+      onClose();
+      void navigate('/activities', { replace: true });
+    },
+  });
   const choices = (gear.data ?? []).filter((g) => !g.retired || g.id === activity.gear?.id);
   return (
     <Modal title={t('activity.edit')} onClose={onClose}>
@@ -142,6 +172,22 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
             </span>
           )}
         </div>
+        <button
+          type="button"
+          className="danger"
+          disabled={remove.isPending}
+          onClick={() => {
+            if (window.confirm(`${t('activity.delete')}?\n\n${t('activity.deleteConfirm')}`)) remove.mutate();
+          }}
+        >
+          <MaterialIcon name="delete" />
+          {t('activity.delete')}
+        </button>
+        {remove.isError && (
+          <p className="note" role="alert">
+            {t('common.error')}
+          </p>
+        )}
       </form>
     </Modal>
   );
@@ -325,7 +371,7 @@ async function resized(file: File): Promise<Blob> {
   );
 }
 
-function AddPhoto({ activityId }: { activityId: number }) {
+export function AddPhoto({ activityId }: { activityId: number }) {
   const input = useRef<HTMLInputElement>(null);
   const refresh = useRefreshActivity(activityId);
   const upload = useMutation({
@@ -384,7 +430,7 @@ export function Photos({ activityId, photos }: { activityId: number; photos: Pho
   if (!photos.length) return null;
   return (
     <section className="panel">
-      <h2>{t('photos.title')}</h2>
+      <CardTitle>{t('photos.title')}</CardTitle>
       <ul className="gallery">
         {photos.map((p) => (
           <li key={p.id}>

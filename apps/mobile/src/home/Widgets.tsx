@@ -13,6 +13,13 @@ import {
   healthDaysQuery,
   meQuery,
   SPORT_ICONS,
+  dayHeading,
+  formLabel,
+  daysBefore,
+  healthAverage as average,
+  isoDay,
+  lastDay,
+  lastSevenDays,
   type ActivitySummary,
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
@@ -25,11 +32,9 @@ import { Thumbnail } from '../Feed';
 import { Icon, type IconName } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
-import { formLabel } from '../stats/Sections';
 import { useTheme } from '../theme';
 import { Card, Heading, Muted, styles as ui } from '../ui';
 import { CardSkeleton, Pulse } from '../Skeleton';
-import { average, dayHeading, daysBefore, isoDay, lastDay, lastSevenDays } from './data';
 
 type Format = ReturnType<typeof useFormat>;
 

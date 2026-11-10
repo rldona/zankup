@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ActivitySummary, HealthDay } from '@zankup/core';
-
-import { average, dayHeading, daysBefore, lastDay, lastSevenDays } from './data';
+import type { ActivitySummary, HealthDay } from '../api/queries';
+import { dayHeading, daysBefore, healthAverage as average, lastDay, lastSevenDays } from './home';
 
 const activity = (id: number, start: string, sport: string, distance: number | null, moving = 3600) =>
   ({

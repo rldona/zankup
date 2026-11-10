@@ -124,12 +124,10 @@ const ndjson = (events: object[]) =>
 describe('phase 7: the AI assistant', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('shows the Coach in the sidebar only when this server has a model and the switch is on', async () => {
+  it("shows the Coach in Home's header only when this server has a model and the switch is on", async () => {
     mockApi();
     renderAt('/');
-    const [sidebar] = await screen.findAllByRole('navigation', { name: 'Main' });
-    if (!sidebar) throw new Error('missing navigation');
-    await waitFor(() => expect(within(sidebar).getByRole('link', { name: 'Coach' })).toBeInTheDocument());
+    expect(await screen.findByRole('link', { name: 'Coach' })).toHaveAttribute('href', '/coach');
     vi.unstubAllGlobals();
     mockApi({
       '/api/ai/status': () => Response.json({ ...STATUS, available: false, model: null, budget: null }),
@@ -208,7 +206,7 @@ describe('phase 7: the AI assistant', () => {
       }),
     );
     // A written summary stays as it is: no button to write it again.
-    expect(screen.queryByRole('button', { name: /summary/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ask for a summary' })).not.toBeInTheDocument();
   });
 
   it('has the AI switches, the explanation and the MCP tokens in Settings', async () => {
@@ -234,7 +232,7 @@ describe('phase 7: the AI assistant', () => {
         return new Response(null, { status: 204 });
       },
     });
-    renderAt('/settings');
+    renderAt('/settings/ai');
     expect(await screen.findByRole('heading', { name: 'Zankup Coach' })).toBeInTheDocument();
     expect(await screen.findByText('coordinates and routes')).toBeInTheDocument();
     expect(screen.getByText(/\$0\.42 of \$5\.00 spent this month/)).toBeInTheDocument();
@@ -244,7 +242,6 @@ describe('phase 7: the AI assistant', () => {
         ai: { enabled: false, summaries: true, weekly: true },
       }),
     );
-    expect(screen.getByRole('checkbox', { name: "Coach's weekly report (Mondays)" })).toBeInTheDocument();
     await userEvent.type(screen.getByRole('textbox', { name: 'Token name' }), 'Claude Desktop');
     await userEvent.click(screen.getByRole('button', { name: 'Create token' }));
     expect(await screen.findByDisplayValue('zk_abcdefghij')).toBeInTheDocument();
@@ -256,5 +253,20 @@ describe('phase 7: the AI assistant', () => {
       expect(calls.some((c) => c.method === 'DELETE' && c.path === '/api/ai/tokens/3')).toBe(true),
     );
     expect(await screen.findByText('No tokens yet.')).toBeInTheDocument();
+  });
+
+  it('the Coach as on the app: two examples, and its note behind the (i) (OS-915)', async () => {
+    mockApi();
+    renderAt('/coach');
+    expect(await screen.findByText('Questions you could ask:')).toBeInTheDocument();
+    const chat = screen.getByRole('region', { name: 'Zankup Coach' });
+    expect(
+      within(chat)
+        .getAllByRole('button')
+        .filter((b) => b.textContent?.endsWith('?')),
+    ).toHaveLength(2);
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'About the coach' }));
+    expect(screen.getByRole('note')).toHaveTextContent(/can be wrong/);
   });
 });

@@ -152,27 +152,37 @@ function renderAt(path: string) {
 describe('phase 3 screens', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('stats: now, estimates with their sources, summary against last year, records and a period in the URL', async () => {
+  it('stats: now, summary against last year, records and a period in the URL', async () => {
     mockApi();
     const router = renderAt('/stats');
     expect(await screen.findByText('Recomputing your metrics: 12 of 207 activities.')).toBeInTheDocument();
-    expect(await screen.findByText('192 W')).toBeInTheDocument();
-    expect(screen.getByText(/95% of your best 20 min power/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /11 Oct 2026|Oct 11, 2026/ })).toHaveAttribute(
-      'href',
-      '/activities/3',
-    );
-    expect(screen.getByText(/Riegel's formula from your best 10 km/)).toBeInTheDocument();
-    expect(screen.getByText('53:31')).toBeInTheDocument(); // 10 km prediction
     expect((await screen.findAllByText(/\+100 % vs the same period last year/)).length).toBeGreaterThan(0);
     expect(screen.getByText(/\+150 % vs the same period last year/)).toBeInTheDocument(); // 100 km against 40
-    expect(await screen.findByText('New 5 km record: 25:00')).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'How the 5 km record came down' })).toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Period/ }), '2025');
-    expect(router.state.location.search).toBe('?period=2025');
+    // The period as on the app (OS-912): a year moved with arrows, or a run of months.
+    const year = new Date().getFullYear();
+    await userEvent.click(screen.getByRole('radio', { name: 'Year' }));
+    expect(router.state.location.search).toBe(`?period=${year}`);
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('radio', { name: 'Months' }));
+    const month = String(new Date().getMonth() + 1).padStart(2, '0');
+    expect(router.state.location.search).toBe(`?period=${year}-${month}`);
+    // Estimates have their own page now (OS-913).
+    expect(screen.queryByText(/Riegel's formula/)).not.toBeInTheDocument();
   });
 
-  it('goals: add one in Profile → Goals', async () => {
+  it('notifications: the bell on Home opens what the engine noticed (OS-916)', async () => {
+    mockApi();
+    const router = renderAt('/');
+    await userEvent.click(await screen.findByRole('link', { name: 'Notifications' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/notifications'));
+    expect(await screen.findByText('New 5 km record: 25:00')).toBeInTheDocument();
+  });
+
+  it("goals: add one from Goals (You's old Goals tab leads there)", async () => {
+    HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
+      this.setAttribute('open', '');
+    };
     let goals: object[] = [];
     const calls = mockApi({
       'GET /api/goals': () => Response.json(goals),
@@ -204,9 +214,12 @@ describe('phase 3 screens', () => {
           device: null,
         }),
     });
-    renderAt('/profile?tab=goals');
-    await userEvent.type(await screen.findByRole('spinbutton', { name: /Target/ }), '40');
-    await userEvent.click(screen.getByRole('button', { name: 'Add goal' }));
+    const router = renderAt('/profile?tab=goals');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/goals'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add goal' }));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /Target/ }), '40');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Add goal' }));
     expect(await screen.findByText('On track: about 70.00 km by the end')).toBeInTheDocument();
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
       period: 'week',
@@ -293,7 +306,7 @@ describe('phase 3 screens', () => {
           { kind: 'lthr', value: 161, method: 'lthr_60min', day: '2026-11-08', sources: [], history: [] },
         ]),
     });
-    renderAt('/settings');
+    renderAt('/settings/heart');
     const model = await screen.findByRole('combobox', { name: 'Heart rate zones' });
     expect(screen.getByText('Estimated: 161 bpm')).toBeInTheDocument();
     expect(screen.getByText('Estimated: 192 W')).toBeInTheDocument();

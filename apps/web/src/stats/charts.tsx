@@ -10,6 +10,7 @@ import {
   type ThemeName,
   type VolumeBucket,
   type YearLine,
+  yearColours,
 } from '@zankup/core';
 import type { EChartsType } from 'echarts/core';
 import { useCallback, useMemo } from 'react';
@@ -251,8 +252,13 @@ export function ProgressChart({
 }) {
   const c = palette(theme);
   const scale = distanceUnit === 'km' ? 1000 : 1609.344;
-  const option = useMemo(
-    () => ({
+  const option = useMemo(() => {
+    const colours = yearColours(
+      lines.map((l) => l.year),
+      selected,
+      c,
+    );
+    return {
       grid: { left: 48, right: 12, top: 30, bottom: 26 },
       legend: { top: 0 },
       tooltip: { trigger: 'axis', valueFormatter: (v: number) => `${v} ${distanceUnit}` },
@@ -269,17 +275,17 @@ export function ProgressChart({
         type: 'line',
         symbol: 'none',
         data: line.cumulative_m.map((m) => Math.round(m / scale)),
+        // The other years in their own colours, but faint, so the selected one stands out.
         lineStyle: {
-          width: line.year === selected ? 3 : 1.2,
-          color: line.year === selected ? c.accent : undefined,
-          opacity: line.year === selected ? 1 : 0.55,
+          width: line.year === selected ? 3 : 1.6,
+          color: colours.get(line.year),
+          opacity: line.year === selected ? 1 : 0.45,
         },
-        itemStyle: line.year === selected ? { color: c.accent } : undefined,
+        itemStyle: { color: colours.get(line.year), opacity: line.year === selected ? 1 : 0.45 },
         z: line.year === selected ? 3 : 2,
       })),
-    }),
-    [lines, selected, c, scale, distanceUnit],
-  );
+    };
+  }, [lines, selected, c, scale, distanceUnit]);
   return (
     <EChart
       option={option}

@@ -24,6 +24,7 @@ import {
   type Sport,
   formLabel,
   weekQuery,
+  yearColours,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -586,6 +587,11 @@ export function Progress({ selected }: { selected: number }) {
   const scale = format.unit === 'km' ? 1000 : 1609.344;
   const top = Math.max(1, ...lines.data.map((l) => l.cumulative_m.at(-1) ?? 0)) / scale;
   const sorted = [...lines.data].sort((a, b) => (a.year === selected ? 1 : b.year === selected ? -1 : 0));
+  const colours = yearColours(
+    lines.data.map((l) => l.year),
+    selected,
+    c,
+  );
   return (
     <Card>
       <CardTitle>{t('stats.progress')}</CardTitle>
@@ -601,19 +607,28 @@ export function Progress({ selected }: { selected: number }) {
         layers={sorted.map((l) => ({
           kind: 'line',
           label: String(l.year),
-          color: l.year === selected ? c.accent : c.muted,
+          color: colours.get(l.year) ?? c.muted,
           values: l.cumulative_m.map((m) => m / scale),
           domain: [0, top * 1.05] as [number, number],
-          width: l.year === selected ? 3 : 1.2,
-          opacity: l.year === selected ? 1 : 0.55,
-          hideLegend: l.year !== selected,
+          width: l.year === selected ? 3 : 1.6,
+          opacity: l.year === selected ? 1 : 0.5,
         }))}
       />
       {lines.data.map((l) => (
-        <View key={l.year} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View key={l.year} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: colours.get(l.year),
+              opacity: l.year === selected ? 1 : 0.5,
+            }}
+          />
           <Text
             style={{
-              color: l.year === selected ? c.accent : c.fg,
+              flex: 1,
+              color: c.fg,
               fontWeight: l.year === selected ? '700' : '400',
             }}
           >

@@ -7,7 +7,6 @@ import {
   profileSummaryQuery,
   providersQuery,
   queryKeys,
-  sourcesQuery,
   SPORTS,
   type Me,
   type MessageKey,
@@ -25,11 +24,9 @@ import { usePrefs } from '../prefs';
 import { deviceName } from '../signin/device';
 import { attestationJson, creationOptions, passkeysSupported } from '../signin/webauthn';
 import { SportIcon } from '../SportIcon';
-import { Menu } from '../ui';
+import { CardTitle, Menu } from '../ui';
+import { MaterialIcon } from '../MaterialIcon';
 import { CardSkeleton, PageSkeleton, Pulse } from '../Skeleton';
-
-const TABS = ['summary', 'goals', 'estimates', 'gear', 'account'] as const;
-type Tab = (typeof TABS)[number];
 
 const asSport = (value: string): Sport =>
   (SPORTS as readonly string[]).includes(value) ? (value as Sport) : 'other';
@@ -46,12 +43,18 @@ export function Profile() {
   const me = useQuery(meQuery(api));
   const summary = useQuery(profileSummaryQuery(api));
   const ai = useQuery({ ...aiStatusQuery(api), retry: false });
-  const [params, setParams] = useSearchParams();
-  const tab: Tab = (TABS as readonly string[]).includes(params.get('tab') ?? '')
-    ? (params.get('tab') as Tab)
-    : 'summary';
+  const [params] = useSearchParams();
   const [editing, setEditing] = useState(false);
 
+  // You's old tabs each have their own page now.
+  const tab = params.get('tab');
+  const moved: Record<string, string> = {
+    goals: '/goals',
+    estimates: '/estimates',
+    gear: '/gear',
+    account: '/settings/account',
+  };
+  if (tab && moved[tab]) return <Navigate to={moved[tab]} replace />;
   if (!me.data) return <PageSkeleton />;
 
   return (
@@ -68,31 +71,12 @@ export function Profile() {
             : []),
           { to: '/gear', icon: 'footprint', label: t('gear.title') },
           { to: '/settings/import', icon: 'upload', label: t('import.title') },
-          { to: '/profile?tab=account', icon: 'account_circle', label: t('profile.tab.account') },
+          { to: '/settings/account', icon: 'account_circle', label: t('profile.tab.account') },
           { to: '/settings', icon: 'settings', label: t('nav.settings') },
         ]}
       />
       {summary.data && <YearNumbers summary={summary.data} />}
-      <div className="tabs" role="tablist">
-        {TABS.map((name) => (
-          <button
-            key={name}
-            type="button"
-            role="tab"
-            aria-selected={tab === name}
-            onClick={() => setParams(name === 'summary' ? {} : { tab: name }, { replace: true })}
-          >
-            {t(`profile.tab.${name}`)}
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel">
-        {tab === 'summary' && <Summary me={me.data} summary={summary.data} />}
-        {tab === 'goals' && <Navigate to="/goals" replace />}
-        {tab === 'estimates' && <Navigate to="/estimates" replace />}
-        {tab === 'gear' && <Navigate to="/gear" replace />}
-        {tab === 'account' && <Account me={me.data} />}
-      </div>
+      <Summary me={me.data} summary={summary.data} />
     </section>
   );
 }
@@ -128,7 +112,6 @@ function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSummary; onE
         <button type="button" onClick={onEdit}>
           {t('profile.edit')}
         </button>
-        <Link to="/settings">{t('nav.settings')}</Link>
       </div>
     </header>
   );
@@ -217,8 +200,28 @@ function effortLabel(key: string): string | null {
   return label ? t(label) : null;
 }
 
+const HIDDEN_KEY = 'zankup-physical-hidden';
+
+function readHidden(): boolean {
+  try {
+    return localStorage.getItem(HIDDEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeHidden(hidden: boolean) {
+  try {
+    if (hidden) localStorage.setItem(HIDDEN_KEY, '1');
+    else localStorage.removeItem(HIDDEN_KEY);
+  } catch {
+    // Storage blocked: hidden for this page only.
+  }
+}
+
 function Summary({ me, summary }: { me: Me; summary?: ProfileSummary }) {
   const [today] = useState(() => new Date());
+  const [hidden, setHidden] = useState(readHidden);
   const prefs = usePrefs();
   const format = useMemo(() => formatters(prefs), [prefs]);
   if (!summary)
@@ -274,14 +277,31 @@ function Summary({ me, summary }: { me: Me; summary?: ProfileSummary }) {
         )}
       </section>
       <section className="panel">
-        <div className="ph">
-          <h2>{t('profile.physical')}</h2>
-        </div>
+        {/* As on the app: an eye hides what you would rather not show (age, weight…), and remembers it. */}
+        <CardTitle
+          right={
+            <button
+              type="button"
+              className="mapbtn flat"
+              aria-label={t(hidden ? 'profile.showPhysical' : 'profile.hidePhysical')}
+              title={t(hidden ? 'profile.showPhysical' : 'profile.hidePhysical')}
+              aria-pressed={hidden}
+              onClick={() => {
+                writeHidden(!hidden);
+                setHidden(!hidden);
+              }}
+            >
+              <MaterialIcon name={hidden ? 'visibility_off' : 'visibility'} />
+            </button>
+          }
+        >
+          {t('profile.physical')}
+        </CardTitle>
         <dl className="pairs">
           {physical.map(([label, value]) => (
             <div key={label}>
               <dt>{t(label)}</dt>
-              <dd>{value}</dd>
+              <dd className={hidden ? 'masked' : undefined}>{hidden ? '•••' : value}</dd>
             </div>
           ))}
         </dl>
@@ -396,11 +416,10 @@ function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
   );
 }
 
-function Account({ me }: { me: Me }) {
+/** How you sign in (email, code, passkeys, Google) and signing out: Settings › Account (OS-914). */
+export function Account({ me }: { me: Me }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const sources = useQuery(sourcesQuery(api));
-  const garmin = sources.data?.find((s) => s.kind === 'garmin');
 
   const signOut = async () => {
     await api.POST('/api/auth/logout');
@@ -410,41 +429,22 @@ function Account({ me }: { me: Me }) {
   };
 
   return (
-    <div className="grid2">
-      <section className="panel">
-        <div className="ph">
-          <h2>{t('profile.signIn')}</h2>
-        </div>
-        <p>
-          <b>{me.email}</b>
-        </p>
-        <p className="note">
-          {t('profile.passwordTotp')}: {me.totp_enabled ? t('profile.on') : '—'}
-        </p>
-        <Passkeys />
-        <Google me={me} />
-      </section>
-      <section className="panel">
-        <div className="ph">
-          <h2>{t('profile.sources')}</h2>
-        </div>
-        {garmin && (
-          <p className="note">
-            Garmin · {garmin.configured ? t('settings.garminOn') : t('settings.garminOff')}
-          </p>
-        )}
-        <h3>{t('profile.importExport')}</h3>
-        <p className="note">{t('profile.importSoon')}</p>
-        <p className="note">
-          <Link to="/settings">{t('profile.sessionsLink')}</Link>
-        </p>
-        <div className="actions">
-          <button type="button" onClick={() => void signOut()}>
-            {t('nav.signOut')}
-          </button>
-        </div>
-      </section>
-    </div>
+    <section className="panel">
+      <CardTitle>{t('profile.signIn')}</CardTitle>
+      <p>
+        <b>{me.email}</b>
+      </p>
+      <p className="note">
+        {t('profile.passwordTotp')}: {me.totp_enabled ? t('profile.on') : '—'}
+      </p>
+      <Passkeys />
+      <Google me={me} />
+      <div className="actions">
+        <button type="button" onClick={() => void signOut()}>
+          {t('nav.signOut')}
+        </button>
+      </div>
+    </section>
   );
 }
 

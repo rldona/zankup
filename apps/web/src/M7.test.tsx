@@ -232,7 +232,7 @@ describe('phase 7: the AI assistant', () => {
         return new Response(null, { status: 204 });
       },
     });
-    renderAt('/settings');
+    renderAt('/settings/ai');
     expect(await screen.findByRole('heading', { name: 'Zankup Coach' })).toBeInTheDocument();
     expect(await screen.findByText('coordinates and routes')).toBeInTheDocument();
     expect(screen.getByText(/\$0\.42 of \$5\.00 spent this month/)).toBeInTheDocument();
@@ -242,7 +242,6 @@ describe('phase 7: the AI assistant', () => {
         ai: { enabled: false, summaries: true, weekly: true },
       }),
     );
-    expect(screen.getByRole('checkbox', { name: "Coach's weekly report (Mondays)" })).toBeInTheDocument();
     await userEvent.type(screen.getByRole('textbox', { name: 'Token name' }), 'Claude Desktop');
     await userEvent.click(screen.getByRole('button', { name: 'Create token' }));
     expect(await screen.findByDisplayValue('zk_abcdefghij')).toBeInTheDocument();

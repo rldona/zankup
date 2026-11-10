@@ -161,7 +161,7 @@ describe('phase 6: health', () => {
     expect(await screen.findByText(/No health data yet/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Connect a source/ })).toHaveAttribute(
       'href',
-      '/settings#health',
+      '/settings/health',
     );
   });
 
@@ -185,7 +185,7 @@ describe('phase 6: health', () => {
     vi.stubGlobal('confirm', () => true);
     renderAt('/settings?health=connected');
     expect(await screen.findByRole('heading', { name: 'Health' })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Google Health is connected');
+    expect(await screen.findByRole('status')).toHaveTextContent('Google Health is connected');
     expect(screen.getByRole('link', { name: 'Connect Google Health' })).toHaveAttribute(
       'href',
       '/api/wellness/google/start',

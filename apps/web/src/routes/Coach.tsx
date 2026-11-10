@@ -44,7 +44,7 @@ export function Coach() {
       {info && !info.available && <p className="state">{t('coach.unavailable')}</p>}
       {info?.available && !info.enabled && (
         <p className="state">
-          {t('coach.off')} <Link to="/settings#ai">{t('nav.settings')}</Link>
+          {t('coach.off')} <Link to="/settings/ai">{t('nav.settings')}</Link>
         </p>
       )}
       {info?.available && info.enabled && (

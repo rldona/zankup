@@ -103,14 +103,15 @@ describe('settings and profile', () => {
         return new Response(null, { status: 204 });
       },
     });
-    renderAt('/settings');
+    renderAt('/settings/general');
 
     await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Units' }), 'imperial');
     await waitFor(() =>
       expect(calls).toContainEqual({ method: 'PATCH', path: '/api/settings', body: { units: 'imperial' } }),
     );
 
-    const max = screen.getByRole('spinbutton', { name: 'Max HR' });
+    await userEvent.click(screen.getByRole('link', { name: /^Heart rate and zones/ }));
+    const max = await screen.findByRole('spinbutton', { name: 'Max HR' });
     expect(max).toHaveAttribute('placeholder', '188');
     expect(screen.getByText(/the highest you have recorded \(188 bpm\)/)).toBeInTheDocument();
     await userEvent.type(max, '191');
@@ -123,15 +124,16 @@ describe('settings and profile', () => {
       }),
     );
 
-    expect(screen.getByText(/Renew it soon/)).toBeInTheDocument();
-
+    await userEvent.click(screen.getByRole('link', { name: /^Account/ }));
+    expect(await screen.findByText(/Renew it soon/)).toBeInTheDocument();
     const pixel = (await screen.findByText('Pixel')).closest('li');
     if (!pixel) throw new Error('no session row');
     expect(screen.getByText('This device')).toBeInTheDocument();
     await userEvent.click(within(pixel).getByRole('button', { name: 'Sign out' }));
     await waitFor(() => expect(screen.queryByText('Pixel')).not.toBeInTheDocument());
 
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: /^Language/ }), 'es');
+    await userEvent.click(screen.getByRole('link', { name: /^General/ }));
+    await userEvent.selectOptions(await screen.findByRole('combobox', { name: /^Language/ }), 'es');
     await waitFor(() =>
       expect(calls).toContainEqual({ method: 'PATCH', path: '/api/settings', body: { language: 'es' } }),
     );
@@ -190,9 +192,9 @@ describe('settings and profile', () => {
     const patch = calls.find((c) => c.method === 'PATCH');
     expect(patch?.body).toMatchObject({ location: 'Valencia', sex: 'male', weight_kg: 72.5, height_cm: 178 });
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Goals' }));
-    expect(await screen.findByText('No goals yet.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add goal' })).toBeInTheDocument();
+    // You leads to the rest, as on the app (OS-914).
+    expect(screen.getByRole('link', { name: /Estimates/ })).toHaveAttribute('href', '/estimates');
+    expect(screen.getByRole('link', { name: /Account/ })).toHaveAttribute('href', '/settings/account');
   });
 
   it('lists and removes passkeys in the account tab', async () => {

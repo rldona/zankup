@@ -28,6 +28,7 @@ import { attestationJson, creationOptions, passkeysSupported } from '../signin/w
 import { SportIcon } from '../SportIcon';
 import { EstimatesPanel, GoalsPanel } from '../stats/panels';
 import { Menu } from '../ui';
+import { CardSkeleton, PageSkeleton, Pulse } from '../Skeleton';
 
 const TABS = ['summary', 'goals', 'estimates', 'gear', 'account'] as const;
 type Tab = (typeof TABS)[number];
@@ -53,7 +54,7 @@ export function Profile() {
     : 'summary';
   const [editing, setEditing] = useState(false);
 
-  if (!me.data) return <section className="page">{<p className="state">{t('common.loading')}</p>}</section>;
+  if (!me.data) return <PageSkeleton />;
 
   return (
     <section className="page profile">
@@ -222,7 +223,13 @@ function Summary({ me, summary }: { me: Me; summary?: ProfileSummary }) {
   const [today] = useState(() => new Date());
   const prefs = usePrefs();
   const format = useMemo(() => formatters(prefs), [prefs]);
-  if (!summary) return <p className="state">{t('common.loading')}</p>;
+  if (!summary)
+    return (
+      <Pulse>
+        <CardSkeleton />
+        <CardSkeleton />
+      </Pulse>
+    );
   const age = me.birth_date ? ageOn(me.birth_date, today) : null;
   const physical: [MessageKey, string][] = [];
   if (age != null) physical.push(['profile.age', t('profile.years', { count: age })]);
@@ -561,6 +568,11 @@ function Passkeys() {
 
 function ProfileEstimates() {
   const estimates = useQuery(estimatesQuery(api));
-  if (!estimates.data) return <p className="state">{t('common.loading')}</p>;
+  if (!estimates.data)
+    return (
+      <Pulse>
+        <CardSkeleton lines={2} />
+      </Pulse>
+    );
   return <EstimatesPanel estimates={estimates.data} />;
 }

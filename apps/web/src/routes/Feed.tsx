@@ -24,6 +24,7 @@ import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { MaterialIcon } from '../MaterialIcon';
 import { SportGlyph, SportIcon } from '../SportIcon';
+import { FeedSkeleton } from '../Skeleton';
 
 type Format = ReturnType<typeof formatters>;
 const CHIPS = SPORTS.filter((s) => s !== 'other');
@@ -99,7 +100,7 @@ export function Feed() {
           {t('feed.searchHint')} <Link to="/search">{t('feed.searchLink')} ›</Link>
         </p>
 
-        {feed.isPending && <p className="state">{t('common.loading')}</p>}
+        {feed.isPending && <FeedSkeleton />}
         {feed.isError && (
           <p className="state" role="alert">
             {t('common.error')}

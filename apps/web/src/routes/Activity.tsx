@@ -43,6 +43,7 @@ import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { SportIcon } from '../SportIcon';
 import { useResolvedTheme } from '../theme';
+import { ActivitySkeleton, ChartSkeleton, Pulse } from '../Skeleton';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -78,7 +79,7 @@ export function Activity() {
   }
   return (
     <section className="page">
-      <p className="state">{t('common.loading')}</p>
+      <ActivitySkeleton />
     </section>
   );
 }
@@ -109,7 +110,11 @@ function Detail({ activity }: { activity: ActivityDetail }) {
       <Kpis activity={activity} format={format} pace={pace} />
       <Summary activityId={activity.id} name={activity.name} />
 
-      {activity.streams && !series && <p className="state">{t('activity.loadingSeries')}</p>}
+      {activity.streams && !series && (
+        <Pulse>
+          <ChartSkeleton height={280} />
+        </Pulse>
+      )}
       {series && (
         <RoutePanel
           series={series}

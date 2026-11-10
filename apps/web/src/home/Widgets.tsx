@@ -36,6 +36,7 @@ import { locale, t } from '../i18n';
 import { MaterialIcon } from '../MaterialIcon';
 import { usePrefs } from '../prefs';
 import { CardTitle } from '../ui';
+import { CardSkeleton, Pulse } from '../Skeleton';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -69,7 +70,12 @@ export function LastDay() {
   const format = useFormat();
   const { feed, health, items } = useHomeData(today);
   const last = lastDay(items);
-  if (!feed.isFetched && !last) return <div className="panel skeleton" style={{ height: 120 }} />;
+  if (!feed.isFetched && !last)
+    return (
+      <Pulse>
+        <CardSkeleton lines={2} />
+      </Pulse>
+    );
 
   // The day's activities only for today or yesterday: an older day is not news. The day's steps, heart
   // rate and HRV show either way (those of today, or yesterday's while today has none yet).

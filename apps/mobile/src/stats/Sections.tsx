@@ -136,17 +136,20 @@ export function GoalCard({
         </View>
       </Pressable>
       {chart && (
-        <GoalChart
-          goal={goal}
-          value={(v) => goalValue(goal, v, format)}
-          tick={(v) =>
-            goal.metric === 'distance'
-              ? `${Math.round(v / (format.unit === 'km' ? 1000 : 1609.344))} ${format.unit}`
-              : goal.metric === 'time'
-                ? `${Math.round(v / 3600)} h`
-                : String(Math.round(v))
-          }
-        />
+        // Some room between the figures above and the chart.
+        <View style={{ marginTop: 12 }}>
+          <GoalChart
+            goal={goal}
+            value={(v) => goalValue(goal, v, format)}
+            tick={(v) =>
+              goal.metric === 'distance'
+                ? `${Math.round(v / (format.unit === 'km' ? 1000 : 1609.344))} ${format.unit}`
+                : goal.metric === 'time'
+                  ? `${Math.round(v / 3600)} h`
+                  : String(Math.round(v))
+            }
+          />
+        </View>
       )}
       {children}
     </Card>

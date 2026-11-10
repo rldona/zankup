@@ -3818,3 +3818,7 @@ button.danger svg.i {
 .popmenu a:hover {
   background: var(--surface-2);
 }
+
+.page.estimates {
+  max-width: 1100px;
+}

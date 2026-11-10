@@ -32,16 +32,7 @@ export default function HomeScreen() {
   const format = useFormat();
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: c.bg }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-          paddingTop: 16,
-          paddingBottom: 12,
-          gap: 20,
-        }}
-      >
+      <View style={ui.headerBar}>
         <View style={{ flex: 1 }}>
           <Wordmark height={15} />
         </View>

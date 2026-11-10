@@ -30,6 +30,7 @@ import {
   compare,
   comparisonLabels,
   formTone,
+  mix,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -295,7 +296,7 @@ export function Summary({ range }: { range: Range }) {
               {labels && percent ? (
                 <Text
                   style={{
-                    color: tone,
+                    color: mix(tone, c.fg, 0.4), // towards the text colour, to read on the pale pill
                     backgroundColor: alpha(tone, 0.15),
                     fontSize: 12,
                     fontWeight: '600',
@@ -864,10 +865,11 @@ function formColour(c: ReturnType<typeof useTheme>, tsb: number): string {
 }
 
 function Pill({ colour, children }: { colour: string; children: string }) {
+  const c = useTheme();
   return (
     <Text
       style={{
-        color: colour,
+        color: mix(colour, c.fg, 0.4), // towards the text colour, to read on the pale pill
         backgroundColor: alpha(colour, 0.15),
         fontSize: 12,
         fontWeight: '600',

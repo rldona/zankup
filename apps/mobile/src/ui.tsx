@@ -85,9 +85,10 @@ export function Title({ children }: { children: ReactNode }) {
   return <Text style={[styles.title, { color: c.fg }]}>{children}</Text>;
 }
 
-export function Heading({ children }: { children: ReactNode }) {
+export function Heading({ children, first }: { children: ReactNode; first?: boolean }) {
   const c = useTheme();
-  return <Text style={[styles.heading, { color: c.fg }]}>{children}</Text>;
+  // `first`: the screen's first heading, right under a fixed title, without the gap above sections.
+  return <Text style={[styles.heading, { color: c.fg }, first && { marginTop: 0 }]}>{children}</Text>;
 }
 
 export function Muted({

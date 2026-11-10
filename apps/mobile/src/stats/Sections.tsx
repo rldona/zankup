@@ -182,7 +182,7 @@ function Goals() {
   );
 }
 
-function eventText(e: EventOut, format: Format): string {
+export function eventText(e: EventOut, format: Format): string {
   const p = e.payload as Record<string, unknown>;
   if (e.kind === 'record')
     return t('event.record', {

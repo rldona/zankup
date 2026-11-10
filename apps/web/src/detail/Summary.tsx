@@ -78,7 +78,6 @@ export function Summary({ activityId, name }: { activityId: number; name: string
               )}
             </p>
           )}
-          <p className="note origin">{t('summary.by', { model: row.model })}</p>
         </>
       )}
       {(write.isError || rename.isError) && (

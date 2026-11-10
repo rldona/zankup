@@ -13,3 +13,4 @@ export * from './charts/theme';
 export * from './domain/strength';
 export * from './domain/password';
 export * from './stats/period';
+export * from './icons';

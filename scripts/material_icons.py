@@ -1,0 +1,233 @@
+"""Copies the Material Symbols the apps use into packages/core (src/icons/material.ts).
+
+Material Symbols (Google, Apache 2.0, https://fonts.google.com/icons), Rounded, weight 400: each icon is one
+filled path in a 960-unit box (viewBox 0 -960 960 960). Only the icons listed below are copied, so neither app
+ships the whole set. To add one, put its name in NAMES (and `<name>-fill` for the filled version) and run:
+
+    python3 scripts/material_icons.py
+
+It downloads @material-symbols/svg-400 with `npm pack` into a temporary folder.
+"""
+
+from __future__ import annotations
+
+import re
+import subprocess
+import tarfile
+import tempfile
+from pathlib import Path
+
+VERSION = "0.48.3"
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "packages/core/src/icons/material.ts"
+
+# Sports: the seven groups Zankup uses today, and the ones Garmin and Strava can record, for later.
+SPORTS = [
+    "directions_run",
+    "directions_bike",
+    "fitness_center",
+    "directions_walk",
+    "rowing",
+    "pool",
+    "exercise",
+    "hiking",
+    "nordic_walking",
+    "sprint",
+    "pedal_bike",
+    "electric_bike",
+    "mountain_flag",
+    "downhill_skiing",
+    "snowboarding",
+    "sledding",
+    "ice_skating",
+    "roller_skating",
+    "skateboarding",
+    "kayaking",
+    "sailing",
+    "surfing",
+    "kitesurfing",
+    "scuba_diving",
+    "self_improvement",
+    "sports_gymnastics",
+    "sports_martial_arts",
+    "sports_mma",
+    "sports_tennis",
+    "sports_golf",
+    "sports_soccer",
+    "sports_basketball",
+    "sports_volleyball",
+    "sports_handball",
+    "sports_baseball",
+    "sports_cricket",
+    "sports_hockey",
+    "sports_rugby",
+    "sports_football",
+    "sports_motorsports",
+    "paragliding",
+    "stairs",
+    "steps",
+    "sports_score",
+    "sports",
+]
+# Metrics and health.
+METRICS = [
+    "monitor_heart",
+    "ecg_heart",
+    "favorite",
+    "cardiology",
+    "pulmonology",
+    "bedtime",
+    "timer",
+    "schedule",
+    "speed",
+    "landscape",
+    "elevation",
+    "route",
+    "map",
+    "location_on",
+    "local_fire_department",
+    "bolt",
+    "trophy",
+    "trending_up",
+    "trending_down",
+    "query_stats",
+    "monitoring",
+    "bar_chart",
+    "show_chart",
+    "calendar_month",
+    "event",
+    "thermostat",
+    "water_drop",
+    "air",
+    "nightlight",
+    "spo2",
+    "weight",
+    "straighten",
+    "footprint",
+    "conversion_path",
+    "timeline",
+    "summarize",
+    "flag",
+    "star",
+    "grid_view",
+    "layers",
+]
+# Interface.
+INTERFACE = [
+    "home",
+    "cards_stack",
+    "list",
+    "search",
+    "sync",
+    "person",
+    "settings",
+    "chat",
+    "smart_toy",
+    "wand_stars",
+    "upload",
+    "download",
+    "visibility",
+    "visibility_off",
+    "passkey",
+    "chevron_right",
+    "keyboard_arrow_down",
+    "keyboard_arrow_up",
+    "send",
+    "stop",
+    "add_comment",
+    "chevron_left",
+    "close",
+    "add",
+    "edit",
+    "delete",
+    "check",
+    "more_vert",
+    "notifications",
+    "shield_lock",
+    "location_off",
+    "database",
+    "devices",
+    "lock",
+    "language",
+    "palette",
+    "tune",
+    "logout",
+    "share",
+    "photo_camera",
+    "image",
+    "refresh",
+    "info",
+    "help",
+    "warning",
+    "error",
+    "health_and_safety",
+    "key",
+    "mail",
+    "link",
+    "open_in_new",
+    "filter_list",
+    "sort",
+    "play_arrow",
+    "pause",
+    "replay",
+    "content_copy",
+    "account_circle",
+    "group",
+    "cloud_sync",
+]
+FILLED = [
+    "home",
+    "cards_stack",
+    "flag",
+    "list",
+    "search",
+    "sync",
+    "person",
+    "bar_chart",
+    "monitoring",
+    "favorite",
+    "settings",
+]
+
+
+def main() -> None:
+    names = sorted(set(SPORTS + METRICS + INTERFACE)) + sorted(f"{n}-fill" for n in FILLED)
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(
+            ["npm", "pack", f"@material-symbols/svg-400@{VERSION}", "--silent"],
+            cwd=tmp,
+            check=True,
+            capture_output=True,
+        )
+        tgz = next(Path(tmp).glob("*.tgz"))
+        with tarfile.open(tgz) as tar:
+            tar.extractall(tmp, filter="data")
+        rounded = Path(tmp) / "package/rounded"
+        lines, missing = [], []
+        for name in names:
+            svg = rounded / f"{name}.svg"
+            if not svg.exists():
+                missing.append(name)
+                continue
+            paths = re.findall(r'<path d="([^"]+)"', svg.read_text())
+            lines.append(f"  '{name}': '{' '.join(paths)}',")
+    if missing:
+        raise SystemExit(f"Not in Material Symbols {VERSION}: {', '.join(missing)}")
+    OUT.parent.mkdir(exist_ok=True)
+    OUT.write_text(
+        "/**\n"
+        " * Material Symbols (Google, Apache License 2.0, https://fonts.google.com/icons),\n"
+        " * Rounded, weight 400,"
+        f" from @material-symbols/svg-400 {VERSION}. Generated by scripts/material_icons.py: do not edit.\n"
+        " * Each icon is filled path data in a 960-unit box whose viewBox is `0 -960 960 960`.\n"
+        " */\n"
+        "export const MATERIAL_ICONS = {\n" + "\n".join(lines) + "\n} as const;\n\n"
+        "export type MaterialIcon = keyof typeof MATERIAL_ICONS;\n\n"
+        "/** The viewBox of every icon. */\n"
+        "export const MATERIAL_VIEWBOX = '0 -960 960 960';\n"
+    )
+    print(f"{len(lines)} icons written to {OUT.relative_to(ROOT)}")
+
+
+if __name__ == "__main__":
+    main()

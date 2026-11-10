@@ -234,6 +234,7 @@ def callback(
         if db.scalar(select(User.id).where(User.google_sub == sub, User.id != user.id)):
             return _back(settings, failed)
         user.google_sub = sub
+        take_profile(user, claims)
         db.commit()
         log.info("Google account linked", extra={"user_id": user.id})
         return _back(settings, "/profile?tab=account&google=linked")
@@ -242,9 +243,21 @@ def callback(
     if linked is None:
         log.info("Google sign-in for an account that is not linked")
         return _back(settings, "/sign-in?error=google")
+    take_profile(linked, claims)
     response = _back(settings, flow["next"])
     start_session(db, linked, response, settings, web=True, remember=True, device_name="Browser (Google)")
     return response
+
+
+def take_profile(user: User, claims: dict[str, Any]) -> None:
+    """Keep the Google account's photo up to date, and its name when the profile has none yet: a name
+    the person chose is never overwritten."""
+    picture = claims.get("picture")
+    if isinstance(picture, str) and picture.startswith("https://") and len(picture) <= 500:
+        user.avatar_url = picture
+    name = claims.get("name")
+    if not user.display_name and isinstance(name, str) and name.strip():
+        user.display_name = name.strip()[:120]
 
 
 FRESH_TOKEN = timedelta(minutes=5)
@@ -314,6 +327,7 @@ def mobile_sign_in(body: MobileSignIn, response: Response, db: DbSession, settin
     if linked is None:
         log.info("Google mobile sign-in for an account that is not linked")
         raise rejected
+    take_profile(linked, claims)
     tokens = start_session(
         db, linked, response, settings, web=False, remember=True, device_name=body.device_name
     )

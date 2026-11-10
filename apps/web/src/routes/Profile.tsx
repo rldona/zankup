@@ -94,9 +94,13 @@ function initials(me: Me): string {
 function Header({ me, summary, onEdit }: { me: Me; summary?: ProfileSummary; onEdit: () => void }) {
   return (
     <header className="phead">
-      <span className="avatar" aria-hidden="true">
-        {initials(me)}
-      </span>
+      {me.avatar_url ? (
+        <img className="avatar" src={me.avatar_url} alt="" referrerPolicy="no-referrer" />
+      ) : (
+        <span className="avatar" aria-hidden="true">
+          {initials(me)}
+        </span>
+      )}
       <div className="grow">
         <h1>{me.display_name ?? me.email}</h1>
         <p className="note">{[me.location, summary?.device].filter(Boolean).join(' · ')}</p>

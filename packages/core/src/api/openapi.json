@@ -8346,6 +8346,18 @@
             "title": "Google Linked",
             "default": false
           },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url",
+            "description": "The linked Google account's photo"
+          },
           "location": {
             "anyOf": [
               {

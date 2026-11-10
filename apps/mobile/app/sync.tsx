@@ -1,25 +1,26 @@
 /** The Sync tab (OS-511): sync now, load the whole history, what the current run is doing and the latest runs. */
 import type { SyncRun } from '@zankup/core';
 import { useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
-import { Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
-import { locale, t } from '../../src/i18n';
-import { active, useSync } from '../../src/sync';
-import { useTheme } from '../../src/theme';
-import { Badge, Body, Button, Card, Heading, Muted, ProgressBar, Screen, Title } from '../../src/ui';
+import { locale, t } from '../src/i18n';
+import { active, useSync } from '../src/sync';
+import { useTheme } from '../src/theme';
+import { Icon } from '../src/Icon';
+import { Badge, Body, Button, Card, Heading, Muted, ProgressBar, Screen, styles as ui } from '../src/ui';
 
 export default function SyncScreen() {
   const { runs, latest, running, start, refetch } = useSync();
   const c = useTheme();
+  const [showRuns, setShowRuns] = useState(false);
   useFocusEffect(
     useCallback(() => {
       void refetch();
     }, [refetch]),
   );
   return (
-    <Screen>
-      <Title>{t('sync.title')}</Title>
+    <Screen header>
       <Muted>{t('sync.auto')}</Muted>
       <Button primary onPress={() => start.mutate(false)} disabled={running || start.isPending}>
         {t('sync.now')}
@@ -39,30 +40,44 @@ export default function SyncScreen() {
 
       {runs.length > 0 && (
         <>
-          <Heading>{t('sync.recent')}</Heading>
-          <Card>
-            {runs.map((run) => (
-              <View
-                key={run.id}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: c.fg, fontWeight: '600' }}>{t(`sync.trigger.${run.trigger}`)}</Text>
-                  <Muted>
-                    {new Date(run.started_at).toLocaleString(locale, {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })}
-                    {run.status === 'success' && ` · ${t('sync.success', { count: run.new_count })}`}
-                    {run.error && ` · ${run.error}`}
-                  </Muted>
+          {/* Collapsed until asked for: a row with the count and a chevron. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showRuns }}
+            onPress={() => setShowRuns((v) => !v)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}
+          >
+            <Text style={[ui.heading, { color: c.fg, marginTop: 0, flex: 1 }]}>{t('sync.recent')}</Text>
+            <Muted>{runs.length}</Muted>
+            <Icon name={showRuns ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} color={c.muted} />
+          </Pressable>
+          {showRuns && (
+            <Card>
+              {runs.map((run) => (
+                <View
+                  key={run.id}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: c.fg, fontWeight: '600' }}>{t(`sync.trigger.${run.trigger}`)}</Text>
+                    <Muted>
+                      {new Date(run.started_at).toLocaleString(locale, {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })}
+                      {run.status === 'success' && ` · ${t('sync.success', { count: run.new_count })}`}
+                      {run.error && ` · ${run.error}`}
+                    </Muted>
+                  </View>
+                  <Badge
+                    tone={run.status === 'success' ? 'good' : run.status === 'error' ? 'bad' : undefined}
+                  >
+                    {t(`sync.status.${run.status}`)}
+                  </Badge>
                 </View>
-                <Badge tone={run.status === 'success' ? 'good' : run.status === 'error' ? 'bad' : undefined}>
-                  {t(`sync.status.${run.status}`)}
-                </Badge>
-              </View>
-            ))}
-          </Card>
+              ))}
+            </Card>
+          )}
         </>
       )}
     </Screen>

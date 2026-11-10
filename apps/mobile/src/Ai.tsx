@@ -56,7 +56,6 @@ export function SummaryCard({ activityId }: { activityId: number }) {
               ))}
             </View>
           )}
-          <Muted>{t('summary.by', { model: row.model })}</Muted>
         </>
       )}
       {can && (

@@ -32,18 +32,39 @@ export function Screen({
   children,
   scroll = true,
   header = false,
+  title,
+  toolbar,
+  actions,
 }: {
   children: ReactNode;
   scroll?: boolean;
   /** Under a stack header, which already keeps clear of the status bar. */
   header?: boolean;
+  /** A title that stays put while the screen scrolls under it (the tabs). */
+  title?: string;
+  /** Controls that stay put under the title (Stats' period). */
+  toolbar?: ReactNode;
+  /** Buttons on the title's right (the calendar on Activities). */
+  actions?: ReactNode;
 }) {
   const c = useTheme();
   return (
     <SafeAreaView edges={header ? [] : ['top']} style={{ flex: 1, backgroundColor: c.bg }}>
+      {title ? (
+        <View style={styles.headerBar}>
+          <View style={{ flex: 1 }}>
+            <Title>{title}</Title>
+          </View>
+          {actions}
+        </View>
+      ) : null}
+      {toolbar ? <View style={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}>{toolbar}</View> : null}
       {scroll ? (
         // "handled": a tap on a button works at once, even with the keyboard open.
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.page}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[styles.page, title ? { paddingTop: 4 } : null]}
+        >
           {children}
         </ScrollView>
       ) : (
@@ -92,12 +113,27 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
   );
 }
 
-export function Stat({ label, value }: { label: string; value: string }) {
+export function Stat({
+  label,
+  value,
+  labelFirst,
+}: {
+  label: string;
+  value: string;
+  /** The label above the figure instead of under it (the week's numbers above the feed). */
+  labelFirst?: boolean;
+}) {
   const c = useTheme();
+  const caption = (
+    <Text style={[styles.statLabel, { color: c.muted }, labelFirst && { marginTop: 0, marginBottom: 2 }]}>
+      {label}
+    </Text>
+  );
   return (
     <View style={styles.stat}>
+      {labelFirst && caption}
       <Text style={[styles.statValue, { color: c.fg }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: c.muted }]}>{label}</Text>
+      {!labelFirst && caption}
     </View>
   );
 }
@@ -108,12 +144,18 @@ export function Button({
   primary,
   disabled,
   accessibilityLabel,
+  icon,
+  labelColor,
 }: {
   children: string;
   onPress: () => void;
   primary?: boolean;
   disabled?: boolean;
   accessibilityLabel?: string;
+  /** Drawn before the label (Google's G on "Continue with Google"). */
+  icon?: ReactNode;
+  /** The label's colour, when it is not the button's usual one (white on "Continue with Google"). */
+  labelColor?: string;
 }) {
   const c = useTheme();
   return (
@@ -132,7 +174,14 @@ export function Button({
         },
       ]}
     >
-      <Text style={{ color: primary ? onAccent(c) : c.fg, fontWeight: '600', fontSize: 15 }}>{children}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        {icon}
+        <Text
+          style={{ color: labelColor ?? (primary ? onAccent(c) : c.fg), fontWeight: '600', fontSize: 15 }}
+        >
+          {children}
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -344,7 +393,9 @@ export function Badge({ children, tone }: { children: string; tone?: 'good' | 'b
 
 export const styles = StyleSheet.create({
   page: { padding: 16, gap: 12, paddingBottom: 32 },
-  title: { fontSize: 26, fontWeight: '700', letterSpacing: -0.3 },
+  title: { fontSize: 22, fontWeight: '700', letterSpacing: -0.2 },
+  /** The fixed header of the tabs and Home: one height everywhere. */
+  headerBar: { flexDirection: 'row', alignItems: 'center', gap: 20, paddingHorizontal: 16, height: 60 },
   heading: { fontSize: 17, fontWeight: '700', marginTop: 8 },
   card: { borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 8 },
   stat: { minWidth: 72, paddingVertical: 4 },

@@ -2,6 +2,7 @@ import {
   formatHoursMinutes,
   healthDaysQuery,
   healthNightQuery,
+  SOURCE_ICONS,
   type HealthDay,
   type HealthNight,
   type HealthSourceName,
@@ -29,6 +30,17 @@ function from(source: HealthSourceName, others: HealthSourceName[]) {
   return others.length
     ? t('health.fromAlso', { source: sourceName(source), others: others.map(sourceName).join(', ') })
     : t('health.from', { source: sourceName(source) });
+}
+
+/** Where a figure comes from: the source's mark in the panel's top-right corner, the full text as its title. */
+function SourceMark({ source, label }: { source: HealthSourceName; label: string }) {
+  const icon = SOURCE_ICONS[source];
+  return (
+    <svg className="source" viewBox={icon.viewBox} role="img" aria-label={label}>
+      <title>{label}</title>
+      <path d={icon.d} />
+    </svg>
+  );
 }
 
 const one = (n: number) => n.toLocaleString(locale, { maximumFractionDigits: 1 });
@@ -158,9 +170,8 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
             ) : null;
           })}
         </ul>
-        <p className="note">
-          {longDay(day.day)} · {from(sleep.source, sleep.others)}
-        </p>
+        <p className="note">{longDay(day.day)}</p>
+        <SourceMark source={sleep.source} label={from(sleep.source, sleep.others)} />
       </article>
     </>
   );
@@ -225,7 +236,7 @@ function Today({ day }: { day: HealthDay }) {
           <article className="panel" key={tile.key}>
             <h3>{t(tile.key)}</h3>
             <p className="big num">{tile.value}</p>
-            {tile.source && <p className="note">{from(...tile.source)}</p>}
+            {tile.source && <SourceMark source={tile.source[0]} label={from(...tile.source)} />}
           </article>
         ))}
       </div>

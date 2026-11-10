@@ -26,7 +26,7 @@ import {
   Zones,
 } from '../../src/settings/Sections';
 import { sectionTitle } from '../../src/settings/titles';
-import { availableBiometrics, instanceUrl, type Biometrics } from '../../src/session';
+import { availableBiometrics, biometricLockOn, instanceUrl, type Biometrics } from '../../src/session';
 import { keys, readSync, storage } from '../../src/storage';
 import { ThemeContext } from '../../src/theme';
 import { Button, Card, Choice, Heading, MenuRow, Muted, Screen, SwitchRow } from '../../src/ui';
@@ -147,20 +147,43 @@ function Security() {
   const { rekey } = useAuth();
   const [biometrics, setBiometrics] = useState<Biometrics | null>(null);
   const [weak, setWeak] = useState(readSync(keys.weakBiometrics) === '1');
+  const [lock, setLock] = useState(biometricLockOn());
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     void availableBiometrics().then(setBiometrics);
   }, []);
+  // Turning the lock on stores the session behind the fingerprint again (Android asks for it); if that is
+  // cancelled, the switch goes back.
+  const setLockTo = async (on: boolean) => {
+    setLock(on);
+    setFailed(false);
+    await storage.setItem(keys.biometricLock, on ? '1' : '0');
+    try {
+      await rekey();
+    } catch {
+      setLock(!on);
+      setFailed(true);
+      await storage.setItem(keys.biometricLock, on ? '0' : '1');
+    }
+  };
   return (
     <Card>
       <Heading>{t('mobile.security')}</Heading>
-      <Muted>
-        {biometrics === 'strong'
-          ? t('mobile.biometricsStrong')
-          : biometrics === 'weak'
-            ? t('mobile.biometricsWeak')
-            : t('mobile.biometricsNone')}
-      </Muted>
-      {biometrics === 'weak' && (
+      {lock || biometrics === 'none' ? (
+        <Muted>
+          {biometrics === 'strong'
+            ? t('mobile.biometricsStrong')
+            : biometrics === 'weak'
+              ? t('mobile.biometricsWeak')
+              : t('mobile.biometricsNone')}
+        </Muted>
+      ) : null}
+      {biometrics !== null && biometrics !== 'none' && (
+        <SwitchRow label={t('mobile.biometricLock')} value={lock} onChange={(on) => void setLockTo(on)} />
+      )}
+      {!lock && <Muted>{t('mobile.biometricLockOff')}</Muted>}
+      {failed && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
+      {biometrics === 'weak' && lock && (
         <SwitchRow
           label={t('mobile.weakLock')}
           value={weak}

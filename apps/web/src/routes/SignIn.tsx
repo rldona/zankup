@@ -114,8 +114,15 @@ function PasswordStep({
 
   return (
     <>
-      <h1>{t('signIn.welcome')}</h1>
+      <h1 className="greeting">{t('signIn.welcome')}</h1>
       <ErrorBox message={error} />
+      {/* As on the app (OS-918): Google and the passkey first, then "or" and the e-mail and password,
+          whose button is the quieter one. The "or" goes when neither quick way is offered. */}
+      <div className="quick">
+        <GoogleButton />
+        <PasskeyButton remember={remember} onSignedIn={onSignedIn} onError={setError} />
+      </div>
+      <div className="or">{t('signIn.or')}</div>
       <form onSubmit={(e) => void submit(e)} noValidate>
         <label className="fld">
           {t('signIn.email')}
@@ -157,12 +164,10 @@ function PasswordStep({
           </label>
           <Link to="/forgot">{t('signIn.forgot')}</Link>
         </div>
-        <button className="primary block" type="submit" disabled={busy}>
+        <button className="block" type="submit" disabled={busy}>
           {busy ? <span className="spin" aria-label={t('common.loading')} /> : t('signIn.submit')}
         </button>
       </form>
-      <PasskeyButton remember={remember} onSignedIn={onSignedIn} onError={setError} />
-      <GoogleButton />
     </>
   );
 }
@@ -205,7 +210,6 @@ function PasskeyButton({
 
   return (
     <>
-      <div className="or">{t('signIn.or')}</div>
       <button type="button" className="block" onClick={() => void start()} disabled={waiting}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="8" cy="8" r="4" />

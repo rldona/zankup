@@ -4052,3 +4052,24 @@ button.danger svg.i {
   height: 20px;
   color: var(--accent);
 }
+
+/* Sign-in in the app's order (OS-918): the quick ways first, then "or" and the e-mail. */
+h1.greeting {
+  margin-bottom: 24px;
+}
+
+.quick {
+  display: grid;
+  gap: 10px;
+}
+
+.quick:empty,
+.quick:empty + .or {
+  display: none;
+}
+
+.quick > a.button.google,
+.quick > button {
+  margin: 0;
+  border-radius: 999px;
+}

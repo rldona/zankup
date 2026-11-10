@@ -17,7 +17,7 @@ import {
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { forgetOfflineData } from '../offline';
@@ -92,7 +92,7 @@ export function Profile() {
         {tab === 'summary' && <Summary me={me.data} summary={summary.data} />}
         {tab === 'goals' && <GoalsPanel editable />}
         {tab === 'estimates' && <ProfileEstimates />}
-        {tab === 'gear' && <p className="state">{t('profile.gearSoon')}</p>}
+        {tab === 'gear' && <Navigate to="/gear" replace />}
         {tab === 'account' && <Account me={me.data} />}
       </div>
     </section>

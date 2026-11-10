@@ -36,8 +36,13 @@ export function Gear() {
   const prefs = usePrefs();
   const format = formatters(prefs);
   const [editing, setEditing] = useState<GearOut | 'new' | null>(null);
-  const active = (gear.data ?? []).filter((g) => !g.retired);
-  const retired = (gear.data ?? []).filter((g) => g.retired);
+  // The habitual ones first (OS-910), then the rest in use, then the retired.
+  const list = gear.data ?? [];
+  const ordered = [
+    ...list.filter((g) => g.habitual && !g.retired),
+    ...list.filter((g) => !g.habitual && !g.retired),
+    ...list.filter((g) => g.retired),
+  ];
   return (
     <section className="page">
       <h1>{t('gear.title')}</h1>
@@ -50,14 +55,22 @@ export function Gear() {
       {editing && <GearForm gear={editing === 'new' ? null : editing} onDone={() => setEditing(null)} />}
       {gear.data && gear.data.length === 0 && <p className="state">{t('gear.empty')}</p>}
       <ul className="gearlist">
-        {[...active, ...retired].map((g) => {
+        {ordered.map((g) => {
           const share = g.limit_m ? Math.min(1, g.distance_m / g.limit_m) : null;
           return (
-            <li key={g.id} className={g.retired ? 'retired' : g.over_limit ? 'over' : undefined}>
+            <li
+              key={g.id}
+              className={
+                g.retired
+                  ? 'retired'
+                  : [g.habitual && 'habitual', g.over_limit && 'over'].filter(Boolean).join(' ') || undefined
+              }
+            >
               <div className="ph">
                 <h2>
                   {g.name}
                   {g.retired && <span className="badge">{t('gear.retired')}</span>}
+                  {g.habitual && !g.retired && <span className="badge good">{t('gear.habitual')}</span>}
                 </h2>
                 <button type="button" className="link" onClick={() => setEditing(g)}>
                   {t('activity.edit')}
@@ -103,6 +116,7 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
   const [brand, setBrand] = useState(gear?.brand ?? '');
   const [model, setModel] = useState(gear?.model ?? '');
   const [sports, setSports] = useState<string[]>(gear?.sports ?? []);
+  const [habitual, setHabitual] = useState(gear?.habitual ?? false);
   const [initial, setInitial] = useState(gear ? String(Math.round(gear.initial_m / 1000)) : '0');
   const [limit, setLimit] = useState(
     gear?.limit_m ? String(Math.round(gear.limit_m / 1000)) : gear ? '' : '800',
@@ -121,6 +135,7 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
         sports: sports as ('run' | 'ride')[],
         initial_m: Number(initial || 0) * 1000,
         limit_m: limit.trim() ? Number(limit) * 1000 : null,
+        habitual,
       };
       const { error } = gear
         ? await api.PATCH('/api/gear/{gear_id}', {
@@ -197,6 +212,13 @@ function GearForm({ gear, onDone }: { gear: GearOut | null; onDone: () => void }
           </label>
         ))}
       </fieldset>
+      <label className="check habitualcheck">
+        <input type="checkbox" checked={habitual} onChange={(e) => setHabitual(e.target.checked)} />
+        <span>
+          <b>{t('gear.habitual')}</b>
+          <small className="note">{t('gear.habitualHelp')}</small>
+        </span>
+      </label>
       <div className="actions">
         <button type="submit" className="primary" disabled={save.isPending}>
           {t('settings.save')}

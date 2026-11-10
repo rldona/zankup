@@ -3513,3 +3513,30 @@ button.danger svg.i {
   width: 18px;
   height: 18px;
 }
+
+/* The habitual gear (OS-910), as on the app: first, ringed in the accent, with its badge. */
+.gearlist > li.habitual {
+  border: 2px solid var(--accent);
+}
+
+.badge.good {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: transparent;
+  margin-left: 8px;
+}
+
+.habitualcheck {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.habitualcheck > span {
+  display: grid;
+  gap: 4px;
+}
+
+.habitualcheck small {
+  margin: 0;
+}

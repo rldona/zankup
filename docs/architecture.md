@@ -293,7 +293,7 @@ There are three kinds of charts, depending on how much they move and how much yo
 - **Technology:** TypeScript, React and Vite, with `vite-plugin-pwa` (Workbox) for the service worker and manifest. React Router for routes (one public route, `/sign-in`; everything else behind a session guard that keeps the requested page in `?next=`), TanStack Query for data caching with the query definitions shared in `packages/core` (plain key + function objects, so the Android app reuses them), MapLibre GL for maps (vector, smooth on mobile; tiles from OpenFreeMap, free and keyless, drawn with Zankup's own style generated from the theme's tokens in `packages/core`, and an SVG route shape where there is no WebGL) and the shared catalogues for translations. Built to static files and deployed on Vercel.
 - **Responsive design:**
   - **Desktop (≥ 1024 px):** sidebar navigation. Feed and detail in two columns (list on the left, activity on the right). Large map with the synced profile underneath, full lap and zone tables, and full-width fitness charts.
-  - **Mobile:** bottom tab bar (Feed · Search · Sync · Stats · You). Single-column detail with the map on top, metric cards and touch-friendly charts.
+  - **Mobile:** bottom tab bar (Home · Activities · Health · Goals · You), as on the app (OS-903). Single-column detail with the map on top, metric cards and touch-friendly charts.
   - One codebase with breakpoints. No separate versions.
 - **Screens:** home (your week and the feed), activity detail (map, profile, laps, zones, records), advanced search, stats ("Now" highlights, per-period stats, fitness, volume, records, power curve, heatmap), profile, settings (theme, language, max/resting HR, privacy zones, devices, Garmin key expiry) and the "Sync" button with progress.
 - **Public screens** (the only ones visible without a session): sign-in, initial sign-up and password recovery. **They show no user data.** Their side panel has gentle animated waves drawn with **Canvas 2D and `requestAnimationFrame`**, with no library: Three.js would add about 600 KB for what amounts to 25 sine waves. They pause when the tab is hidden and stay still with `prefers-reduced-motion`.
@@ -359,6 +359,20 @@ The proof of concept is the activity detail with real data from the API, signed 
 - **Notifications:** the app registers its FCM token on its device row (`PUT /api/notifications/fcm`); `notify.py` sends every notification through FCM HTTP v1 as well as Web Push, with the service account in `FCM_SERVICE_ACCOUNT`.
 - **Widget:** `react-native-android-widget`, the latest activity and today's form from a snapshot kept on the phone; tapping it opens the activity (`zankup://activity/<id>`).
 - **Release:** `eas.json` (APK for internal distribution, AAB for Play's internal track with `eas submit`). CI builds a release APK when the app changes (`.github/workflows/android.yml`).
+
+### Web and app in step (phase 9, OS-901)
+
+Until November 2026 the web led and the app followed; then the app took the lead and the web fell behind. From phase 9 on, **a feature lands on both clients in the same block of work**, unless it is on one of the lists below. Both share the logic in `packages/core` (queries, formatting, domain, tokens, translations); each draws its own UI.
+
+| Only on the app | Only on the web | On both, adapted |
+|---|---|---|
+| Health Connect | The advanced search page with every filter (the app has the useful ones) | Home, the activity and its charts, Health, Goals, Stats, Estimates, You, Settings, the Coach, gear, notifications, sign-in, skeletons |
+| The home-screen widget | The chart catalogue (`/catalogue`, for development) | The latest activity on arrival: a bottom sheet on the phone, a dialog on desktop |
+| Background sync | The public shared-activity page (`/s/…`) | The offline notice: a pill over the tab bar on the phone, a banner on the web |
+| The fingerprint on the session | Downloading the original FIT, GPX or TCX file | Sharing: the link and the share image |
+| The keyboard and edge-to-edge handling | List and detail side by side on desktop | |
+
+**Large screens.** The web is not the phone stretched: content up to about 1100 px wide; two columns where the phone stacks cards (charts side by side, the list of Settings sections beside the open one, Home's widgets in a grid); hover replaces the phone's tap for a chart's readout, and a click pins it; dialogs and side panels instead of bottom sheets. Below 1024 px the web follows the phone's layout.
 
 ### Monorepo structure
 

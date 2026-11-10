@@ -22,6 +22,7 @@ import {
   yearColours,
   compare,
   comparisonLabels,
+  formTone,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -271,19 +272,33 @@ function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
         {now && (
           <article className="panel">
             <h3>{t('stats.tsb')}</h3>
-            <p className="big num">{now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}</p>
-            <p className="note">
-              {t(formLabel(now.tsb))} · {t('stats.ctl')} {now.ctl.toFixed(0)} · {t('stats.atl')}{' '}
-              {now.atl.toFixed(0)}
+            <p className="big num freshness">
+              {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
+              <span className={`formpill ${formTone(now.tsb)}`}>{t(formLabel(now.tsb))}</span>
             </p>
+            {/* Freshness is fitness minus fatigue: both as bars, so the gap between them shows. */}
+            <ul className="formbars num">
+              {(
+                [
+                  ['ctl', t('stats.ctl'), now.ctl],
+                  ['atl', t('stats.atl'), now.atl],
+                ] as const
+              ).map(([key, label, value]) => (
+                <li key={key}>
+                  <span>{label}</span>
+                  <b>{value.toFixed(0)}</b>
+                  <i
+                    className={key}
+                    style={{ width: `${Math.max(2, (value / Math.max(1, now.ctl, now.atl)) * 100)}%` }}
+                  />
+                </li>
+              ))}
+            </ul>
           </article>
         )}
         {week.data && (
           <article className="panel">
-            <div className="ph">
-              <h3>{t('stats.load')}</h3>
-              <InfoTip text={t('stats.loadNote', { average: formatHoursMinutes(average) })} />
-            </div>
+            <h3>{t('stats.load')}</h3>
             <p className="big num">
               {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
             </p>
@@ -291,6 +306,7 @@ function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
               <i style={{ width: `${Math.min(100, (share ?? 0) / 1.5)}%` }} />
               <b style={{ left: `${100 / 1.5}%` }} />
             </div>
+            <p className="note">{t('stats.loadNote', { average: formatHoursMinutes(average) })}</p>
           </article>
         )}
       </div>

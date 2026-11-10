@@ -70,6 +70,16 @@ export function dayHeading(day: string, today: string): 'today' | 'yesterday' | 
 }
 
 /** The form (TSB) in words, as Stats, Home and the app name it. */
+/** How the form's pill is coloured: rested, neither, building (the training zone) or overreaching. */
+export type FormTone = 'fresh' | 'neutral' | 'optimal' | 'overreaching';
+
+export function formTone(tsb: number): FormTone {
+  if (tsb > 5) return 'fresh';
+  if (tsb > -10) return 'neutral';
+  if (tsb > -30) return 'optimal';
+  return 'overreaching';
+}
+
 export function formLabel(tsb: number): MessageKey {
   if (tsb > 5) return 'stats.form.fresh';
   if (tsb > -10) return 'stats.form.neutral';

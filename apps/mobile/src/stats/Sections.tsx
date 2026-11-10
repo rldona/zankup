@@ -154,7 +154,17 @@ export function GoalCard({
         </Text>
       </View>
       <ProgressBar value={share} max={1} label={t('goals.target')} />
-      <GoalChart goal={goal} />
+      <GoalChart
+        goal={goal}
+        value={(v) => goalValue(goal, v, format)}
+        tick={(v) =>
+          goal.metric === 'distance'
+            ? `${Math.round(v / (format.unit === 'km' ? 1000 : 1609.344))} ${format.unit}`
+            : goal.metric === 'time'
+              ? `${Math.round(v / 3600)} h`
+              : String(Math.round(v))
+        }
+      />
       <Text style={{ color: c.fg, fontVariant: ['tabular-nums'] }}>
         <Text style={{ fontWeight: '700' }}>{goalValue(goal, goal.current, format)}</Text> /{' '}
         {goalValue(goal, goal.target, format)}

@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -253,5 +253,20 @@ describe('phase 7: the AI assistant', () => {
       expect(calls.some((c) => c.method === 'DELETE' && c.path === '/api/ai/tokens/3')).toBe(true),
     );
     expect(await screen.findByText('No tokens yet.')).toBeInTheDocument();
+  });
+
+  it('the Coach as on the app: two examples, and its note behind the (i) (OS-915)', async () => {
+    mockApi();
+    renderAt('/coach');
+    expect(await screen.findByText('Questions you could ask:')).toBeInTheDocument();
+    const chat = screen.getByRole('region', { name: 'Zankup Coach' });
+    expect(
+      within(chat)
+        .getAllByRole('button')
+        .filter((b) => b.textContent?.endsWith('?')),
+    ).toHaveLength(2);
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'About the coach' }));
+    expect(screen.getByRole('note')).toHaveTextContent(/can be wrong/);
   });
 });

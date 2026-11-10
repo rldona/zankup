@@ -25,7 +25,7 @@ import { Icon, SourceIcon, SpinningIcon } from '../../src/Icon';
 import { MenuButton } from '../../src/Menu';
 import { locale, t } from '../../src/i18n';
 import { useTheme } from '../../src/theme';
-import { Button, Card, Heading, Muted, Screen, styles as ui } from '../../src/ui';
+import { Button, Card, CardTitle, Heading, Muted, Screen, styles as ui } from '../../src/ui';
 
 const PERIODS = ['30', '90', '365'] as const;
 type Period = (typeof PERIODS)[number];
@@ -161,9 +161,10 @@ export default function HealthScreen() {
 
       {nights.length > 1 && (
         <>
-          <Heading>{t('health.sleep')}</Heading>
           <Card>
+            <CardTitle>{t('health.sleep')}</CardTitle>
             <Chart
+              legendGap={18}
               days={span.map((d) => shortDay(d.day))}
               label={t('health.sleepSummary', {
                 hours: one(hours(nights.at(-1)?.sleep?.asleep_s)),
@@ -212,9 +213,10 @@ export default function HealthScreen() {
       )}
       {list.length > 1 && (
         <>
-          <Heading>{t('health.heart')}</Heading>
           <Card>
+            <CardTitle>{t('health.heart')}</CardTitle>
             <Chart
+              legendGap={18}
               days={span.map((d) => shortDay(d.day))}
               label={`${t('health.hrv')} ${latest?.hrv?.value.toFixed(0) ?? '–'} ms, ${t('health.restingHr')} ${latest?.resting_hr?.value.toFixed(0) ?? '–'} bpm`}
               layers={[
@@ -233,9 +235,10 @@ export default function HealthScreen() {
               ]}
             />
           </Card>
-          <Heading>{t('health.readinessAndForm')}</Heading>
           <Card>
+            <CardTitle>{t('health.readinessAndForm')}</CardTitle>
             <Chart
+              legendGap={18}
               days={span.map((d) => shortDay(d.day))}
               label={
                 latest?.readiness

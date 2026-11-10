@@ -21,7 +21,7 @@ import {
   type Series,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
+import { router, Stack, useLocalSearchParams, useNavigation } from 'expo-router';
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
@@ -269,6 +269,32 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
           </View>
         </View>
         <Figures main={main} more={more} />
+        {a.gear && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/gear')}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+              borderRadius: 14,
+              backgroundColor: c.surface,
+            }}
+          >
+            <Icon name={sport === 'ride' ? 'directions_bike' : 'footprint'} color={c.muted} size={22} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: c.muted, fontSize: 12 }}>
+                {t(sport === 'ride' ? 'activity.equipmentUsed' : 'activity.gearUsed')}
+              </Text>
+              <Text style={{ color: c.fg, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
+                {a.gear.name}
+              </Text>
+            </View>
+            <Icon name="chevron_right" color={c.muted} size={22} />
+          </Pressable>
+        )}
         <SummaryCard activityId={a.id} />
         {track && track.n > 1 && (
           <Card>

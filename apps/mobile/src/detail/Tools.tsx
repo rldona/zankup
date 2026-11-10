@@ -31,7 +31,6 @@ function useRefreshActivity(id: number) {
 /** Gear and weather, as under the PWA's title. */
 export function metaLine(activity: ActivityDetail, units: 'metric' | 'imperial'): string {
   const parts: string[] = [];
-  if (activity.gear) parts.push(activity.gear.name);
   const w = activity.weather;
   if (w) {
     const bits = [

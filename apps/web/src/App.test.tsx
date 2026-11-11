@@ -303,10 +303,10 @@ describe('app skeleton', () => {
 
     await userEvent.click(within(tabbar).getByRole('link', { name: 'Feed' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/activities'));
-    // Search is reached from the Activities header, and stays under Activities.
-    await userEvent.click(await screen.findByRole('link', { name: 'Search' }));
-    expect(await screen.findByRole('searchbox', { name: 'Search' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/search');
+    // Search is reached from the search bar under the Activities title, and stays under Activities.
+    await userEvent.type(await screen.findByRole('searchbox', { name: 'Search' }), 'hill{Enter}');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/search'));
+    expect(router.state.location.search).toBe('?q=hill');
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Feed');
 
     // Settings marks its own icon in the rail; the tab bar keeps You marked, as on the app.

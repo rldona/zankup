@@ -399,8 +399,6 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             position: 'absolute',
             inset: 0,
             backgroundColor: c.bg,
-            borderBottomWidth: 1,
-            borderColor: c.line,
             opacity: solid,
           }}
         />

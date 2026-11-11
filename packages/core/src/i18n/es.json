@@ -575,6 +575,7 @@
   "activity.wind": "viento",
   "common.cancel": "Cancelar",
   "common.close": "Cerrar",
+  "common.back": "Atrás",
   "compare.title": "Cómo se comparan estas métricas",
   "compare.help": "Los valores de Strava de tu exportación frente a los de Zankup. Cada métrica mantiene su fórmula documentada: esto solo mide cuánto se parecen.",
   "compare.metric": "Métrica",

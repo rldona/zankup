@@ -575,6 +575,7 @@
   "activity.wind": "wind",
   "common.cancel": "Cancel",
   "common.close": "Close",
+  "common.back": "Back",
   "compare.title": "How these metrics compare",
   "compare.help": "Strava's own values from your export against Zankup's. Each metric keeps its own documented formula: this only measures how close they are.",
   "compare.metric": "Metric",

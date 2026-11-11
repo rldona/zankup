@@ -25,7 +25,7 @@ import { usePrefs } from '../prefs';
 import { SportIcon } from '../SportIcon';
 import { day } from '../stats/format';
 import { useResolvedTheme } from '../theme';
-import { PageSkeleton } from '../Skeleton';
+import { ChartSkeleton, PageSkeleton, Pulse } from '../Skeleton';
 
 const asSport = (value: string): Sport =>
   (SPORTS as readonly string[]).includes(value) ? (value as Sport) : 'other';
@@ -161,35 +161,55 @@ export function TrainingCalendar() {
   );
 }
 
-/** The personal heatmap (OS-310): every route with GPS, overlapping into the places you go most. */
+/**
+ * The personal heatmap (OS-310), as the app's (OS-520): every route with GPS on a map that fills the
+ * screen under the title, the sports as chips centred over it and the number of routes at its foot.
+ */
 export function Heatmap() {
   const [params, setParams] = useSearchParams();
   const sport = params.get('sport');
   const routes = useQuery(heatmapQuery(api, {}, sport ? [sport] : undefined));
   const theme = useResolvedTheme();
+  const count = routes.data?.routes.length ?? 0;
+  const pick = (value: string | null) => setParams(value ? { sport: value } : {}, { replace: true });
   return (
-    <section className="page wide">
-      <div className="statshead">
+    <section className="page heatmap">
+      <div className="titlebar">
         <h1>{t('heatmap.title')}</h1>
-        <select
-          aria-label={t('feed.sports')}
-          value={sport ?? ''}
-          onChange={(e) => setParams(e.target.value ? { sport: e.target.value } : {}, { replace: true })}
-        >
-          <option value="">{t('feed.all')}</option>
-          {(['run', 'ride', 'walk'] as const).map((s) => (
-            <option key={s} value={s}>
-              {t(`sport.${s}`)}
-            </option>
-          ))}
-        </select>
       </div>
-      <p className="note">
-        {t('heatmap.note')} {routes.data && t('heatmap.count', { count: routes.data.routes.length })}
-      </p>
-      {routes.data && routes.data.routes.length > 0 && (
-        <TrackMap tracks={routes.data.routes} colour={themes[theme].run} theme={theme} heat height={560} />
-      )}
+      <div className="heatwrap">
+        {routes.isPending ? (
+          <Pulse>
+            <ChartSkeleton height={400} />
+          </Pulse>
+        ) : count > 0 ? (
+          <TrackMap
+            key={sport ?? ''}
+            tracks={routes.data?.routes ?? []}
+            colour={themes[theme].run}
+            theme={theme}
+            heat
+            height="100%"
+          />
+        ) : (
+          <p className="note">{t('heatmap.note')}</p>
+        )}
+        <div className="chips heatchips" role="group" aria-label={t('feed.sports')}>
+          <button type="button" className="chip" aria-pressed={!sport} onClick={() => pick(null)}>
+            {t('feed.all')}
+          </button>
+          {(['run', 'ride', 'walk'] as const).map((s) => (
+            <button key={s} type="button" className="chip" aria-pressed={sport === s} onClick={() => pick(s)}>
+              {t(`sport.${s}`)}
+            </button>
+          ))}
+        </div>
+        {count > 0 && (
+          <p className="heatcount" title={t('heatmap.note')}>
+            {t('heatmap.count', { count })}
+          </p>
+        )}
+      </div>
     </section>
   );
 }

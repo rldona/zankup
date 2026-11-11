@@ -22,7 +22,8 @@ export function TrackMap({
   colour: string;
   theme: ThemeName;
   heat?: boolean;
-  height?: number;
+  /** In pixels, or any CSS height (the heatmap fills its box: '100%'). */
+  height?: number | string;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibre | null>(null);

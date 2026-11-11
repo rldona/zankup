@@ -66,22 +66,37 @@ button {
   color: var(--run);
 }
 
-/* Signed-in frame (OS-202), from the prototype: sidebar and two columns on desktop; top bar and
-   bottom tab bar below 1024 px, with the phone's safe areas. */
+/* The signed-in frame (OS-202, docs/prototypes/web), in three sizes as the app: below 600 px the bottom
+   tab bar and one header per screen; from 600 px a rail of 88 px; from 1200 px the content centred at one
+   width shared by every screen. The phone's safe areas are respected. */
+:root {
+  --rail: 88px;
+  --tabbar-h: 76px;
+  --page-max: 1320px;
+  --gutter: 24px;
+}
+
+@media (max-width: 599px) {
+  :root {
+    --gutter: 16px;
+  }
+}
+
+/* Thin scrollbars everywhere. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
+  scrollbar-color: var(--line) transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--fg) 22%, transparent);
-  border-radius: 10px;
-  border: 3px solid transparent;
+  background: var(--line);
+  border-radius: 8px;
+  border: 2px solid transparent;
   background-clip: content-box;
 }
 
@@ -109,87 +124,138 @@ svg.i.m {
 
 .app {
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
+  grid-template-columns: var(--rail) minmax(0, 1fr);
   height: 100dvh;
 }
 
-.side {
+.rail {
   background: var(--surface);
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  padding: 18px 12px;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  padding: calc(18px + env(safe-area-inset-top)) 6px calc(14px + env(safe-area-inset-bottom));
+  padding-left: calc(6px + env(safe-area-inset-left));
+  overflow-y: auto;
 }
 
-.side .brand {
+.rail .brand {
   color: var(--fg);
   text-decoration: none;
-  padding: 4px 10px 18px;
+  padding: 4px 0 14px;
 }
 
-.side nav {
+.rail nav,
+.railfoot {
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  justify-items: center;
 }
 
-.side nav a {
+.rail nav a {
+  box-sizing: border-box;
+  width: 76px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  gap: 4px;
+  padding: 10px 0;
+  border-radius: 12px;
   color: var(--muted);
+  font-size: 12px;
   font-weight: 550;
+  text-align: center;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.side nav a:hover {
+.railfoot a {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--fg);
+}
+
+.rail nav a svg.i,
+.railfoot a svg.i {
+  width: 24px;
+  height: 24px;
+}
+
+.rail nav a:hover,
+.railfoot a:hover {
   background: var(--surface-2);
   color: var(--fg);
 }
 
-.side nav a.on {
+.rail nav a.on,
+.railfoot a.on {
   background: var(--accent-soft);
   color: var(--accent);
+  font-weight: 650;
 }
 
 .grow {
   flex: 1;
 }
 
-.syncbtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 10px;
-  padding: 11px;
-  background: var(--accent);
-  color: var(--accent-fg);
-  font-weight: 650;
-  text-decoration: none;
-}
-
 .main {
   overflow: auto;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.topbar,
 .tabbar {
   display: none;
 }
 
+/* Every screen: centred, one width for all of them. */
 .page {
-  max-width: 760px;
-  padding: 20px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding: 20px var(--gutter);
+}
+
+/* The way back from a screen under a section ("‹ You"), above its title. */
+.crumbrow {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding: 8px var(--gutter) 0;
+}
+
+/* Under a way back that shows, the page needs no top padding of its own. */
+.crumbrow.show-always + .page {
+  padding-top: 0;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding-right: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.crumb:hover {
+  color: var(--fg);
 }
 
 .feedwrap {
   display: grid;
   grid-template-columns: 400px minmax(0, 1fr);
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .feedcol {
@@ -225,62 +291,14 @@ svg.i.m {
   place-items: center;
 }
 
+/* Below 1024 px the feed's list and an activity take turns instead of sitting side by side. */
 @media (max-width: 1023px) {
-  .app {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
-  }
-
-  .side {
-    display: none;
-  }
-
-  .topbar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .topbar .brand {
-    flex: 1;
-    min-width: 0;
-    color: var(--fg);
-    text-decoration: none;
-  }
-
-  .tabbar {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    background: var(--surface);
-    border-top: 1px solid var(--line);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-  }
-
-  .tabbar a {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    font-size: 11px;
-    color: var(--muted);
-    padding: 4px;
-    text-decoration: none;
-  }
-
-  .tabbar a.on {
-    color: var(--accent);
-  }
-
   .feedwrap {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .feedcol {
     border-right: 0;
-    padding: 14px 16px;
   }
 
   .detailcol {
@@ -294,9 +312,97 @@ svg.i.m {
   .feedwrap.detail .detailcol {
     display: block;
   }
+}
 
+/* What only a phone shows (the way back on screens the rail already names, Home's wordmark). */
+.phone-only {
+  display: none;
+}
+
+/* The way back shows where nothing else on screen leads back: on a phone only (the rail names the
+   Coach, the notifications and Settings), below 1024 px (Settings' list sits beside its sections from
+   there), or on a tablet only (an activity: the list beside it on a desktop, floating buttons on a phone). */
+@media (min-width: 600px) {
+  .crumbrow.show-phone,
+  .crumbrow.show-tablet:not(:has(+ .feedwrap)) {
+    display: none;
+  }
+
+  .crumbrow.show-compact + .page {
+    padding-top: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .crumbrow.show-compact,
+  .crumbrow.show-tablet {
+    display: none;
+  }
+
+  .crumbrow.show-compact + .page {
+    padding-top: 20px;
+  }
+}
+
+/* The phone: the app's bottom tab bar (76 px, 28 px icons), no rail. */
+@media (max-width: 599px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .rail,
+  .rail-only {
+    display: none;
+  }
+
+  .phone-only {
+    display: revert;
+  }
+
+  .main {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .tabbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    box-sizing: border-box;
+    min-height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .tabbar a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px;
+    text-decoration: none;
+  }
+
+  .tabbar a.on {
+    color: var(--accent);
+    font-weight: 650;
+  }
+
+  .tabbar a svg.i {
+    width: 28px;
+    height: 28px;
+  }
+
+  .feedcol,
   .page {
-    padding: 14px 16px;
+    padding: 14px var(--gutter);
+  }
+
+  .crumbrow:not(.show-tablet) + .page {
+    padding-top: 0;
   }
 
   .chips {
@@ -509,10 +615,6 @@ svg.i.m {
 }
 
 /* Activity detail (OS-205 to OS-208, OS-216), from the prototype. */
-.page.detail {
-  max-width: 980px;
-}
-
 .dhead {
   display: flex;
   gap: 12px;
@@ -895,10 +997,6 @@ img.avatar {
   object-fit: cover;
 }
 
-.page.profile {
-  max-width: 980px;
-}
-
 .tabs {
   display: flex;
   gap: 4px;
@@ -970,12 +1068,6 @@ img.avatar {
 }
 
 /* Sync (OS-209, OS-226): a sheet with the run's progress, over the page. */
-button.syncbtn {
-  border: 0;
-  font: inherit;
-  cursor: pointer;
-}
-
 .spinning {
   display: inline-grid;
   animation: spin 1.2s linear infinite;
@@ -995,7 +1087,7 @@ button.syncbtn {
 
 .sheet {
   position: fixed;
-  left: 248px;
+  left: calc(var(--rail) + 16px);
   bottom: 20px;
   width: min(380px, calc(100vw - 32px));
   background: var(--surface);
@@ -1023,12 +1115,12 @@ button.syncbtn {
   color: var(--run);
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 599px) {
   .sheet {
     left: 16px;
     right: 16px;
     width: auto;
-    bottom: calc(76px + env(safe-area-inset-bottom));
+    bottom: calc(var(--tabbar-h) + 8px + env(safe-area-inset-bottom));
   }
 }
 
@@ -1086,8 +1178,8 @@ a.button.block {
 }
 
 .days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  display: flex;
+  justify-content: space-between;
   list-style: none;
   padding: 0;
   margin: 12px 0 10px;
@@ -1102,40 +1194,52 @@ a.button.block {
 }
 
 .dot {
+  box-sizing: border-box;
   position: relative;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  border: 1px dashed var(--line);
-  color: var(--sport);
+  border: 2px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
+/* A day with an activity: the sport's icon in white on its colour, as the app. */
 .dot.on {
-  border: 0;
-  background: color-mix(in srgb, var(--sport) 18%, var(--surface));
+  border-color: var(--sport);
+  background: var(--sport);
+  color: #fff;
 }
 
 .dot svg.i {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 
-.dot .more {
+/* A second sport that day: a dot in its colour on the circle's top right. */
+.dot .second {
   position: absolute;
-  right: -4px;
   top: -4px;
-  font-size: 10px;
-  background: var(--fg);
-  color: var(--bg);
-  border-radius: 999px;
-  padding: 0 4px;
+  right: -4px;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--sport);
+  border: 2px solid var(--surface);
 }
 
 .days .today .dot {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.days .today .dot.on {
+  color: #fff;
 }
 
 .days .today .dlabel {
@@ -1143,8 +1247,9 @@ a.button.block {
   font-weight: 650;
 }
 
-.days .future {
-  opacity: 0.45;
+/* The days still to come, faded as the app's; their number and initial stay readable (WCAG AA). */
+.days .future .dot {
+  border-color: color-mix(in srgb, var(--line) 45%, transparent);
 }
 
 .dlabel {
@@ -1240,10 +1345,6 @@ a.button.block {
 }
 
 /* Advanced search (OS-219). */
-.page.search {
-  max-width: 1180px;
-}
-
 .searchbox {
   width: 100%;
   font-size: 16px;
@@ -1422,12 +1523,6 @@ a.button.block {
 }
 
 /* Stats, calendar, routes and segments (phase 3). */
-.page.stats,
-.page.calendar,
-.page.wide {
-  max-width: 1180px;
-}
-
 .statshead {
   display: flex;
   flex-wrap: wrap;
@@ -1438,6 +1533,10 @@ a.button.block {
 
 .statshead h1 {
   margin: 0;
+}
+
+.page.calendar .statshead {
+  margin-bottom: 12px;
 }
 
 .statshead .month {
@@ -2284,6 +2383,8 @@ a.button {
   margin: 0;
   padding: 0;
   display: grid;
+  /* Side by side where there is room, now that every screen is as wide as the others. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
   gap: 10px;
 }
 
@@ -2326,11 +2427,6 @@ a.button {
 
 .over .gearbar i {
   background: var(--warn, var(--accent));
-}
-
-.crumbs {
-  margin: 0 0 4px;
-  font-size: 14px;
 }
 
 .bullets {
@@ -2858,11 +2954,6 @@ textarea {
   height: 24px;
 }
 
-.tabbar a svg.i.m {
-  width: 26px;
-  height: 26px;
-}
-
 /* A card of rows that lead somewhere (You's menu), as the app's MenuRow. */
 .panel.menu {
   padding: 0 16px;
@@ -2909,20 +3000,94 @@ textarea {
   height: 22px;
 }
 
-/* Home (OS-904), as the app's: two columns on a large screen, one on a phone. */
-.page.home {
-  max-width: 1100px;
+/* Home (OS-904), as the app's: two columns on a large screen, one on a phone. On a phone the header is
+   the wordmark (the title stays for screen readers). */
+.homemark {
+  flex: 1;
+  color: var(--fg);
+}
+
+@media (max-width: 599px) {
+  .page.home .titlebar h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .page.home .titlebar .iconbtn.phone-only {
+    display: grid;
+  }
 }
 
 .homegrid {
   display: grid;
+  grid-template-areas: 'week' 'day' 'metrics' 'last';
   gap: 0 20px;
   align-items: start;
 }
 
+.h-week {
+  grid-area: week;
+}
+
+.h-day {
+  grid-area: day;
+}
+
+.h-metrics {
+  grid-area: metrics;
+}
+
+.h-last {
+  grid-area: last;
+}
+
+/* Tablet: the week across, then the last day beside the metrics two by two. */
+@media (min-width: 600px) {
+  .homegrid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'week week' 'day metrics' 'last last';
+  }
+
+  /* With nothing to show for the last day, the metrics take the row. */
+  .h-day:empty + .h-metrics {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Desktop: the week (7/12) beside the last day (5/12), the metrics in one row. With nothing to show
+   for the last day, the week takes the row. */
 @media (min-width: 1200px) {
   .homegrid {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-areas: 'week day' 'metrics metrics' 'last last';
+  }
+
+  .h-metrics .tiles {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .h-week:has(+ .h-day:empty) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The last seven days in one card, its rows in columns where there is room. */
+@media (min-width: 600px) {
+  .h-last .rowsbox {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    column-gap: 32px;
+    overflow: hidden;
+  }
+
+  .h-last .hrow {
+    margin-top: -1px;
+    border-bottom: 0;
+    border-top: 1px solid var(--line);
   }
 }
 
@@ -3503,9 +3668,27 @@ textarea {
   margin-left: auto;
 }
 
-@media (max-width: 600px) {
+/* Desktop: the six figures in one row, in a box, as docs/prototypes/web. */
+@media (min-width: 1200px) {
+  .figures {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px 20px;
+  }
+
   .figs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .figs > div {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .figs dd {
+    font-size: 20px;
   }
 }
 
@@ -3561,10 +3744,6 @@ button.danger svg.i {
 }
 
 /* Goals (OS-911), as the app's: the card opens its chart; side by side on a large screen. */
-.page.goals {
-  max-width: 1100px;
-}
-
 .goalgrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -3739,10 +3918,6 @@ button.danger svg.i {
 }
 
 /* Stats (OS-912), as the app's: the period over everything, the cards two by two on a large screen. */
-.page.stats {
-  max-width: 1200px;
-}
-
 .periodbar {
   display: flex;
   flex-wrap: wrap;
@@ -3838,16 +4013,8 @@ button.danger svg.i {
   background: var(--surface-2);
 }
 
-.page.estimates {
-  max-width: 1100px;
-}
-
 /* Settings in the app's sections (OS-914): the list on the left and the open one on the right on a large
    screen; on a phone the list is a page and each section another. */
-.page.settings {
-  max-width: 1200px;
-}
-
 .settingswrap {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
@@ -4169,7 +4336,7 @@ h1.greeting {
   padding: 1px 8px;
   border-radius: 999px;
   /* The tone towards the text colour, so it reads on its pale background in any theme. */
-  color: color-mix(in srgb, var(--tone) 60%, var(--fg));
+  color: color-mix(in srgb, var(--tone) 55%, var(--fg));
   background: color-mix(in srgb, var(--tone) 15%, transparent);
 }
 
@@ -4265,6 +4432,17 @@ h1.greeting {
   color: var(--muted);
 }
 
+/* As the app's bar: 8 px on the line's colour, the usual week marked across it. */
+.usualweek .meterbar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+}
+
+.usualweek .meterbar i {
+  border-radius: 4px;
+}
+
 .formpill.ahead {
   --tone: var(--form-positive);
 }
@@ -4284,4 +4462,416 @@ h1.greeting {
   transform: translateX(-50%);
   white-space: nowrap;
   font-size: 12px;
+}
+
+/* The activity (docs/prototypes/web): the map across the top of the detail, edge to edge. */
+.page.detail.withmap {
+  padding-top: 0;
+}
+
+.page.detail > .mapblock {
+  margin-inline: calc(-1 * var(--gutter));
+  border-radius: 0;
+  border-width: 0 0 1px;
+}
+
+/* Desktop: the charts two by two and the rest beside a column with the Coach's summary and the zones. */
+.detailgrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 16px;
+  align-items: start;
+}
+
+.detailmain .chartgrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detailside > :first-child {
+  margin-top: 0;
+}
+
+/* The Activities header's search bar, as the app's. */
+.feedsearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0 12px;
+  min-height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.feedsearch:focus-within {
+  border-color: var(--accent);
+}
+
+.feedsearch input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+}
+
+/* An activity on a phone, as the app's pushed screen: no tab bar, and back, edit, share and photos as
+   round buttons floating over the map. */
+.floatbar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 0 12px;
+}
+
+.page.detail.withmap > .floatbar {
+  margin-bottom: -56px;
+}
+
+.floatbtn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--fg);
+}
+
+.floatbtn svg.i {
+  width: 22px;
+  height: 22px;
+}
+
+@media (max-width: 599px) {
+  .app.pushed .tabbar,
+  .crumbrow.show-tablet {
+    display: none;
+  }
+
+  .app.pushed {
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+/* The map's zoom under its options button, and both under the floating buttons on a phone. */
+.mapblock .maplibregl-ctrl-top-right {
+  top: 52px;
+}
+
+.floatbar + .mapblock .mapopts {
+  top: 68px;
+}
+
+.floatbar + .mapblock .mappanel {
+  top: 116px;
+}
+
+.floatbar + .mapblock .maplibregl-ctrl-top-right {
+  top: 108px;
+}
+
+/* Health (docs/prototypes/web): the period as a segmented control in the header; last night beside
+   today on a desktop, today's tiles two by three; the three trends in one row. */
+.page.health .titlebar .periods {
+  margin-right: 6px;
+}
+
+.healthtop {
+  display: grid;
+  gap: 0 20px;
+  align-items: start;
+}
+
+.h-today .cards {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+@media (min-width: 1200px) {
+  .healthtop {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  .h-today .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page.health .statgrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .page.health .titlebar {
+    flex-wrap: wrap;
+  }
+
+  .page.health .titlebar .periods {
+    order: 3;
+    flex-basis: 100%;
+    margin: 6px 0 0;
+  }
+
+  .page.health .titlebar .periods button {
+    flex: 1;
+  }
+
+  .h-today .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Goals' header (docs/prototypes/web): icons on a phone, as the app; labelled buttons from 600 px. */
+.titlebar .iconbtn.labelled span {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .titlebar .iconbtn.labelled {
+    width: auto;
+    height: 40px;
+    color: var(--fg);
+    text-decoration: none;
+    display: inline-flex;
+    gap: 6px;
+    padding: 0 16px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-weight: 600;
+  }
+
+  .titlebar .iconbtn.labelled span {
+    display: inline;
+  }
+
+  .titlebar .iconbtn.labelled.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-fg);
+  }
+
+  .titlebar .iconbtn.labelled svg.i {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.goalhead.fixed {
+  cursor: default;
+}
+
+/* You (docs/prototypes/web): on a desktop the profile and the menu in a fixed column on the left, the
+   year and the tables on the right. Tables scroll sideways instead of wrapping inside their cells. */
+.tablescroll {
+  overflow-x: auto;
+}
+
+.page.profile .tablescroll th,
+.page.profile .tablescroll td {
+  white-space: nowrap;
+}
+
+@media (min-width: 1200px) {
+  .page.profile {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 0 24px;
+    align-items: start;
+  }
+
+  .youside {
+    position: sticky;
+    top: 20px;
+  }
+
+  .youside .phead {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .youside .phead .actions,
+  .youside .phead .actions button {
+    width: 100%;
+  }
+
+  .youmain > h2:first-child {
+    margin-top: 0;
+  }
+
+  .youmain .kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Stats (docs/prototypes/web): on a desktop the cards in rows of two of equal height, so there are no
+   holes; the comparison with Strava across. */
+@media (min-width: 1200px) {
+  .page.stats:not(.health) .statgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .page.stats:not(.health) .statgrid > .wide,
+  .page.stats:not(.health) .statgrid > :nth-child(odd):has(+ .wide),
+  .page.stats:not(.health) .statgrid > :nth-child(odd):last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Settings: the chosen section marked as in the rail. */
+.settingslist a.on {
+  background: var(--accent-soft);
+  border-radius: 12px;
+}
+
+/* The Coach (docs/prototypes/web): on a desktop the weekly report on the left and the conversation on
+   the right, in a card the height of the screen, the suggestions centred in it and the question field
+   held at its foot. */
+@media (min-width: 1200px) {
+  .coachgrid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .coachgrid > .weekly {
+    position: sticky;
+    top: 20px;
+    margin: 0;
+  }
+
+  .coachgrid > :only-child {
+    grid-column: 1 / -1;
+  }
+
+  .coachgrid > .chat {
+    box-sizing: border-box;
+    min-height: calc(100dvh - 160px);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 24px;
+  }
+
+  .coachgrid > .chat .intro {
+    flex: 1;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .coachgrid > .chat .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .coachgrid > .chat .turns {
+    flex: 1;
+  }
+
+  .coachgrid > .chat .composer {
+    position: sticky;
+    bottom: 0;
+    margin-top: auto;
+    padding-top: 8px;
+    background: var(--surface);
+  }
+}
+
+@media (min-width: 1200px) {
+  .coachgrid > .chat .turns:empty {
+    display: none;
+  }
+}
+
+/* The heatmap, as the app's: the map fills the screen under the title, the sports centred over it and
+   the number of routes at its foot. */
+.page.heatmap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.heatwrap {
+  position: relative;
+  flex: 1;
+  min-height: 420px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.heatwrap .map {
+  margin: 0;
+  border-radius: 0;
+}
+
+.heatwrap > .note {
+  padding: 24px;
+}
+
+.heatwrap .heatchips {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0 12px;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.heatwrap .heatchips .chip {
+  pointer-events: auto;
+}
+
+.heatwrap .heatcount {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-weight: 600;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+/* The map's zoom under the sports. */
+.heatwrap .maplibregl-ctrl-top-right {
+  top: 52px;
+}
+
+@media (max-width: 599px) {
+  .heatwrap {
+    margin-inline: calc(-1 * var(--gutter));
+    border-radius: 0;
+    border-width: 1px 0 0;
+  }
 }

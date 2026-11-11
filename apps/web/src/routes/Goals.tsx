@@ -17,6 +17,7 @@ import { api } from '../api';
 import { Modal } from '../detail/Tools';
 import { locale, t } from '../i18n';
 import { MaterialIcon } from '../MaterialIcon';
+import { DESKTOP, useMedia } from '../media';
 import { usePrefs } from '../prefs';
 import { CardSkeleton, Pulse } from '../Skeleton';
 
@@ -58,24 +59,27 @@ export function Goals() {
     <section className="page goals">
       <div className="titlebar">
         <h1>{t('nav.goals')}</h1>
+        {/* Icons on a phone, as the app; labelled buttons from 600 px (docs/prototypes/web). */}
         <button
           type="button"
-          className="iconbtn"
+          className="iconbtn labelled"
           aria-label={editing ? t('goals.doneEditing') : t('goals.edit')}
           aria-pressed={editing}
           title={editing ? t('goals.doneEditing') : t('goals.edit')}
           onClick={() => setEditing(!editing)}
         >
           <MaterialIcon name={editing ? 'check' : 'edit_square'} />
+          <span aria-hidden="true">{editing ? t('goals.doneEditing') : t('goals.edit')}</span>
         </button>
         <button
           type="button"
-          className="iconbtn"
+          className="iconbtn labelled primary"
           aria-label={t('goals.add')}
           title={t('goals.add')}
           onClick={() => setForm('new')}
         >
           <MaterialIcon name="add" />
+          <span aria-hidden="true">{t('goals.add')}</span>
         </button>
       </div>
       {!goals.data && (
@@ -150,17 +154,25 @@ function rememberGoal(id: number, open: boolean): void {
 function GoalCard({ goal, format, children }: { goal: GoalOut; format: Format; children?: React.ReactNode }) {
   const share = Math.min(1, goal.current / goal.target);
   const done = goal.current >= goal.target;
-  // Open or folded as it was left, in this browser.
-  const [chart, setChart] = useState(() => openGoals().has(goal.id));
+  // Open or folded as it was left, in this browser. On a desktop the chart is always open
+  // (docs/prototypes/web): there is room for it, so the card is not a toggle there.
+  const desktop = useMedia(DESKTOP);
+  const [open, setChart] = useState(() => openGoals().has(goal.id));
+  const chart = desktop || open;
   const toggle = () => {
-    setChart(!chart);
-    rememberGoal(goal.id, !chart);
+    setChart(!open);
+    rememberGoal(goal.id, !open);
   };
+  const Head = desktop ? 'div' : 'button';
   return (
     <article className="panel goalcard">
       {/* The whole card opens and closes the day-by-day chart; the chart sits outside the button, so
           reading it never folds it. */}
-      <button type="button" className="goalhead" aria-expanded={chart} onClick={toggle}>
+      <Head
+        {...(desktop
+          ? { className: 'goalhead fixed' }
+          : { type: 'button' as const, className: 'goalhead', 'aria-expanded': chart, onClick: toggle })}
+      >
         <span className="goalrow">
           <b>{goalName(goal)}</b>
           <b className="num">{Math.round(share * 100)} %</b>
@@ -181,11 +193,13 @@ function GoalCard({ goal, format, children }: { goal: GoalOut; format: Format; c
                 })}
           </small>
         )}
-        <span className="goaltoggle">
-          {t(chart ? 'goals.hideChart' : 'goals.showChart')}
-          <MaterialIcon name={chart ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} />
-        </span>
-      </button>
+        {!desktop && (
+          <span className="goaltoggle">
+            {t(chart ? 'goals.hideChart' : 'goals.showChart')}
+            <MaterialIcon name={chart ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} />
+          </span>
+        )}
+      </Head>
       {chart && <GoalChart goal={goal} format={format} />}
       {children}
     </article>

@@ -174,7 +174,8 @@ describe('phase 3 screens', () => {
   it('notifications: the bell on Home opens what the engine noticed (OS-916)', async () => {
     mockApi();
     const router = renderAt('/');
-    await userEvent.click(await screen.findByRole('link', { name: 'Notifications' }));
+    const header = within(await screen.findByRole('main'));
+    await userEvent.click(await header.findByRole('link', { name: 'Notifications' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/notifications'));
     expect(await screen.findByText('New 5 km record: 25:00')).toBeInTheDocument();
   });

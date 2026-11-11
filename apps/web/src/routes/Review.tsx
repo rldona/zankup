@@ -59,9 +59,6 @@ export function Review() {
   const heading = title(period, value);
   return (
     <section className="page review">
-      <p className="crumbs">
-        <Link to="/stats">{t('nav.stats')}</Link>
-      </p>
       <div className="statshead">
         <h1>{t(period === 'year' ? 'review.yearTitle' : 'review.monthTitle', { period: heading })}</h1>
         <div className="seg" role="group" aria-label={t('review.period')}>

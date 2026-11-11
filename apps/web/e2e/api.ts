@@ -169,7 +169,8 @@ export async function fakeApi(page: Page) {
         never_sends: [],
       });
     if (path === '/api/ai/tokens') return json(route, []);
-    if (path.endsWith('/summary')) return json(route, { detail: 'No summary yet' }, 404);
+    // An activity's Coach summary: none yet. (Not the profile's summary, which ends the same way.)
+    if (/^\/api\/activities\/\d+\/summary$/.test(path)) return json(route, { detail: 'No summary yet' }, 404);
     if (path === '/api/auth/logout') {
       state.signedIn = false;
       return route.fulfill({ status: 204 });
@@ -210,11 +211,21 @@ export async function fakeApi(page: Page) {
       const monday = '2026-11-09';
       return json(route, {
         today,
+        // A run and a ride on Monday, a ride on Tuesday: the circles, the second sport's dot and the
+        // days without an activity all show.
         days: Array.from({ length: 7 }, (_, i) => ({
           date: `2026-11-${String(9 + i).padStart(2, '0')}`,
-          activities: [],
+          activities:
+            i === 0
+              ? [
+                  { id: 7, sport: 'run', name: 'Morning run' },
+                  { id: 8, sport: 'ride', name: 'Hill ride' },
+                ]
+              : i === 1
+                ? [{ id: 8, sport: 'ride', name: 'Hill ride' }]
+                : [],
         })),
-        this_week: { week_start: monday, count: 0, distance_m: 0, moving_s: 0, ascent_m: 0 },
+        this_week: { week_start: monday, count: 3, distance_m: 69400, moving_s: 9000, ascent_m: 950 },
         previous: Array.from({ length: 12 }, (_, i) => ({
           week_start: `2026-08-${10 + i}`,
           count: 3,
@@ -345,7 +356,80 @@ export async function fakeApi(page: Page) {
     if (path === '/api/stats/heatmap') return json(route, { routes: [RUN.route] });
     if (path === '/api/routes') return json(route, []);
     if (path === '/api/segments') return json(route, []);
-    if (path === '/api/goals') return json(route, []);
+    if (path === '/api/goals')
+      return json(route, [
+        {
+          id: 1,
+          period: 'week',
+          metric: 'distance',
+          sport: 'run',
+          target: 40000,
+          current: 5400,
+          projection: 18900,
+          start: '2026-11-09',
+          end: '2026-11-16',
+        },
+        {
+          id: 2,
+          period: 'month',
+          metric: 'time',
+          sport: null,
+          target: 72000,
+          current: 30600,
+          projection: 85000,
+          start: '2026-11-01',
+          end: '2026-12-01',
+        },
+      ]);
+    // Health: a fortnight of days up to the one asked for, and last night's stages.
+    if (path === '/api/wellness/days') {
+      const end = new Date(`${url.searchParams.get('end') ?? '2026-11-12'}T12:00:00Z`);
+      return json(
+        route,
+        Array.from({ length: 14 }, (_, i) => {
+          const d = new Date(end);
+          d.setUTCDate(d.getUTCDate() - 14 + i);
+          const day = d.toISOString().slice(0, 10);
+          const v = (value: number) => ({ value, source: 'garmin', others: [] });
+          return {
+            day,
+            sleep: {
+              source: 'garmin',
+              others: [],
+              start_utc: `${day}T00:00:00Z`,
+              end_utc: `${day}T07:00:00Z`,
+              utc_offset_s: 3600,
+              asleep_s: 6.5 * 3600 + (i % 3) * 900,
+              awake_s: 900,
+              light_s: 4 * 3600,
+              deep_s: 3600,
+              rem_s: 1.5 * 3600,
+              score: 70 + (i % 5) * 4,
+            },
+            resting_hr: v(50 + (i % 4)),
+            hrv: v(52 + (i % 6)),
+            spo2: v(96),
+            respiration: v(12.4),
+            steps: v(6000 + i * 300),
+            tsb: -5 + i,
+            readiness: { score: 60 + i, hrv: 60, resting_hr: 62, sleep: 75, form: 55 },
+          };
+        }),
+      );
+    }
+    if (path.startsWith('/api/wellness/nights/'))
+      return json(route, {
+        day: path.split('/').at(-1),
+        chosen: null,
+        stages: [
+          { offset_s: 0, duration_s: 600, stage: 'awake' },
+          { offset_s: 600, duration_s: 3600, stage: 'deep' },
+          { offset_s: 4200, duration_s: 9000, stage: 'light' },
+          { offset_s: 13200, duration_s: 3600, stage: 'rem' },
+          { offset_s: 16800, duration_s: 7200, stage: 'light' },
+        ],
+        alternatives: [],
+      });
     if (path === '/api/events') return json(route, []);
     if (path === '/api/engine')
       return json(route, {

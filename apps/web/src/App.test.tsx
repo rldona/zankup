@@ -398,6 +398,34 @@ describe('app skeleton', () => {
     expect(document.querySelector('.crumb')).toBeNull();
   });
 
+  it('leads back to the screen each one was opened from, once', async () => {
+    mockApi({ '/api/auth/me': () => Response.json(ME) });
+    const cases: [string, string, string, string][] = [
+      ['/review/month/2026-11', 'Stats', '/stats', 'always'],
+      ['/stats/heatmap', 'Stats', '/stats', 'always'],
+      ['/routes', 'Stats', '/stats', 'always'],
+      ['/routes/3', 'Your routes', '/routes', 'always'],
+      ['/estimates', 'You', '/profile', 'always'],
+      ['/settings/import', 'Settings', '/settings', 'always'],
+      ['/settings/account', 'Settings', '/settings', 'compact'],
+      ['/search', 'Feed', '/activities', 'always'],
+      ['/notifications', 'Home', '/', 'phone'],
+    ];
+    for (const [path, name, to, show] of cases) {
+      renderAt(path);
+      const crumbs = await waitFor(() => {
+        const found = document.querySelectorAll('.crumb');
+        if (!found.length) throw new Error(`no way back on ${path}`);
+        return found;
+      });
+      expect(crumbs, path).toHaveLength(1);
+      expect(crumbs[0], path).toHaveTextContent(name);
+      expect(crumbs[0], path).toHaveAttribute('href', to);
+      expect(crumbs[0]?.parentElement, path).toHaveClass(`show-${show}`);
+      cleanup();
+    }
+  });
+
   it('keeps the feed beside the detail on wide screens', async () => {
     mockApi({
       '/api/auth/me': () => Response.json(ME),

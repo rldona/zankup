@@ -231,8 +231,8 @@ svg.i.m {
   padding: 8px var(--gutter) 0;
 }
 
-/* Under a way back that shows; a phone-only one (Coach, Settings…) is hidden from 600 px. */
-.crumbrow:not(.narrow-only) + .page {
+/* Under a way back that shows, the page needs no top padding of its own. */
+.crumbrow.show-always + .page {
   padding-top: 0;
 }
 
@@ -319,15 +319,28 @@ svg.i.m {
   display: none;
 }
 
+/* The way back shows where nothing else on screen leads back: on a phone only (the rail names the
+   Coach, the notifications and Settings), below 1024 px (Settings' list sits beside its sections from
+   there), or on a tablet only (an activity: the list beside it on a desktop, floating buttons on a phone). */
 @media (min-width: 600px) {
-  .crumbrow.narrow-only:not(:has(+ .feedwrap)) {
+  .crumbrow.show-phone,
+  .crumbrow.show-tablet:not(:has(+ .feedwrap)) {
     display: none;
+  }
+
+  .crumbrow.show-compact + .page {
+    padding-top: 0;
   }
 }
 
 @media (min-width: 1024px) {
-  .crumbrow.narrow-only {
+  .crumbrow.show-compact,
+  .crumbrow.show-tablet {
     display: none;
+  }
+
+  .crumbrow.show-compact + .page {
+    padding-top: 20px;
   }
 }
 
@@ -388,7 +401,7 @@ svg.i.m {
     padding: 14px var(--gutter);
   }
 
-  .crumbrow + .page {
+  .crumbrow:not(.show-tablet) + .page {
     padding-top: 0;
   }
 
@@ -2412,11 +2425,6 @@ a.button {
 
 .over .gearbar i {
   background: var(--warn, var(--accent));
-}
-
-.crumbs {
-  margin: 0 0 4px;
-  font-size: 14px;
 }
 
 .bullets {
@@ -4547,7 +4555,7 @@ h1.greeting {
 
 @media (max-width: 599px) {
   .app.pushed .tabbar,
-  .crumbrow.pushed {
+  .crumbrow.show-tablet {
     display: none;
   }
 

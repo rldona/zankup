@@ -426,6 +426,18 @@ describe('app skeleton', () => {
     }
   });
 
+  it("picks the heatmap's sport from chips over the map", async () => {
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/stats/heatmap': () => Response.json({ routes: [] }),
+    });
+    const router = renderAt('/stats/heatmap');
+    const sports = await screen.findByRole('group', { name: 'Sports' });
+    await userEvent.click(within(sports).getByRole('button', { name: 'Ride' }));
+    await waitFor(() => expect(router.state.location.search).toBe('?sport=ride'));
+    expect(within(sports).getByRole('button', { name: 'Ride' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('keeps the feed beside the detail on wide screens', async () => {
     mockApi({
       '/api/auth/me': () => Response.json(ME),

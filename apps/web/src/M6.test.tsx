@@ -155,6 +155,23 @@ describe('phase 6: health', () => {
     expect(screen.getByRole('heading', { name: 'Readiness and form' })).toBeInTheDocument();
   });
 
+  it('picks the period from a segmented control in the header', async () => {
+    const starts: string[] = [];
+    mockApi({
+      '/api/wellness/days': (url) => {
+        starts.push(url.searchParams.get('start') ?? '');
+        return Response.json(DAYS);
+      },
+    });
+    const router = renderAt('/health');
+    const periods = await screen.findByRole('group', { name: 'Period' });
+    expect(within(periods).getByRole('button', { name: '30 days' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(within(periods).getByRole('button', { name: '90 days' }));
+    await waitFor(() => expect(router.state.location.search).toBe('?days=90'));
+    expect(within(periods).getByRole('button', { name: '90 days' })).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(new Set(starts).size).toBe(2));
+  });
+
   it('without data, it points to connecting a source', async () => {
     mockApi({ '/api/wellness/days': () => Response.json([]) });
     renderAt('/health');

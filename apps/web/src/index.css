@@ -4571,3 +4571,53 @@ h1.greeting {
 .floatbar + .mapblock .maplibregl-ctrl-top-right {
   top: 108px;
 }
+
+/* Health (docs/prototypes/web): the period as a segmented control in the header; last night beside
+   today on a desktop, today's tiles two by three; the three trends in one row. */
+.page.health .titlebar .periods {
+  margin-right: 6px;
+}
+
+.healthtop {
+  display: grid;
+  gap: 0 20px;
+  align-items: start;
+}
+
+.h-today .cards {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+@media (min-width: 1200px) {
+  .healthtop {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  .h-today .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page.health .statgrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .page.health .titlebar {
+    flex-wrap: wrap;
+  }
+
+  .page.health .titlebar .periods {
+    order: 3;
+    flex-basis: 100%;
+    margin: 6px 0 0;
+  }
+
+  .page.health .titlebar .periods button {
+    flex: 1;
+  }
+
+  .h-today .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

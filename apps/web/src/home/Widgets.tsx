@@ -14,6 +14,9 @@ import {
   formatHoursMinutes,
   formatters,
   formLabel,
+  formTone,
+  weekEffort,
+  weekQuery,
   healthAverage,
   healthDaysQuery,
   isoDay,
@@ -246,7 +249,9 @@ export function Metrics() {
   const { health } = useHomeData(today);
   const estimates = useQuery(estimatesQuery(api));
   const fitness = useQuery(fitnessQuery(api, {}));
+  const week = useQuery(weekQuery(api, today));
   const me = useQuery(meQuery(api));
+  const effort = week.data ? weekEffort(week.data) : null;
   const vdot = estimates.data?.find((e) => e.kind === 'vdot')?.value;
   const ftp = estimates.data?.find((e) => e.kind === 'ftp')?.value;
   const now = fitness.data?.at(-1);
@@ -281,14 +286,42 @@ export function Metrics() {
           </span>
         </Tile>
         {now ? (
-          <Tile icon="speed" label={t('home.load')}>
-            <b className="form">{t(formLabel(now.tsb))}</b>
-            <b className="num big">
-              {Math.round(now.atl)}/{Math.round(now.ctl)}
-            </b>
-            <small>
-              {t('stats.atl')} / {t('stats.ctl')}
-            </small>
+          <Tile icon="speed" label={t('home.load')} stretch>
+            <p className="big num freshness">
+              {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
+              <span className={`formpill ${formTone(now.tsb)}`}>{t(formLabel(now.tsb))}</span>
+            </p>
+            {/* Freshness is fitness minus fatigue: both as bars, so the gap between them shows. */}
+            <ul className="formbars num">
+              {(
+                [
+                  ['ctl', t('stats.ctl'), now.ctl],
+                  ['atl', t('stats.atl'), now.atl],
+                ] as const
+              ).map(([key, label, value]) => (
+                <li key={key}>
+                  <span>{label}</span>
+                  <b>{value.toFixed(0)}</b>
+                  <i
+                    className={key}
+                    style={{ width: `${Math.max(2, (value / Math.max(1, now.ctl, now.atl)) * 100)}%` }}
+                  />
+                </li>
+              ))}
+            </ul>
+          </Tile>
+        ) : null}
+        {effort && week.data ? (
+          // This week's moving time against an ordinary week (the previous twelve): 100 % is as usual.
+          <Tile icon="timer" label={t('stats.load')} stretch>
+            <p className="big num">
+              {effort.share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${effort.share} %`}
+            </p>
+            <div className="meterbar" aria-hidden="true">
+              <i style={{ width: `${Math.min(100, (effort.share ?? 0) / 1.5)}%` }} />
+              <b style={{ left: `${100 / 1.5}%` }} />
+            </div>
+            <small>{t('stats.loadNote', { average: formatHoursMinutes(effort.average) })}</small>
           </Tile>
         ) : null}
       </div>
@@ -323,14 +356,25 @@ function Row({
   );
 }
 
-function Tile({ icon, label, children }: { icon: MaterialIconName; label: string; children: ReactNode }) {
+function Tile({
+  icon,
+  label,
+  children,
+  stretch = false,
+}: {
+  icon: MaterialIconName;
+  label: string;
+  children: ReactNode;
+  /** Bars across the tile instead of one centred figure (the training load, this week's effort). */
+  stretch?: boolean;
+}) {
   return (
     <article className="panel tile">
       <CardTitle>
         <MaterialIcon name={icon} />
         {label}
       </CardTitle>
-      <div className="tbody">{children}</div>
+      <div className={stretch ? 'tbody stretch' : 'tbody'}>{children}</div>
     </article>
   );
 }

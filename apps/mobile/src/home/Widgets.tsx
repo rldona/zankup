@@ -15,6 +15,11 @@ import {
   SPORT_ICONS,
   dayHeading,
   formLabel,
+  formTone,
+  weekEffort,
+  weekQuery,
+  mix,
+  alpha,
   daysBefore,
   healthAverage as average,
   isoDay,
@@ -33,7 +38,7 @@ import { Icon, type IconName } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
 import { useTheme } from '../theme';
-import { Card, Heading, Muted, styles as ui } from '../ui';
+import { Card, Heading, Muted, ProgressBar, styles as ui } from '../ui';
 import { CardSkeleton, Pulse } from '../Skeleton';
 
 type Format = ReturnType<typeof useFormat>;
@@ -283,8 +288,10 @@ export function Metrics() {
   const today = useToday();
   const estimates = useQuery(estimatesQuery(api));
   const fitness = useQuery(fitnessQuery(api, {}));
+  const week = useQuery(weekQuery(api, today));
   const me = useQuery(meQuery(api));
   const health = useHealthWeek(today);
+  const effort = week.data ? weekEffort(week.data) : null;
   const vdot = estimates.data?.find((e) => e.kind === 'vdot')?.value;
   const ftp = estimates.data?.find((e) => e.kind === 'ftp')?.value;
   const now = fitness.data?.at(-1);
@@ -325,13 +332,46 @@ export function Metrics() {
     </Tile>,
     now ? (
       <Tile key="load" icon="speed" label={t('home.load')}>
-        <Text style={{ color: c.fg, fontSize: 24, fontWeight: '700' }}>{t(formLabel(now.tsb))}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>
+            {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
+          </Text>
+          <Pill colour={formColour(c, now.tsb)}>{t(formLabel(now.tsb))}</Pill>
+        </View>
+        {/* Freshness is fitness minus fatigue: both as bars, so the gap between them shows. */}
+        {(
+          [
+            [t('stats.ctl'), now.ctl, c.accent],
+            [t('stats.atl'), now.atl, c.zone5],
+          ] as const
+        ).map(([label, value, colour]) => (
+          <View key={label} style={{ gap: 3 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Muted style={{ fontSize: 12 }}>{label}</Muted>
+              <Text style={{ color: c.fg, fontSize: 12, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
+                {value.toFixed(0)}
+              </Text>
+            </View>
+            <View
+              style={{
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: colour,
+                width: `${Math.max(2, (value / Math.max(1, now.ctl, now.atl)) * 100)}%`,
+              }}
+            />
+          </View>
+        ))}
+      </Tile>
+    ) : null,
+    effort && week.data ? (
+      // This week's moving time against an ordinary week (the previous twelve): 100 % is as usual.
+      <Tile key="effort" icon="timer" label={t('stats.load')}>
         <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>
-          {Math.round(now.atl)}/{Math.round(now.ctl)}
+          {effort.share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${effort.share} %`}
         </Text>
-        <Muted>
-          {t('stats.atl')} / {t('stats.ctl')}
-        </Muted>
+        {effort.share != null && <ProgressBar value={effort.share} max={150} label={t('stats.load')} />}
+        <Muted>{t('stats.loadNote', { average: formatHoursMinutes(effort.average) })}</Muted>
       </Tile>
     ) : null,
   ].filter(Boolean);
@@ -344,6 +384,38 @@ export function Metrics() {
 }
 
 // --- pieces -------------------------------------------------------------------------------------------
+
+/** The form's colour: rested green, neither grey, building in the accent, overreaching red. */
+function formColour(c: ReturnType<typeof useTheme>, tsb: number): string {
+  const tone = formTone(tsb);
+  return tone === 'fresh'
+    ? c.formPositive
+    : tone === 'optimal'
+      ? c.accent
+      : tone === 'overreaching'
+        ? c.formNegative
+        : c.muted;
+}
+
+function Pill({ colour, children }: { colour: string; children: string }) {
+  const c = useTheme();
+  return (
+    <Text
+      style={{
+        color: mix(colour, c.fg, 0.4), // towards the text colour, to read on the pale pill
+        backgroundColor: alpha(colour, 0.15),
+        fontSize: 12,
+        fontWeight: '600',
+        paddingHorizontal: 8,
+        paddingVertical: 1,
+        borderRadius: 999,
+        overflow: 'hidden',
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
 
 function Row({
   icon,

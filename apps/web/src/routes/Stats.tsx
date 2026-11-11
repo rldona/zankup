@@ -11,18 +11,15 @@ import {
   recordsQuery,
   summaryQuery,
   volumeQuery,
-  weekQuery,
   yearsQuery,
   formatDuration,
   type FitnessDay,
   stravaComparisonQuery,
-  formLabel,
   effortShown,
   themes,
   yearColours,
   compare,
   comparisonLabels,
-  formTone,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -44,7 +41,6 @@ import { effortName } from '../stats/format';
 import { MaterialIcon } from '../MaterialIcon';
 import { CardTitle, Menu, InfoTip } from '../ui';
 import { useResolvedTheme } from '../theme';
-import { localToday } from '../week/today';
 
 const MODES = ['last12', 'year', 'month', 'all'] as const;
 type Mode = (typeof MODES)[number];
@@ -190,8 +186,6 @@ export function Stats() {
         </p>
       )}
 
-      <Now theme={theme} />
-
       <div className="statgrid">
         <FitnessSection range={range} theme={theme} />
         <Volume range={range} unit={period.unit} theme={theme} format={format} />
@@ -252,65 +246,6 @@ function Stepper({
         <MaterialIcon name="chevron_right" />
       </button>
     </div>
-  );
-}
-
-function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
-  const [today] = useState(localToday);
-  const week = useQuery(weekQuery(api, today));
-  const fitness = useQuery(fitnessQuery(api, {}));
-  const now = fitness.data?.at(-1);
-  const average = week.data
-    ? week.data.previous.reduce((s, w) => s + w.moving_s, 0) / (week.data.previous.length || 1)
-    : 0;
-  const share = week.data && average > 0 ? Math.round((week.data.this_week.moving_s / average) * 100) : null;
-  void theme;
-  return (
-    <>
-      <h2>{t('stats.now')}</h2>
-      <div className="cards">
-        {now && (
-          <article className="panel">
-            <h3>{t('stats.tsb')}</h3>
-            <p className="big num freshness">
-              {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
-              <span className={`formpill ${formTone(now.tsb)}`}>{t(formLabel(now.tsb))}</span>
-            </p>
-            {/* Freshness is fitness minus fatigue: both as bars, so the gap between them shows. */}
-            <ul className="formbars num">
-              {(
-                [
-                  ['ctl', t('stats.ctl'), now.ctl],
-                  ['atl', t('stats.atl'), now.atl],
-                ] as const
-              ).map(([key, label, value]) => (
-                <li key={key}>
-                  <span>{label}</span>
-                  <b>{value.toFixed(0)}</b>
-                  <i
-                    className={key}
-                    style={{ width: `${Math.max(2, (value / Math.max(1, now.ctl, now.atl)) * 100)}%` }}
-                  />
-                </li>
-              ))}
-            </ul>
-          </article>
-        )}
-        {week.data && (
-          <article className="panel">
-            <h3>{t('stats.load')}</h3>
-            <p className="big num">
-              {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
-            </p>
-            <div className="meterbar" aria-hidden="true">
-              <i style={{ width: `${Math.min(100, (share ?? 0) / 1.5)}%` }} />
-              <b style={{ left: `${100 / 1.5}%` }} />
-            </div>
-            <p className="note">{t('stats.loadNote', { average: formatHoursMinutes(average) })}</p>
-          </article>
-        )}
-      </div>
-    </>
   );
 }
 

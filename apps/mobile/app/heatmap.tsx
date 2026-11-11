@@ -1,6 +1,6 @@
 /**
  * The personal heatmap on the phone (OS-520), as in the PWA (OS-310): every route with GPS, on a map
- * that fills the screen. A see-through header (back and the title) and the sport chips sit over the
+ * that fills the screen. A see-through header (back on a round background, the title on the map itself) and the sport chips sit over the
  * map, and the number of routes at the bottom.
  */
 import { heatmapQuery } from '@zankup/core';
@@ -75,15 +75,20 @@ export default function HeatmapScreen() {
           >
             <Icon name="arrow_back" color={c.fg} />
           </Pressable>
-          <View style={[pill, { paddingHorizontal: 14, height: 40, justifyContent: 'center' }]}>
-            <Text
-              accessibilityRole="header"
-              numberOfLines={1}
-              style={{ color: c.fg, fontSize: 16, fontWeight: '600' }}
-            >
-              {t('heatmap.title')}
-            </Text>
-          </View>
+          <Text
+            accessibilityRole="header"
+            numberOfLines={1}
+            style={{
+              flex: 1,
+              color: c.fg,
+              fontSize: 18,
+              fontWeight: '600',
+              textShadowColor: c.bg,
+              textShadowRadius: 6,
+            }}
+          >
+            {t('heatmap.title')}
+          </Text>
         </View>
         <View style={{ alignItems: 'center', marginTop: 12 }}>
           <Choice

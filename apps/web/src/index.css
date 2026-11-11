@@ -4632,6 +4632,8 @@ h1.greeting {
   .titlebar .iconbtn.labelled {
     width: auto;
     height: 40px;
+    color: var(--fg);
+    text-decoration: none;
     display: inline-flex;
     gap: 6px;
     padding: 0 16px;
@@ -4704,5 +4706,20 @@ h1.greeting {
 
   .youmain .kpis {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Stats (docs/prototypes/web): on a desktop the cards in rows of two of equal height, so there are no
+   holes; the comparison with Strava across. */
+@media (min-width: 1200px) {
+  .page.stats:not(.health) .statgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .page.stats:not(.health) .statgrid > .wide,
+  .page.stats:not(.health) .statgrid > :nth-child(odd):has(+ .wide),
+  .page.stats:not(.health) .statgrid > :nth-child(odd):last-child {
+    grid-column: 1 / -1;
   }
 }

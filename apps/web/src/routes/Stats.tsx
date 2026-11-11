@@ -133,13 +133,25 @@ export function Stats() {
             </nav>
           )}
         </div>
+        {/* The calendar and the heatmap: icons on a phone, labelled buttons from 600 px
+            (docs/prototypes/web). */}
+        <Link
+          to="/stats/calendar"
+          className="iconbtn labelled"
+          aria-label={t('stats.calendar')}
+          title={t('stats.calendar')}
+        >
+          <MaterialIcon name="calendar_month" />
+          <span aria-hidden="true">{t('stats.calendar')}</span>
+        </Link>
         <Link
           to="/stats/heatmap"
-          className="iconbtn"
+          className="iconbtn labelled"
           aria-label={t('stats.heatmap')}
           title={t('stats.heatmap')}
         >
           <MaterialIcon name="layers" />
+          <span aria-hidden="true">{t('stats.heatmap')}</span>
         </Link>
       </div>
       <div className="periodbar">
@@ -568,7 +580,7 @@ function CompareWithStrava({ theme }: { theme: ReturnType<typeof useResolvedThem
   const number = (v: number | null | undefined, digits = 2) =>
     v == null ? '–' : v.toLocaleString(locale, { maximumFractionDigits: digits });
   return (
-    <section className="panel">
+    <section className="panel wide">
       <div className="ph">
         <h2>{t('compare.title')}</h2>
         <div className="seg" role="group" aria-label={t('compare.metric')}>

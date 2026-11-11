@@ -127,6 +127,41 @@ test("Home in the app's order at every size, with This week as the app's", async
   await expect(page.getByRole('progressbar', { name: w('home.vsUsual') })).toBeVisible();
 });
 
+test('Health, Goals and You: the period segmented, labelled buttons, open charts, hidden data', async ({
+  page,
+}, info) => {
+  const w = (key: string) => word(lang(info.project.name), key);
+  const width = page.viewportSize()?.width ?? 0;
+  await signIn(page, lang(info.project.name));
+
+  // Health: the period in a segmented control, last night and today, the three trends.
+  await page.goto('/health');
+  const periods = page.getByRole('group', { name: w('stats.period') });
+  await periods.getByRole('button', { name: w('health.period.90') }).click();
+  await expect(page).toHaveURL(/days=90/);
+  await expect(page.getByRole('heading', { name: w('health.lastNight') })).toBeVisible();
+  await expect(page.getByRole('heading', { name: w('health.readinessAndForm') })).toBeVisible();
+
+  // Goals: labelled buttons from 600 px; the chart open on a desktop.
+  await page.goto('/goals');
+  const add = page.getByRole('button', { name: w('goals.add') });
+  await expect(add).toBeVisible();
+  if (width >= 600) await expect(add).toContainText(w('goals.add'));
+  if (width >= 1200) await expect(page.locator('.goalcard .goalchart, .goalcard svg').first()).toBeVisible();
+
+  // You: the physical data hidden by default on a desktop, the tables scroll instead of wrapping.
+  await page.goto('/profile');
+  await expect(page.getByRole('heading', { name: w('profile.physical') })).toBeVisible();
+  const eye = page.getByRole('button', {
+    name: w(width >= 1200 ? 'profile.showPhysical' : 'profile.hidePhysical'),
+  });
+  await expect(eye).toBeVisible();
+  const wraps = await page
+    .locator('.page.profile .tablescroll td')
+    .evaluateAll((cells) => cells.filter((c) => c.getClientRects().length > 1).length);
+  expect(wraps).toBe(0);
+});
+
 test('search keeps its filters in the URL', async ({ page }, info) => {
   const w = (key: string) => word(lang(info.project.name), key);
   await signIn(page, lang(info.project.name));

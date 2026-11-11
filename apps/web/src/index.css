@@ -1164,8 +1164,8 @@ a.button.block {
 }
 
 .days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  display: flex;
+  justify-content: space-between;
   list-style: none;
   padding: 0;
   margin: 12px 0 10px;
@@ -1180,40 +1180,52 @@ a.button.block {
 }
 
 .dot {
+  box-sizing: border-box;
   position: relative;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  border: 1px dashed var(--line);
-  color: var(--sport);
+  border: 2px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
+/* A day with an activity: the sport's icon in white on its colour, as the app. */
 .dot.on {
-  border: 0;
-  background: color-mix(in srgb, var(--sport) 18%, var(--surface));
+  border-color: var(--sport);
+  background: var(--sport);
+  color: #fff;
 }
 
 .dot svg.i {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 
-.dot .more {
+/* A second sport that day: a dot in its colour on the circle's top right. */
+.dot .second {
   position: absolute;
-  right: -4px;
   top: -4px;
-  font-size: 10px;
-  background: var(--fg);
-  color: var(--bg);
-  border-radius: 999px;
-  padding: 0 4px;
+  right: -4px;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--sport);
+  border: 2px solid var(--surface);
 }
 
 .days .today .dot {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.days .today .dot.on {
+  color: #fff;
 }
 
 .days .today .dlabel {
@@ -1221,8 +1233,9 @@ a.button.block {
   font-weight: 650;
 }
 
-.days .future {
-  opacity: 0.45;
+/* The days still to come, faded as the app's; their number and initial stay readable (WCAG AA). */
+.days .future .dot {
+  border-color: color-mix(in srgb, var(--line) 45%, transparent);
 }
 
 .dlabel {
@@ -4331,6 +4344,17 @@ h1.greeting {
 
 .usualweek .weekbar small {
   color: var(--muted);
+}
+
+/* As the app's bar: 8 px on the line's colour, the usual week marked across it. */
+.usualweek .meterbar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+}
+
+.usualweek .meterbar i {
+  border-radius: 4px;
 }
 
 .formpill.ahead {

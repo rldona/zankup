@@ -210,11 +210,21 @@ export async function fakeApi(page: Page) {
       const monday = '2026-11-09';
       return json(route, {
         today,
+        // A run and a ride on Monday, a ride on Tuesday: the circles, the second sport's dot and the
+        // days without an activity all show.
         days: Array.from({ length: 7 }, (_, i) => ({
           date: `2026-11-${String(9 + i).padStart(2, '0')}`,
-          activities: [],
+          activities:
+            i === 0
+              ? [
+                  { id: 7, sport: 'run', name: 'Morning run' },
+                  { id: 8, sport: 'ride', name: 'Hill ride' },
+                ]
+              : i === 1
+                ? [{ id: 8, sport: 'ride', name: 'Hill ride' }]
+                : [],
         })),
-        this_week: { week_start: monday, count: 0, distance_m: 0, moving_s: 0, ascent_m: 0 },
+        this_week: { week_start: monday, count: 3, distance_m: 69400, moving_s: 9000, ascent_m: 950 },
         previous: Array.from({ length: 12 }, (_, i) => ({
           week_start: `2026-08-${10 + i}`,
           count: 3,

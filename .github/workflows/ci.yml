@@ -97,6 +97,15 @@ jobs:
       - name: Build
         run: pnpm build
       - name: End-to-end tests (main flows in English and Spanish, accessibility)
+        # The system packages come from Ubuntu's mirrors, which the runners sometimes cannot reach: try
+        # again after a pause, and failing that install the browser alone (the runner image already
+        # has what Chromium needs to run headless).
         run: |
-          pnpm --filter @zankup/web exec playwright install --with-deps chromium
+          pnpm --filter @zankup/web exec playwright install --with-deps chromium || {
+            sleep 60
+            pnpm --filter @zankup/web exec playwright install --with-deps chromium
+          } || {
+            echo "::warning::Ubuntu's mirrors unreachable: installing Chromium without its system packages"
+            pnpm --filter @zankup/web exec playwright install chromium
+          }
           pnpm --filter @zankup/web e2e

@@ -6,6 +6,7 @@ import {
   type EventOut,
   type MaterialIcon as MaterialIconName,
   type MessageKey,
+  eventShown,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -93,7 +94,7 @@ export function EventsList() {
   const format = useMemo(() => formatters(prefs), [prefs]);
   const events = useQuery(eventsQuery(api));
   if (events.isPending) return null;
-  const list = events.data ?? [];
+  const list = (events.data ?? []).filter((e) => eventShown(e, format.unit));
   if (!list.length) return <p className="note">{t('notifications.empty')}</p>;
   return (
     <ul className="panel events">

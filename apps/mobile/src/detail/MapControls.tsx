@@ -20,9 +20,18 @@ type Props<M extends string> = {
   onMetric: (m: M) => void;
   /** The ends of the colour ramp, already written out, and its colours from low to high. */
   legend: { low: string; high: string; colours: readonly string[] } | null;
+  /** How much of the map's top the screen's header covers: the options button sits under it. */
+  top?: number;
 };
 
-export function MapControls<M extends string>({ replay, metric, metrics, onMetric, legend }: Props<M>) {
+export function MapControls<M extends string>({
+  replay,
+  metric,
+  metrics,
+  onMetric,
+  legend,
+  top = 0,
+}: Props<M>) {
   const c = useTheme();
   const [open, setOpen] = useState(false);
   // The chip lights up at once, while the map catches up with the new colouring.
@@ -44,7 +53,7 @@ export function MapControls<M extends string>({ replay, metric, metrics, onMetri
         accessibilityLabel={t('activity.mapOptions')}
         onPress={() => setOpen(true)}
         hitSlop={6}
-        style={[button, { position: 'absolute', top: 12, right: 12 }]}
+        style={[button, { position: 'absolute', top: top + 12, right: 12 }]}
       >
         <Icon name="tune" color={c.fg} size={22} />
       </Pressable>

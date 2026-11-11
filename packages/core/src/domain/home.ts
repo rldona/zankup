@@ -70,6 +70,44 @@ export function dayHeading(day: string, today: string): 'today' | 'yesterday' | 
 }
 
 /** The form (TSB) in words, as Stats, Home and the app name it. */
+/**
+ * This week's effort (Home): its moving time as a share of the average week of the previous twelve,
+ * 100 % being an ordinary week. Null share when there is no history yet.
+ */
+export function weekEffort(week: { this_week: { moving_s: number }; previous: { moving_s: number }[] }): {
+  share: number | null;
+  average: number;
+} {
+  const average = week.previous.length
+    ? week.previous.reduce((sum, w) => sum + w.moving_s, 0) / week.previous.length
+    : 0;
+  return { share: average > 0 ? Math.round((week.this_week.moving_s / average) * 100) : null, average };
+}
+
+/** How the form is coloured (pill and gauge): rested, neither, building (the training zone) or overreaching. */
+export type FormTone = 'fresh' | 'neutral' | 'optimal' | 'overreaching';
+
+export function formTone(tsb: number): FormTone {
+  if (tsb > 5) return 'fresh';
+  if (tsb > -10) return 'neutral';
+  if (tsb > -30) return 'optimal';
+  return 'overreaching';
+}
+
+/**
+ * The training load's gauge on Home: freshness from -40 to +30, in the bands formTone draws (each
+ * band's upper end), so the dot sits in the colour of the pill under it.
+ */
+export const FORM_GAUGE: { min: number; bands: { tone: FormTone; to: number }[] } = {
+  min: -40,
+  bands: [
+    { tone: 'overreaching', to: -30 },
+    { tone: 'optimal', to: -10 },
+    { tone: 'neutral', to: 5 },
+    { tone: 'fresh', to: 30 },
+  ],
+};
+
 export function formLabel(tsb: number): MessageKey {
   if (tsb > 5) return 'stats.form.fresh';
   if (tsb > -10) return 'stats.form.neutral';

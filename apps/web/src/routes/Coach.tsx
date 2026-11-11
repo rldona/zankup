@@ -6,7 +6,7 @@ import { Link } from 'react-router';
 import { api } from '../api';
 import { locale, t } from '../i18n';
 import { MaterialIcon } from '../MaterialIcon';
-import { CardTitle } from '../ui';
+import { CardTitle, InfoTip } from '../ui';
 
 type Turn = { role: 'user' | 'assistant'; content: string; tools?: string[]; error?: string };
 type Event =
@@ -140,8 +140,6 @@ async function* events(response: Response): AsyncGenerator<Event> {
 
 function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }) {
   const [turns, setTurns] = useState<Turn[]>([]);
-  // What the Coach can and cannot do, behind an (i) in the header instead of a line under the chat.
-  const [about, setAbout] = useState(false);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
@@ -207,23 +205,8 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
     <>
       <div className="titlebar">
         <h1>{t('coach.title')}</h1>
-        <div className="menuwrap">
-          <button
-            type="button"
-            className="iconbtn"
-            aria-label={t('coach.about')}
-            title={t('coach.about')}
-            aria-expanded={about}
-            onClick={() => setAbout(!about)}
-          >
-            <MaterialIcon name="info" />
-          </button>
-          {about && (
-            <p className="popmenu tip" role="note">
-              {t('coach.disclaimer')}
-            </p>
-          )}
-        </div>
+        {/* What the Coach can and cannot do, behind an (i) instead of a line under the chat. */}
+        <InfoTip text={t('coach.disclaimer')} label={t('coach.about')} />
         {turns.length > 0 && (
           <button
             type="button"

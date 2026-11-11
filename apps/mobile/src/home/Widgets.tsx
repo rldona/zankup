@@ -15,6 +15,13 @@ import {
   SPORT_ICONS,
   dayHeading,
   formLabel,
+  formTone,
+  FORM_GAUGE,
+  type FormTone,
+  weekEffort,
+  weekQuery,
+  mix,
+  alpha,
   daysBefore,
   healthAverage as average,
   isoDay,
@@ -33,7 +40,7 @@ import { Icon, type IconName } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
 import { useTheme } from '../theme';
-import { Card, Heading, Muted, styles as ui } from '../ui';
+import { Card, Heading, Muted } from '../ui';
 import { CardSkeleton, Pulse } from '../Skeleton';
 
 type Format = ReturnType<typeof useFormat>;
@@ -48,7 +55,8 @@ function useToday() {
 /** The health days of the last week, shared by the widgets (one request). */
 function useHealthWeek(today: string) {
   const api = useApi();
-  return useQuery(healthDaysQuery(api, daysBefore(today, 6), today));
+  // `end` is exclusive: tomorrow, so today's steps come too.
+  return useQuery(healthDaysQuery(api, daysBefore(today, 6), daysBefore(today, -1)));
 }
 
 // --- the last day -----------------------------------------------------------------------------------
@@ -325,13 +333,20 @@ export function Metrics() {
     </Tile>,
     now ? (
       <Tile key="load" icon="speed" label={t('home.load')}>
-        <Text style={{ color: c.fg, fontSize: 24, fontWeight: '700' }}>{t(formLabel(now.tsb))}</Text>
-        <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>
-          {Math.round(now.atl)}/{Math.round(now.ctl)}
-        </Text>
-        <Muted>
-          {t('stats.atl')} / {t('stats.ctl')}
-        </Muted>
+        {/* Freshness (fitness minus fatigue) on the form's bands, as VO₂ max and FTP. */}
+        <Gauge
+          value={now.tsb}
+          min={FORM_GAUGE.min}
+          max={FORM_GAUGE.bands.at(-1)?.to ?? 30}
+          label={now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
+          bands={FORM_GAUGE.bands.map((b) => ({ colour: formColour(c, b.tone), to: b.to }))}
+        />
+        <View style={{ alignItems: 'center', gap: 4 }}>
+          <Pill colour={formColour(c, now.tsb)}>{t(formLabel(now.tsb))}</Pill>
+          <Muted style={{ textAlign: 'center' }}>
+            {t('stats.ctl')} {now.ctl.toFixed(0)} · {t('stats.atl')} {now.atl.toFixed(0)}
+          </Muted>
+        </View>
       </Tile>
     ) : null,
   ].filter(Boolean);
@@ -343,7 +358,102 @@ export function Metrics() {
   );
 }
 
+// --- this week against a usual one ---------------------------------------------------------------------
+
+/**
+ * Closes Home's "This week": the time trained so far against a usual week (the previous twelve's
+ * average), as a pill ahead or behind and a bar whose mark is the usual week.
+ */
+export function UsualWeek() {
+  const api = useApi();
+  const c = useTheme();
+  const today = useToday();
+  const week = useQuery(weekQuery(api, today));
+  const effort = week.data ? weekEffort(week.data) : null;
+  if (effort?.share == null) return null;
+  const share = effort.share;
+  return (
+    <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderColor: c.line, gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text style={{ color: c.fg, fontSize: 14, fontWeight: '600', flex: 1 }}>{t('home.vsUsual')}</Text>
+        {share !== 100 && (
+          <Pill colour={share > 100 ? c.formPositive : c.formNegative}>
+            {t('stats.change', { sign: share > 100 ? '+' : '', percent: share - 100 })}
+          </Pill>
+        )}
+      </View>
+      <View>
+        {/* The bar runs to 150 % of a usual week; the mark is the usual week. */}
+        <View
+          accessibilityRole="progressbar"
+          accessibilityLabel={t('home.vsUsual')}
+          accessibilityValue={{ min: 0, max: 150, now: Math.min(150, share) }}
+          style={{ height: 8, borderRadius: 4, backgroundColor: c.line }}
+        >
+          <View
+            style={{
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: c.accent,
+              width: `${Math.min(100, share / 1.5)}%`,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              left: `${100 / 1.5}%`,
+              top: -3,
+              bottom: -3,
+              width: 2,
+              backgroundColor: c.fg,
+            }}
+          />
+        </View>
+        <View style={{ flexDirection: 'row', marginTop: 4 }}>
+          <View style={{ width: `${100 / 1.5}%`, alignItems: 'flex-end' }}>
+            <Muted style={{ fontSize: 12, marginRight: -40, textAlign: 'center' }}>
+              {t('home.usualWeek', { average: formatHoursMinutes(effort.average) })}
+            </Muted>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // --- pieces -------------------------------------------------------------------------------------------
+
+/** The form's colour: rested blue, neither grey, building green, overreaching red. */
+function formColour(c: ReturnType<typeof useTheme>, form: number | FormTone): string {
+  const tone = typeof form === 'number' ? formTone(form) : form;
+  return tone === 'fresh'
+    ? c.ride
+    : tone === 'optimal'
+      ? c.formPositive
+      : tone === 'overreaching'
+        ? c.formNegative
+        : c.muted;
+}
+
+function Pill({ colour, children }: { colour: string; children: string }) {
+  const c = useTheme();
+  return (
+    <Text
+      style={{
+        color: mix(colour, c.fg, 0.4), // towards the text colour, to read on the pale pill
+        backgroundColor: alpha(colour, 0.15),
+        fontSize: 12,
+        fontWeight: '600',
+        paddingHorizontal: 8,
+        paddingVertical: 1,
+        borderRadius: 999,
+        overflow: 'hidden',
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
 
 function Row({
   icon,
@@ -433,19 +543,24 @@ function Ring({
 
 const GAUGE = ['#e03131', '#e8590c', '#2f9e44', '#1c7ed6', '#7950f2'];
 
-/** A 270° gauge in five coloured bands, with a dot at the value and the figure in the middle. */
+/**
+ * A 270° gauge in coloured bands, with a dot at the value and the figure in the middle: five equal
+ * bands by default (VO₂ max, FTP), or `bands` with each one's upper end (the training load's form).
+ */
 function Gauge({
   value,
   min,
   max,
   label,
   unit,
+  bands: given,
 }: {
   value: number;
   min: number;
   max: number;
   label: string;
   unit?: string;
+  bands?: { colour: string; to: number }[];
 }) {
   const c = useTheme();
   const size = 120;
@@ -453,30 +568,26 @@ function Gauge({
   const start = -135;
   const sweep = 270;
   const gap = 4;
-  const bands = GAUGE.map((colour, i) => {
-    const from = start + (sweep / GAUGE.length) * i + (i ? gap / 2 : 0);
-    const to = start + (sweep / GAUGE.length) * (i + 1) - (i < GAUGE.length - 1 ? gap / 2 : 0);
-    return { colour, path: Skia.Path.MakeFromSVGString(arc(size / 2, size / 2, r, from, to)) };
+  const scale =
+    given ?? GAUGE.map((colour, i) => ({ colour, to: min + ((max - min) * (i + 1)) / GAUGE.length }));
+  const at = (v: number) => Math.max(0, Math.min(1, (v - min) / (max - min)));
+  const bands = scale.map(({ colour, to }, i) => {
+    const from = start + sweep * at(i ? (scale[i - 1]?.to ?? min) : min) + (i ? gap / 2 : 0);
+    const end = start + sweep * at(to) - (i < scale.length - 1 ? gap / 2 : 0);
+    return { colour, path: Skia.Path.MakeFromSVGString(arc(size / 2, size / 2, r, from, end)) };
   });
-  const share = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  const share = at(value);
   const angle = ((start + sweep * share - 90) * Math.PI) / 180;
   const dot = Skia.Path.MakeFromSVGString(
     `M ${size / 2 + r * Math.cos(angle) + 8} ${size / 2 + r * Math.sin(angle)} a 8 8 0 1 0 -16 0 a 8 8 0 1 0 16 0`,
   );
-  const dotColour = GAUGE[Math.min(GAUGE.length - 1, Math.floor(share * GAUGE.length))] ?? c.fg;
+  const dotColour = (scale.find((b) => value <= b.to) ?? scale.at(-1))?.colour ?? c.fg;
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
       <Canvas style={{ width: size, height: size }}>
-        {bands.map((b) =>
+        {bands.map((b, i) =>
           b.path ? (
-            <Path
-              key={b.colour}
-              path={b.path}
-              style="stroke"
-              strokeWidth={8}
-              strokeCap="round"
-              color={b.colour}
-            />
+            <Path key={i} path={b.path} style="stroke" strokeWidth={8} strokeCap="round" color={b.colour} />
           ) : null,
         )}
         {dot && <Path path={dot} color={dotColour} />}

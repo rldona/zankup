@@ -25,7 +25,10 @@ describe('Goals (OS-911)', () => {
       this.setAttribute('open', '');
     };
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
 
   it('opens a goal day by day, and edits it in place', async () => {
     const calls: { method: string; path: string; body: unknown }[] = [];
@@ -82,6 +85,47 @@ describe('Goals (OS-911)', () => {
         path: '/api/goals/4',
         body: { period: 'week', metric: 'distance', sport: 'run', target: 25000 },
       }),
+    );
+  });
+
+  it('keeps a chart open or folded as it was left, after leaving the page', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: Request | string) => {
+        const url = new URL(typeof input === 'string' ? input : input.url, 'http://localhost');
+        if (url.pathname === '/api/auth/me')
+          return Response.json({
+            id: 1,
+            email: 'me@example.com',
+            display_name: 'Runner',
+            totp_enabled: true,
+          });
+        if (url.pathname === '/api/goals') return Response.json([GOAL]);
+        if (url.pathname === '/api/stats/calendar') return Response.json([]);
+        return Response.json({ detail: 'Not Found' }, { status: 404 });
+      }),
+    );
+    const open = () =>
+      render(
+        <App
+          queryClient={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+          router={createMemoryRouter(routes, { initialEntries: ['/goals'] })}
+        />,
+      );
+    const first = open();
+    await userEvent.click(await screen.findByRole('button', { name: /This week · Run/ }));
+    first.unmount();
+
+    const second = open();
+    const card = await screen.findByRole('button', { name: /This week · Run/ });
+    expect(card).toHaveAttribute('aria-expanded', 'true'); // still open
+    await userEvent.click(card);
+    second.unmount();
+
+    open();
+    expect(await screen.findByRole('button', { name: /This week · Run/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
     );
   });
 });

@@ -11,12 +11,15 @@ import {
   recordsQuery,
   summaryQuery,
   volumeQuery,
-  weekQuery,
   yearsQuery,
   formatDuration,
   type FitnessDay,
   stravaComparisonQuery,
-  formLabel,
+  effortShown,
+  themes,
+  yearColours,
+  compare,
+  comparisonLabels,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
@@ -36,9 +39,8 @@ import {
 } from '../stats/charts';
 import { effortName } from '../stats/format';
 import { MaterialIcon } from '../MaterialIcon';
-import { CardTitle, Menu } from '../ui';
+import { CardTitle, Menu, InfoTip } from '../ui';
 import { useResolvedTheme } from '../theme';
-import { localToday } from '../week/today';
 
 const MODES = ['last12', 'year', 'month', 'all'] as const;
 type Mode = (typeof MODES)[number];
@@ -184,13 +186,11 @@ export function Stats() {
         </p>
       )}
 
-      <Now theme={theme} />
-
       <div className="statgrid">
         <FitnessSection range={range} theme={theme} />
         <Volume range={range} unit={period.unit} theme={theme} format={format} />
         <Curves range={range} theme={theme} format={format} />
-        <RecordsSection range={range} theme={theme} />
+        <RecordsSection range={range} theme={theme} unit={format.unit} />
         <Progress
           theme={theme}
           distanceUnit={format.unit}
@@ -249,48 +249,6 @@ function Stepper({
   );
 }
 
-function Now({ theme }: { theme: ReturnType<typeof useResolvedTheme> }) {
-  const [today] = useState(localToday);
-  const week = useQuery(weekQuery(api, today));
-  const fitness = useQuery(fitnessQuery(api, {}));
-  const now = fitness.data?.at(-1);
-  const average = week.data
-    ? week.data.previous.reduce((s, w) => s + w.moving_s, 0) / (week.data.previous.length || 1)
-    : 0;
-  const share = week.data && average > 0 ? Math.round((week.data.this_week.moving_s / average) * 100) : null;
-  void theme;
-  return (
-    <>
-      <h2>{t('stats.now')}</h2>
-      <div className="cards">
-        {now && (
-          <article className="panel">
-            <h3>{t('stats.tsb')}</h3>
-            <p className="big num">{now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}</p>
-            <p className="note">
-              {t(formLabel(now.tsb))} · {t('stats.ctl')} {now.ctl.toFixed(0)} · {t('stats.atl')}{' '}
-              {now.atl.toFixed(0)}
-            </p>
-          </article>
-        )}
-        {week.data && (
-          <article className="panel">
-            <h3>{t('stats.load')}</h3>
-            <p className="big num">
-              {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
-            </p>
-            <div className="meterbar" aria-hidden="true">
-              <i style={{ width: `${Math.min(100, (share ?? 0) / 1.5)}%` }} />
-              <b style={{ left: `${100 / 1.5}%` }} />
-            </div>
-            <p className="note">{t('stats.loadNote', { average: formatHoursMinutes(average) })}</p>
-          </article>
-        )}
-      </div>
-    </>
-  );
-}
-
 function Summary({
   range,
   format,
@@ -301,46 +259,51 @@ function Summary({
   const summary = useQuery(summaryQuery(api, range));
   if (!summary.data) return null;
   const { current, previous } = summary.data;
-  const change = (now: number, before: number) => {
-    if (!before) return t('stats.noPrevious');
-    const percent = Math.round(((now - before) / before) * 100);
-    return t('stats.vsLastYear', { sign: percent > 0 ? '+' : '', percent });
-  };
+  const labels = comparisonLabels(range, locale, t); // null for All: nothing to compare with
+  const rows: [string, string, number, number][] = [
+    [t('feed.title'), current.count.toLocaleString(locale), current.count, previous.count],
+    [t('feed.stat.distance'), format.distance(current.distance_m), current.distance_m, previous.distance_m],
+    [t('feed.stat.time'), formatHoursMinutes(current.moving_s), current.moving_s, previous.moving_s],
+    [t('feed.stat.ascent'), format.elevation(current.ascent_m), current.ascent_m, previous.ascent_m],
+    [t('home.load'), Math.round(current.load).toLocaleString(locale), current.load, previous.load],
+  ];
   return (
     <section className="panel">
-      <CardTitle>{t('stats.summaryTitle')}</CardTitle>
-      <dl className="kpis num">
-        <div className="kpi">
-          <dd>{current.count.toLocaleString(locale)}</dd>
-          <dt>
-            {t('feed.title')} · {change(current.count, previous.count)}
-          </dt>
-        </div>
-        <div className="kpi">
-          <dd>{format.distance(current.distance_m)}</dd>
-          <dt>
-            {t('feed.stat.distance')} · {change(current.distance_m, previous.distance_m)}
-          </dt>
-        </div>
-        <div className="kpi">
-          <dd>{formatHoursMinutes(current.moving_s)}</dd>
-          <dt>
-            {t('feed.stat.time')} · {change(current.moving_s, previous.moving_s)}
-          </dt>
-        </div>
-        <div className="kpi">
-          <dd>{format.elevation(current.ascent_m)}</dd>
-          <dt>
-            {t('feed.stat.ascent')} · {change(current.ascent_m, previous.ascent_m)}
-          </dt>
-        </div>
-        <div className="kpi">
-          <dd>{Math.round(current.load).toLocaleString(locale)}</dd>
-          <dt>
-            {t('stats.load')} · {change(current.load, previous.load)}
-          </dt>
-        </div>
-      </dl>
+      <CardTitle info={t('stats.summaryNote')}>{t('stats.summaryTitle')}</CardTitle>
+      {/* Each figure against the same period a year before, as the app: last year's bar, then this period's. */}
+      <ul className="compare num">
+        {rows.map(([label, value, now, before]) => {
+          const { percent, now: mine, before: theirs } = compare(now, before);
+          const tone = percent == null || percent === 0 ? '' : percent > 0 ? ' up' : ' down';
+          return (
+            <li key={label}>
+              <span className="clabel">{label}</span>
+              <b>{value}</b>
+              {labels && percent ? ( // no pill when nothing changed
+                <span className={`pill${tone}`}>
+                  {t('stats.change', { sign: percent > 0 ? '+' : '', percent })}
+                </span>
+              ) : null}
+              {labels && (
+                <>
+                  <i className="bar before" style={{ width: `${theirs * 100}%` }} />
+                  <i className="bar now" style={{ width: `${mine * 100}%` }} />
+                </>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {labels && (
+        <p className="comparekey note">
+          <span>
+            <i className="bar before" /> {labels[0]}
+          </span>
+          <span>
+            <i className="bar now" /> {labels[1]}
+          </span>
+        </p>
+      )}
     </section>
   );
 }
@@ -356,9 +319,8 @@ function FitnessSection({
   const days: FitnessDay[] = fitness.data ?? [];
   return (
     <section className="panel">
-      <CardTitle>{t('stats.fitness')}</CardTitle>
+      <CardTitle info={t('stats.fitnessNote')}>{t('stats.fitness')}</CardTitle>
       {days.length ? <FitnessChart days={days} theme={theme} /> : <p className="note">{t('stats.empty')}</p>}
-      <p className="note">{t('stats.fitnessNote')}</p>
     </section>
   );
 }
@@ -460,9 +422,11 @@ function Curves({
 function RecordsSection({
   range,
   theme,
+  unit,
 }: {
   range: { from: string; to: string };
   theme: ReturnType<typeof useResolvedTheme>;
+  unit: 'km' | 'mi';
 }) {
   const records = useQuery(recordsQuery(api, range));
   const [chosen, setChosen] = useState('5k');
@@ -488,29 +452,31 @@ function RecordsSection({
             </tr>
           </thead>
           <tbody>
-            {records.data.all_time.map((r) => {
-              const p = period.get(r.distance_key);
-              return (
-                <tr
-                  key={r.distance_key}
-                  aria-selected={chosen === r.distance_key}
-                  onClick={() => setChosen(r.distance_key)}
-                >
-                  <th scope="row">
-                    <button type="button" className="link" onClick={() => setChosen(r.distance_key)}>
-                      {effortName(r.distance_key)}
-                    </button>
-                  </th>
-                  <td>
-                    <Link to={`/activities/${r.activity_id}`}>{formatDuration(r.time_s)}</Link>{' '}
-                    <span className="note">{day(r.day)}</span>
-                  </td>
-                  <td>
-                    {p ? <Link to={`/activities/${p.activity_id}`}>{formatDuration(p.time_s)}</Link> : '—'}
-                  </td>
-                </tr>
-              );
-            })}
+            {records.data.all_time
+              .filter((r) => effortShown(r.distance_key, unit))
+              .map((r) => {
+                const p = period.get(r.distance_key);
+                return (
+                  <tr
+                    key={r.distance_key}
+                    aria-selected={chosen === r.distance_key}
+                    onClick={() => setChosen(r.distance_key)}
+                  >
+                    <th scope="row">
+                      <button type="button" className="link" onClick={() => setChosen(r.distance_key)}>
+                        {effortName(r.distance_key)}
+                      </button>
+                    </th>
+                    <td>
+                      <Link to={`/activities/${r.activity_id}`}>{formatDuration(r.time_s)}</Link>{' '}
+                      <span className="note">{day(r.day)}</span>
+                    </td>
+                    <td>
+                      {p ? <Link to={`/activities/${p.activity_id}`}>{formatDuration(p.time_s)}</Link> : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>
@@ -538,11 +504,32 @@ function Progress({
 }) {
   const lines = useQuery(progressQuery(api));
   if (!lines.data?.length) return null;
+  const colours = yearColours(
+    lines.data.map((l) => l.year),
+    selected,
+    themes[theme],
+  );
   return (
     <section className="panel">
-      <CardTitle>{t('stats.progress')}</CardTitle>
+      <CardTitle info={t('stats.progressNote')}>{t('stats.progress')}</CardTitle>
       <ProgressChart lines={lines.data} selected={selected} theme={theme} distanceUnit={distanceUnit} />
-      <p className="note">{t('stats.progressNote')}</p>
+      {/* In place of a legend, as the app: each year's colour and total. */}
+      <ul className="rows years">
+        {lines.data.map((l) => (
+          <li key={l.year} className={l.year === selected ? 'on' : undefined}>
+            <span>
+              <i style={{ background: colours.get(l.year), opacity: l.year === selected ? 1 : 0.5 }} />
+              {l.year}
+            </span>
+            <span className="num">
+              {Math.round(
+                (l.cumulative_m.at(-1) ?? 0) / (distanceUnit === 'km' ? 1000 : 1609.344),
+              ).toLocaleString(locale)}{' '}
+              {distanceUnit}
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -591,8 +578,8 @@ function CompareWithStrava({ theme }: { theme: ReturnType<typeof useResolvedThem
             </button>
           ))}
         </div>
+        <InfoTip text={t('compare.help')} />
       </div>
-      <p className="note">{t('compare.help')}</p>
       {current && current.count >= 3 ? (
         <>
           <dl className="kpis num">

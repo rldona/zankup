@@ -6,7 +6,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "dev:android": "adb reverse tcp:8000 tcp:8000 && ZANKUP_DEV=1 expo run:android --variant debug",
+    "dev:android": "adb reverse tcp:8000 tcp:8000 && ZANKUP_DEV=1 expo prebuild --clean -p android --no-install && ZANKUP_DEV=1 expo run:android --variant debug",
+    "release:android": "expo prebuild --clean -p android --no-install && cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a && adb install -r app/build/outputs/apk/release/app-release.apk",
     "dev": "adb reverse tcp:8000 tcp:8000 && adb reverse tcp:8081 tcp:8081 && ZANKUP_DEV=1 expo start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

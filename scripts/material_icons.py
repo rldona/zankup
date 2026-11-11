@@ -114,6 +114,7 @@ METRICS = [
 ]
 # Interface.
 INTERFACE = [
+    "arrow_back",
     "home",
     "cards_stack",
     "list",

@@ -17,6 +17,7 @@ import {
   type Me,
   type MessageKey,
   type ProfileSummary,
+  effortShown,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -266,24 +267,26 @@ export function Summary({ me, summary }: { me: Me; summary: ProfileSummary }) {
       <Card>
         <CardTitle>{t('profile.records')}</CardTitle>
         {summary.records.length === 0 && <Muted>{t('profile.noRecords')}</Muted>}
-        {summary.records.map((r) => (
-          <Pressable
-            key={r.distance_key}
-            accessibilityRole="link"
-            onPress={() => router.push(`/activity/${r.activity_id}`)}
-            style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: c.accent, fontWeight: '600' }}>{effortName(r.distance_key)}</Text>
-              <Muted>
-                {format.pace(r.distance_m / r.time_s)} · {day(r.date)}
-              </Muted>
-            </View>
-            <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-              {formatDuration(r.time_s)}
-            </Text>
-          </Pressable>
-        ))}
+        {summary.records
+          .filter((r) => effortShown(r.distance_key, format.unit))
+          .map((r) => (
+            <Pressable
+              key={r.distance_key}
+              accessibilityRole="link"
+              onPress={() => router.push(`/activity/${r.activity_id}`)}
+              style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: c.accent, fontWeight: '600' }}>{effortName(r.distance_key)}</Text>
+                <Muted>
+                  {format.pace(r.distance_m / r.time_s)} · {day(r.date)}
+                </Muted>
+              </View>
+              <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                {formatDuration(r.time_s)}
+              </Text>
+            </Pressable>
+          ))}
       </Card>
     </>
   );

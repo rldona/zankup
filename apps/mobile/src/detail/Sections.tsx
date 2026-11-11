@@ -13,6 +13,7 @@ import {
   type ActivityDetail,
   type MessageKey,
   type Series,
+  effortShown,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { Text, View } from 'react-native';
@@ -165,18 +166,20 @@ export function BestEfforts({ activity, format }: { activity: ActivityDetail; fo
     <Card>
       <CardTitle>{t('activity.best')}</CardTitle>
       <Row muted cells={[t('feed.stat.distance'), t('feed.stat.time'), t('feed.stat.pace')]} />
-      {activity.best_efforts.map((e) => (
-        <Row
-          key={e.distance_key}
-          cells={[
-            EFFORT_KEYS.has(e.distance_key)
-              ? t(`effort.${e.distance_key}` as MessageKey)
-              : format.distance(e.distance_m),
-            formatDuration(e.time_s),
-            format.pace(e.distance_m / e.time_s),
-          ]}
-        />
-      ))}
+      {activity.best_efforts
+        .filter((e) => effortShown(e.distance_key, format.unit))
+        .map((e) => (
+          <Row
+            key={e.distance_key}
+            cells={[
+              EFFORT_KEYS.has(e.distance_key)
+                ? t(`effort.${e.distance_key}` as MessageKey)
+                : format.distance(e.distance_m),
+              formatDuration(e.time_s),
+              format.pace(e.distance_m / e.time_s),
+            ]}
+          />
+        ))}
     </Card>
   );
 }

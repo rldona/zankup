@@ -156,8 +156,8 @@ describe('phase 3 screens', () => {
     mockApi();
     const router = renderAt('/stats');
     expect(await screen.findByText('Recomputing your metrics: 12 of 207 activities.')).toBeInTheDocument();
-    expect((await screen.findAllByText(/\+100 % vs the same period last year/)).length).toBeGreaterThan(0);
-    expect(screen.getByText(/\+150 % vs the same period last year/)).toBeInTheDocument(); // 100 km against 40
+    expect((await screen.findAllByText('+100 %')).length).toBeGreaterThan(0);
+    expect(screen.getByText('+150 %')).toBeInTheDocument(); // 100 km against 40
     expect(await screen.findByRole('heading', { name: 'How the 5 km record came down' })).toBeInTheDocument();
     // The period as on the app (OS-912): a year moved with arrows, or a run of months.
     const year = new Date().getFullYear();

@@ -184,9 +184,8 @@ export function Health() {
               <HeartChart days={span} theme={theme} />
             </section>
             <section className="panel">
-              <CardTitle>{t('health.readinessAndForm')}</CardTitle>
+              <CardTitle info={t('health.readinessNote')}>{t('health.readinessAndForm')}</CardTitle>
               <ReadinessChart days={span} theme={theme} />
-              <p className="note">{t('health.readinessNote')}</p>
             </section>
           </div>
         </>

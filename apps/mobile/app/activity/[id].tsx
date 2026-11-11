@@ -25,7 +25,7 @@ import {
   type Series,
 } from '@zankup/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Stack, useLocalSearchParams, useNavigation } from 'expo-router';
+import { router, Stack, useLocalSearchParams, useNavigation } from 'expo-router';
 import {
   startTransition,
   useCallback,
@@ -34,8 +34,10 @@ import {
   useRef,
   useState,
   type ComponentProps,
+  type ReactNode,
 } from 'react';
-import { Alert, Pressable, ScrollView, Share, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Animated, Pressable, Share, Text, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { SummaryCard } from '../../src/Ai';
@@ -46,6 +48,7 @@ import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../..
 import { Strength } from '../../src/detail/Strength';
 import { MapControls } from '../../src/detail/MapControls';
 import { ActivitySkeleton } from '../../src/Skeleton';
+import { ActionMenu } from '../../src/Menu';
 import { drawCard, shareCard } from '../../src/share/card';
 import { EditActivity, metaLine, Photos, SaveSegment, useReplay } from '../../src/detail/Tools';
 import { Icon, SportIcon } from '../../src/Icon';
@@ -70,6 +73,8 @@ export default function ActivityScreen() {
 function Detail({ activity: a }: { activity: ActivityDetail }) {
   const api = useApi();
   const c = useTheme();
+  const insets = useSafeAreaInsets();
+  const [scrollY] = useState(() => new Animated.Value(0));
   const format = useFormat();
   const { width } = useWindowDimensions();
   const sport = asSport(a.sport);
@@ -202,187 +207,279 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
       Alert.alert(t('common.error'));
     }
   };
-  const share = () =>
-    Alert.alert(t('activity.share'), undefined, [
-      { text: t('share.image'), onPress: () => void shareImage() },
-      { text: t('share.link'), onPress: () => void shareLink() },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-
+  // The map runs under the header, which is see-through over it and fills in as the map scrolls away
+  // (with the title); without a map the header is solid from the start.
+  const header = insets.top + HEADER;
+  const map = track?.hasGps ? MAP + header : 0;
+  const solid = map
+    ? scrollY.interpolate({
+        inputRange: [map - header - 48, map - header],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+      })
+    : 1;
+  // The buttons' round backgrounds go as the header comes.
+  const round = typeof solid === 'number' ? 1 - solid : Animated.subtract(1, solid);
+  const title = a.name ?? t(`sport.${sport}`);
   return (
-    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: 32 }}>
-      <Stack.Screen
-        options={{
-          title: a.name ?? t(`sport.${sport}`),
-          headerRight: () => (
-            <View style={{ flexDirection: 'row', gap: 20, alignItems: 'center' }}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('activity.edit')}
-                hitSlop={10}
-                onPress={() => setEditing(true)}
-              >
-                <Icon name="edit_square" color={c.fg} />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('activity.share')}
-                hitSlop={10}
-                onPress={() => void share()}
-              >
-                <Icon name="share" color={c.fg} />
-              </Pressable>
-            </View>
-          ),
-        }}
-      />
-      {track?.hasGps && (
-        <View style={{ height: 300 }}>
-          <RouteMap
-            track={track}
-            bbox={a.bbox ?? null}
-            cursor={cursorIndex}
-            section={section}
-            dark={c.scheme === 'dark'}
-            colors={{ route: c[sport], section: String(c.accent), cursor: c[sport] }}
-            values={colouring?.values}
-            range={colouring?.range}
-          />
-          <MapControls
-            replay={replay}
-            metric={metric}
-            metrics={metrics.map((x) => ({ value: x, label: metricLabel(x) }))}
-            onMetric={chooseMetric}
-            legend={
-              colouring && metric
-                ? {
-                    // A pace reads best first: the fast end of the ramp is the low pace.
-                    low: formatMetric(metric, inverted ? colouring.range[1] : colouring.range[0]),
-                    high: formatMetric(metric, inverted ? colouring.range[0] : colouring.range[1]),
-                    colours: inverted ? [...RAMP].reverse() : RAMP,
-                  }
-                : null
-            }
-          />
-        </View>
-      )}
-      <View style={ui.page}>
-        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-          <SportIcon sport={sport} size={44} />
-          <View style={{ flex: 1 }}>
-            <Text numberOfLines={1} style={{ color: c.fg, fontSize: 18, fontWeight: '700' }}>
-              {a.name ?? t(`sport.${sport}`)}
-            </Text>
-            <Muted>
-              {formatActivityDate(localStart(a.start_utc, a.timezone), locale)}
-              {a.device ? ` · ${a.device}` : ''}
-              {a.gear ? ` · ${a.gear.name}` : ''}
-            </Muted>
-            {meta ? <Muted>{meta}</Muted> : null}
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <Stack.Screen options={{ headerShown: false, title }} />
+      <Animated.ScrollView
+        style={{ backgroundColor: c.bg }}
+        contentContainerStyle={{ paddingBottom: 32, paddingTop: map ? 0 : header }}
+        scrollEventThrottle={16}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+      >
+        {track?.hasGps && (
+          <View style={{ height: map }}>
+            <RouteMap
+              track={track}
+              bbox={a.bbox ?? null}
+              cursor={cursorIndex}
+              section={section}
+              dark={c.scheme === 'dark'}
+              colors={{ route: c[sport], section: String(c.accent), cursor: c[sport] }}
+              values={colouring?.values}
+              range={colouring?.range}
+            />
+            <MapControls
+              top={header}
+              replay={replay}
+              metric={metric}
+              metrics={metrics.map((x) => ({ value: x, label: metricLabel(x) }))}
+              onMetric={chooseMetric}
+              legend={
+                colouring && metric
+                  ? {
+                      // A pace reads best first: the fast end of the ramp is the low pace.
+                      low: formatMetric(metric, inverted ? colouring.range[1] : colouring.range[0]),
+                      high: formatMetric(metric, inverted ? colouring.range[0] : colouring.range[1]),
+                      colours: inverted ? [...RAMP].reverse() : RAMP,
+                    }
+                  : null
+              }
+            />
           </View>
-        </View>
-        <Figures main={main} more={more} />
-        <SummaryCard activityId={a.id} />
-        {track && track.n > 1 && (
-          <>
-            {/* Each chart on its own card, under one heading with the section switch. */}
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: 12,
-              }}
-            >
-              <Heading>{t('activity.profile')}</Heading>
-              <Pressable
-                onPress={() => {
-                  // Turning "Section" off drops the band, its figures and the map's highlight.
-                  if (selecting) {
-                    selection.set(null);
-                    setSection(null);
-                    setStats(null);
-                  }
-                  setSelecting(!selecting);
-                }}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: selecting }}
+        )}
+        <View style={ui.page}>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+            <SportIcon sport={sport} size={44} />
+            <View style={{ flex: 1 }}>
+              <Text numberOfLines={1} style={{ color: c.fg, fontSize: 18, fontWeight: '700' }}>
+                {a.name ?? t(`sport.${sport}`)}
+              </Text>
+              <Muted>
+                {formatActivityDate(localStart(a.start_utc, a.timezone), locale)}
+                {a.device ? ` · ${a.device}` : ''}
+                {a.gear ? ` · ${a.gear.name}` : ''}
+              </Muted>
+              {meta ? <Muted>{meta}</Muted> : null}
+            </View>
+          </View>
+          <Figures main={main} more={more} />
+          <SummaryCard activityId={a.id} />
+          {track && track.n > 1 && (
+            <>
+              {/* Each chart on its own card, under one heading with the section switch. */}
+              <View
                 style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 999,
-                  backgroundColor: selecting ? accent(c) : c.surface2,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: 12,
                 }}
               >
-                <Text style={{ color: selecting ? onAccent(c) : c.fg, fontWeight: '600' }}>
-                  {t('mobile.selectSection')}
-                </Text>
-              </Pressable>
-            </View>
-            {charts.map((chart) => (
-              <ChartCard
-                key={chart.label}
-                track={track}
-                series={chart}
-                width={width - 60}
-                selection={selection}
-                selecting={selecting}
-                onCursor={onCursor}
-                onSelection={onSelection}
-                unit={units === 'imperial' ? 1609.344 : 1000}
-                unitLabel={units === 'imperial' ? 'mi' : 'km'}
-                colors={chartColors}
-              />
-            ))}
-            {(stats || (section && track.hasGps)) && (
-              <Card>
-                {stats && (
-                  <View style={ui.stats}>
-                    <Stat label={t('feed.stat.distance')} value={format.distance(stats.distance)} />
-                    <Stat label={t('feed.stat.time')} value={formatDuration(stats.time)} />
-                    <Stat
-                      label={t(pace ? 'feed.stat.pace' : 'feed.stat.speed')}
-                      value={
-                        stats.distance > 0
-                          ? format.speedFor(stats.distance / Math.max(stats.time, 1), pace)
-                          : '–'
-                      }
-                    />
-                    <Stat label={t('feed.stat.ascent')} value={format.elevation(stats.ascent)} />
-                    {stats.avgHr != null && (
-                      <Stat label={t('feed.stat.hr')} value={`${Math.round(stats.avgHr)} bpm`} />
-                    )}
-                  </View>
-                )}
-                {section && track.hasGps && <SaveSegment activityId={a.id} section={section} />}
-              </Card>
-            )}
-          </>
-        )}
-        <Photos activity={a} />
-        {/* On a ride, heart-rate zones follow the power curve and zones. */}
-        {series && sport !== 'ride' && (
-          <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />
-        )}
-        {/* On a run, the splits follow the heart-rate zones. */}
-        {sport === 'run' && <Splits activity={a} format={format} pace={pace} />}
-        {(a.sets ?? []).length > 0 && <Strength sets={a.sets} />}
-        <RouteAndSegments activity={a} />
-        <Power activity={a} />
-        {series && sport === 'ride' && (
-          <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />
-        )}
-        <Laps activity={a} format={format} pace={pace} />
-        {sport !== 'run' && <Splits activity={a} format={format} pace={pace} />}
-        {a.description ? (
-          <Card>
-            <Text style={{ color: c.fg }}>{a.description}</Text>
-          </Card>
-        ) : null}
-        <BestEfforts activity={a} format={format} />
+                <Heading>{t('activity.profile')}</Heading>
+                <Pressable
+                  onPress={() => {
+                    // Turning "Section" off drops the band, its figures and the map's highlight.
+                    if (selecting) {
+                      selection.set(null);
+                      setSection(null);
+                      setStats(null);
+                    }
+                    setSelecting(!selecting);
+                  }}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: selecting }}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 999,
+                    backgroundColor: selecting ? accent(c) : c.surface2,
+                  }}
+                >
+                  <Text style={{ color: selecting ? onAccent(c) : c.fg, fontWeight: '600' }}>
+                    {t('mobile.selectSection')}
+                  </Text>
+                </Pressable>
+              </View>
+              {charts.map((chart) => (
+                <ChartCard
+                  key={chart.label}
+                  track={track}
+                  series={chart}
+                  width={width - 60}
+                  selection={selection}
+                  selecting={selecting}
+                  onCursor={onCursor}
+                  onSelection={onSelection}
+                  unit={units === 'imperial' ? 1609.344 : 1000}
+                  unitLabel={units === 'imperial' ? 'mi' : 'km'}
+                  colors={chartColors}
+                />
+              ))}
+              {(stats || (section && track.hasGps)) && (
+                <Card>
+                  {stats && (
+                    <View style={ui.stats}>
+                      <Stat label={t('feed.stat.distance')} value={format.distance(stats.distance)} />
+                      <Stat label={t('feed.stat.time')} value={formatDuration(stats.time)} />
+                      <Stat
+                        label={t(pace ? 'feed.stat.pace' : 'feed.stat.speed')}
+                        value={
+                          stats.distance > 0
+                            ? format.speedFor(stats.distance / Math.max(stats.time, 1), pace)
+                            : '–'
+                        }
+                      />
+                      <Stat label={t('feed.stat.ascent')} value={format.elevation(stats.ascent)} />
+                      {stats.avgHr != null && (
+                        <Stat label={t('feed.stat.hr')} value={`${Math.round(stats.avgHr)} bpm`} />
+                      )}
+                    </View>
+                  )}
+                  {section && track.hasGps && <SaveSegment activityId={a.id} section={section} />}
+                </Card>
+              )}
+            </>
+          )}
+          <Photos activity={a} />
+          {/* On a ride, heart-rate zones follow the power curve and zones. */}
+          {series && sport !== 'ride' && (
+            <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />
+          )}
+          {/* On a run, the splits follow the heart-rate zones. */}
+          {sport === 'run' && <Splits activity={a} format={format} pace={pace} />}
+          {(a.sets ?? []).length > 0 && <Strength sets={a.sets} />}
+          <RouteAndSegments activity={a} />
+          <Power activity={a} />
+          {series && sport === 'ride' && (
+            <Zones series={series} activity={a} hrMax={hrMax} estimated={estimated} />
+          )}
+          <Laps activity={a} format={format} pace={pace} />
+          {sport !== 'run' && <Splits activity={a} format={format} pace={pace} />}
+          {a.description ? (
+            <Card>
+              <Text style={{ color: c.fg }}>{a.description}</Text>
+            </Card>
+          ) : null}
+          <BestEfforts activity={a} format={format} />
+        </View>
+      </Animated.ScrollView>
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: header,
+          paddingTop: insets.top,
+          paddingHorizontal: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: c.bg,
+            opacity: solid,
+          }}
+        />
+        <HeaderButton label={t('common.back')} onPress={() => router.back()} round={round}>
+          <Icon name="arrow_back" color={c.fg} />
+        </HeaderButton>
+        <Animated.Text
+          numberOfLines={1}
+          style={{ flex: 1, color: c.fg, fontSize: 18, fontWeight: '600', opacity: solid }}
+        >
+          {title}
+        </Animated.Text>
+        <HeaderButton label={t('activity.edit')} onPress={() => setEditing(true)} round={round}>
+          <Icon name="edit_square" color={c.fg} />
+        </HeaderButton>
+        <HeaderButton round={round}>
+          <ActionMenu
+            label={t('activity.share')}
+            icon="share"
+            actions={[
+              { icon: 'image', label: t('share.image'), onPress: () => void shareImage() },
+              { icon: 'link', label: t('share.link'), onPress: () => void shareLink() },
+            ]}
+          />
+        </HeaderButton>
       </View>
       {editing && <EditActivity activity={a} onClose={() => setEditing(false)} />}
-    </ScrollView>
+    </View>
+  );
+}
+
+/** The header's height under the status bar, and the map's own height under the header. */
+const HEADER = 56;
+const MAP = 300;
+
+/**
+ * A button in the activity's header: on a round background while the header is see-through over the
+ * map, so it reads there; the background fades away as the header fills in (`round`, 1 to 0).
+ */
+function HeaderButton({
+  label,
+  onPress,
+  round,
+  children,
+}: {
+  label?: string;
+  onPress?: () => void;
+  round: Animated.AnimatedInterpolation<number> | number;
+  children: ReactNode;
+}) {
+  const c = useTheme();
+  const body = (
+    <>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 20,
+          backgroundColor: c.surface,
+          borderWidth: 1,
+          borderColor: c.line,
+          opacity: round,
+        }}
+      />
+      {children}
+    </>
+  );
+  const box = { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' } as const;
+  return onPress ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={6}
+      onPress={onPress}
+      style={box}
+    >
+      {body}
+    </Pressable>
+  ) : (
+    <View style={box}>{body}</View>
   );
 }
 

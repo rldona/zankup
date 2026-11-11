@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ActivitySummary, HealthDay } from '../api/queries';
-import { dayHeading, daysBefore, healthAverage as average, lastDay, lastSevenDays } from './home';
+import { dayHeading, daysBefore, healthAverage as average, lastDay, lastSevenDays, weekEffort } from './home';
 
 const activity = (id: number, start: string, sport: string, distance: number | null, moving = 3600) =>
   ({
@@ -50,5 +50,13 @@ describe('home', () => {
     expect(dayHeading('2026-11-10', '2026-11-10')).toBe('today');
     expect(dayHeading('2026-11-09', '2026-11-10')).toBe('yesterday');
     expect(dayHeading('2026-11-07', '2026-11-10')).toBe('date');
+  });
+});
+
+describe('weekEffort', () => {
+  it("is this week's moving time against the average of the previous weeks", () => {
+    const week = { this_week: { moving_s: 3600 }, previous: [{ moving_s: 4000 }, { moving_s: 5600 }] };
+    expect(weekEffort(week)).toEqual({ share: 75, average: 4800 });
+    expect(weekEffort({ this_week: { moving_s: 600 }, previous: [] })).toEqual({ share: null, average: 0 });
   });
 });

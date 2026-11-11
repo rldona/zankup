@@ -221,3 +221,22 @@ export function GoalsSkeleton() {
     </Pulse>
   );
 }
+
+/** The routes: each a name, a line of figures and the route's shape on the right. */
+export function RoutesSkeleton() {
+  return (
+    <Pulse style={{ gap: 12 }}>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <CardBox key={i}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ flex: 1, gap: 8 }}>
+              <Bone width="55%" height={14} />
+              <Bone width="80%" height={10} />
+            </View>
+            <Bone width={88} height={64} radius={10} />
+          </View>
+        </CardBox>
+      ))}
+    </Pulse>
+  );
+}

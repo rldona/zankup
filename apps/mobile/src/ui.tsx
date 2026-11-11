@@ -5,6 +5,7 @@ import {
   Dimensions,
   Easing,
   Keyboard,
+  Modal,
   Pressable,
   ScrollView,
   Switch,
@@ -15,8 +16,10 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Icon } from './Icon';
+import { t } from './i18n';
 import { PageSkeleton } from './Skeleton';
 import { dynamicAccent, dynamicOnAccent, useTheme, type Palette } from './theme';
 
@@ -56,8 +59,9 @@ export function Screen({
 }) {
   const c = useTheme();
   const keyboard = useFieldAboveKeyboard();
+  const top = useTopInset(!header);
   return (
-    <SafeAreaView edges={header ? [] : ['top']} style={{ flex: 1, backgroundColor: c.bg }}>
+    <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: top }}>
       {title ? (
         <View style={styles.headerBar}>
           <View style={{ flex: 1 }}>
@@ -73,7 +77,7 @@ export function Screen({
         <ScrollView
           {...keyboard}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[styles.page, title ? { paddingTop: 12 } : null]}
+          contentContainerStyle={[styles.page, title ? { paddingTop: 0 } : null]}
         >
           {children}
         </ScrollView>
@@ -81,8 +85,18 @@ export function Screen({
         children
       )}
       <KeyboardSpace />
-    </SafeAreaView>
+    </View>
   );
+}
+
+/**
+ * Room for the status bar at the top of a screen, from the insets the provider already knows. Not
+ * SafeAreaView: it applies its padding natively a frame late, so a tab opened for the first time
+ * showed its header under the status bar and then jumped down.
+ */
+export function useTopInset(apply = true): number {
+  const insets = useSafeAreaInsets();
+  return apply ? insets.top : 0;
 }
 
 /**
@@ -166,9 +180,19 @@ export function Heading({ children, first }: { children: ReactNode; first?: bool
 
 /**
  * The title at the top of a card (Zones, Splits, Power curve…): no gap above, beyond the card's own
- * padding, and the same room below as the activity's chart cards; `right` sits on its line.
+ * padding, and the same room below as the activity's chart cards; `right` sits on its line. `info`
+ * puts an (i) on the right that opens it as a tooltip under the title, instead of a note under the
+ * card; a tap on the tooltip closes it.
  */
-export function CardTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
+export function CardTitle({
+  children,
+  right,
+  info,
+}: {
+  children: ReactNode;
+  right?: ReactNode;
+  info?: string;
+}) {
   return (
     <View
       style={{
@@ -184,7 +208,61 @@ export function CardTitle({ children, right }: { children: ReactNode; right?: Re
       </View>
       {/* What changes the card (chips such as Hours | Distance), on the title's line. */}
       {right}
+      {info ? <InfoButton text={info} /> : null}
     </View>
+  );
+}
+
+/**
+ * An (i) that opens `text` as a tooltip under it (a card's title, the Coach's header). The tooltip sits
+ * on a transparent layer over the whole screen, so a tap anywhere, on it or outside it, closes it.
+ */
+export function InfoButton({ text, label = t('common.moreInfo') }: { text: string; label?: string }) {
+  const c = useTheme();
+  const anchor = useRef<ComponentRef<typeof View>>(null);
+  const [below, setBelow] = useState<number | null>(null);
+  const open = () => anchor.current?.measureInWindow((_x, y, _w, h) => setBelow(y + h + 8));
+  const close = () => setBelow(null);
+  return (
+    <>
+      <Pressable
+        ref={anchor}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ expanded: below !== null }}
+        hitSlop={10}
+        onPress={below === null ? open : close}
+      >
+        <Icon name="info" color={c.fg} size={22} />
+      </Pressable>
+      <Modal
+        transparent
+        visible={below !== null}
+        animationType="fade"
+        statusBarTranslucent
+        navigationBarTranslucent
+        onRequestClose={close}
+      >
+        <Pressable accessibilityRole="button" accessibilityLabel={text} onPress={close} style={{ flex: 1 }}>
+          <View
+            style={{
+              position: 'absolute',
+              top: below ?? 0,
+              left: 16,
+              right: 16,
+              elevation: 6,
+              backgroundColor: c.surface2,
+              borderColor: c.line,
+              borderWidth: 1,
+              borderRadius: 12,
+              padding: 12,
+            }}
+          >
+            <Text style={{ color: c.fg, fontSize: 14, lineHeight: 20 }}>{text}</Text>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -330,6 +408,7 @@ export function Choice<T extends string>({
   onChange,
   label,
   scroll,
+  center,
 }: {
   options: { value: T; label: string }[];
   value: T;
@@ -337,6 +416,8 @@ export function Choice<T extends string>({
   label: string;
   /** One row that scrolls sideways, for long lists (years). */
   scroll?: boolean;
+  /** The chips centred in their row, for a row of its own at the top of a screen. */
+  center?: boolean;
 }) {
   const c = useTheme();
   const Wrapper = (scroll ? ScrollView : View) as typeof View;
@@ -346,7 +427,14 @@ export function Choice<T extends string>({
       accessibilityLabel={label}
       {...(scroll
         ? { horizontal: true, showsHorizontalScrollIndicator: false, contentContainerStyle: { gap: 6 } }
-        : { style: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 } })}
+        : {
+            style: {
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: 6,
+              justifyContent: center ? 'center' : 'flex-start',
+            },
+          })}
     >
       {options.map((o) => {
         const on = o.value === value;

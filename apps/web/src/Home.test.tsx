@@ -13,6 +13,12 @@ const isoDay = (daysAgo: number) => {
   const d = new Date(Date.now() - daysAgo * DAY);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
+/** The machine's UTC offset on that date, as the API gives it: "+01:00". */
+const offset = (date: Date) => {
+  const minutes = -date.getTimezoneOffset();
+  const abs = Math.abs(minutes);
+  return `${minutes < 0 ? '-' : '+'}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
+};
 const activity = (id: number, name: string, daysAgo: number) => ({
   id,
   name,
@@ -20,7 +26,8 @@ const activity = (id: number, name: string, daysAgo: number) => ({
   sub_sport: null,
   source: 'garmin',
   start_utc: at(daysAgo),
-  timezone: null,
+  // The machine's own offset, as "today" is: with none, the day would be UTC's (wrong after midnight).
+  timezone: offset(new Date(Date.now() - daysAgo * DAY)),
   duration_s: 3600,
   moving_s: 3500,
   distance_m: 10000,
@@ -46,6 +53,9 @@ function mockApi(items: unknown[]) {
         '/api/stats/estimates': [{ kind: 'ftp', value: 280 }],
         '/api/stats/fitness': [{ day: isoDay(0), ctl: 49, atl: 36, tsb: 13 }],
       };
+      // As the API: health days stop before `end` (exclusive), so asking up to today leaves today out.
+      if (url.pathname === '/api/wellness/days' && (url.searchParams.get('end') ?? '') <= isoDay(0))
+        return Response.json([]);
       const data = body[url.pathname];
       return data === undefined
         ? Response.json({ detail: 'Not Found' }, { status: 404 })

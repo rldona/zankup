@@ -236,7 +236,7 @@ export default function HealthScreen() {
             />
           </Card>
           <Card>
-            <CardTitle>{t('health.readinessAndForm')}</CardTitle>
+            <CardTitle info={t('health.readinessNote')}>{t('health.readinessAndForm')}</CardTitle>
             <Chart
               legendGap={18}
               days={span.map((d) => shortDay(d.day))}
@@ -270,7 +270,6 @@ export default function HealthScreen() {
                 },
               ]}
             />
-            <Muted>{t('health.readinessNote')}</Muted>
           </Card>
         </>
       )}

@@ -17,7 +17,7 @@ test('sign in with password and code, then the feed', async ({ page }, info) => 
   await expect(page.getByRole('heading', { name: w('signIn.welcome') })).toBeVisible();
   await signIn(page, lang(info.project.name));
   // Home first, as on the app (OS-903, OS-904); the feed is under Activities.
-  await expect(page.getByRole('heading', { name: w('week.title') })).toBeVisible();
+  await expect(page.getByRole('heading', { name: w('week.title'), exact: true })).toBeVisible();
   await page
     .getByRole('link', { name: w('nav.feed'), exact: true })
     .filter({ visible: true })
@@ -52,7 +52,7 @@ test('open an activity: figures, route, zones and laps', async ({ page }, info) 
     .filter({ visible: true })
     .first()
     .click();
-  await expect(page.getByRole('heading', { name: w('week.title') })).toBeVisible();
+  await expect(page.getByRole('heading', { name: w('week.title'), exact: true })).toBeVisible();
 });
 
 test('search keeps its filters in the URL', async ({ page }, info) => {
@@ -82,6 +82,8 @@ test('a theme picked in Settings survives a reload with no flash', async ({ page
 });
 
 test('no serious accessibility problems on the main screens', async ({ page }, info) => {
+  // An axe scan of every main screen takes close to the default 30 s on its own.
+  test.setTimeout(90_000);
   await page.goto('/sign-in');
   const scan = async (where: string) => {
     const result = await new AxeBuilder({ page }).analyze();

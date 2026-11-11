@@ -92,6 +92,9 @@ export function LastDay() {
     ? health.data?.find((d) => d.day === recent.day)
     : (health.data?.find((d) => d.day === today && (d.steps || d.resting_hr || d.hrv)) ??
       health.data?.find((d) => d.day === yesterday));
+  const vitals = !!day && !!(day.steps || day.resting_hr || day.hrv);
+  // Nothing to say for the day: no section at all, so the others take its room.
+  if (!recent && !vitals && !(!last && feed.isSuccess)) return null;
 
   return (
     <section
@@ -109,7 +112,7 @@ export function LastDay() {
           </div>
         </>
       )}
-      {day && (day.steps || day.resting_hr || day.hrv) ? (
+      {day && vitals ? (
         <div className="panel rowsbox">
           {day.steps ? (
             <Row

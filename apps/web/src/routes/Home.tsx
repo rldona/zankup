@@ -10,9 +10,9 @@ import { WeekHeader } from '../week/WeekHeader';
 import { Wordmark } from '../Wordmark';
 
 /**
- * Home (OS-903, OS-904), as the app's: the Coach in the header when this server has a model, then this
- * week, the last day with activities, the metrics and the last seven days. On desktop the widgets sit in
- * two columns: the week and the day on the left, the metrics and the last seven days on the right.
+ * Home (OS-903, OS-904), as the app's: this week, the last day with activities, the metrics and the last
+ * seven days, in that order at every size (docs/prototypes/web). On a phone the header is the wordmark
+ * with the Coach and the notifications; from 600 px those two are in the rail.
  */
 export function Home() {
   const ai = useQuery({ ...aiStatusQuery(api), retry: false });
@@ -39,14 +39,20 @@ export function Home() {
           <MaterialIcon name="notifications" />
         </Link>
       </div>
+      {/* The app's order at every size. Desktop: the week beside the last day, the metrics in one row,
+          the last seven days in one card. Tablet: the week across, then the last day beside the
+          metrics two by two. Phone: one column. */}
       <div className="homegrid">
-        <div>
+        <div className="h-week">
           <WeekHeader footer={<UsualWeek />} />
+        </div>
+        <div className="h-day">
           <LastDay />
         </div>
-        <div>
-          {/* Where things stand now before the week in detail, which repeats This week's ground. */}
+        <div className="h-metrics">
           <Metrics />
+        </div>
+        <div className="h-last">
           <LastSevenDays />
         </div>
       </div>

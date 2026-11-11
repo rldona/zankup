@@ -17,7 +17,7 @@ import {
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type RefObject } from 'react';
-import { Link, NavLink, Outlet, useMatch, useSearchParams } from 'react-router';
+import { Link, NavLink, Outlet, useMatch, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { locale, t } from '../i18n';
@@ -25,6 +25,8 @@ import { usePrefs } from '../prefs';
 import { MaterialIcon } from '../MaterialIcon';
 import { SportGlyph, SportIcon } from '../SportIcon';
 import { FeedSkeleton } from '../Skeleton';
+import { useSyncNow } from '../syncSheet';
+import { Icon } from '../Icon';
 
 type Format = ReturnType<typeof formatters>;
 const CHIPS = SPORTS.filter((s) => s !== 'other');
@@ -59,6 +61,8 @@ export function Feed() {
     column.current?.scrollTo?.({ top: 0 });
   };
   const search = params.toString() ? `?${params}` : '';
+  const sync = useSyncNow();
+  const navigate = useNavigate();
 
   const cards = items.map((activity, i) => {
     const start = localStart(activity.start_utc, activity.timezone);
@@ -72,10 +76,19 @@ export function Feed() {
           <h1>
             {t('feed.title')} <Since months={sport ? allMonths.data : months.data} />
           </h1>
-          {/* As the app's Activities header: the search and the training calendar. */}
-          <Link to="/search" className="iconbtn" aria-label={t('nav.search')} title={t('nav.search')}>
-            <MaterialIcon name="search" />
-          </Link>
+          {/* As the app's Activities header: sync and the training calendar. */}
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label={t('nav.sync')}
+            title={t('nav.sync')}
+            onClick={sync.start}
+            aria-busy={sync.running}
+          >
+            <span className={sync.running ? 'spinning' : undefined}>
+              <Icon name="sync" />
+            </span>
+          </button>
           <Link
             to="/stats/calendar"
             className="iconbtn"
@@ -85,6 +98,26 @@ export function Feed() {
             <MaterialIcon name="calendar_month" />
           </Link>
         </div>
+        {/* As the app: the search bar under the title, then the sports. It opens the search with the
+            text, where the filters are. */}
+        <form
+          role="search"
+          className="feedsearch"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const q = new FormData(event.currentTarget).get('q')?.toString().trim();
+            void navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+          }}
+        >
+          <MaterialIcon name="search" />
+          <input
+            type="search"
+            name="q"
+            aria-label={t('nav.search')}
+            placeholder={t('search.placeholder')}
+            enterKeyHint="search"
+          />
+        </form>
         <div className="chips" role="group" aria-label={t('feed.sports')}>
           <button type="button" className="chip" aria-pressed={sport === null} onClick={() => pick(null)}>
             {t('feed.all')}
@@ -96,9 +129,6 @@ export function Feed() {
             </button>
           ))}
         </div>
-        <p className="note">
-          {t('feed.searchHint')} <Link to="/search">{t('feed.searchLink')} ›</Link>
-        </p>
 
         {feed.isPending && <FeedSkeleton />}
         {feed.isError && (

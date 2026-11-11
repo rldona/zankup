@@ -13,9 +13,10 @@ const asSport = (value: string): Sport =>
   (SPORTS as readonly string[]).includes(value) ? (value as Sport) : 'other';
 
 /**
- * "This week" above the feed (OS-217): the seven days with what was done on each (today marked, the
- * days still to come faded), the streak of active weeks and the week's numbers; `footer` closes the
- * card (Home's comparison with a usual week).
+ * "This week" (OS-217), as the app's: the seven days, each with the sport done that day in a filled
+ * circle (a dot on it for a second sport) or the day's number, today ringed and the days still to come
+ * faded; the streak of active weeks and the week's numbers; `footer` closes the card (Home's comparison
+ * with a usual week).
  */
 export function WeekHeader({ footer }: { footer?: ReactNode }) {
   const [today] = useState(localToday);
@@ -28,11 +29,12 @@ export function WeekHeader({ footer }: { footer?: ReactNode }) {
     <section className="week" aria-labelledby="week-title">
       <div className="weekhead">
         <h2 id="week-title">{t('week.title')}</h2>
-        <span className="badge streak">{t('week.streak', { count: streak })}</span>
+        {streak > 0 && <span className="badge streak">{t('week.streak', { count: streak })}</span>}
       </div>
       <ol className="days">
         {days.map((day) => {
           const first = day.activities[0];
+          const second = day.activities[1];
           const date = new Date(`${day.date}T12:00:00`);
           const label = date.toLocaleDateString(locale, { weekday: 'narrow' });
           const long = date.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -47,10 +49,17 @@ export function WeekHeader({ footer }: { footer?: ReactNode }) {
                   aria-label={`${long}: ${day.activities.map((a) => a.name ?? t(`sport.${asSport(a.sport)}`)).join(', ')}`}
                 >
                   <SportGlyph sport={asSport(first.sport)} />
-                  {day.activities.length > 1 && <b className="more">+{day.activities.length - 1}</b>}
+                  {second && (
+                    <i
+                      className="second"
+                      style={{ ['--sport' as string]: `var(--${asSport(second.sport)})` }}
+                    />
+                  )}
                 </Link>
               ) : (
-                <span className="dot" role="img" aria-label={long} />
+                <span className="dot" role="img" aria-label={long}>
+                  <span aria-hidden="true">{date.getDate()}</span>
+                </span>
               )}
               <span className="dlabel">{state === 'today' ? t('week.today') : label}</span>
             </li>

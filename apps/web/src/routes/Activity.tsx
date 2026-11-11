@@ -50,6 +50,7 @@ import { useResolvedTheme } from '../theme';
 import { ActivitySkeleton, ChartSkeleton, Pulse } from '../Skeleton';
 import { CardTitle } from '../ui';
 import { MaterialIcon } from '../MaterialIcon';
+import { DESKTOP, PHONE, useMedia } from '../media';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -114,36 +115,22 @@ function Detail({ activity }: { activity: ActivityDetail }) {
     />
   );
 
-  return (
-    <article className="page detail">
-      {/* As on the app: the map on top, then the title, the figures and the Coach's summary. */}
-      {series && hasMap && (
-        <ActivityMap
-          series={series}
-          sport={sport}
-          pace={pace}
-          format={format}
-          hover={hover}
-          section={section}
-          onHover={setHover}
-        />
-      )}
-      <header className="dhead">
-        <SportIcon sport={sport} />
-        <div>
-          <h1>{activity.name ?? t(`sport.${sport}`)}</h1>
-          <p className="csub">
-            {formatActivityDate(localStart(activity.start_utc, activity.timezone), locale)}
-            {activity.device ? ` · ${activity.device}` : ''}
-          </p>
-          <Meta activity={activity} />
-        </div>
-        <ActivityActions activity={activity} />
-      </header>
-
-      <Figures {...activityFigures(activity, { pace, format, t, locale })} />
-      <Summary activityId={activity.id} name={activity.name} />
-
+  const phone = useMedia(PHONE);
+  const desktop = useMedia(DESKTOP);
+  const map = series && hasMap && (
+    <ActivityMap
+      series={series}
+      sport={sport}
+      pace={pace}
+      format={format}
+      hover={hover}
+      section={section}
+      onHover={setHover}
+    />
+  );
+  const summary = <Summary activityId={activity.id} name={activity.name} />;
+  const charts = (
+    <>
       {activity.streams && !series && (
         <Pulse>
           <ChartSkeleton height={280} />
@@ -162,17 +149,20 @@ function Detail({ activity }: { activity: ActivityDetail }) {
           onSection={setSection}
         />
       )}
-
+    </>
+  );
+  // The sections in the app's order (OS-909): on a ride the heart-rate zones follow the power curve and
+  // zones; on a run the splits follow the heart-rate zones. On a desktop the heart-rate zones sit in the
+  // side column with the Coach's summary.
+  const rest = (
+    <>
       <Photos activityId={activity.id} photos={activity.photo_list ?? []} />
-
-      {/* The sections in the app's order (OS-909): on a ride the heart-rate zones follow the power
-          curve and zones; on a run the splits follow the heart-rate zones. */}
-      {sport !== 'ride' && hrZones}
+      {!desktop && sport !== 'ride' && hrZones}
       {sport === 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {/* Kept offline before sets existed, an activity may come without them. */}
       {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
       <EngineExtras activity={activity} />
-      {sport === 'ride' && hrZones}
+      {!desktop && sport === 'ride' && hrZones}
       <Laps activity={activity} format={format} pace={pace} />
       {sport !== 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {activity.description && (
@@ -195,6 +185,48 @@ function Detail({ activity }: { activity: ActivityDetail }) {
           </>
         )}
       </p>
+    </>
+  );
+
+  return (
+    <article className={`page detail${map ? ' withmap' : ''}`}>
+      {/* On a phone, as the app's pushed screen: back, edit, share and photos over the map. */}
+      {phone && <ActivityActions activity={activity} floating />}
+      {/* As on the app: the map across the top, then the title, the figures and the Coach's summary. */}
+      {map}
+      <header className="dhead">
+        <SportIcon sport={sport} />
+        <div>
+          <h1>{activity.name ?? t(`sport.${sport}`)}</h1>
+          <p className="csub">
+            {formatActivityDate(localStart(activity.start_utc, activity.timezone), locale)}
+            {activity.device ? ` · ${activity.device}` : ''}
+          </p>
+          <Meta activity={activity} />
+        </div>
+        {!phone && <ActivityActions activity={activity} />}
+      </header>
+
+      <Figures {...activityFigures(activity, { pace, format, t, locale })} />
+      {desktop ? (
+        // Desktop: the charts and the rest beside a column with the Coach's summary and the zones.
+        <div className="detailgrid">
+          <div className="detailmain">
+            {charts}
+            {rest}
+          </div>
+          <aside className="detailside">
+            {summary}
+            {hrZones}
+          </aside>
+        </div>
+      ) : (
+        <>
+          {summary}
+          {charts}
+          {rest}
+        </>
+      )}
     </article>
   );
 }

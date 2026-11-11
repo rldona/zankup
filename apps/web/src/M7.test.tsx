@@ -127,7 +127,10 @@ describe('phase 7: the AI assistant', () => {
   it("shows the Coach in Home's header only when this server has a model and the switch is on", async () => {
     mockApi();
     renderAt('/');
-    expect(await screen.findByRole('link', { name: 'Coach' })).toHaveAttribute('href', '/coach');
+    // In Home's header (on a phone) and at the foot of the rail.
+    const header = within(await screen.findByRole('main'));
+    expect(await header.findByRole('link', { name: 'Coach' })).toHaveAttribute('href', '/coach');
+    expect(await screen.findAllByRole('link', { name: 'Coach' })).toHaveLength(2);
     vi.unstubAllGlobals();
     mockApi({
       '/api/ai/status': () => Response.json({ ...STATUS, available: false, model: null, budget: null }),

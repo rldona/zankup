@@ -92,13 +92,25 @@ export function Health() {
     }
     return out;
   }, [days.data, range]);
-  const [menu, setMenu] = useState(false);
 
   return (
     <section className="page stats health">
-      {/* As on the app: sync, the health settings and the period (in a menu) in the header. */}
+      {/* As on the app: sync and the health settings in the header. The period is a visible
+          segmented control instead of the app's header menu (docs/prototypes/web). */}
       <div className="titlebar">
         <h1>{t('nav.health')}</h1>
+        <div className="seg periods" role="group" aria-label={t('stats.period')}>
+          {(Object.keys(PERIODS) as PeriodKey[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              aria-pressed={p === period}
+              onClick={() => setParams({ days: p }, { replace: true })}
+            >
+              {t(`health.period.${p}` as MessageKey)}
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           className="iconbtn"
@@ -120,37 +132,6 @@ export function Health() {
         >
           <MaterialIcon name="settings" />
         </Link>
-        <div className="menuwrap">
-          <button
-            type="button"
-            className="iconbtn"
-            aria-label={t('stats.period')}
-            title={t('stats.period')}
-            aria-expanded={menu}
-            onClick={() => setMenu(!menu)}
-          >
-            <MaterialIcon name="more_vert" />
-          </button>
-          {menu && (
-            <div className="popmenu" role="menu" aria-label={t('stats.period')}>
-              {(Object.keys(PERIODS) as PeriodKey[]).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={p === period}
-                  onClick={() => {
-                    setParams({ days: p }, { replace: true });
-                    setMenu(false);
-                  }}
-                >
-                  {t(`health.period.${p}` as MessageKey)}
-                  {p === period && <MaterialIcon name="check" />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
       {sync.isSuccess && (
         <p className="note" role="status">
@@ -169,8 +150,21 @@ export function Health() {
         </div>
       )}
 
-      {lastNight?.sleep && <LastNight day={lastNight} sleep={lastNight.sleep} />}
-      {latest && <Today day={latest} />}
+      {/* Last night beside today on a desktop, one under the other below it. */}
+      {(lastNight?.sleep || latest) && (
+        <div className="healthtop">
+          {lastNight?.sleep && (
+            <div className="h-night">
+              <LastNight day={lastNight} sleep={lastNight.sleep} />
+            </div>
+          )}
+          {latest && (
+            <div className="h-today">
+              <Today day={latest} />
+            </div>
+          )}
+        </div>
+      )}
 
       {list.length > 1 && (
         <>

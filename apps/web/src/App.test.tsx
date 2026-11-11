@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -152,6 +152,65 @@ describe('app skeleton', () => {
     expect(router.state.location.pathname).toBe('/activities/7');
   });
 
+  it('lays an activity out as the app: floating buttons on a phone, a side column on a desktop', async () => {
+    const n = 61;
+    const streams = {
+      t: Array.from({ length: n }, (_, i) => i * 10),
+      dist: Array.from({ length: n }, (_, i) => i * 30),
+      hr: Array.from({ length: n }, (_, i) => (i < 30 ? 120 : 170)),
+    };
+    const media = (width: number) =>
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches:
+          (query === '(max-width: 599px)' && width < 600) ||
+          (query === '(min-width: 1200px)' && width >= 1200),
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }));
+    const api = () =>
+      mockApi({
+        '/api/auth/me': () => Response.json(ME),
+        '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
+        '/api/activities/7': () =>
+          Response.json({
+            ...RUN,
+            streams: { series: ['t', 'dist', 'hr'], sample_count: n },
+            laps: [],
+            splits: [],
+            best_efforts: [],
+          }),
+        '/api/activities/7/streams': () => Response.json(streams),
+      });
+
+    // A phone: back, edit, share and photos float as icons; no labelled buttons beside the title.
+    media(390);
+    api();
+    const router = renderAt('/activities');
+    await userEvent.click(await screen.findByRole('link', { name: /Morning run/ }));
+    const detail = await screen.findByRole('article');
+    for (const name of ['Back', 'Edit', 'Share', 'Add photos'])
+      expect(within(detail).getByRole('button', { name })).toHaveClass('floatbtn');
+    expect(detail.querySelector('.dactions')).toBeNull();
+    await userEvent.click(within(detail).getByRole('button', { name: 'Back' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/activities'));
+    cleanup();
+    vi.unstubAllGlobals();
+
+    // A desktop: the heart-rate zones in the side column, the labelled buttons beside the title.
+    media(1440);
+    api();
+    renderAt('/activities/7');
+    const wide = await screen.findByRole('article');
+    const side = await waitFor(() => {
+      const aside = wide.querySelector('aside.detailside');
+      if (!aside) throw new Error('no side column');
+      return aside as HTMLElement;
+    });
+    expect(await within(side).findByRole('heading', { name: 'Heart rate zones' })).toBeInTheDocument();
+    expect(within(wide).getByRole('button', { name: 'Edit' })).not.toHaveClass('floatbtn');
+  });
+
   it('shows the detail: figures, route, zones, best efforts, laps and the file', async () => {
     const n = 61;
     const streams = {
@@ -276,7 +335,7 @@ describe('app skeleton', () => {
     expect(calls).toContain('POST /api/auth/logout');
   });
 
-  it('has every section in the sidebar and the tab bar', async () => {
+  it('has every section in the rail and the tab bar', async () => {
     mockApi({
       '/api/auth/me': () => Response.json(ME),
       '/api/activities': () => Response.json({ items: [], next_cursor: null }),
@@ -289,14 +348,94 @@ describe('app skeleton', () => {
     expect(names(sidebar)).toEqual(['Home', 'Feed', 'Health', 'Goals', 'You']);
     expect(names(tabbar)).toEqual(names(sidebar));
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Home');
+    // The rail's foot has the notifications and Settings (and the Coach when there is a model), not
+    // a sync button: that is in the Activities header, as in the app.
+    const rail = sidebar.closest('aside');
+    if (!rail) throw new Error('missing rail');
+    expect(within(rail).getByRole('link', { name: 'Notifications' })).toHaveAttribute(
+      'href',
+      '/notifications',
+    );
+    expect(within(rail).getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings');
+    expect(within(rail).queryByRole('link', { name: 'Coach' })).not.toBeInTheDocument();
+    expect(within(rail).queryByRole('button', { name: 'Sync' })).not.toBeInTheDocument();
 
     await userEvent.click(within(tabbar).getByRole('link', { name: 'Feed' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/activities'));
-    // Search is reached from the Activities header, and stays under Activities.
-    await userEvent.click(await screen.findByRole('link', { name: 'Search' }));
-    expect(await screen.findByRole('searchbox', { name: 'Search' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/search');
+    // Search is reached from the search bar under the Activities title, and stays under Activities.
+    await userEvent.type(await screen.findByRole('searchbox', { name: 'Search' }), 'hill{Enter}');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/search'));
+    expect(router.state.location.search).toBe('?q=hill');
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Feed');
+
+    // Settings marks its own icon in the rail; the tab bar keeps You marked, as on the app.
+    await userEvent.click(within(rail).getByRole('link', { name: 'Settings' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+    expect(within(rail).getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+    expect(sidebar.querySelector('a.on')).toBeNull();
+    expect(tabbar.querySelector('a.on')?.textContent).toBe('You');
+  });
+
+  it("says notifications arrive in this browser, and puts Stats' calendar and heatmap in its header", async () => {
+    mockApi({ '/api/auth/me': () => Response.json(ME) });
+    renderAt('/settings');
+    expect(await screen.findByText('In this browser, and which kinds')).toBeInTheDocument();
+    cleanup();
+    renderAt('/stats');
+    const title = await screen.findByRole('heading', { name: 'Stats', level: 1 });
+    const header = title.closest('.titlebar') as HTMLElement;
+    expect(within(header).getByRole('link', { name: 'Calendar' })).toHaveAttribute('href', '/stats/calendar');
+    expect(within(header).getByRole('link', { name: 'Heatmap' })).toHaveAttribute('href', '/stats/heatmap');
+  });
+
+  it('shows the way back to You above the screens under it', async () => {
+    mockApi({ '/api/auth/me': () => Response.json(ME) });
+    const router = renderAt('/stats');
+    const back = await screen.findByRole('link', { name: 'You', current: false });
+    expect(back).toHaveClass('crumb');
+    await userEvent.click(back);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/profile'));
+    expect(document.querySelector('.crumb')).toBeNull();
+  });
+
+  it('leads back to the screen each one was opened from, once', async () => {
+    mockApi({ '/api/auth/me': () => Response.json(ME) });
+    const cases: [string, string, string, string][] = [
+      ['/review/month/2026-11', 'Stats', '/stats', 'always'],
+      ['/stats/heatmap', 'Stats', '/stats', 'always'],
+      ['/routes', 'Stats', '/stats', 'always'],
+      ['/routes/3', 'Your routes', '/routes', 'always'],
+      ['/estimates', 'You', '/profile', 'always'],
+      ['/settings/import', 'Settings', '/settings', 'always'],
+      ['/settings/account', 'Settings', '/settings', 'compact'],
+      ['/search', 'Feed', '/activities', 'always'],
+      ['/notifications', 'Home', '/', 'phone'],
+    ];
+    for (const [path, name, to, show] of cases) {
+      renderAt(path);
+      const crumbs = await waitFor(() => {
+        const found = document.querySelectorAll('.crumb');
+        if (!found.length) throw new Error(`no way back on ${path}`);
+        return found;
+      });
+      expect(crumbs, path).toHaveLength(1);
+      expect(crumbs[0], path).toHaveTextContent(name);
+      expect(crumbs[0], path).toHaveAttribute('href', to);
+      expect(crumbs[0]?.parentElement, path).toHaveClass(`show-${show}`);
+      cleanup();
+    }
+  });
+
+  it("picks the heatmap's sport from chips over the map", async () => {
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/stats/heatmap': () => Response.json({ routes: [] }),
+    });
+    const router = renderAt('/stats/heatmap');
+    const sports = await screen.findByRole('group', { name: 'Sports' });
+    await userEvent.click(within(sports).getByRole('button', { name: 'Ride' }));
+    await waitFor(() => expect(router.state.location.search).toBe('?sport=ride'));
+    expect(within(sports).getByRole('button', { name: 'Ride' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('keeps the feed beside the detail on wide screens', async () => {

@@ -18,6 +18,11 @@ export default defineConfig({
   projects: [
     { name: 'desktop-en', use: { ...devices['Desktop Chrome'], locale: 'en-GB' } },
     { name: 'mobile-es', use: { ...devices['Pixel 7'], locale: 'es-ES' } },
+    // The rail size (600–1199 px), as the tablet in docs/prototypes/web.
+    {
+      name: 'tablet-es',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 834, height: 1112 }, locale: 'es-ES' },
+    },
   ],
   webServer: {
     command: 'corepack pnpm build && corepack pnpm preview --port 4174 --strictPort --host 127.0.0.1',

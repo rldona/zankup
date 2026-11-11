@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -40,7 +40,7 @@ const activity = (id: number, name: string, daysAgo: number) => ({
   photos: 0,
 });
 
-function mockApi(items: unknown[]) {
+function mockApi(items: unknown[], extra: Record<string, unknown> = {}) {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: Request | string) => {
@@ -52,6 +52,7 @@ function mockApi(items: unknown[]) {
         '/api/wellness/days': [{ day: isoDay(0), steps: { value: 4321, source: 'garmin' } }],
         '/api/stats/estimates': [{ kind: 'ftp', value: 280 }],
         '/api/stats/fitness': [{ day: isoDay(0), ctl: 49, atl: 36, tsb: 13 }],
+        ...extra,
       };
       // As the API: health days stop before `end` (exclusive), so asking up to today leaves today out.
       if (url.pathname === '/api/wellness/days' && (url.searchParams.get('end') ?? '') <= isoDay(0))
@@ -82,6 +83,57 @@ describe('Home (OS-904)', () => {
     expect(screen.getByText('Run · 2')).toBeInTheDocument();
     expect(await screen.findByText('4 W/kg')).toBeInTheDocument(); // 280 W at 70 kg
     expect(await screen.findByText('Fresh')).toBeInTheDocument();
+  });
+
+  it("draws This week as the app's: the sport, a dot for a second one, the day's number, the usual week", async () => {
+    const week = (moving_s: number) => ({
+      week_start: isoDay(7),
+      count: 3,
+      distance_m: 30000,
+      moving_s,
+      ascent_m: 200,
+    });
+    mockApi([], {
+      '/api/week': {
+        today: isoDay(0),
+        days: [
+          {
+            date: isoDay(1),
+            activities: [
+              { id: 7, sport: 'run', name: 'Morning run' },
+              { id: 8, sport: 'ride', name: 'Hill ride' },
+            ],
+          },
+          { date: isoDay(0), activities: [] },
+          { date: isoDay(-1), activities: [] },
+        ],
+        this_week: week(5400),
+        previous: [week(10800), week(10800)],
+        streak_weeks: 0,
+        records: [],
+      },
+    });
+    renderHome();
+    const card = (await screen.findByRole('heading', { name: 'This week' })).closest('section');
+    if (!card) throw new Error('no week card');
+    // Yesterday: the run's icon in its circle, a dot for the ride, and both named.
+    const done = within(card).getByRole('link', { name: /Morning run, Hill ride/ });
+    expect(done).toHaveAttribute('href', '/activities/7');
+    expect(done.querySelector('.second')).toHaveStyle({ '--sport': 'var(--ride)' });
+    // Today and tomorrow: the day's number, today ringed and tomorrow faded.
+    const today = card.querySelector('li.today');
+    expect(today).toHaveTextContent(String(new Date().getDate()));
+    expect(today).toHaveTextContent('Today');
+    expect(card.querySelector('li.future .dot')).toHaveTextContent(
+      String(new Date(Date.now() + DAY).getDate()),
+    );
+    // No streak to show; half a usual week of training time.
+    expect(within(card).queryByText(/in a row/)).not.toBeInTheDocument();
+    expect(within(card).getByRole('progressbar', { name: 'Training time' })).toHaveAttribute(
+      'aria-valuenow',
+      '50',
+    );
+    expect(within(card).getByText(/50\s?%/)).toBeInTheDocument();
   });
 
   it('leaves out a last day older than yesterday, but keeps the health card', async () => {

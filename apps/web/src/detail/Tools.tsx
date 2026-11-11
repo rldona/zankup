@@ -69,17 +69,53 @@ function useRefreshActivity(id: number) {
 }
 
 /** Edit, share and add photos (OS-408, OS-409, OS-412). */
-export function ActivityActions({ activity }: { activity: ActivityDetail }) {
+/**
+ * Edit, Share and Add photos: labelled buttons beside the title, or (`floating`, on a phone, as the app)
+ * round icons over the map, after the way back.
+ */
+export function ActivityActions({
+  activity,
+  floating = false,
+}: {
+  activity: ActivityDetail;
+  floating?: boolean;
+}) {
   const [open, setOpen] = useState<'edit' | 'share' | null>(null);
+  const navigate = useNavigate();
+  const icon = (name: 'edit_square' | 'share', label: string, onClick: () => void) => (
+    <button type="button" className="floatbtn" aria-label={label} title={label} onClick={onClick}>
+      <MaterialIcon name={name} />
+    </button>
+  );
   return (
-    <div className="dactions">
-      <button type="button" onClick={() => setOpen('edit')}>
-        {t('activity.edit')}
-      </button>
-      <button type="button" onClick={() => setOpen('share')}>
-        {t('activity.share')}
-      </button>
-      <AddPhoto activityId={activity.id} />
+    <div className={floating ? 'floatbar' : 'dactions'}>
+      {floating ? (
+        <>
+          <button
+            type="button"
+            className="floatbtn"
+            aria-label={t('nav.back')}
+            title={t('nav.back')}
+            onClick={() => void navigate(-1)}
+          >
+            <MaterialIcon name="arrow_back" />
+          </button>
+          <span className="grow" />
+          {icon('edit_square', t('activity.edit'), () => setOpen('edit'))}
+          {icon('share', t('activity.share'), () => setOpen('share'))}
+          <AddPhoto activityId={activity.id} icon />
+        </>
+      ) : (
+        <>
+          <button type="button" onClick={() => setOpen('edit')}>
+            {t('activity.edit')}
+          </button>
+          <button type="button" onClick={() => setOpen('share')}>
+            {t('activity.share')}
+          </button>
+          <AddPhoto activityId={activity.id} />
+        </>
+      )}
       {open === 'edit' && <EditActivity activity={activity} onClose={() => setOpen(null)} />}
       {open === 'share' && <ShareActivity activity={activity} onClose={() => setOpen(null)} />}
     </div>
@@ -371,7 +407,7 @@ async function resized(file: File): Promise<Blob> {
   );
 }
 
-export function AddPhoto({ activityId }: { activityId: number }) {
+export function AddPhoto({ activityId, icon = false }: { activityId: number; icon?: boolean }) {
   const input = useRef<HTMLInputElement>(null);
   const refresh = useRefreshActivity(activityId);
   const upload = useMutation({
@@ -391,9 +427,22 @@ export function AddPhoto({ activityId }: { activityId: number }) {
   });
   return (
     <>
-      <button type="button" onClick={() => input.current?.click()} disabled={upload.isPending}>
-        {upload.isPending ? t('photos.uploading') : t('photos.add')}
-      </button>
+      {icon ? (
+        <button
+          type="button"
+          className="floatbtn"
+          aria-label={upload.isPending ? t('photos.uploading') : t('photos.add')}
+          title={t('photos.add')}
+          onClick={() => input.current?.click()}
+          disabled={upload.isPending}
+        >
+          <MaterialIcon name="photo_camera" />
+        </button>
+      ) : (
+        <button type="button" onClick={() => input.current?.click()} disabled={upload.isPending}>
+          {upload.isPending ? t('photos.uploading') : t('photos.add')}
+        </button>
+      )}
       <input
         ref={input}
         type="file"

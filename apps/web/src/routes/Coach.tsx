@@ -222,69 +222,72 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
           </button>
         )}
       </div>
-      {weekly && <Weekly />}
-      {budgetSpent ? (
-        <p className="warn">{t('coach.budget')}</p>
-      ) : (
-        <section className="chat" aria-label={t('coach.title')}>
-          {turns.length === 0 && (
-            <div className="intro">
-              <p className="note">{t('coach.suggestionsTitle')}</p>
-              <div className="suggestions">
-                {SUGGESTIONS.map((key) => (
-                  <button key={key} type="button" onClick={() => void ask(t(key))}>
-                    {t(key)}
-                  </button>
-                ))}
+      {/* Desktop: the weekly report on the left, the conversation on the right (docs/prototypes/web). */}
+      <div className="coachgrid">
+        {weekly && <Weekly />}
+        {budgetSpent ? (
+          <p className="warn">{t('coach.budget')}</p>
+        ) : (
+          <section className="chat" aria-label={t('coach.title')}>
+            {turns.length === 0 && (
+              <div className="intro">
+                <p className="note">{t('coach.suggestionsTitle')}</p>
+                <div className="suggestions">
+                  {SUGGESTIONS.map((key) => (
+                    <button key={key} type="button" onClick={() => void ask(t(key))}>
+                      {t(key)}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          <ol className="turns" aria-live="polite">
-            {turns.map((turn, index) => (
-              <li key={index} className={turn.role}>
-                {turn.role === 'user' ? <p>{turn.content}</p> : <Answer text={turn.content} />}
-                {turn.error && (
-                  <p className="note" role="alert">
-                    {turn.error}
-                  </p>
-                )}
-              </li>
-            ))}
-            {working && (
-              <li className="assistant working" role="status">
-                {working}
-              </li>
             )}
-          </ol>
-          <div ref={end} />
-          <form className="composer" onSubmit={submit}>
-            <MaterialIcon name="wand_stars" />
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder={t('coach.placeholder')}
-              aria-label={t('coach.placeholder')}
-              rows={2}
-              maxLength={4000}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  if (draft.trim() && !busy) void ask(draft.trim());
-                }
-              }}
-            />
-            {busy ? (
-              <button type="button" onClick={() => abort.current?.abort()}>
-                {t('coach.stop')}
-              </button>
-            ) : (
-              <button type="submit" className="primary" disabled={!draft.trim()}>
-                {t('coach.send')}
-              </button>
-            )}
-          </form>
-        </section>
-      )}
+            <ol className="turns" aria-live="polite">
+              {turns.map((turn, index) => (
+                <li key={index} className={turn.role}>
+                  {turn.role === 'user' ? <p>{turn.content}</p> : <Answer text={turn.content} />}
+                  {turn.error && (
+                    <p className="note" role="alert">
+                      {turn.error}
+                    </p>
+                  )}
+                </li>
+              ))}
+              {working && (
+                <li className="assistant working" role="status">
+                  {working}
+                </li>
+              )}
+            </ol>
+            <div ref={end} />
+            <form className="composer" onSubmit={submit}>
+              <MaterialIcon name="wand_stars" />
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder={t('coach.placeholder')}
+                aria-label={t('coach.placeholder')}
+                rows={2}
+                maxLength={4000}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (draft.trim() && !busy) void ask(draft.trim());
+                  }
+                }}
+              />
+              {busy ? (
+                <button type="button" onClick={() => abort.current?.abort()}>
+                  {t('coach.stop')}
+                </button>
+              ) : (
+                <button type="submit" className="primary" disabled={!draft.trim()}>
+                  {t('coach.send')}
+                </button>
+              )}
+            </form>
+          </section>
+        )}
+      </div>
     </>
   );
 }

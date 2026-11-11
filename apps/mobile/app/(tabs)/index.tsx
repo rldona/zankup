@@ -1,6 +1,6 @@
 /**
  * Home (OS-527): ZANKUP, with the Coach and notifications on the right, over this week, the last day with
- * activities, the last seven days and the metrics. The header stays put while the widgets scroll.
+ * activities, the metrics and the last seven days. The header stays put while the widgets scroll.
  */
 import { aiStatusQuery, type MessageKey } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
@@ -49,8 +49,9 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={[ui.page, { paddingTop: 4 }]}>
         <WeekHeader format={format} footer={<UsualWeek />} />
         <LastDay />
-        <LastSevenDays />
+        {/* Where things stand now before the week in detail, which repeats This week's ground. */}
         <Metrics />
+        <LastSevenDays />
       </ScrollView>
     </View>
   );

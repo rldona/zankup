@@ -10,8 +10,8 @@ import { WeekHeader } from '../week/WeekHeader';
 
 /**
  * Home (OS-903, OS-904), as the app's: the Coach in the header when this server has a model, then this
- * week, the last day with activities, the last seven days and the metrics. On desktop the widgets sit in
- * two columns: the week and the day on the left, the last seven days and the metrics on the right.
+ * week, the last day with activities, the metrics and the last seven days. On desktop the widgets sit in
+ * two columns: the week and the day on the left, the metrics and the last seven days on the right.
  */
 export function Home() {
   const ai = useQuery({ ...aiStatusQuery(api), retry: false });
@@ -39,8 +39,9 @@ export function Home() {
           <LastDay />
         </div>
         <div>
-          <LastSevenDays />
+          {/* Where things stand now before the week in detail, which repeats This week's ground. */}
           <Metrics />
+          <LastSevenDays />
         </div>
       </div>
     </section>

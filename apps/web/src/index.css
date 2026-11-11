@@ -231,7 +231,8 @@ svg.i.m {
   padding: 8px var(--gutter) 0;
 }
 
-.crumbrow + .page {
+/* Under a way back that shows; a phone-only one (Coach, Settings…) is hidden from 600 px. */
+.crumbrow:not(.narrow-only) + .page {
   padding-top: 0;
 }
 

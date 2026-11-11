@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { WeekHeader } from '../../src/Feed';
-import { LastDay, LastSevenDays, Metrics } from '../../src/home/Widgets';
+import { LastDay, LastSevenDays, Metrics, UsualWeek } from '../../src/home/Widgets';
 import { useApi } from '../../src/auth';
 import { Icon, type IconName } from '../../src/Icon';
 import { t } from '../../src/i18n';
@@ -47,7 +47,7 @@ export default function HomeScreen() {
         ))}
       </View>
       <ScrollView contentContainerStyle={[ui.page, { paddingTop: 4 }]}>
-        <WeekHeader format={format} />
+        <WeekHeader format={format} footer={<UsualWeek />} />
         <LastDay />
         <LastSevenDays />
         <Metrics />

@@ -4238,12 +4238,27 @@ h1.greeting {
   --tone: var(--form-negative);
 }
 
-/* Home's training this week: the pill ahead or behind a usual week, the usual week named under its mark. */
-.freshness {
+/* Home's This week against a usual week: the pill ahead or behind, the usual week named under its mark. */
+.usualweek {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.usualweek p {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.usualweek p b {
+  flex: 1;
+}
+
+.usualweek .weekbar small {
+  color: var(--muted);
 }
 
 .formpill.ahead {

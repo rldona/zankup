@@ -601,10 +601,6 @@ svg.i.m {
 }
 
 /* Activity detail (OS-205 to OS-208, OS-216), from the prototype. */
-.page.detail {
-  max-width: 980px;
-}
-
 .dhead {
   display: flex;
   gap: 12px;
@@ -987,10 +983,6 @@ img.avatar {
   object-fit: cover;
 }
 
-.page.profile {
-  max-width: 980px;
-}
-
 .tabs {
   display: flex;
   gap: 4px;
@@ -1326,10 +1318,6 @@ a.button.block {
 }
 
 /* Advanced search (OS-219). */
-.page.search {
-  max-width: 1180px;
-}
-
 .searchbox {
   width: 100%;
   font-size: 16px;
@@ -1508,12 +1496,6 @@ a.button.block {
 }
 
 /* Stats, calendar, routes and segments (phase 3). */
-.page.stats,
-.page.calendar,
-.page.wide {
-  max-width: 1180px;
-}
-
 .statshead {
   display: flex;
   flex-wrap: wrap;
@@ -1524,6 +1506,10 @@ a.button.block {
 
 .statshead h1 {
   margin: 0;
+}
+
+.page.calendar .statshead {
+  margin-bottom: 12px;
 }
 
 .statshead .month {
@@ -3012,10 +2998,6 @@ textarea {
   }
 }
 
-.page.home {
-  max-width: 1100px;
-}
-
 .homegrid {
   display: grid;
   gap: 0 20px;
@@ -3663,10 +3645,6 @@ button.danger svg.i {
 }
 
 /* Goals (OS-911), as the app's: the card opens its chart; side by side on a large screen. */
-.page.goals {
-  max-width: 1100px;
-}
-
 .goalgrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -3841,10 +3819,6 @@ button.danger svg.i {
 }
 
 /* Stats (OS-912), as the app's: the period over everything, the cards two by two on a large screen. */
-.page.stats {
-  max-width: 1200px;
-}
-
 .periodbar {
   display: flex;
   flex-wrap: wrap;
@@ -3940,16 +3914,8 @@ button.danger svg.i {
   background: var(--surface-2);
 }
 
-.page.estimates {
-  max-width: 1100px;
-}
-
 /* Settings in the app's sections (OS-914): the list on the left and the open one on the right on a large
    screen; on a phone the list is a page and each section another. */
-.page.settings {
-  max-width: 1200px;
-}
-
 .settingswrap {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);

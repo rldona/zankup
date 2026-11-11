@@ -51,16 +51,30 @@ export default function ReviewScreen() {
     <Screen
       header
       toolbar={
-        <Choice
-          center
-          label={t('review.period')}
-          value={period}
-          onChange={switchTo}
-          options={[
-            { value: 'month', label: t('review.month') },
-            { value: 'year', label: t('review.year') },
-          ]}
-        />
+        <>
+          <Choice
+            center
+            label={t('review.period')}
+            value={period}
+            onChange={switchTo}
+            options={[
+              { value: 'month', label: t('review.month') },
+              { value: 'year', label: t('review.year') },
+            ]}
+          />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Button
+                onPress={() => setValue(shiftPeriod(period, value, -1))}
+              >{`← ${title(period, shiftPeriod(period, value, -1))}`}</Button>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                onPress={() => setValue(shiftPeriod(period, value, 1))}
+              >{`${title(period, shiftPeriod(period, value, 1))} →`}</Button>
+            </View>
+          </View>
+        </>
       }
     >
       <Stack.Screen
@@ -68,18 +82,6 @@ export default function ReviewScreen() {
           title: t(period === 'year' ? 'review.yearTitle' : 'review.monthTitle', { period: heading }),
         }}
       />
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <Button
-            onPress={() => setValue(shiftPeriod(period, value, -1))}
-          >{`← ${title(period, shiftPeriod(period, value, -1))}`}</Button>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button
-            onPress={() => setValue(shiftPeriod(period, value, 1))}
-          >{`${title(period, shiftPeriod(period, value, 1))} →`}</Button>
-        </View>
-      </View>
       {review.isPending && <Loading />}
       {review.isError && !review.data && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
       {review.data && review.data.totals.count === 0 && <Muted>{t('review.empty')}</Muted>}

@@ -53,7 +53,7 @@ describe('sync', () => {
     vi.unstubAllGlobals();
   });
 
-  it('syncs from the sidebar, follows the progress and refreshes the feed', async () => {
+  it('syncs from the Activities header, follows the progress and refreshes the feed', async () => {
     let state: object[] = [];
     let polls = 0;
     const calls = mockApi({
@@ -69,9 +69,8 @@ describe('sync', () => {
       },
     });
     renderAt('/activities');
-    const [sidebar] = await screen.findAllByRole('button', { name: 'Sync' });
-    if (!sidebar) throw new Error('no sync button');
-    await userEvent.click(sidebar);
+    // As in the app, sync sits in the Activities header; the frame has no sync button of its own.
+    await userEvent.click(await screen.findByRole('button', { name: 'Sync' }));
     const sheet = await screen.findByRole('dialog', { name: 'Sync' });
     expect(within(sheet).getByText('Syncing with Garmin…')).toBeInTheDocument();
     expect(sheet).toHaveTextContent('5 found · 2 new · 1 downloaded');

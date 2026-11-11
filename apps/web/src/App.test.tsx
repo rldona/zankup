@@ -276,7 +276,7 @@ describe('app skeleton', () => {
     expect(calls).toContain('POST /api/auth/logout');
   });
 
-  it('has every section in the sidebar and the tab bar', async () => {
+  it('has every section in the rail and the tab bar', async () => {
     mockApi({
       '/api/auth/me': () => Response.json(ME),
       '/api/activities': () => Response.json({ items: [], next_cursor: null }),
@@ -289,6 +289,17 @@ describe('app skeleton', () => {
     expect(names(sidebar)).toEqual(['Home', 'Feed', 'Health', 'Goals', 'You']);
     expect(names(tabbar)).toEqual(names(sidebar));
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Home');
+    // The rail's foot has the notifications and Settings (and the Coach when there is a model), not
+    // a sync button: that is in the Activities header, as in the app.
+    const rail = sidebar.closest('aside');
+    if (!rail) throw new Error('missing rail');
+    expect(within(rail).getByRole('link', { name: 'Notifications' })).toHaveAttribute(
+      'href',
+      '/notifications',
+    );
+    expect(within(rail).getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings');
+    expect(within(rail).queryByRole('link', { name: 'Coach' })).not.toBeInTheDocument();
+    expect(within(rail).queryByRole('button', { name: 'Sync' })).not.toBeInTheDocument();
 
     await userEvent.click(within(tabbar).getByRole('link', { name: 'Feed' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/activities'));
@@ -297,6 +308,23 @@ describe('app skeleton', () => {
     expect(await screen.findByRole('searchbox', { name: 'Search' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/search');
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Feed');
+
+    // Settings marks its own icon in the rail; the tab bar keeps You marked, as on the app.
+    await userEvent.click(within(rail).getByRole('link', { name: 'Settings' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
+    expect(within(rail).getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+    expect(sidebar.querySelector('a.on')).toBeNull();
+    expect(tabbar.querySelector('a.on')?.textContent).toBe('You');
+  });
+
+  it('shows the way back to You above the screens under it', async () => {
+    mockApi({ '/api/auth/me': () => Response.json(ME) });
+    const router = renderAt('/stats');
+    const back = await screen.findByRole('link', { name: 'You', current: false });
+    expect(back).toHaveClass('crumb');
+    await userEvent.click(back);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/profile'));
+    expect(document.querySelector('.crumb')).toBeNull();
   });
 
   it('keeps the feed beside the detail on wide screens', async () => {

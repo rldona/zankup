@@ -4325,7 +4325,7 @@ h1.greeting {
   padding: 1px 8px;
   border-radius: 999px;
   /* The tone towards the text colour, so it reads on its pale background in any theme. */
-  color: color-mix(in srgb, var(--tone) 60%, var(--fg));
+  color: color-mix(in srgb, var(--tone) 55%, var(--fg));
   background: color-mix(in srgb, var(--tone) 15%, transparent);
 }
 

@@ -53,6 +53,9 @@ function mockApi(items: unknown[]) {
         '/api/stats/estimates': [{ kind: 'ftp', value: 280 }],
         '/api/stats/fitness': [{ day: isoDay(0), ctl: 49, atl: 36, tsb: 13 }],
       };
+      // As the API: health days stop before `end` (exclusive), so asking up to today leaves today out.
+      if (url.pathname === '/api/wellness/days' && (url.searchParams.get('end') ?? '') <= isoDay(0))
+        return Response.json([]);
       const data = body[url.pathname];
       return data === undefined
         ? Response.json({ detail: 'Not Found' }, { status: 404 })

@@ -124,15 +124,43 @@ export function Goals() {
   );
 }
 
+const OPEN_GOALS = 'zankup-goals-open';
+
+/** The goals whose day-by-day chart was left open in this browser. */
+function openGoals(): Set<number> {
+  try {
+    const ids: unknown = JSON.parse(localStorage.getItem(OPEN_GOALS) ?? '[]');
+    return new Set(Array.isArray(ids) ? ids.filter((id): id is number => typeof id === 'number') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberGoal(id: number, open: boolean): void {
+  const ids = openGoals();
+  if (open) ids.add(id);
+  else ids.delete(id);
+  try {
+    localStorage.setItem(OPEN_GOALS, JSON.stringify([...ids]));
+  } catch {
+    // Storage off (a private window): the chart just starts folded next time.
+  }
+}
+
 function GoalCard({ goal, format, children }: { goal: GoalOut; format: Format; children?: React.ReactNode }) {
   const share = Math.min(1, goal.current / goal.target);
   const done = goal.current >= goal.target;
-  const [chart, setChart] = useState(false);
+  // Open or folded as it was left, in this browser.
+  const [chart, setChart] = useState(() => openGoals().has(goal.id));
+  const toggle = () => {
+    setChart(!chart);
+    rememberGoal(goal.id, !chart);
+  };
   return (
     <article className="panel goalcard">
       {/* The whole card opens and closes the day-by-day chart; the chart sits outside the button, so
           reading it never folds it. */}
-      <button type="button" className="goalhead" aria-expanded={chart} onClick={() => setChart(!chart)}>
+      <button type="button" className="goalhead" aria-expanded={chart} onClick={toggle}>
         <span className="goalrow">
           <b>{goalName(goal)}</b>
           <b className="num">{Math.round(share * 100)} %</b>

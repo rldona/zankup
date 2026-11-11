@@ -49,6 +49,7 @@ import {
 import { Icon } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
+import { openGoals, rememberGoal } from '../storage';
 import { useTheme } from '../theme';
 import { Card, CardTitle, Choice, Heading, Muted, ProgressBar, Stat, styles as ui } from '../ui';
 
@@ -87,16 +88,21 @@ export function GoalCard({
   const c = useTheme();
   const share = Math.min(1, goal.current / goal.target);
   const done = goal.current >= goal.target;
-  const [chart, setChart] = useState(false);
+  // Open or folded as it was left, even after closing the app.
+  const [chart, setChart] = useState(() => openGoals().has(goal.id));
+  const toggle = () => {
+    setChart(!chart);
+    rememberGoal(goal.id, !chart);
+  };
   return (
     <Card>
-      {/* The whole card opens and closes the day-by-day chart, folded at first. The chart itself sits
-          outside the touch area, so reading it with a finger never folds it. */}
+      {/* The whole card opens and closes the day-by-day chart. The chart itself sits outside the touch
+          area, so reading it with a finger never folds it. */}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: chart }}
         accessibilityHint={t(chart ? 'goals.hideChart' : 'goals.showChart')}
-        onPress={() => setChart(!chart)}
+        onPress={toggle}
         style={({ pressed }) => ({ gap: 8, opacity: pressed ? 0.7 : 1 })}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>

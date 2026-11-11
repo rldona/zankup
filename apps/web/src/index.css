@@ -4723,3 +4723,67 @@ h1.greeting {
     grid-column: 1 / -1;
   }
 }
+
+/* The Coach (docs/prototypes/web): on a desktop the weekly report on the left and the conversation on
+   the right, in a card the height of the screen, the suggestions centred in it and the question field
+   held at its foot. */
+@media (min-width: 1200px) {
+  .coachgrid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .coachgrid > .weekly {
+    position: sticky;
+    top: 20px;
+    margin: 0;
+  }
+
+  .coachgrid > :only-child {
+    grid-column: 1 / -1;
+  }
+
+  .coachgrid > .chat {
+    box-sizing: border-box;
+    min-height: calc(100dvh - 160px);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 24px;
+  }
+
+  .coachgrid > .chat .intro {
+    flex: 1;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .coachgrid > .chat .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .coachgrid > .chat .turns {
+    flex: 1;
+  }
+
+  .coachgrid > .chat .composer {
+    position: sticky;
+    bottom: 0;
+    margin-top: auto;
+    padding-top: 8px;
+    background: var(--surface);
+  }
+}
+
+@media (min-width: 1200px) {
+  .coachgrid > .chat .turns:empty {
+    display: none;
+  }
+}

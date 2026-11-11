@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 import { fakeApi, signIn, word } from './api';
 
-/** English on desktop, Spanish on a phone: the language comes from the browser (OS-223). */
+/** English on desktop, Spanish on a tablet and a phone: the language comes from the browser (OS-223). */
 const lang = (name: string): 'en' | 'es' => (name.endsWith('-es') ? 'es' : 'en');
 
 test.beforeEach(async ({ page }) => {
@@ -53,6 +53,45 @@ test('open an activity: figures, route, zones and laps', async ({ page }, info) 
     .first()
     .click();
   await expect(page.getByRole('heading', { name: w('week.title'), exact: true })).toBeVisible();
+});
+
+test('the frame: tab bar on a phone, the rail from 600 px, one header, no sideways scroll', async ({
+  page,
+}, info) => {
+  const w = (key: string) => word(lang(info.project.name), key);
+  await signIn(page, lang(info.project.name));
+  const width = page.viewportSize()?.width ?? 0;
+  const tabbar = page.locator('nav.tabbar');
+  const rail = page.locator('aside.rail');
+  for (const path of ['/', '/activities', '/health', '/goals', '/profile', '/stats']) {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    if (width < 600) {
+      await expect(tabbar).toBeVisible();
+      await expect(rail).toBeHidden();
+    } else {
+      await expect(rail).toBeVisible();
+      await expect(tabbar).toBeHidden();
+    }
+    // One title per screen: no top bar of the frame's own above it.
+    await expect(page.locator('h1').filter({ visible: true })).toHaveCount(1);
+    const overflow = await page.evaluate(() => {
+      const main = document.querySelector('main');
+      return (main?.scrollWidth ?? 0) - (main?.clientWidth ?? 0);
+    });
+    expect(overflow, path).toBeLessThanOrEqual(0);
+  }
+  // Sync is in the Activities header, as in the app.
+  await page.goto('/activities');
+  await expect(page.getByRole('main').getByRole('button', { name: w('nav.sync') })).toBeVisible();
+  // Stats sits under You, with the way back above its title.
+  await page.goto('/stats');
+  await page.locator('.crumb').click();
+  await expect(page).toHaveURL(/\/profile$/);
+  if (width >= 1200) {
+    const box = await page.locator('main .page').first().boundingBox();
+    expect(box?.width).toBeLessThanOrEqual(1320);
+  }
 });
 
 test('search keeps its filters in the URL', async ({ page }, info) => {

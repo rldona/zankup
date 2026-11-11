@@ -2383,6 +2383,8 @@ a.button {
   margin: 0;
   padding: 0;
   display: grid;
+  /* Side by side where there is room, now that every screen is as wide as the others. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
   gap: 10px;
 }
 

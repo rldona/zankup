@@ -2990,7 +2990,28 @@ textarea {
   height: 22px;
 }
 
-/* Home (OS-904), as the app's: two columns on a large screen, one on a phone. */
+/* Home (OS-904), as the app's: two columns on a large screen, one on a phone. On a phone the header is
+   the wordmark (the title stays for screen readers). */
+.homemark {
+  flex: 1;
+  color: var(--fg);
+}
+
+@media (max-width: 599px) {
+  .page.home .titlebar h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .page.home .titlebar .iconbtn.phone-only {
+    display: grid;
+  }
+}
+
 .page.home {
   max-width: 1100px;
 }

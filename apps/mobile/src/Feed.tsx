@@ -131,7 +131,8 @@ export function WeekHeader({ format, footer }: { format: Format; footer?: React.
           );
         })}
       </View>
-      <View style={ui.stats}>
+      {/* The days, then the week's numbers, set apart as the comparison under them. */}
+      <View style={[ui.stats, { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderColor: c.line }]}>
         <Stat labelFirst label={t('feed.title')} value={String(totals.count)} />
         <Stat labelFirst label={t('feed.stat.distance')} value={format.distance(totals.distance_m)} />
         <Stat labelFirst label={t('feed.stat.time')} value={formatHoursMinutes(totals.moving_s)} />

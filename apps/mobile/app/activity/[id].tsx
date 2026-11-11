@@ -218,6 +218,8 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         extrapolate: 'clamp',
       })
     : 1;
+  // The buttons' round backgrounds go as the header comes.
+  const round = typeof solid === 'number' ? 1 - solid : Animated.subtract(1, solid);
   const title = a.name ?? t(`sport.${sport}`);
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -402,7 +404,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
             opacity: solid,
           }}
         />
-        <HeaderButton label={t('common.back')} onPress={() => router.back()}>
+        <HeaderButton label={t('common.back')} onPress={() => router.back()} round={round}>
           <Icon name="arrow_back" color={c.fg} />
         </HeaderButton>
         <Animated.Text
@@ -411,10 +413,10 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
         >
           {title}
         </Animated.Text>
-        <HeaderButton label={t('activity.edit')} onPress={() => setEditing(true)}>
+        <HeaderButton label={t('activity.edit')} onPress={() => setEditing(true)} round={round}>
           <Icon name="edit_square" color={c.fg} />
         </HeaderButton>
-        <View style={headerButton(c)}>
+        <HeaderButton round={round}>
           <ActionMenu
             label={t('activity.share')}
             icon="share"
@@ -423,7 +425,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
               { icon: 'link', label: t('share.link'), onPress: () => void shareLink() },
             ]}
           />
-        </View>
+        </HeaderButton>
       </View>
       {editing && <EditActivity activity={a} onClose={() => setEditing(false)} />}
     </View>
@@ -434,39 +436,52 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
 const HEADER = 56;
 const MAP = 300;
 
-/** A round button in the activity's header, so it reads over the map as well as over the page. */
-const headerButton = (c: ReturnType<typeof useTheme>) =>
-  ({
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: c.surface,
-    borderWidth: 1,
-    borderColor: c.line,
-  }) as const;
-
+/**
+ * A button in the activity's header: on a round background while the header is see-through over the
+ * map, so it reads there; the background fades away as the header fills in (`round`, 1 to 0).
+ */
 function HeaderButton({
   label,
   onPress,
+  round,
   children,
 }: {
-  label: string;
-  onPress: () => void;
+  label?: string;
+  onPress?: () => void;
+  round: Animated.AnimatedInterpolation<number> | number;
   children: ReactNode;
 }) {
   const c = useTheme();
-  return (
+  const body = (
+    <>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 20,
+          backgroundColor: c.surface,
+          borderWidth: 1,
+          borderColor: c.line,
+          opacity: round,
+        }}
+      />
+      {children}
+    </>
+  );
+  const box = { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' } as const;
+  return onPress ? (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={6}
       onPress={onPress}
-      style={headerButton(c)}
+      style={box}
     >
-      {children}
+      {body}
     </Pressable>
+  ) : (
+    <View style={box}>{body}</View>
   );
 }
 

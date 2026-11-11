@@ -72,7 +72,8 @@ const TITLES: Record<Section, MessageKey> = {
 const SECTION_NOTES: Record<Section, MessageKey> = {
   general: 'mobile.section.generalNote',
   heart: 'mobile.section.heartNote',
-  notifications: 'mobile.section.notificationsNote',
+  // Where notifications arrive on the web: this browser, not the phone (docs/prototypes/web).
+  notifications: 'settings.section.notificationsNoteWeb',
   ai: 'mobile.section.aiNote',
   privacy: 'mobile.section.privacyNote',
   health: 'mobile.section.healthNote',

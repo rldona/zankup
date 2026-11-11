@@ -376,6 +376,18 @@ describe('app skeleton', () => {
     expect(tabbar.querySelector('a.on')?.textContent).toBe('You');
   });
 
+  it("says notifications arrive in this browser, and puts Stats' calendar and heatmap in its header", async () => {
+    mockApi({ '/api/auth/me': () => Response.json(ME) });
+    renderAt('/settings');
+    expect(await screen.findByText('In this browser, and which kinds')).toBeInTheDocument();
+    cleanup();
+    renderAt('/stats');
+    const title = await screen.findByRole('heading', { name: 'Stats', level: 1 });
+    const header = title.closest('.titlebar') as HTMLElement;
+    expect(within(header).getByRole('link', { name: 'Calendar' })).toHaveAttribute('href', '/stats/calendar');
+    expect(within(header).getByRole('link', { name: 'Heatmap' })).toHaveAttribute('href', '/stats/heatmap');
+  });
+
   it('shows the way back to You above the screens under it', async () => {
     mockApi({ '/api/auth/me': () => Response.json(ME) });
     const router = renderAt('/stats');

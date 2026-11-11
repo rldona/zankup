@@ -48,21 +48,25 @@ export default function ReviewScreen() {
     setValue(next === 'year' ? value.slice(0, 4) : value.length === 4 ? `${value}-12` : value);
   };
   return (
-    <Screen header>
+    <Screen
+      header
+      toolbar={
+        <Choice
+          center
+          label={t('review.period')}
+          value={period}
+          onChange={switchTo}
+          options={[
+            { value: 'month', label: t('review.month') },
+            { value: 'year', label: t('review.year') },
+          ]}
+        />
+      }
+    >
       <Stack.Screen
         options={{
           title: t(period === 'year' ? 'review.yearTitle' : 'review.monthTitle', { period: heading }),
         }}
-      />
-      <Choice
-        center
-        label={t('review.period')}
-        value={period}
-        onChange={switchTo}
-        options={[
-          { value: 'month', label: t('review.month') },
-          { value: 'year', label: t('review.year') },
-        ]}
       />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>

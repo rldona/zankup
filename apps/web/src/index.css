@@ -4213,13 +4213,7 @@ h1.greeting {
   width: 12px;
 }
 
-/* Stats' freshness (as the app): the form as a coloured pill, then fitness and fatigue as bars. */
-.freshness {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+/* The training load's form as a coloured pill (Home, as the app): rested blue, building green. */
 
 .formpill {
   --tone: var(--muted);
@@ -4233,47 +4227,13 @@ h1.greeting {
 }
 
 .formpill.fresh {
-  --tone: var(--form-positive);
+  --tone: var(--ride);
 }
 
 .formpill.optimal {
-  --tone: var(--accent);
+  --tone: var(--form-positive);
 }
 
 .formpill.overreaching {
   --tone: var(--form-negative);
-}
-
-.formbars {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.formbars li {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  row-gap: 3px;
-  font-size: 12px;
-}
-
-.formbars span {
-  color: var(--muted);
-}
-
-.formbars i {
-  grid-column: 1 / -1;
-  display: block;
-  height: 6px;
-  border-radius: 3px;
-}
-
-.formbars i.ctl {
-  background: var(--accent);
-}
-
-.formbars i.atl {
-  background: var(--zone-5);
 }

@@ -84,7 +84,7 @@ export function weekEffort(week: { this_week: { moving_s: number }; previous: { 
   return { share: average > 0 ? Math.round((week.this_week.moving_s / average) * 100) : null, average };
 }
 
-/** How the form's pill is coloured: rested, neither, building (the training zone) or overreaching. */
+/** How the form is coloured (pill and gauge): rested, neither, building (the training zone) or overreaching. */
 export type FormTone = 'fresh' | 'neutral' | 'optimal' | 'overreaching';
 
 export function formTone(tsb: number): FormTone {
@@ -93,6 +93,20 @@ export function formTone(tsb: number): FormTone {
   if (tsb > -30) return 'optimal';
   return 'overreaching';
 }
+
+/**
+ * The training load's gauge on Home: freshness from -40 to +30, in the bands formTone draws (each
+ * band's upper end), so the dot sits in the colour of the pill under it.
+ */
+export const FORM_GAUGE: { min: number; bands: { tone: FormTone; to: number }[] } = {
+  min: -40,
+  bands: [
+    { tone: 'overreaching', to: -30 },
+    { tone: 'optimal', to: -10 },
+    { tone: 'neutral', to: 5 },
+    { tone: 'fresh', to: 30 },
+  ],
+};
 
 export function formLabel(tsb: number): MessageKey {
   if (tsb > 5) return 'stats.form.fresh';

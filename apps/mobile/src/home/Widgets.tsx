@@ -16,6 +16,8 @@ import {
   dayHeading,
   formLabel,
   formTone,
+  FORM_GAUGE,
+  type FormTone,
   weekEffort,
   weekQuery,
   mix,
@@ -332,36 +334,20 @@ export function Metrics() {
     </Tile>,
     now ? (
       <Tile key="load" icon="speed" label={t('home.load')}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>
-            {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
-          </Text>
+        {/* Freshness (fitness minus fatigue) on the form's bands, as VO₂ max and FTP. */}
+        <Gauge
+          value={now.tsb}
+          min={FORM_GAUGE.min}
+          max={FORM_GAUGE.bands.at(-1)?.to ?? 30}
+          label={now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
+          bands={FORM_GAUGE.bands.map((b) => ({ colour: formColour(c, b.tone), to: b.to }))}
+        />
+        <View style={{ alignItems: 'center', gap: 4 }}>
           <Pill colour={formColour(c, now.tsb)}>{t(formLabel(now.tsb))}</Pill>
+          <Muted style={{ textAlign: 'center' }}>
+            {t('stats.ctl')} {now.ctl.toFixed(0)} · {t('stats.atl')} {now.atl.toFixed(0)}
+          </Muted>
         </View>
-        {/* Freshness is fitness minus fatigue: both as bars, so the gap between them shows. */}
-        {(
-          [
-            [t('stats.ctl'), now.ctl, c.accent],
-            [t('stats.atl'), now.atl, c.zone5],
-          ] as const
-        ).map(([label, value, colour]) => (
-          <View key={label} style={{ gap: 3 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Muted style={{ fontSize: 12 }}>{label}</Muted>
-              <Text style={{ color: c.fg, fontSize: 12, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
-                {value.toFixed(0)}
-              </Text>
-            </View>
-            <View
-              style={{
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: colour,
-                width: `${Math.max(2, (value / Math.max(1, now.ctl, now.atl)) * 100)}%`,
-              }}
-            />
-          </View>
-        ))}
       </Tile>
     ) : null,
     effort && week.data ? (
@@ -385,13 +371,13 @@ export function Metrics() {
 
 // --- pieces -------------------------------------------------------------------------------------------
 
-/** The form's colour: rested green, neither grey, building in the accent, overreaching red. */
-function formColour(c: ReturnType<typeof useTheme>, tsb: number): string {
-  const tone = formTone(tsb);
+/** The form's colour: rested blue, neither grey, building green, overreaching red. */
+function formColour(c: ReturnType<typeof useTheme>, form: number | FormTone): string {
+  const tone = typeof form === 'number' ? formTone(form) : form;
   return tone === 'fresh'
-    ? c.formPositive
+    ? c.ride
     : tone === 'optimal'
-      ? c.accent
+      ? c.formPositive
       : tone === 'overreaching'
         ? c.formNegative
         : c.muted;
@@ -505,19 +491,24 @@ function Ring({
 
 const GAUGE = ['#e03131', '#e8590c', '#2f9e44', '#1c7ed6', '#7950f2'];
 
-/** A 270° gauge in five coloured bands, with a dot at the value and the figure in the middle. */
+/**
+ * A 270° gauge in coloured bands, with a dot at the value and the figure in the middle: five equal
+ * bands by default (VO₂ max, FTP), or `bands` with each one's upper end (the training load's form).
+ */
 function Gauge({
   value,
   min,
   max,
   label,
   unit,
+  bands: given,
 }: {
   value: number;
   min: number;
   max: number;
   label: string;
   unit?: string;
+  bands?: { colour: string; to: number }[];
 }) {
   const c = useTheme();
   const size = 120;
@@ -525,30 +516,26 @@ function Gauge({
   const start = -135;
   const sweep = 270;
   const gap = 4;
-  const bands = GAUGE.map((colour, i) => {
-    const from = start + (sweep / GAUGE.length) * i + (i ? gap / 2 : 0);
-    const to = start + (sweep / GAUGE.length) * (i + 1) - (i < GAUGE.length - 1 ? gap / 2 : 0);
-    return { colour, path: Skia.Path.MakeFromSVGString(arc(size / 2, size / 2, r, from, to)) };
+  const scale =
+    given ?? GAUGE.map((colour, i) => ({ colour, to: min + ((max - min) * (i + 1)) / GAUGE.length }));
+  const at = (v: number) => Math.max(0, Math.min(1, (v - min) / (max - min)));
+  const bands = scale.map(({ colour, to }, i) => {
+    const from = start + sweep * at(i ? (scale[i - 1]?.to ?? min) : min) + (i ? gap / 2 : 0);
+    const end = start + sweep * at(to) - (i < scale.length - 1 ? gap / 2 : 0);
+    return { colour, path: Skia.Path.MakeFromSVGString(arc(size / 2, size / 2, r, from, end)) };
   });
-  const share = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  const share = at(value);
   const angle = ((start + sweep * share - 90) * Math.PI) / 180;
   const dot = Skia.Path.MakeFromSVGString(
     `M ${size / 2 + r * Math.cos(angle) + 8} ${size / 2 + r * Math.sin(angle)} a 8 8 0 1 0 -16 0 a 8 8 0 1 0 16 0`,
   );
-  const dotColour = GAUGE[Math.min(GAUGE.length - 1, Math.floor(share * GAUGE.length))] ?? c.fg;
+  const dotColour = (scale.find((b) => value <= b.to) ?? scale.at(-1))?.colour ?? c.fg;
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
       <Canvas style={{ width: size, height: size }}>
-        {bands.map((b) =>
+        {bands.map((b, i) =>
           b.path ? (
-            <Path
-              key={b.colour}
-              path={b.path}
-              style="stroke"
-              strokeWidth={8}
-              strokeCap="round"
-              color={b.colour}
-            />
+            <Path key={i} path={b.path} style="stroke" strokeWidth={8} strokeCap="round" color={b.colour} />
           ) : null,
         )}
         {dot && <Path path={dot} color={dotColour} />}

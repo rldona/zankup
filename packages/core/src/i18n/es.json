@@ -910,6 +910,7 @@
   "mobile.section.heart": "Pulso y zonas",
   "mobile.section.heartNote": "FC máxima y en reposo, modelo de zonas, umbral y FTP",
   "mobile.section.notificationsNote": "En este teléfono, y de qué tipo",
+  "settings.section.notificationsNoteWeb": "En este navegador, y de qué tipo",
   "mobile.section.ai": "Zankup Coach y MCP",
   "mobile.section.aiNote": "El coach y los tokens personales",
   "mobile.section.privacyNote": "Lugares ocultos en lo que compartes",

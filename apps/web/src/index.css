@@ -4724,6 +4724,12 @@ h1.greeting {
   }
 }
 
+/* Settings: the chosen section marked as in the rail. */
+.settingslist a.on {
+  background: var(--accent-soft);
+  border-radius: 12px;
+}
+
 /* The Coach (docs/prototypes/web): on a desktop the weekly report on the left and the conversation on
    the right, in a card the height of the screen, the suggestions centred in it and the question field
    held at its foot. */

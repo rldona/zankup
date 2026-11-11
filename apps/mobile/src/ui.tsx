@@ -408,6 +408,7 @@ export function Choice<T extends string>({
   onChange,
   label,
   scroll,
+  center,
 }: {
   options: { value: T; label: string }[];
   value: T;
@@ -415,6 +416,8 @@ export function Choice<T extends string>({
   label: string;
   /** One row that scrolls sideways, for long lists (years). */
   scroll?: boolean;
+  /** The chips centred in their row, for a row of its own at the top of a screen. */
+  center?: boolean;
 }) {
   const c = useTheme();
   const Wrapper = (scroll ? ScrollView : View) as typeof View;
@@ -424,7 +427,14 @@ export function Choice<T extends string>({
       accessibilityLabel={label}
       {...(scroll
         ? { horizontal: true, showsHorizontalScrollIndicator: false, contentContainerStyle: { gap: 6 } }
-        : { style: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 } })}
+        : {
+            style: {
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              gap: 6,
+              justifyContent: center ? 'center' : 'flex-start',
+            },
+          })}
     >
       {options.map((o) => {
         const on = o.value === value;

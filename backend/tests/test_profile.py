@@ -184,3 +184,51 @@ def test_garmin_status(ctx: Ctx) -> None:
     [garmin] = ctx.http.get("/api/sources").json()
     assert garmin["configured"] is True and garmin["expiring_soon"] is True
     assert garmin["last_error"] == "Garmin is down" and garmin["last_sync_at"] is None
+
+
+@pytest.mark.parametrize("units", ["metric", "imperial"])
+def test_a_record_in_miles_is_kept_but_only_announced_with_miles(
+    ctx: Ctx, monkeypatch: pytest.MonkeyPatch, units: str
+) -> None:
+    from zankup import notify as notify_module
+    from zankup.db.models import Event, UserSettings
+    from zankup.engine.activity import record_events
+
+    announced: list[str] = []
+    monkeypatch.setattr(
+        notify_module, "notify", lambda db, user_id, kind, data, key: announced.append(data["distance_key"])
+    )
+    now = datetime.now(UTC)
+    with ctx.sessions.begin() as db:
+        db.add(UserSettings(user_id=ctx.user_id, theme="system", units=units))
+        runs = []
+        for i, seconds in enumerate((420, 400)):  # an older run, then today's faster one
+            activity = Activity(
+                user_id=ctx.user_id,
+                source="garmin",
+                external_id=f"m{i}",
+                sport="run",
+                start_utc=now - timedelta(days=1 - i, hours=1),
+                duration_s=3600,
+                distance_m=10000,
+            )
+            db.add(activity)
+            db.flush()
+            runs.append(activity)
+            for key, metres, time_s in (("1mile", 1609, seconds), ("5k", 5000, seconds * 3)):
+                db.add(
+                    BestEffort(
+                        activity_id=activity.id,
+                        user_id=ctx.user_id,
+                        distance_key=key,
+                        distance_m=metres,
+                        time_s=time_s,
+                        start_s=0,
+                        start_distance_m=0,
+                    )
+                )
+        db.flush()
+        assert record_events(db, runs[1]) == 2
+        kept = db.scalars(select(Event.payload).where(Event.user_id == ctx.user_id, Event.kind == "record"))
+        assert sorted(p["distance_key"] for p in kept) == ["1mile", "5k"]
+    assert announced == (["5k"] if units == "metric" else ["1mile", "5k"])

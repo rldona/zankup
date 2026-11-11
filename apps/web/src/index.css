@@ -589,6 +589,11 @@ svg.i.m {
   flex: 1;
 }
 
+.ph h3 {
+  margin: 0;
+  flex: 1;
+}
+
 .seg {
   display: inline-flex;
   border: 1px solid var(--line);
@@ -1154,6 +1159,10 @@ a.button.block {
   justify-content: space-between;
   gap: 4px 12px;
   margin: 0;
+  /* The days, then the week's numbers, set apart as the comparison under them. */
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 
 .weeknums div {
@@ -3066,6 +3075,16 @@ textarea {
   text-align: center;
 }
 
+.tile .tbody.stretch {
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.tile .tbody.stretch .big {
+  margin: 0;
+}
+
 .tile .form {
   font-size: 24px;
 }
@@ -4090,4 +4109,179 @@ h1.greeting {
   background: var(--accent);
   color: var(--accent-fg);
   border-color: transparent;
+}
+
+/* Year by year: each year's colour and total, in place of the chart's legend (as the app). */
+.rows.years {
+  margin-top: 4px;
+}
+
+.rows.years li {
+  padding: 6px 0;
+}
+
+.rows.years li > span:first-child {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.rows.years li.on {
+  font-weight: 700;
+}
+
+.rows.years i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Stats' summary against the same period a year before (as the app): figure, change, two bars. */
+.compare {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.compare li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 4px;
+}
+
+.compare .clabel {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.compare .bar {
+  grid-column: 1 / -1;
+}
+
+.compare .pill {
+  --tone: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  /* The tone towards the text colour, so it reads on its pale background in any theme. */
+  color: color-mix(in srgb, var(--tone) 60%, var(--fg));
+  background: color-mix(in srgb, var(--tone) 15%, transparent);
+}
+
+.compare .pill.up {
+  --tone: var(--form-positive);
+}
+
+.compare .pill.down {
+  --tone: var(--form-negative);
+}
+
+.compare .bar,
+.comparekey .bar {
+  display: block;
+  height: 7px;
+  border-radius: 4px;
+  min-width: 2px;
+}
+
+.compare .bar.now,
+.comparekey .bar.now {
+  background: var(--accent);
+}
+
+.compare .bar.before,
+.comparekey .bar.before {
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+.comparekey {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 12px 0 0;
+}
+
+.comparekey span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comparekey .bar {
+  display: inline-block;
+  width: 12px;
+}
+
+/* The training load's form as a coloured pill (Home, as the app): rested blue, building green. */
+
+.formpill {
+  --tone: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  /* The tone towards the text colour, so it reads on its pale background in any theme. */
+  color: color-mix(in srgb, var(--tone) 60%, var(--fg));
+  background: color-mix(in srgb, var(--tone) 15%, transparent);
+}
+
+.formpill.fresh {
+  --tone: var(--ride);
+}
+
+.formpill.optimal {
+  --tone: var(--form-positive);
+}
+
+.formpill.overreaching {
+  --tone: var(--form-negative);
+}
+
+/* Home's This week against a usual week: the pill ahead or behind, the usual week named under its mark. */
+.usualweek {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.usualweek p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.usualweek p b {
+  flex: 1;
+}
+
+.usualweek .weekbar small {
+  color: var(--muted);
+}
+
+.formpill.ahead {
+  --tone: var(--form-positive);
+}
+
+.formpill.behind {
+  --tone: var(--form-negative);
+}
+
+.weekbar {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.weekbar small {
+  position: absolute;
+  top: 16px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
 }

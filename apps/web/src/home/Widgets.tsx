@@ -14,6 +14,11 @@ import {
   formatHoursMinutes,
   formatters,
   formLabel,
+  formTone,
+  FORM_GAUGE,
+  type FormTone,
+  weekEffort,
+  weekQuery,
   healthAverage,
   healthDaysQuery,
   isoDay,
@@ -58,7 +63,8 @@ function useFormat() {
 /** The feed's first page and the last week's health days, shared by the widgets (one request each). */
 function useHomeData(today: string) {
   const feed = useInfiniteQuery(activitiesQuery(api));
-  const health = useQuery(healthDaysQuery(api, daysBefore(today, 6), today));
+  // `end` is exclusive: tomorrow, so today's steps come too.
+  const health = useQuery(healthDaysQuery(api, daysBefore(today, 6), daysBefore(today, -1)));
   const items = useMemo(() => feed.data?.pages.flatMap((p) => p.items) ?? [], [feed.data]);
   return { feed, health, items };
 }
@@ -282,17 +288,58 @@ export function Metrics() {
         </Tile>
         {now ? (
           <Tile icon="speed" label={t('home.load')}>
-            <b className="form">{t(formLabel(now.tsb))}</b>
-            <b className="num big">
-              {Math.round(now.atl)}/{Math.round(now.ctl)}
-            </b>
+            {/* Freshness (fitness minus fatigue) on the form's bands, as VO₂ max and FTP. */}
+            <Gauge
+              value={now.tsb}
+              min={FORM_GAUGE.min}
+              max={FORM_GAUGE.bands.at(-1)?.to ?? 30}
+              label={now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
+              bands={FORM_GAUGE.bands.map((b) => ({ colour: FORM_COLOURS[b.tone], to: b.to }))}
+            />
+            <span className={`formpill ${formTone(now.tsb)}`}>{t(formLabel(now.tsb))}</span>
             <small>
-              {t('stats.atl')} / {t('stats.ctl')}
+              {t('stats.ctl')} {now.ctl.toFixed(0)} · {t('stats.atl')} {now.atl.toFixed(0)}
             </small>
           </Tile>
         ) : null}
       </div>
     </section>
+  );
+}
+
+// --- this week against a usual one ---------------------------------------------------------------------
+
+/**
+ * Closes Home's "This week" (as the app): the time trained so far against a usual week (the previous
+ * twelve's average), as a pill ahead or behind and a bar whose mark is the usual week.
+ */
+export function UsualWeek() {
+  const today = useToday();
+  const week = useQuery(weekQuery(api, today));
+  const effort = week.data ? weekEffort(week.data) : null;
+  if (effort?.share == null) return null;
+  const share = effort.share;
+  return (
+    <div className="usualweek">
+      <p>
+        <b>{t('home.vsUsual')}</b>
+        {share !== 100 && (
+          <span className={`formpill ${share > 100 ? 'ahead' : 'behind'}`}>
+            {t('stats.change', { sign: share > 100 ? '+' : '', percent: share - 100 })}
+          </span>
+        )}
+      </p>
+      <div className="weekbar">
+        {/* The bar runs to 150 % of a usual week; the mark is the usual week. */}
+        <div className="meterbar" aria-hidden="true">
+          <i style={{ width: `${Math.min(100, share / 1.5)}%` }} />
+          <b style={{ left: `${100 / 1.5}%` }} />
+        </div>
+        <small style={{ left: `${100 / 1.5}%` }}>
+          {t('home.usualWeek', { average: formatHoursMinutes(effort.average) })}
+        </small>
+      </div>
+    </div>
   );
 }
 
@@ -323,14 +370,25 @@ function Row({
   );
 }
 
-function Tile({ icon, label, children }: { icon: MaterialIconName; label: string; children: ReactNode }) {
+function Tile({
+  icon,
+  label,
+  children,
+  stretch = false,
+}: {
+  icon: MaterialIconName;
+  label: string;
+  children: ReactNode;
+  /** Bars across the tile instead of one centred figure (the training load, this week's effort). */
+  stretch?: boolean;
+}) {
   return (
     <article className="panel tile">
       <CardTitle>
         <MaterialIcon name={icon} />
         {label}
       </CardTitle>
-      <div className="tbody">{children}</div>
+      <div className={stretch ? 'tbody stretch' : 'tbody'}>{children}</div>
     </article>
   );
 }
@@ -377,38 +435,54 @@ function Ring({
 
 const GAUGE = ['#e03131', '#e8590c', '#2f9e44', '#1c7ed6', '#7950f2'];
 
-/** A 270° gauge in five coloured bands, with a dot at the value and the figure in the middle. */
+/** The form's colours, as its pill: rested blue, neither grey, building green, overreaching red. */
+const FORM_COLOURS: Record<FormTone, string> = {
+  fresh: 'var(--ride)',
+  neutral: 'var(--muted)',
+  optimal: 'var(--form-positive)',
+  overreaching: 'var(--form-negative)',
+};
+
+/**
+ * A 270° gauge in coloured bands, with a dot at the value and the figure in the middle: five equal
+ * bands by default (VO₂ max, FTP), or `bands` with each one's upper end (the training load's form).
+ */
 function Gauge({
   value,
   min,
   max,
   label,
   unit,
+  bands: given,
 }: {
   value: number;
   min: number;
   max: number;
   label: string;
   unit?: string;
+  bands?: { colour: string; to: number }[];
 }) {
   const size = 120;
   const r = 48;
   const start = -135;
   const sweep = 270;
   const gap = 4;
-  const share = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  const scale =
+    given ?? GAUGE.map((colour, i) => ({ colour, to: min + ((max - min) * (i + 1)) / GAUGE.length }));
+  const at = (v: number) => Math.max(0, Math.min(1, (v - min) / (max - min)));
+  const share = at(value);
   const angle = ((start + sweep * share - 90) * Math.PI) / 180;
-  const dotColour = GAUGE[Math.min(GAUGE.length - 1, Math.floor(share * GAUGE.length))] ?? 'var(--fg)';
+  const dotColour = (scale.find((b) => value <= b.to) ?? scale.at(-1))?.colour ?? 'var(--fg)';
   return (
     <span className="gauge">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-        {GAUGE.map((colour, i) => {
-          const from = start + (sweep / GAUGE.length) * i + (i ? gap / 2 : 0);
-          const to = start + (sweep / GAUGE.length) * (i + 1) - (i < GAUGE.length - 1 ? gap / 2 : 0);
+        {scale.map(({ colour, to }, i) => {
+          const from = start + sweep * at(i ? (scale[i - 1]?.to ?? min) : min) + (i ? gap / 2 : 0);
+          const end = start + sweep * at(to) - (i < scale.length - 1 ? gap / 2 : 0);
           return (
             <path
-              key={colour}
-              d={arc(size / 2, size / 2, r, from, to)}
+              key={i}
+              d={arc(size / 2, size / 2, r, from, end)}
               fill="none"
               stroke={colour}
               strokeWidth={8}

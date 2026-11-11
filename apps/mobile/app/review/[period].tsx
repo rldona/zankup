@@ -3,7 +3,7 @@
  * previous period with their bars, consistency and sports, the longest, hardest and hilliest
  * activity, records and gear; moving between months and years.
  */
-import { formatDuration, reviewQuery, type Review } from '@zankup/core';
+import { formatDuration, reviewQuery, type Review, effortShown } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -48,33 +48,40 @@ export default function ReviewScreen() {
     setValue(next === 'year' ? value.slice(0, 4) : value.length === 4 ? `${value}-12` : value);
   };
   return (
-    <Screen header>
+    <Screen
+      header
+      toolbar={
+        <>
+          <Choice
+            center
+            label={t('review.period')}
+            value={period}
+            onChange={switchTo}
+            options={[
+              { value: 'month', label: t('review.month') },
+              { value: 'year', label: t('review.year') },
+            ]}
+          />
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Button
+                onPress={() => setValue(shiftPeriod(period, value, -1))}
+              >{`← ${title(period, shiftPeriod(period, value, -1))}`}</Button>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                onPress={() => setValue(shiftPeriod(period, value, 1))}
+              >{`${title(period, shiftPeriod(period, value, 1))} →`}</Button>
+            </View>
+          </View>
+        </>
+      }
+    >
       <Stack.Screen
         options={{
           title: t(period === 'year' ? 'review.yearTitle' : 'review.monthTitle', { period: heading }),
         }}
       />
-      <Choice
-        label={t('review.period')}
-        value={period}
-        onChange={switchTo}
-        options={[
-          { value: 'month', label: t('review.month') },
-          { value: 'year', label: t('review.year') },
-        ]}
-      />
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <Button
-            onPress={() => setValue(shiftPeriod(period, value, -1))}
-          >{`← ${title(period, shiftPeriod(period, value, -1))}`}</Button>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button
-            onPress={() => setValue(shiftPeriod(period, value, 1))}
-          >{`${title(period, shiftPeriod(period, value, 1))} →`}</Button>
-        </View>
-      </View>
       {review.isPending && <Loading />}
       {review.isError && !review.data && <Muted accessibilityRole="alert">{t('common.error')}</Muted>}
       {review.data && review.data.totals.count === 0 && <Muted>{t('review.empty')}</Muted>}
@@ -187,27 +194,29 @@ function Cards({ data, format }: { data: Review; format: Format }) {
       {data.records.length > 0 && (
         <Card>
           <Heading>{t('review.records')}</Heading>
-          {data.records.map((r) => (
-            <Pressable
-              key={r.distance_key}
-              accessibilityRole="link"
-              onPress={() => open(r.activity_id)}
-              style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
-            >
-              <Text style={{ color: c.accent, fontWeight: '600' }}>
-                {effortName(r.distance_key)}
-                {r.previous_s ? (
-                  <Text style={{ color: c.muted, fontWeight: '400' }}>
-                    {' '}
-                    {t('review.beat', { previous: formatDuration(r.previous_s) })}
-                  </Text>
-                ) : null}
-              </Text>
-              <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
-                {formatDuration(r.time_s)}
-              </Text>
-            </Pressable>
-          ))}
+          {data.records
+            .filter((r) => effortShown(r.distance_key, format.unit))
+            .map((r) => (
+              <Pressable
+                key={r.distance_key}
+                accessibilityRole="link"
+                onPress={() => open(r.activity_id)}
+                style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
+              >
+                <Text style={{ color: c.accent, fontWeight: '600' }}>
+                  {effortName(r.distance_key)}
+                  {r.previous_s ? (
+                    <Text style={{ color: c.muted, fontWeight: '400' }}>
+                      {' '}
+                      {t('review.beat', { previous: formatDuration(r.previous_s) })}
+                    </Text>
+                  ) : null}
+                </Text>
+                <Text style={{ color: c.fg, fontWeight: '700', fontVariant: ['tabular-nums'] }}>
+                  {formatDuration(r.time_s)}
+                </Text>
+              </Pressable>
+            ))}
         </Card>
       )}
       {data.gear.length > 0 && (

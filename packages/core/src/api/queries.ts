@@ -548,6 +548,7 @@ export function pushKeyQuery(api: ApiClient) {
 // --- health (phase 6) ------------------------------------------------------------------------------
 
 /** One row per day with health data, one value per metric chosen between sources (OS-605, OS-606). */
+/** Health days from `start` to `end`, which is exclusive: to include today, pass tomorrow. */
 export function healthDaysQuery(api: ApiClient, start: string, end: string) {
   return {
     queryKey: [...queryKeys.wellness, 'days', start, end] as const,

@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 import zankup_metrics as m
-from zankup.db.models import Activity, ActivityMetrics, BestEffort, Event, Stream
+from zankup.db.models import Activity, ActivityMetrics, BestEffort, Event, Stream, UserSettings
 from zankup.engine import METRICS_VERSION
 from zankup.engine.athlete import Athlete
 from zankup.fit.streams import decode_streams
@@ -124,6 +124,16 @@ def update_activity(db: Session, activity: Activity, who: Athlete) -> ActivityMe
     return db.get_one(ActivityMetrics, activity.id)
 
 
+# Records at a distance in miles are kept, but not announced to someone who uses km (as the apps,
+# which leave them out of their lists of records).
+MILE_EFFORTS = frozenset({"half_mile", "1mile", "2mile", "10mile"})
+
+
+def _metric(db: Session, user_id: int) -> bool:
+    units = db.scalar(select(UserSettings.units).where(UserSettings.user_id == user_id))
+    return units != "imperial"
+
+
 def record_events(db: Session, activity: Activity) -> int:
     """A "record" event for each best effort of this activity that is the fastest ever (OS-304)."""
     count = 0
@@ -165,7 +175,11 @@ def record_events(db: Session, activity: Activity) -> int:
                 )
                 .on_conflict_do_nothing(index_elements=["dedupe_key"])
             )
-            if inserted.rowcount and datetime.now(UTC) - activity.start_utc <= RECENT:  # type: ignore[attr-defined]
+            if (
+                inserted.rowcount  # type: ignore[attr-defined]
+                and datetime.now(UTC) - activity.start_utc <= RECENT
+                and not (effort.distance_key in MILE_EFFORTS and _metric(db, activity.user_id))
+            ):
                 from zankup.notify import notify
 
                 notify(

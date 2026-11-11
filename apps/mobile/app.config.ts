@@ -3,26 +3,29 @@
  *
  * - `google-services.json` (Firebase, for notifications) is optional: without it the app builds and
  *   simply cannot receive notifications. It is never committed.
- * - `ZANKUP_DEV=1` allows plain HTTP, to reach a local API (`adb reverse tcp:8000 tcp:8000`).
+ * - `ZANKUP_DEV=1` builds "Zankup Dev" (`com.zankup.app.dev`, JavaScript served by Metro): a separate
+ *   app that sits beside the release one, so the phone always has a Zankup that needs no computer. It
+ *   allows plain HTTP, to reach a local API (`adb reverse tcp:8000 tcp:8000`), and has no Firebase
+ *   (its project only knows `com.zankup.app`), so no push notifications.
  */
 import { existsSync } from 'node:fs';
 
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
-const firebase = existsSync('./google-services.json') ? './google-services.json' : undefined;
 const dev = process.env.ZANKUP_DEV === '1';
+const firebase = !dev && existsSync('./google-services.json') ? './google-services.json' : undefined;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Zankup',
+  name: dev ? 'Zankup Dev' : 'Zankup',
   slug: 'zankup',
-  scheme: 'zankup',
+  scheme: dev ? 'zankup-dev' : 'zankup',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   android: {
-    package: 'com.zankup.app',
+    package: dev ? 'com.zankup.app.dev' : 'com.zankup.app',
     versionCode: 1,
     adaptiveIcon: {
       backgroundColor: '#20c997',
@@ -77,7 +80,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         widgets: [
           {
             name: 'Latest',
-            label: 'Zankup',
+            label: dev ? 'Zankup Dev' : 'Zankup',
             description: 'Your latest activity and today’s form',
             minWidth: '250dp',
             minHeight: '110dp',

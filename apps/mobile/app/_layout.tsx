@@ -11,7 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthContext } from '../src/auth';
 import { scheduleBackgroundSync } from '../src/background';
@@ -97,7 +97,7 @@ export default function Root() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: c.bg }}>
-      <SafeAreaProvider>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <ThemeContext.Provider value={{ choice, setChoice }}>
           <PersistQueryClientProvider
             client={queryClient}

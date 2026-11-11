@@ -36,12 +36,18 @@ export function TrackMap({
   colour,
   heat = false,
   height = 300,
+  fill = false,
+  padding,
 }: {
   tracks: string[];
   precision?: number;
   colour: string;
   heat?: boolean;
   height?: number;
+  /** The whole screen, edge to edge, instead of a rounded card `height` tall. */
+  fill?: boolean;
+  /** Room kept clear around the tracks the map opens on, for what sits over the map. */
+  padding?: { top: number; right: number; bottom: number; left: number };
 }) {
   const c = useTheme();
   const lines = useMemo(
@@ -68,7 +74,7 @@ export function TrackMap({
   const { cover, reveal } = useMapCover(c.scheme === 'dark');
   if (!bounds) return null;
   return (
-    <View style={{ height, borderRadius: 16, overflow: 'hidden' }}>
+    <View style={fill ? { flex: 1 } : { height, borderRadius: 16, overflow: 'hidden' }}>
       <Map
         style={{ flex: 1 }}
         mapStyle={c.scheme === 'dark' ? STYLE_DARK : STYLE_LIGHT}
@@ -80,7 +86,9 @@ export function TrackMap({
         touchPitch={false}
         onDidFinishLoadingStyle={reveal}
       >
-        <Camera initialViewState={{ bounds, padding: { top: 24, right: 24, bottom: 24, left: 24 } }} />
+        <Camera
+          initialViewState={{ bounds, padding: padding ?? { top: 24, right: 24, bottom: 24, left: 24 } }}
+        />
         <GeoJSONSource id="tracks" data={data} tolerance={0}>
           <Layer
             type="line"

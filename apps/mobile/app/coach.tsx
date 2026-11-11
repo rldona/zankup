@@ -25,7 +25,7 @@ import { blocks, pieces, readEvents } from '../src/coach';
 import { locale, t } from '../src/i18n';
 import { accessToken, instanceUrl } from '../src/session';
 import { useTheme } from '../src/theme';
-import { accent, Body, Button, Card, CardTitle, Muted, onAccent, styles as ui } from '../src/ui';
+import { accent, Body, Button, Card, CardTitle, Muted, onAccent, styles as ui, InfoButton } from '../src/ui';
 
 type Turn = { role: 'user' | 'assistant'; content: string; error?: string };
 
@@ -165,20 +165,11 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
   const navigation = useNavigation();
   const hasTurns = turns.length > 0;
   // What the coach can and cannot do, behind an (i) in the header instead of a line under the chat.
-  const [about, setAbout] = useState(false);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('coach.about')}
-            accessibilityState={{ expanded: about }}
-            hitSlop={10}
-            onPress={() => setAbout(!about)}
-          >
-            <Icon name="info" color={c.fg} />
-          </Pressable>
+          <InfoButton text={t('coach.disclaimer')} label={t('coach.about')} />
           {hasTurns && (
             <Pressable
               accessibilityRole="button"
@@ -195,7 +186,7 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
         </View>
       ),
     });
-  }, [navigation, hasTurns, c.fg, about]);
+  }, [navigation, hasTurns, c.fg]);
 
   const ask = async (question: string) => {
     const history: Turn[] = [...turns, { role: 'user', content: question }];
@@ -249,29 +240,6 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
 
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: c.bg }}>
-      {about && (
-        // The tooltip under the (i): a tap on it closes it.
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('coach.disclaimer')}
-          onPress={() => setAbout(false)}
-          style={{
-            position: 'absolute',
-            top: 6,
-            right: 12,
-            left: 64,
-            zIndex: 10,
-            elevation: 6,
-            backgroundColor: c.surface2,
-            borderColor: c.line,
-            borderWidth: 1,
-            borderRadius: 12,
-            padding: 12,
-          }}
-        >
-          <Text style={{ color: c.fg, fontSize: 14 }}>{t('coach.disclaimer')}</Text>
-        </Pressable>
-      )}
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }} keyboardVerticalOffset={90}>
         <ScrollView
           ref={scroll}

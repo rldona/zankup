@@ -22,8 +22,12 @@ import {
   type GoalOut,
   type MessageKey,
   type Sport,
-  formLabel,
-  weekQuery,
+  yearColours,
+  effortShown,
+  alpha,
+  compare,
+  comparisonLabels,
+  mix,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -45,6 +49,7 @@ import {
 import { Icon } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
+import { openGoals, rememberGoal } from '../storage';
 import { useTheme } from '../theme';
 import { Card, CardTitle, Choice, Heading, Muted, ProgressBar, Stat, styles as ui } from '../ui';
 
@@ -83,16 +88,21 @@ export function GoalCard({
   const c = useTheme();
   const share = Math.min(1, goal.current / goal.target);
   const done = goal.current >= goal.target;
-  const [chart, setChart] = useState(false);
+  // Open or folded as it was left, even after closing the app.
+  const [chart, setChart] = useState(() => openGoals().has(goal.id));
+  const toggle = () => {
+    setChart(!chart);
+    rememberGoal(goal.id, !chart);
+  };
   return (
     <Card>
-      {/* The whole card opens and closes the day-by-day chart, folded at first. The chart itself sits
-          outside the touch area, so reading it with a finger never folds it. */}
+      {/* The whole card opens and closes the day-by-day chart. The chart itself sits outside the touch
+          area, so reading it with a finger never folds it. */}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: chart }}
         accessibilityHint={t(chart ? 'goals.hideChart' : 'goals.showChart')}
-        onPress={() => setChart(!chart)}
+        onPress={toggle}
         style={({ pressed }) => ({ gap: 8, opacity: pressed ? 0.7 : 1 })}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -255,34 +265,72 @@ export function Summary({ range }: { range: Range }) {
   const summary = useQuery(summaryQuery(api, range));
   if (!summary.data) return null;
   const { current, previous } = summary.data;
-  const change = (now: number, before: number) => {
-    if (!before) return t('stats.noPrevious');
-    const percent = Math.round(((now - before) / before) * 100);
-    return t('stats.vsLastYear', { sign: percent > 0 ? '+' : '', percent });
-  };
-  const rows: [string, string, string][] = [
-    [t('feed.title'), current.count.toLocaleString(locale), change(current.count, previous.count)],
-    [
-      t('feed.stat.distance'),
-      format.distance(current.distance_m),
-      change(current.distance_m, previous.distance_m),
-    ],
-    [t('feed.stat.time'), formatHoursMinutes(current.moving_s), change(current.moving_s, previous.moving_s)],
-    [t('feed.stat.ascent'), format.elevation(current.ascent_m), change(current.ascent_m, previous.ascent_m)],
-    [t('stats.load'), Math.round(current.load).toLocaleString(locale), change(current.load, previous.load)],
+  const labels = comparisonLabels(range, locale, t); // null for All: nothing to compare with
+  const rows: [string, string, number, number][] = [
+    [t('feed.title'), current.count.toLocaleString(locale), current.count, previous.count],
+    [t('feed.stat.distance'), format.distance(current.distance_m), current.distance_m, previous.distance_m],
+    [t('feed.stat.time'), formatHoursMinutes(current.moving_s), current.moving_s, previous.moving_s],
+    [t('feed.stat.ascent'), format.elevation(current.ascent_m), current.ascent_m, previous.ascent_m],
+    [t('home.load'), Math.round(current.load).toLocaleString(locale), current.load, previous.load],
   ];
+  const bar = (share: number, colour: string) => (
+    <View
+      style={{
+        height: 7,
+        borderRadius: 4,
+        backgroundColor: colour,
+        width: `${Math.max(share * 100, share ? 2 : 0)}%`,
+      }}
+    />
+  );
   return (
     <Card>
-      <CardTitle>{t('stats.summaryTitle')}</CardTitle>
-      {rows.map(([label, value, delta]) => (
-        <View key={label} style={{ paddingVertical: 3 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Muted>{label}</Muted>
-            <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
+      <CardTitle info={t('stats.summaryNote')}>{t('stats.summaryTitle')}</CardTitle>
+      {/* Each figure against the same period a year before: last year's bar, then this period's. */}
+      {rows.map(([label, value, now, before]) => {
+        const { percent, now: mine, before: theirs } = compare(now, before);
+        const tone =
+          percent == null || percent === 0 ? c.muted : percent > 0 ? c.formPositive : c.formNegative;
+        return (
+          <View key={label} style={{ paddingVertical: 6, gap: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Muted style={{ flex: 1, fontSize: 14 }}>{label}</Muted>
+              <Text style={[ui.statValue, { color: c.fg }]}>{value}</Text>
+              {labels && percent ? (
+                <Text
+                  style={{
+                    color: mix(tone, c.fg, 0.4), // towards the text colour, to read on the pale pill
+                    backgroundColor: alpha(tone, 0.15),
+                    fontSize: 12,
+                    fontWeight: '600',
+                    paddingHorizontal: 8,
+                    paddingVertical: 1,
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {t('stats.change', { sign: percent > 0 ? '+' : '', percent })}
+                </Text>
+              ) : null}
+            </View>
+            {labels && bar(theirs, alpha(c.muted, 0.45))}
+            {labels && bar(mine, c.accent)}
           </View>
-          <Muted style={{ fontSize: 12 }}>{delta}</Muted>
+        );
+      })}
+      {labels && (
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 6 }}>
+          {[
+            [labels[0], alpha(c.muted, 0.45)],
+            [labels[1], c.accent],
+          ].map(([label, colour]) => (
+            <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ width: 12, height: 7, borderRadius: 4, backgroundColor: colour }} />
+              <Muted style={{ fontSize: 12 }}>{label}</Muted>
+            </View>
+          ))}
         </View>
-      ))}
+      )}
     </Card>
   );
 }
@@ -298,7 +346,7 @@ export function Fitness({ range }: { range: Range }) {
   const top = Math.max(1, ...days.flatMap((d) => [d.ctl, d.atl])) * 1.05;
   return (
     <Card>
-      <CardTitle>{t('stats.fitness')}</CardTitle>
+      <CardTitle info={t('stats.fitnessNote')}>{t('stats.fitness')}</CardTitle>
       {days.length > 1 ? (
         <Chart
           legendGap={18}
@@ -341,7 +389,6 @@ export function Fitness({ range }: { range: Range }) {
       ) : (
         <Muted>{t('stats.empty')}</Muted>
       )}
-      <Muted>{t('stats.fitnessNote')}</Muted>
     </Card>
   );
 }
@@ -504,6 +551,7 @@ export function Records({ range }: { range: Range }) {
   const api = useApi();
   const c = useTheme();
   const records = useQuery(recordsQuery(api, range));
+  const format = useFormat();
   const [chosen, setChosen] = useState('5k');
   if (!records.data?.all_time.length) return null;
   const period = new Map(records.data.period.map((r) => [r.distance_key, r]));
@@ -521,32 +569,34 @@ export function Records({ range }: { range: Range }) {
           </Text>
         ))}
       </View>
-      {records.data.all_time.map((r) => {
-        const p = period.get(r.distance_key);
-        const on = chosen === r.distance_key;
-        return (
-          <View
-            key={r.distance_key}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
-          >
-            <Text
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              onPress={() => setChosen(r.distance_key)}
-              style={{ flex: 1, color: on ? c.accent : c.fg, fontWeight: on ? '700' : '400' }}
+      {records.data.all_time
+        .filter((r) => effortShown(r.distance_key, format.unit))
+        .map((r) => {
+          const p = period.get(r.distance_key);
+          const on = chosen === r.distance_key;
+          return (
+            <View
+              key={r.distance_key}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
             >
-              {effortName(r.distance_key)}
-            </Text>
-            <Text style={{ flex: 1.4, textAlign: 'right', fontVariant: ['tabular-nums'] }}>
-              <ActivityLink id={r.activity_id}>{formatDuration(r.time_s)}</ActivityLink>
-              <Text style={{ color: c.muted, fontSize: 11 }}> {shortDay(r.day)}</Text>
-            </Text>
-            <Text style={{ flex: 1, textAlign: 'right', color: c.fg, fontVariant: ['tabular-nums'] }}>
-              {p ? <ActivityLink id={p.activity_id}>{formatDuration(p.time_s)}</ActivityLink> : '—'}
-            </Text>
-          </View>
-        );
-      })}
+              <Text
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                onPress={() => setChosen(r.distance_key)}
+                style={{ flex: 1, color: on ? c.accent : c.fg, fontWeight: on ? '700' : '400' }}
+              >
+                {effortName(r.distance_key)}
+              </Text>
+              <Text style={{ flex: 1.4, textAlign: 'right', fontVariant: ['tabular-nums'] }}>
+                <ActivityLink id={r.activity_id}>{formatDuration(r.time_s)}</ActivityLink>
+                <Text style={{ color: c.muted, fontSize: 11 }}> {shortDay(r.day)}</Text>
+              </Text>
+              <Text style={{ flex: 1, textAlign: 'right', color: c.fg, fontVariant: ['tabular-nums'] }}>
+                {p ? <ActivityLink id={p.activity_id}>{formatDuration(p.time_s)}</ActivityLink> : '—'}
+              </Text>
+            </View>
+          );
+        })}
       {progression.length > 1 && (
         <>
           <Text style={{ color: c.fg, fontWeight: '700', marginTop: 8 }}>
@@ -586,9 +636,14 @@ export function Progress({ selected }: { selected: number }) {
   const scale = format.unit === 'km' ? 1000 : 1609.344;
   const top = Math.max(1, ...lines.data.map((l) => l.cumulative_m.at(-1) ?? 0)) / scale;
   const sorted = [...lines.data].sort((a, b) => (a.year === selected ? 1 : b.year === selected ? -1 : 0));
+  const colours = yearColours(
+    lines.data.map((l) => l.year),
+    selected,
+    c,
+  );
   return (
     <Card>
-      <CardTitle>{t('stats.progress')}</CardTitle>
+      <CardTitle info={t('stats.progressNote')}>{t('stats.progress')}</CardTitle>
       <Chart
         legendGap={18}
         days={Array.from({ length: 366 }, (_, i) =>
@@ -601,19 +656,29 @@ export function Progress({ selected }: { selected: number }) {
         layers={sorted.map((l) => ({
           kind: 'line',
           label: String(l.year),
-          color: l.year === selected ? c.accent : c.muted,
+          color: colours.get(l.year) ?? c.muted,
           values: l.cumulative_m.map((m) => m / scale),
           domain: [0, top * 1.05] as [number, number],
-          width: l.year === selected ? 3 : 1.2,
-          opacity: l.year === selected ? 1 : 0.55,
-          hideLegend: l.year !== selected,
+          width: l.year === selected ? 3 : 1.6,
+          opacity: l.year === selected ? 1 : 0.5,
+          hideLegend: true, // the years and their totals are listed under the chart
         }))}
       />
       {lines.data.map((l) => (
-        <View key={l.year} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View key={l.year} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: colours.get(l.year),
+              opacity: l.year === selected ? 1 : 0.5,
+            }}
+          />
           <Text
             style={{
-              color: l.year === selected ? c.accent : c.fg,
+              flex: 1,
+              color: c.fg,
               fontWeight: l.year === selected ? '700' : '400',
             }}
           >
@@ -624,7 +689,6 @@ export function Progress({ selected }: { selected: number }) {
           </Text>
         </View>
       ))}
-      <Muted>{t('stats.progressNote')}</Muted>
     </Card>
   );
 }
@@ -681,21 +745,20 @@ export function CompareWithStrava() {
     v == null ? '–' : v.toLocaleString(locale, { maximumFractionDigits: digits });
   return (
     <Card>
-      <CardTitle>{t('compare.title')}</CardTitle>
+      <CardTitle info={t('compare.help')}>{t('compare.title')}</CardTitle>
       <Choice
         label={t('compare.metric')}
         value={metric}
         onChange={setMetric}
         options={COMPARED.map((m) => ({ value: m, label: t(`compare.${m}`) }))}
       />
-      <Muted>{t('compare.help')}</Muted>
       {current && current.count >= 3 ? (
         <>
           <View style={ui.stats}>
-            <Stat label={t('compare.count')} value={String(current.count)} />
-            <Stat label="R²" value={number(current.r2, 3)} />
-            <Stat label={t('compare.mae')} value={number(current.mae, 1)} />
-            <Stat label={t('compare.ratio')} value={number(current.ratio, 3)} />
+            <Stat labelFirst label={t('compare.count')} value={String(current.count)} />
+            <Stat labelFirst label="R²" value={number(current.r2, 3)} />
+            <Stat labelFirst label={t('compare.mae')} value={number(current.mae, 1)} />
+            <Stat labelFirst label={t('compare.ratio')} value={number(current.ratio, 3)} />
           </View>
           <Text style={{ color: c.fg, fontWeight: '700' }}>{t('compare.largest')}</Text>
           {current.largest.map((p) => (
@@ -724,47 +787,3 @@ export const sportColour = (c: ReturnType<typeof useTheme>, sport: string) =>
  * "Now" (OS-919, from the PWA): today's form (TSB) with what it means and the fitness and fatigue
  * behind it, and this week's moving time against the average of the previous 12 weeks.
  */
-export function Now() {
-  const api = useApi();
-  const c = useTheme();
-  const [today] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  });
-  const week = useQuery(weekQuery(api, today));
-  const fitness = useQuery(fitnessQuery(api, {}));
-  const now = fitness.data?.at(-1);
-  const previous = week.data?.previous ?? [];
-  const average = previous.length ? previous.reduce((s, w) => s + w.moving_s, 0) / previous.length : 0;
-  const share = week.data && average > 0 ? Math.round((week.data.this_week.moving_s / average) * 100) : null;
-  if (!now && !week.data) return null;
-  return (
-    <>
-      <Heading>{t('stats.now')}</Heading>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        {now && (
-          <Card style={{ flex: 1 }}>
-            <Muted>{t('stats.tsb')}</Muted>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
-              {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
-            </Text>
-            <Muted>
-              {t(formLabel(now.tsb))} · {t('stats.ctl')} {now.ctl.toFixed(0)} · {t('stats.atl')}{' '}
-              {now.atl.toFixed(0)}
-            </Muted>
-          </Card>
-        )}
-        {week.data && (
-          <Card style={{ flex: 1 }}>
-            <Muted>{t('stats.load')}</Muted>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
-              {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
-            </Text>
-            {share != null && <ProgressBar value={share} max={150} label={t('stats.load')} />}
-            <Muted>{t('stats.loadNote', { average: formatHoursMinutes(average) })}</Muted>
-          </Card>
-        )}
-      </View>
-    </>
-  );
-}

@@ -64,8 +64,11 @@ export function Feed() {
   );
 }
 
-/** "This week" (OS-217): the seven days with what was done on each, the streak and the week's numbers. */
-export function WeekHeader({ format }: { format: Format }) {
+/**
+ * "This week" (OS-217): the seven days with what was done on each, the streak and the week's numbers;
+ * `footer` closes the card (Home's comparison with a usual week).
+ */
+export function WeekHeader({ format, footer }: { format: Format; footer?: React.ReactNode }) {
   const api = useApi();
   const c = useTheme();
   const day = today();
@@ -128,12 +131,14 @@ export function WeekHeader({ format }: { format: Format }) {
           );
         })}
       </View>
-      <View style={ui.stats}>
+      {/* The days, then the week's numbers, set apart as the comparison under them. */}
+      <View style={[ui.stats, { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderColor: c.line }]}>
         <Stat labelFirst label={t('feed.title')} value={String(totals.count)} />
         <Stat labelFirst label={t('feed.stat.distance')} value={format.distance(totals.distance_m)} />
         <Stat labelFirst label={t('feed.stat.time')} value={formatHoursMinutes(totals.moving_s)} />
         <Stat labelFirst label={t('feed.stat.ascent')} value={format.elevation(totals.ascent_m)} />
       </View>
+      {footer}
     </Card>
   );
 }

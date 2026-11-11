@@ -304,17 +304,30 @@ export function Metrics() {
             </small>
           </Tile>
         ) : null}
-        {effort && week.data ? (
-          // This week's moving time against an ordinary week (the previous twelve): 100 % is as usual.
-          <Tile icon="timer" label={t('stats.load')} stretch>
-            <p className="big num">
-              {effort.share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${effort.share} %`}
+        {week.data ? (
+          // The time trained this week (every activity) against a usual week, the previous twelve's average:
+          // the pill says how far ahead or behind, the bar's mark is the usual week.
+          <Tile icon="timer" label={t('home.weekTraining')} stretch>
+            <p className="big num freshness">
+              {formatHoursMinutes(week.data.this_week.moving_s)}
+              {effort?.share != null && effort.share !== 100 && (
+                <span className={`formpill ${effort.share > 100 ? 'ahead' : 'behind'}`}>
+                  {t('stats.change', { sign: effort.share > 100 ? '+' : '', percent: effort.share - 100 })}
+                </span>
+              )}
             </p>
-            <div className="meterbar" aria-hidden="true">
-              <i style={{ width: `${Math.min(100, (effort.share ?? 0) / 1.5)}%` }} />
-              <b style={{ left: `${100 / 1.5}%` }} />
-            </div>
-            <small>{t('stats.loadNote', { average: formatHoursMinutes(effort.average) })}</small>
+            {effort?.share != null && (
+              <div className="weekbar">
+                {/* The bar runs to 150 % of a usual week; the mark is the usual week. */}
+                <div className="meterbar" aria-hidden="true">
+                  <i style={{ width: `${Math.min(100, effort.share / 1.5)}%` }} />
+                  <b style={{ left: `${100 / 1.5}%` }} />
+                </div>
+                <small style={{ left: `${100 / 1.5}%` }}>
+                  {t('home.usualWeek', { average: formatHoursMinutes(effort.average) })}
+                </small>
+              </div>
+            )}
           </Tile>
         ) : null}
       </div>

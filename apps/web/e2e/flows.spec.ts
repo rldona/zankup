@@ -17,7 +17,7 @@ test('sign in with password and code, then the feed', async ({ page }, info) => 
   await expect(page.getByRole('heading', { name: w('signIn.welcome') })).toBeVisible();
   await signIn(page, lang(info.project.name));
   // Home first, as on the app (OS-903, OS-904); the feed is under Activities.
-  await expect(page.getByRole('heading', { name: w('week.title') })).toBeVisible();
+  await expect(page.getByRole('heading', { name: w('week.title'), exact: true })).toBeVisible();
   await page
     .getByRole('link', { name: w('nav.feed'), exact: true })
     .filter({ visible: true })
@@ -52,7 +52,7 @@ test('open an activity: figures, route, zones and laps', async ({ page }, info) 
     .filter({ visible: true })
     .first()
     .click();
-  await expect(page.getByRole('heading', { name: w('week.title') })).toBeVisible();
+  await expect(page.getByRole('heading', { name: w('week.title'), exact: true })).toBeVisible();
 });
 
 test('search keeps its filters in the URL', async ({ page }, info) => {

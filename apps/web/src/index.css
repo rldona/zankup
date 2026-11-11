@@ -4237,3 +4237,32 @@ h1.greeting {
 .formpill.overreaching {
   --tone: var(--form-negative);
 }
+
+/* Home's training this week: the pill ahead or behind a usual week, the usual week named under its mark. */
+.freshness {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.formpill.ahead {
+  --tone: var(--form-positive);
+}
+
+.formpill.behind {
+  --tone: var(--form-negative);
+}
+
+.weekbar {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.weekbar small {
+  position: absolute;
+  top: 16px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 12px;
+}

@@ -331,7 +331,14 @@ export function UsualWeek() {
       </p>
       <div className="weekbar">
         {/* The bar runs to 150 % of a usual week; the mark is the usual week. */}
-        <div className="meterbar" aria-hidden="true">
+        <div
+          className="meterbar"
+          role="progressbar"
+          aria-label={t('home.vsUsual')}
+          aria-valuemin={0}
+          aria-valuemax={150}
+          aria-valuenow={Math.min(150, share)}
+        >
           <i style={{ width: `${Math.min(100, share / 1.5)}%` }} />
           <b style={{ left: `${100 / 1.5}%` }} />
         </div>

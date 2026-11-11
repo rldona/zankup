@@ -55,6 +55,7 @@ export default function ReviewScreen() {
         }}
       />
       <Choice
+        center
         label={t('review.period')}
         value={period}
         onChange={switchTo}

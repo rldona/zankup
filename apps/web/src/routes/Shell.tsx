@@ -46,10 +46,10 @@ const SHORTCUTS: (Item & { owns: RegExp })[] = [
 /** Where each section's screens live, so it stays marked on them (an activity under Activities…). */
 const OWNS: Record<string, RegExp> = {
   '/': /^\/(notifications|coach)?$/,
-  '/activities': /^\/(activities|search)(\/|$)/,
+  '/activities': /^\/(activities|search|sync)(\/|$)/,
   '/health': /^\/health(\/|$)/,
   '/goals': /^\/goals(\/|$)/,
-  '/profile': /^\/(profile|stats|estimates|gear|settings|sync|review|routes|segments)(\/|$)/,
+  '/profile': /^\/(profile|stats|estimates|gear|settings|review|routes|segments)(\/|$)/,
 };
 
 /** Screens pushed over a section, as the app's: on a phone they have no tab bar. */
@@ -82,21 +82,39 @@ function NavLink({ item, current, bare }: { item: Item; current: string | undefi
 }
 
 /**
- * The way back from a screen that is not a section's own, above its title: "‹ You" on Stats and the
- * other screens under You, "‹ Feed" on Search. On a phone also on the Coach, the notifications,
- * Settings and an activity, which the rail or the list beside it make plain on larger screens.
+ * Where each screen leads back to, above its title, and where that link shows: the screen it was
+ * opened from (Stats for its calendar, heatmap, reviews, routes and segments; Settings for its
+ * sections; You for Stats, Estimates and Gear). `show` keeps it to the sizes where nothing else on
+ * screen leads back: a phone (the rail names the Coach, the notifications and Settings), below 1024 px
+ * (Settings' list sits beside its sections from there) or a tablet (an activity: beside the list on a
+ * desktop, with its own floating buttons on a phone).
  */
+const PARENTS: {
+  match: RegExp;
+  to: string;
+  label: MessageKey;
+  show?: 'phone' | 'compact' | 'tablet';
+}[] = [
+  { match: PUSHED, to: '/activities', label: 'nav.feed', show: 'tablet' },
+  { match: /^\/(search|sync)$/, to: '/activities', label: 'nav.feed' },
+  { match: /^\/(coach|notifications)$/, to: '/', label: 'nav.home', show: 'phone' },
+  { match: /^\/settings\/import$/, to: '/settings', label: 'nav.settings' },
+  { match: /^\/settings\/./, to: '/settings', label: 'nav.settings', show: 'compact' },
+  { match: /^\/settings$/, to: '/profile', label: 'nav.you', show: 'phone' },
+  { match: /^\/(stats\/|review\/|routes$|segments$)/, to: '/stats', label: 'nav.stats' },
+  { match: /^\/routes\/./, to: '/routes', label: 'routes.title' },
+  { match: /^\/segments\/./, to: '/segments', label: 'segments.title' },
+  { match: /^\/(stats|estimates|gear)$/, to: '/profile', label: 'nav.you' },
+];
+
 function Back({ pathname }: { pathname: string }) {
-  const section = sectionOf(pathname);
-  if (!section || section.to === pathname) return null;
-  // An activity on a phone floats its own way back over the map; on a desktop the list is beside it.
-  const pushed = PUSHED.test(pathname);
-  const narrowOnly = !!shortcutOf(pathname) || pushed;
+  const parent = PARENTS.find((p) => p.match.test(pathname));
+  if (!parent) return null;
   return (
-    <div className={`crumbrow${narrowOnly ? ' narrow-only' : ''}${pushed ? ' pushed' : ''}`}>
-      <Link to={section.to} className="crumb">
+    <div className={`crumbrow show-${parent.show ?? 'always'}`}>
+      <Link to={parent.to} className="crumb">
         <MaterialIcon name="chevron_left" />
-        {t(section.label)}
+        {t(parent.label)}
       </Link>
     </div>
   );

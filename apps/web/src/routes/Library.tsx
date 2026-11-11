@@ -11,7 +11,6 @@ import {
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
 
 import { api } from '../api';
 import { locale, t } from '../i18n';
@@ -312,9 +311,6 @@ export function Import() {
   });
   return (
     <section className="page">
-      <p className="crumbs">
-        <Link to="/settings">{t('nav.settings')}</Link>
-      </p>
       <h1>{t('import.title')}</h1>
       <p className="note">{t('import.help')}</p>
       <ul className="note bullets">

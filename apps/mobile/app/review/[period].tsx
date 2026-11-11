@@ -62,7 +62,7 @@ export default function ReviewScreen() {
               { value: 'year', label: t('review.year') },
             ]}
           />
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
             <View style={{ flex: 1 }}>
               <Button
                 onPress={() => setValue(shiftPeriod(period, value, -1))}

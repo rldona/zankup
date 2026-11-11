@@ -327,7 +327,6 @@
   "week.title": "Esta semana",
   "week.streak": "{count, plural, =0 {Aún sin racha} one {# semana seguida} other {# semanas seguidas}}",
   "week.today": "Hoy",
-  "stats.now": "Ahora",
   "stats.load": "Esfuerzo",
   "stats.loadNote": "Tiempo en movimiento frente a la media de las 12 semanas anteriores ({average}).",
   "stats.lastWeeks": "Últimas 4 semanas",

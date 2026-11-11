@@ -3071,6 +3071,16 @@ textarea {
   text-align: center;
 }
 
+.tile .tbody.stretch {
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.tile .tbody.stretch .big {
+  margin: 0;
+}
+
 .tile .form {
   font-size: 24px;
 }

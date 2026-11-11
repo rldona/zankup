@@ -22,14 +22,11 @@ import {
   type GoalOut,
   type MessageKey,
   type Sport,
-  formLabel,
-  weekQuery,
   yearColours,
   effortShown,
   alpha,
   compare,
   comparisonLabels,
-  formTone,
   mix,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
@@ -784,102 +781,3 @@ export const sportColour = (c: ReturnType<typeof useTheme>, sport: string) =>
  * "Now" (OS-919, from the PWA): today's form (TSB) with what it means and the fitness and fatigue
  * behind it, and this week's moving time against the average of the previous 12 weeks.
  */
-export function Now() {
-  const api = useApi();
-  const c = useTheme();
-  const [today] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  });
-  const week = useQuery(weekQuery(api, today));
-  const fitness = useQuery(fitnessQuery(api, {}));
-  const now = fitness.data?.at(-1);
-  const previous = week.data?.previous ?? [];
-  const average = previous.length ? previous.reduce((s, w) => s + w.moving_s, 0) / previous.length : 0;
-  const share = week.data && average > 0 ? Math.round((week.data.this_week.moving_s / average) * 100) : null;
-  if (!now && !week.data) return null;
-  return (
-    <>
-      <Heading>{t('stats.now')}</Heading>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        {now && (
-          <Card style={{ flex: 1 }}>
-            <Muted>{t('stats.tsb')}</Muted>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
-                {now.tsb > 0 ? `+${now.tsb.toFixed(0)}` : now.tsb.toFixed(0)}
-              </Text>
-              <Pill colour={formColour(c, now.tsb)}>{t(formLabel(now.tsb))}</Pill>
-            </View>
-            {/* Freshness is fitness minus fatigue: both as bars, so the gap between them shows. */}
-            {[
-              [t('stats.ctl'), now.ctl, c.accent],
-              [t('stats.atl'), now.atl, c.zone5],
-            ].map(([label, value, colour]) => (
-              <View key={label as string} style={{ marginTop: 8, gap: 3 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Muted style={{ fontSize: 12 }}>{label as string}</Muted>
-                  <Text
-                    style={{ color: c.fg, fontSize: 12, fontWeight: '600', fontVariant: ['tabular-nums'] }}
-                  >
-                    {(value as number).toFixed(0)}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    height: 6,
-                    borderRadius: 3,
-                    backgroundColor: colour as string,
-                    width: `${Math.max(2, ((value as number) / Math.max(1, now.ctl, now.atl)) * 100)}%`,
-                  }}
-                />
-              </View>
-            ))}
-          </Card>
-        )}
-        {week.data && (
-          <Card style={{ flex: 1 }}>
-            <Muted>{t('stats.load')}</Muted>
-            <Text style={[ui.statValue, { color: c.fg, fontSize: 26 }]}>
-              {share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${share} %`}
-            </Text>
-            {share != null && <ProgressBar value={share} max={150} label={t('stats.load')} />}
-            <Muted>{t('stats.loadNote', { average: formatHoursMinutes(average) })}</Muted>
-          </Card>
-        )}
-      </View>
-    </>
-  );
-}
-
-/** The form's colour: rested green, neither grey, building in the accent, overreaching red. */
-function formColour(c: ReturnType<typeof useTheme>, tsb: number): string {
-  const tone = formTone(tsb);
-  return tone === 'fresh'
-    ? c.formPositive
-    : tone === 'optimal'
-      ? c.accent
-      : tone === 'overreaching'
-        ? c.formNegative
-        : c.muted;
-}
-
-function Pill({ colour, children }: { colour: string; children: string }) {
-  const c = useTheme();
-  return (
-    <Text
-      style={{
-        color: mix(colour, c.fg, 0.4), // towards the text colour, to read on the pale pill
-        backgroundColor: alpha(colour, 0.15),
-        fontSize: 12,
-        fontWeight: '600',
-        paddingHorizontal: 8,
-        paddingVertical: 1,
-        borderRadius: 999,
-        overflow: 'hidden',
-      }}
-    >
-      {children}
-    </Text>
-  );
-}

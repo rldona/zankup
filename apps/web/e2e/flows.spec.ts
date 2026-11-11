@@ -118,6 +118,11 @@ test("Home in the app's order at every size, with This week as the app's", async
 test('search keeps its filters in the URL', async ({ page }, info) => {
   const w = (key: string) => word(lang(info.project.name), key);
   await signIn(page, lang(info.project.name));
+  // From the search bar under the Activities title, as the app's.
+  await page.goto('/activities');
+  await page.getByRole('searchbox', { name: w('nav.search') }).fill('hill');
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/search\?q=hill$/);
   await page.goto('/search?sport=ride');
   await expect(page.getByRole('link', { name: /Hill ride/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /Morning run/ })).toHaveCount(0);

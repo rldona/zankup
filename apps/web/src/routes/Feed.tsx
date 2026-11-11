@@ -17,7 +17,7 @@ import {
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type RefObject } from 'react';
-import { Link, NavLink, Outlet, useMatch, useSearchParams } from 'react-router';
+import { Link, NavLink, Outlet, useMatch, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { locale, t } from '../i18n';
@@ -62,6 +62,7 @@ export function Feed() {
   };
   const search = params.toString() ? `?${params}` : '';
   const sync = useSyncNow();
+  const navigate = useNavigate();
 
   const cards = items.map((activity, i) => {
     const start = localStart(activity.start_utc, activity.timezone);
@@ -75,7 +76,7 @@ export function Feed() {
           <h1>
             {t('feed.title')} <Since months={sport ? allMonths.data : months.data} />
           </h1>
-          {/* As the app's Activities header: sync, the search and the training calendar. */}
+          {/* As the app's Activities header: sync and the training calendar. */}
           <button
             type="button"
             className="iconbtn"
@@ -88,9 +89,6 @@ export function Feed() {
               <Icon name="sync" />
             </span>
           </button>
-          <Link to="/search" className="iconbtn" aria-label={t('nav.search')} title={t('nav.search')}>
-            <MaterialIcon name="search" />
-          </Link>
           <Link
             to="/stats/calendar"
             className="iconbtn"
@@ -100,6 +98,26 @@ export function Feed() {
             <MaterialIcon name="calendar_month" />
           </Link>
         </div>
+        {/* As the app: the search bar under the title, then the sports. It opens the search with the
+            text, where the filters are. */}
+        <form
+          role="search"
+          className="feedsearch"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const q = new FormData(event.currentTarget).get('q')?.toString().trim();
+            void navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+          }}
+        >
+          <MaterialIcon name="search" />
+          <input
+            type="search"
+            name="q"
+            aria-label={t('nav.search')}
+            placeholder={t('search.placeholder')}
+            enterKeyHint="search"
+          />
+        </form>
         <div className="chips" role="group" aria-label={t('feed.sports')}>
           <button type="button" className="chip" aria-pressed={sport === null} onClick={() => pick(null)}>
             {t('feed.all')}
@@ -111,9 +129,6 @@ export function Feed() {
             </button>
           ))}
         </div>
-        <p className="note">
-          {t('feed.searchHint')} <Link to="/search">{t('feed.searchLink')} ›</Link>
-        </p>
 
         {feed.isPending && <FeedSkeleton />}
         {feed.isError && (

@@ -4434,3 +4434,31 @@ h1.greeting {
   white-space: nowrap;
   font-size: 12px;
 }
+
+/* The Activities header's search bar, as the app's. */
+.feedsearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0 12px;
+  min-height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.feedsearch:focus-within {
+  border-color: var(--accent);
+}
+
+.feedsearch input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+}

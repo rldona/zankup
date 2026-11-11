@@ -88,6 +88,37 @@ describe('Goals (OS-911)', () => {
     );
   });
 
+  it('on a desktop, shows every chart open and the card is not a toggle', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(min-width: 1200px)',
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    const calls: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: Request | string) => {
+        const url = new URL(typeof input === 'string' ? input : input.url, 'http://localhost');
+        calls.push(url.pathname);
+        if (url.pathname === '/api/auth/me')
+          return Response.json({ id: 1, email: 'me@example.com', display_name: 'R', totp_enabled: true });
+        if (url.pathname === '/api/goals') return Response.json([GOAL]);
+        if (url.pathname === '/api/stats/calendar') return Response.json([]);
+        return Response.json({ detail: 'Not Found' }, { status: 404 });
+      }),
+    );
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <App queryClient={queryClient} router={createMemoryRouter(routes, { initialEntries: ['/goals'] })} />,
+    );
+    expect(await screen.findByText('This week · Run')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /This week · Run/ })).not.toBeInTheDocument();
+    await waitFor(() => expect(calls).toContain('/api/stats/calendar'));
+    // The header's buttons, labelled.
+    expect(screen.getByRole('button', { name: 'Add goal' })).toHaveTextContent('Add goal');
+  });
+
   it('keeps a chart open or folded as it was left, after leaving the page', async () => {
     vi.stubGlobal(
       'fetch',

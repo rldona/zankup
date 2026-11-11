@@ -4801,3 +4801,75 @@ h1.greeting {
     display: none;
   }
 }
+
+/* The heatmap, as the app's: the map fills the screen under the title, the sports centred over it and
+   the number of routes at its foot. */
+.page.heatmap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.heatwrap {
+  position: relative;
+  flex: 1;
+  min-height: 420px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.heatwrap .map {
+  margin: 0;
+  border-radius: 0;
+}
+
+.heatwrap > .note {
+  padding: 24px;
+}
+
+.heatwrap .heatchips {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0 12px;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.heatwrap .heatchips .chip {
+  pointer-events: auto;
+}
+
+.heatwrap .heatcount {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-weight: 600;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+/* The map's zoom under the sports. */
+.heatwrap .maplibregl-ctrl-top-right {
+  top: 52px;
+}
+
+@media (max-width: 599px) {
+  .heatwrap {
+    margin-inline: calc(-1 * var(--gutter));
+    border-radius: 0;
+    border-width: 1px 0 0;
+  }
+}

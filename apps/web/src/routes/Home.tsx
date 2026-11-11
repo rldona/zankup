@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 
 import { api } from '../api';
-import { LastDay, LastSevenDays, Metrics } from '../home/Widgets';
+import { LastDay, LastSevenDays, Metrics, UsualWeek } from '../home/Widgets';
 import { t } from '../i18n';
 import { MaterialIcon } from '../MaterialIcon';
 import { WeekHeader } from '../week/WeekHeader';
@@ -35,7 +35,7 @@ export function Home() {
       </div>
       <div className="homegrid">
         <div>
-          <WeekHeader />
+          <WeekHeader footer={<UsualWeek />} />
           <LastDay />
         </div>
         <div>

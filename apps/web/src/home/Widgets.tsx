@@ -252,9 +252,7 @@ export function Metrics() {
   const { health } = useHomeData(today);
   const estimates = useQuery(estimatesQuery(api));
   const fitness = useQuery(fitnessQuery(api, {}));
-  const week = useQuery(weekQuery(api, today));
   const me = useQuery(meQuery(api));
-  const effort = week.data ? weekEffort(week.data) : null;
   const vdot = estimates.data?.find((e) => e.kind === 'vdot')?.value;
   const ftp = estimates.data?.find((e) => e.kind === 'ftp')?.value;
   const now = fitness.data?.at(-1);
@@ -304,34 +302,44 @@ export function Metrics() {
             </small>
           </Tile>
         ) : null}
-        {week.data ? (
-          // The time trained this week (every activity) against a usual week, the previous twelve's average:
-          // the pill says how far ahead or behind, the bar's mark is the usual week.
-          <Tile icon="timer" label={t('home.weekTraining')} stretch>
-            <p className="big num freshness">
-              {formatHoursMinutes(week.data.this_week.moving_s)}
-              {effort?.share != null && effort.share !== 100 && (
-                <span className={`formpill ${effort.share > 100 ? 'ahead' : 'behind'}`}>
-                  {t('stats.change', { sign: effort.share > 100 ? '+' : '', percent: effort.share - 100 })}
-                </span>
-              )}
-            </p>
-            {effort?.share != null && (
-              <div className="weekbar">
-                {/* The bar runs to 150 % of a usual week; the mark is the usual week. */}
-                <div className="meterbar" aria-hidden="true">
-                  <i style={{ width: `${Math.min(100, effort.share / 1.5)}%` }} />
-                  <b style={{ left: `${100 / 1.5}%` }} />
-                </div>
-                <small style={{ left: `${100 / 1.5}%` }}>
-                  {t('home.usualWeek', { average: formatHoursMinutes(effort.average) })}
-                </small>
-              </div>
-            )}
-          </Tile>
-        ) : null}
       </div>
     </section>
+  );
+}
+
+// --- this week against a usual one ---------------------------------------------------------------------
+
+/**
+ * Closes Home's "This week" (as the app): the time trained so far against a usual week (the previous
+ * twelve's average), as a pill ahead or behind and a bar whose mark is the usual week.
+ */
+export function UsualWeek() {
+  const today = useToday();
+  const week = useQuery(weekQuery(api, today));
+  const effort = week.data ? weekEffort(week.data) : null;
+  if (effort?.share == null) return null;
+  const share = effort.share;
+  return (
+    <div className="usualweek">
+      <p>
+        <b>{t('home.vsUsual')}</b>
+        {share !== 100 && (
+          <span className={`formpill ${share > 100 ? 'ahead' : 'behind'}`}>
+            {t('stats.change', { sign: share > 100 ? '+' : '', percent: share - 100 })}
+          </span>
+        )}
+      </p>
+      <div className="weekbar">
+        {/* The bar runs to 150 % of a usual week; the mark is the usual week. */}
+        <div className="meterbar" aria-hidden="true">
+          <i style={{ width: `${Math.min(100, share / 1.5)}%` }} />
+          <b style={{ left: `${100 / 1.5}%` }} />
+        </div>
+        <small style={{ left: `${100 / 1.5}%` }}>
+          {t('home.usualWeek', { average: formatHoursMinutes(effort.average) })}
+        </small>
+      </div>
+    </div>
   );
 }
 

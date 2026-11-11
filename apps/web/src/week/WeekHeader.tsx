@@ -1,6 +1,6 @@
 import { formatHoursMinutes, formatters, SPORTS, weekQuery, type Sport } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import { api } from '../api';
@@ -14,9 +14,10 @@ const asSport = (value: string): Sport =>
 
 /**
  * "This week" above the feed (OS-217): the seven days with what was done on each (today marked, the
- * days still to come faded), the streak of active weeks and the week's numbers.
+ * days still to come faded), the streak of active weeks and the week's numbers; `footer` closes the
+ * card (Home's comparison with a usual week).
  */
-export function WeekHeader() {
+export function WeekHeader({ footer }: { footer?: ReactNode }) {
   const [today] = useState(localToday);
   const week = useQuery(weekQuery(api, today));
   const prefs = usePrefs();
@@ -74,6 +75,7 @@ export function WeekHeader() {
           <dt>{t('feed.stat.ascent')}</dt>
         </div>
       </dl>
+      {footer}
     </section>
   );
 }

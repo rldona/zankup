@@ -4658,3 +4658,50 @@ h1.greeting {
 .goalhead.fixed {
   cursor: default;
 }
+
+/* You (docs/prototypes/web): on a desktop the profile and the menu in a fixed column on the left, the
+   year and the tables on the right. Tables scroll sideways instead of wrapping inside their cells. */
+.tablescroll {
+  overflow-x: auto;
+}
+
+.page.profile .tablescroll th,
+.page.profile .tablescroll td {
+  white-space: nowrap;
+}
+
+@media (min-width: 1200px) {
+  .page.profile {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 0 24px;
+    align-items: start;
+  }
+
+  .youside {
+    position: sticky;
+    top: 20px;
+  }
+
+  .youside .phead {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .youside .phead .actions,
+  .youside .phead .actions button {
+    width: 100%;
+  }
+
+  .youmain > h2:first-child {
+    margin-top: 0;
+  }
+
+  .youmain .kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

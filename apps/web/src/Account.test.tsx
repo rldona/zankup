@@ -197,6 +197,37 @@ describe('settings and profile', () => {
     expect(screen.getByRole('link', { name: /Account/ })).toHaveAttribute('href', '/settings/account');
   });
 
+  it('on a desktop hides the physical data until the eye shows them, and remembers it', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(min-width: 1200px)',
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/settings': () => Response.json(SETTINGS),
+      '/api/profile/summary': () =>
+        Response.json({
+          year: 2026,
+          this_year: [],
+          all_time: [],
+          since: null,
+          records: [],
+          streak_weeks: 0,
+          device: null,
+        }),
+    });
+    renderAt('/profile');
+    const panel = (await screen.findByRole('heading', { name: 'Physical data' })).closest('section');
+    if (!panel) throw new Error('no physical data');
+    expect(panel).not.toHaveTextContent('72.5');
+    await userEvent.click(within(panel).getByRole('button', { name: 'Show the physical data' }));
+    expect(panel).toHaveTextContent('72.5');
+    expect(localStorage.getItem('zankup-physical-hidden')).toBe('0');
+    localStorage.clear();
+  });
+
   it('lists and removes passkeys in the account tab', async () => {
     let passkeys = [
       {

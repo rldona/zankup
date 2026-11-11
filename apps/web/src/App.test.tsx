@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -150,6 +150,65 @@ describe('app skeleton', () => {
     await userEvent.click(await screen.findByRole('link', { name: /Morning run/ }));
     expect(await screen.findByRole('heading', { name: 'Morning run' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/activities/7');
+  });
+
+  it('lays an activity out as the app: floating buttons on a phone, a side column on a desktop', async () => {
+    const n = 61;
+    const streams = {
+      t: Array.from({ length: n }, (_, i) => i * 10),
+      dist: Array.from({ length: n }, (_, i) => i * 30),
+      hr: Array.from({ length: n }, (_, i) => (i < 30 ? 120 : 170)),
+    };
+    const media = (width: number) =>
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches:
+          (query === '(max-width: 599px)' && width < 600) ||
+          (query === '(min-width: 1200px)' && width >= 1200),
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }));
+    const api = () =>
+      mockApi({
+        '/api/auth/me': () => Response.json(ME),
+        '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
+        '/api/activities/7': () =>
+          Response.json({
+            ...RUN,
+            streams: { series: ['t', 'dist', 'hr'], sample_count: n },
+            laps: [],
+            splits: [],
+            best_efforts: [],
+          }),
+        '/api/activities/7/streams': () => Response.json(streams),
+      });
+
+    // A phone: back, edit, share and photos float as icons; no labelled buttons beside the title.
+    media(390);
+    api();
+    const router = renderAt('/activities');
+    await userEvent.click(await screen.findByRole('link', { name: /Morning run/ }));
+    const detail = await screen.findByRole('article');
+    for (const name of ['Back', 'Edit', 'Share', 'Add photos'])
+      expect(within(detail).getByRole('button', { name })).toHaveClass('floatbtn');
+    expect(detail.querySelector('.dactions')).toBeNull();
+    await userEvent.click(within(detail).getByRole('button', { name: 'Back' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/activities'));
+    cleanup();
+    vi.unstubAllGlobals();
+
+    // A desktop: the heart-rate zones in the side column, the labelled buttons beside the title.
+    media(1440);
+    api();
+    renderAt('/activities/7');
+    const wide = await screen.findByRole('article');
+    const side = await waitFor(() => {
+      const aside = wide.querySelector('aside.detailside');
+      if (!aside) throw new Error('no side column');
+      return aside as HTMLElement;
+    });
+    expect(await within(side).findByRole('heading', { name: 'Heart rate zones' })).toBeInTheDocument();
+    expect(within(wide).getByRole('button', { name: 'Edit' })).not.toHaveClass('floatbtn');
   });
 
   it('shows the detail: figures, route, zones, best efforts, laps and the file', async () => {

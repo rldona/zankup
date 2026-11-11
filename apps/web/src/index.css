@@ -3657,9 +3657,27 @@ textarea {
   margin-left: auto;
 }
 
-@media (max-width: 600px) {
+/* Desktop: the six figures in one row, in a box, as docs/prototypes/web. */
+@media (min-width: 1200px) {
+  .figures {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px 20px;
+  }
+
   .figs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .figs > div {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .figs dd {
+    font-size: 20px;
   }
 }
 
@@ -4435,6 +4453,33 @@ h1.greeting {
   font-size: 12px;
 }
 
+/* The activity (docs/prototypes/web): the map across the top of the detail, edge to edge. */
+.page.detail.withmap {
+  padding-top: 0;
+}
+
+.page.detail > .mapblock {
+  margin-inline: calc(-1 * var(--gutter));
+  border-radius: 0;
+  border-width: 0 0 1px;
+}
+
+/* Desktop: the charts two by two and the rest beside a column with the Coach's summary and the zones. */
+.detailgrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 16px;
+  align-items: start;
+}
+
+.detailmain .chartgrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detailside > :first-child {
+  margin-top: 0;
+}
+
 /* The Activities header's search bar, as the app's. */
 .feedsearch {
   display: flex;
@@ -4461,4 +4506,68 @@ h1.greeting {
   background: transparent;
   color: var(--fg);
   font: inherit;
+}
+
+/* An activity on a phone, as the app's pushed screen: no tab bar, and back, edit, share and photos as
+   round buttons floating over the map. */
+.floatbar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 0 12px;
+}
+
+.page.detail.withmap > .floatbar {
+  margin-bottom: -56px;
+}
+
+.floatbtn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--fg);
+}
+
+.floatbtn svg.i {
+  width: 22px;
+  height: 22px;
+}
+
+@media (max-width: 599px) {
+  .app.pushed .tabbar,
+  .crumbrow.pushed {
+    display: none;
+  }
+
+  .app.pushed {
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+/* The map's zoom under its options button, and both under the floating buttons on a phone. */
+.mapblock .maplibregl-ctrl-top-right {
+  top: 52px;
+}
+
+.floatbar + .mapblock .mapopts {
+  top: 68px;
+}
+
+.floatbar + .mapblock .mappanel {
+  top: 116px;
+}
+
+.floatbar + .mapblock .maplibregl-ctrl-top-right {
+  top: 108px;
 }

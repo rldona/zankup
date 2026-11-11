@@ -45,6 +45,18 @@ test('open an activity: figures, route, zones and laps', async ({ page }, info) 
   // Charts load when they come near the screen (OS-215), one card each (OS-907).
   await detail.locator('.chartcard').first().scrollIntoViewIfNeeded();
   await expect(detail.locator('.chartcard svg').first()).toBeVisible();
+  // On a phone the activity is pushed over the feed, as on the app: no tab bar, and back, edit, share
+  // and photos float over the map.
+  if ((page.viewportSize()?.width ?? 0) < 600) {
+    await expect(page.locator('nav.tabbar')).toBeHidden();
+    const bar = page.locator('.floatbar');
+    for (const key of ['activity.edit', 'activity.share', 'photos.add'])
+      await expect(bar.getByRole('button', { name: w(key) })).toBeVisible();
+    await bar.getByRole('button', { name: w('nav.back') }).click();
+    await expect(page).toHaveURL(/\/activities$/);
+  } else {
+    await expect(detail.getByRole('button', { name: w('activity.edit'), exact: true })).toBeVisible();
+  }
   // Leaving the detail inside the app takes the charts down with them: the app must carry on (this
   // crashed in production on 9 Nov 2026).
   await page

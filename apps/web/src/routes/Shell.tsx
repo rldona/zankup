@@ -52,6 +52,9 @@ const OWNS: Record<string, RegExp> = {
   '/profile': /^\/(profile|stats|estimates|gear|settings|sync|review|routes|segments)(\/|$)/,
 };
 
+/** Screens pushed over a section, as the app's: on a phone they have no tab bar. */
+const PUSHED = /^\/activities\/\d+/;
+
 const sectionOf = (pathname: string) => SECTIONS.find((s) => OWNS[s.to]?.test(pathname));
 const shortcutOf = (pathname: string) => SHORTCUTS.find((s) => s.owns.test(pathname));
 
@@ -86,9 +89,11 @@ function NavLink({ item, current, bare }: { item: Item; current: string | undefi
 function Back({ pathname }: { pathname: string }) {
   const section = sectionOf(pathname);
   if (!section || section.to === pathname) return null;
-  const narrowOnly = !!shortcutOf(pathname) || /^\/activities\/./.test(pathname);
+  // An activity on a phone floats its own way back over the map; on a desktop the list is beside it.
+  const pushed = PUSHED.test(pathname);
+  const narrowOnly = !!shortcutOf(pathname) || pushed;
   return (
-    <div className={`crumbrow${narrowOnly ? ' narrow-only' : ''}`}>
+    <div className={`crumbrow${narrowOnly ? ' narrow-only' : ''}${pushed ? ' pushed' : ''}`}>
       <Link to={section.to} className="crumb">
         <MaterialIcon name="chevron_left" />
         {t(section.label)}
@@ -121,7 +126,7 @@ export function Shell() {
 
   return (
     <SyncNow.Provider value={{ start: syncNow, running: sync.running }}>
-      <div className="app">
+      <div className={`app${PUSHED.test(pathname) ? ' pushed' : ''}`}>
         <aside className="rail">
           <Link to="/" className="brand" aria-label="Zankup">
             <Wordmark height="0.6rem" />

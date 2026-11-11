@@ -63,7 +63,8 @@ function useFormat() {
 /** The feed's first page and the last week's health days, shared by the widgets (one request each). */
 function useHomeData(today: string) {
   const feed = useInfiniteQuery(activitiesQuery(api));
-  const health = useQuery(healthDaysQuery(api, daysBefore(today, 6), today));
+  // `end` is exclusive: tomorrow, so today's steps come too.
+  const health = useQuery(healthDaysQuery(api, daysBefore(today, 6), daysBefore(today, -1)));
   const items = useMemo(() => feed.data?.pages.flatMap((p) => p.items) ?? [], [feed.data]);
   return { feed, health, items };
 }

@@ -55,7 +55,8 @@ function useToday() {
 /** The health days of the last week, shared by the widgets (one request). */
 function useHealthWeek(today: string) {
   const api = useApi();
-  return useQuery(healthDaysQuery(api, daysBefore(today, 6), today));
+  // `end` is exclusive: tomorrow, so today's steps come too.
+  return useQuery(healthDaysQuery(api, daysBefore(today, 6), daysBefore(today, -1)));
 }
 
 // --- the last day -----------------------------------------------------------------------------------

@@ -15,7 +15,7 @@ import {
   effortShown,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
@@ -27,6 +27,7 @@ import { attestationJson, creationOptions, passkeysSupported } from '../signin/w
 import { SportIcon } from '../SportIcon';
 import { CardTitle, Menu } from '../ui';
 import { MaterialIcon } from '../MaterialIcon';
+import { DESKTOP } from '../media';
 import { CardSkeleton, PageSkeleton, Pulse } from '../Skeleton';
 
 const asSport = (value: string): Sport =>
@@ -60,24 +61,29 @@ export function Profile() {
 
   return (
     <section className="page profile">
-      <Header me={me.data} summary={summary.data} onEdit={() => setEditing(true)} />
-      {editing && <EditProfile me={me.data} onDone={() => setEditing(false)} />}
-      <Menu
-        label={t('nav.you')}
-        items={[
-          { to: '/stats', icon: 'bar_chart', label: t('nav.stats') },
-          { to: '/estimates', icon: 'speed', label: t('stats.estimates') },
-          ...(ai.data?.available && ai.data.enabled
-            ? [{ to: '/coach', icon: 'wand_stars' as const, label: t('coach.title') }]
-            : []),
-          { to: '/gear', icon: 'footprint', label: t('gear.title') },
-          { to: '/settings/import', icon: 'upload', label: t('import.title') },
-          { to: '/settings/account', icon: 'account_circle', label: t('profile.tab.account') },
-          { to: '/settings', icon: 'settings', label: t('nav.settings') },
-        ]}
-      />
-      {summary.data && <YearNumbers summary={summary.data} />}
-      <Summary me={me.data} summary={summary.data} />
+      {/* Desktop: the profile and the menu in a fixed column on the left, the numbers on the right. */}
+      <div className="youside">
+        <Header me={me.data} summary={summary.data} onEdit={() => setEditing(true)} />
+        {editing && <EditProfile me={me.data} onDone={() => setEditing(false)} />}
+        <Menu
+          label={t('nav.you')}
+          items={[
+            { to: '/stats', icon: 'bar_chart', label: t('nav.stats') },
+            { to: '/estimates', icon: 'speed', label: t('stats.estimates') },
+            ...(ai.data?.available && ai.data.enabled
+              ? [{ to: '/coach', icon: 'wand_stars' as const, label: t('coach.title') }]
+              : []),
+            { to: '/gear', icon: 'footprint', label: t('gear.title') },
+            { to: '/settings/import', icon: 'upload', label: t('import.title') },
+            { to: '/settings/account', icon: 'account_circle', label: t('profile.tab.account') },
+            { to: '/settings', icon: 'settings', label: t('nav.settings') },
+          ]}
+        />
+      </div>
+      <div className="youmain">
+        {summary.data && <YearNumbers summary={summary.data} />}
+        <Summary me={me.data} summary={summary.data} />
+      </div>
     </section>
   );
 }
@@ -155,30 +161,44 @@ function YearNumbers({ summary }: { summary: ProfileSummary }) {
   );
 }
 
-function SportTable({ rows }: { rows: ProfileSummary['this_year'] }) {
+/**
+ * A table that scrolls sideways on a narrow screen instead of wrapping inside its cells; reachable with
+ * the keyboard, so it can be scrolled without a mouse.
+ */
+function TableScroll({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="tablescroll" role="region" aria-label={label} tabIndex={0}>
+      {children}
+    </div>
+  );
+}
+
+function SportTable({ rows, label }: { rows: ProfileSummary['this_year']; label: string }) {
   const prefs = usePrefs();
   const format = useMemo(() => formatters(prefs), [prefs]);
   return (
-    <table className="num">
-      <tbody>
-        {rows.map((s) => {
-          const sport = asSport(s.sport);
-          return (
-            <tr key={s.sport}>
-              <th scope="row">
-                <span className="cell-sport">
-                  <SportIcon sport={sport} />
-                  {t(`sport.${sport}`)}
-                </span>
-              </th>
-              <td>{t('profile.activities', { count: s.count })}</td>
-              <td>{s.distance_m ? format.distance(s.distance_m) : '—'}</td>
-              <td>{formatHoursMinutes(s.moving_s)}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <TableScroll label={label}>
+      <table className="num">
+        <tbody>
+          {rows.map((s) => {
+            const sport = asSport(s.sport);
+            return (
+              <tr key={s.sport}>
+                <th scope="row">
+                  <span className="cell-sport">
+                    <SportIcon sport={sport} />
+                    {t(`sport.${sport}`)}
+                  </span>
+                </th>
+                <td>{t('profile.activities', { count: s.count })}</td>
+                <td>{s.distance_m ? format.distance(s.distance_m) : '—'}</td>
+                <td>{formatHoursMinutes(s.moving_s)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </TableScroll>
   );
 }
 
@@ -203,18 +223,23 @@ function effortLabel(key: string): string | null {
 
 const HIDDEN_KEY = 'zankup-physical-hidden';
 
+/**
+ * Whether the physical data start hidden: as left in this browser, else hidden on a large screen (where
+ * others may see it, docs/prototypes/web) and shown on a phone, as the app.
+ */
 function readHidden(): boolean {
+  const large = typeof matchMedia !== 'undefined' && matchMedia(DESKTOP).matches;
   try {
-    return localStorage.getItem(HIDDEN_KEY) === '1';
+    const stored = localStorage.getItem(HIDDEN_KEY);
+    return stored === null ? large : stored === '1';
   } catch {
-    return false;
+    return large;
   }
 }
 
 function writeHidden(hidden: boolean) {
   try {
-    if (hidden) localStorage.setItem(HIDDEN_KEY, '1');
-    else localStorage.removeItem(HIDDEN_KEY);
+    localStorage.setItem(HIDDEN_KEY, hidden ? '1' : '0');
   } catch {
     // Storage blocked: hidden for this page only.
   }
@@ -245,36 +270,38 @@ function Summary({ me, summary }: { me: Me; summary?: ProfileSummary }) {
         <div className="ph">
           <h2>{t('profile.byYear')}</h2>
         </div>
-        <SportTable rows={summary.this_year} />
+        <SportTable rows={summary.this_year} label={t('profile.byYear')} />
       </section>
       <section className="panel">
         <div className="ph">
           <h2>{t('profile.allTime')}</h2>
           {summary.since && <span className="note">{t('profile.since', { date: day(summary.since) })}</span>}
         </div>
-        <SportTable rows={summary.all_time} />
+        <SportTable rows={summary.all_time} label={t('profile.allTime')} />
       </section>
       <section className="panel">
         <div className="ph">
           <h2>{t('profile.records')}</h2>
         </div>
         {summary.records.length ? (
-          <table className="num">
-            <tbody>
-              {summary.records
-                .filter((r) => effortShown(r.distance_key, format.unit))
-                .map((r) => (
-                  <tr key={r.distance_key}>
-                    <th scope="row">{effortLabel(r.distance_key) ?? format.distance(r.distance_m)}</th>
-                    <td>{formatHoursMinutesOrClock(r.time_s)}</td>
-                    <td>{format.pace(r.distance_m / r.time_s)}</td>
-                    <td>
-                      <Link to={`/activities/${r.activity_id}`}>{day(r.date)}</Link>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+          <TableScroll label={t('profile.records')}>
+            <table className="num">
+              <tbody>
+                {summary.records
+                  .filter((r) => effortShown(r.distance_key, format.unit))
+                  .map((r) => (
+                    <tr key={r.distance_key}>
+                      <th scope="row">{effortLabel(r.distance_key) ?? format.distance(r.distance_m)}</th>
+                      <td>{formatHoursMinutesOrClock(r.time_s)}</td>
+                      <td>{format.pace(r.distance_m / r.time_s)}</td>
+                      <td>
+                        <Link to={`/activities/${r.activity_id}`}>{day(r.date)}</Link>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </TableScroll>
         ) : (
           <p className="note">{t('profile.noRecords')}</p>
         )}

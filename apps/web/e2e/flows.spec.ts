@@ -162,6 +162,61 @@ test('Health, Goals and You: the period segmented, labelled buttons, open charts
   expect(wraps).toBe(0);
 });
 
+test('Stats, the Coach and Settings at every size', async ({ page }, info) => {
+  const w = (key: string) => word(lang(info.project.name), key);
+  const width = page.viewportSize()?.width ?? 0;
+  await signIn(page, lang(info.project.name));
+
+  // Stats: the calendar and the heatmap in the header; on a desktop the cards in rows of equal height.
+  await page.goto('/stats');
+  const header = page.locator('.page.stats .titlebar');
+  await expect(header.getByRole('link', { name: w('stats.calendar') })).toHaveAttribute(
+    'href',
+    '/stats/calendar',
+  );
+  await expect(header.getByRole('link', { name: w('stats.heatmap') })).toHaveAttribute(
+    'href',
+    '/stats/heatmap',
+  );
+  if (width >= 1200) {
+    const [a, b] = await page
+      .locator('.statgrid > .panel')
+      .evaluateAll((cards) => cards.slice(0, 2).map((c) => c.getBoundingClientRect()));
+    expect(a?.top).toBe(b?.top);
+    expect(a?.height).toBe(b?.height);
+  }
+
+  // The Coach: the weekly report beside the conversation on a desktop, the page's own top margin.
+  await page.route('**/api/ai/status', (route) =>
+    route.fulfill({
+      json: {
+        available: true,
+        enabled: true,
+        summaries: true,
+        weekly: true,
+        model: 'm',
+        budget: null,
+        sends: [],
+        never_sends: [],
+      },
+    }),
+  );
+  await page.route('**/api/ai/weekly', (route) => route.fulfill({ json: [] }));
+  await page.goto('/coach');
+  const weekly = page.getByRole('heading', { name: w('weekly.title') });
+  const chat = page.getByRole('textbox', { name: w('coach.placeholder') });
+  await expect(chat).toBeVisible();
+  const [left, right] = [await weekly.boundingBox(), await chat.boundingBox()];
+  if (width >= 1200) expect(right?.x ?? 0).toBeGreaterThan((left?.x ?? 0) + (left?.width ?? 0));
+  else expect(right?.y ?? 0).toBeGreaterThan(left?.y ?? 0);
+  const title = await page.getByRole('heading', { name: w('coach.title'), level: 1 }).boundingBox();
+  expect(title?.y ?? 0).toBeGreaterThan(8);
+
+  // Settings: notifications arrive in this browser.
+  await page.goto('/settings');
+  await expect(page.getByText(w('settings.section.notificationsNoteWeb'))).toBeVisible();
+});
+
 test('search keeps its filters in the URL', async ({ page }, info) => {
   const w = (key: string) => word(lang(info.project.name), key);
   await signIn(page, lang(info.project.name));

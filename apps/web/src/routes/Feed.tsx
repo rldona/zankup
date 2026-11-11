@@ -25,6 +25,8 @@ import { usePrefs } from '../prefs';
 import { MaterialIcon } from '../MaterialIcon';
 import { SportGlyph, SportIcon } from '../SportIcon';
 import { FeedSkeleton } from '../Skeleton';
+import { useSyncNow } from '../syncSheet';
+import { Icon } from '../Icon';
 
 type Format = ReturnType<typeof formatters>;
 const CHIPS = SPORTS.filter((s) => s !== 'other');
@@ -59,6 +61,7 @@ export function Feed() {
     column.current?.scrollTo?.({ top: 0 });
   };
   const search = params.toString() ? `?${params}` : '';
+  const sync = useSyncNow();
 
   const cards = items.map((activity, i) => {
     const start = localStart(activity.start_utc, activity.timezone);
@@ -72,7 +75,19 @@ export function Feed() {
           <h1>
             {t('feed.title')} <Since months={sport ? allMonths.data : months.data} />
           </h1>
-          {/* As the app's Activities header: the search and the training calendar. */}
+          {/* As the app's Activities header: sync, the search and the training calendar. */}
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label={t('nav.sync')}
+            title={t('nav.sync')}
+            onClick={sync.start}
+            aria-busy={sync.running}
+          >
+            <span className={sync.running ? 'spinning' : undefined}>
+              <Icon name="sync" />
+            </span>
+          </button>
           <Link to="/search" className="iconbtn" aria-label={t('nav.search')} title={t('nav.search')}>
             <MaterialIcon name="search" />
           </Link>

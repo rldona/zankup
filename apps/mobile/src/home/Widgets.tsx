@@ -40,7 +40,7 @@ import { Icon, type IconName } from '../Icon';
 import { locale, t } from '../i18n';
 import { asSport, useFormat } from '../prefs';
 import { useTheme } from '../theme';
-import { Card, Heading, Muted, ProgressBar, styles as ui } from '../ui';
+import { Card, Heading, Muted, styles as ui } from '../ui';
 import { CardSkeleton, Pulse } from '../Skeleton';
 
 type Format = ReturnType<typeof useFormat>;
@@ -351,14 +351,57 @@ export function Metrics() {
         </View>
       </Tile>
     ) : null,
-    effort && week.data ? (
-      // This week's moving time against an ordinary week (the previous twelve): 100 % is as usual.
-      <Tile key="effort" icon="timer" label={t('stats.load')}>
-        <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>
-          {effort.share == null ? formatHoursMinutes(week.data.this_week.moving_s) : `${effort.share} %`}
-        </Text>
-        {effort.share != null && <ProgressBar value={effort.share} max={150} label={t('stats.load')} />}
-        <Muted>{t('stats.loadNote', { average: formatHoursMinutes(effort.average) })}</Muted>
+    week.data ? (
+      // The time trained this week (every activity) against a usual week, the previous twelve's average:
+      // the pill says how far ahead or behind, the bar's mark is the usual week.
+      <Tile key="effort" icon="timer" label={t('home.weekTraining')}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Text style={[ui.statValue, { color: c.fg, fontSize: 28 }]}>
+            {formatHoursMinutes(week.data.this_week.moving_s)}
+          </Text>
+          {effort?.share != null && effort.share !== 100 && (
+            <Pill colour={effort.share > 100 ? c.formPositive : c.formNegative}>
+              {t('stats.change', { sign: effort.share > 100 ? '+' : '', percent: effort.share - 100 })}
+            </Pill>
+          )}
+        </View>
+        {effort?.share != null && (
+          <View>
+            {/* The bar runs to 150 % of a usual week; the mark is the usual week. */}
+            <View
+              accessibilityRole="progressbar"
+              accessibilityLabel={t('home.weekTraining')}
+              accessibilityValue={{ min: 0, max: 150, now: Math.min(150, effort.share) }}
+              style={{ height: 8, borderRadius: 4, backgroundColor: c.line }}
+            >
+              <View
+                style={{
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: c.accent,
+                  width: `${Math.min(100, effort.share / 1.5)}%`,
+                }}
+              />
+              <View
+                style={{
+                  position: 'absolute',
+                  left: `${100 / 1.5}%`,
+                  top: -3,
+                  bottom: -3,
+                  width: 2,
+                  backgroundColor: c.fg,
+                }}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', marginTop: 4 }}>
+              <View style={{ width: `${100 / 1.5}%`, alignItems: 'flex-end' }}>
+                <Muted style={{ fontSize: 12, marginRight: -40, textAlign: 'center' }}>
+                  {t('home.usualWeek', { average: formatHoursMinutes(effort.average) })}
+                </Muted>
+              </View>
+            </View>
+          </View>
+        )}
       </Tile>
     ) : null,
   ].filter(Boolean);

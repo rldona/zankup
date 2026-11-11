@@ -19,7 +19,7 @@ import { Choice, Loading, Muted } from '../src/ui';
 
 /** The header's height under the status bar, and the chips' row under it. */
 const HEADER = 56;
-const CHIPS = 48;
+const CHIPS = 60;
 
 export default function HeatmapScreen() {
   const api = useApi();
@@ -85,16 +85,17 @@ export default function HeatmapScreen() {
             </Text>
           </View>
         </View>
-        <Choice
-          scroll
-          label={t('feed.sports')}
-          value={sport}
-          onChange={setSport}
-          options={[
-            { value: '', label: t('feed.all') },
-            ...(['run', 'ride', 'walk'] as const).map((s) => ({ value: s, label: t(`sport.${s}`) })),
-          ]}
-        />
+        <View style={{ alignItems: 'center', marginTop: 12 }}>
+          <Choice
+            label={t('feed.sports')}
+            value={sport}
+            onChange={setSport}
+            options={[
+              { value: '', label: t('feed.all') },
+              ...(['run', 'ride', 'walk'] as const).map((s) => ({ value: s, label: t(`sport.${s}`) })),
+            ]}
+          />
+        </View>
       </View>
 
       {count > 0 && (

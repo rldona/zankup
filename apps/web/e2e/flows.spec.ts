@@ -217,6 +217,41 @@ test('Stats, the Coach and Settings at every size', async ({ page }, info) => {
   await expect(page.getByText(w('settings.section.notificationsNoteWeb'))).toBeVisible();
 });
 
+test('the rest of the screens: one way back each, and the heatmap filling the screen', async ({
+  page,
+}, info) => {
+  const w = (key: string) => word(lang(info.project.name), key);
+  const width = page.viewportSize()?.width ?? 0;
+  await signIn(page, lang(info.project.name));
+  for (const [path, parent] of [
+    ['/review/month/2026-11', 'nav.stats'],
+    ['/settings/import', 'nav.settings'],
+    ['/routes', 'nav.stats'],
+    ['/estimates', 'nav.you'],
+    ['/gear', 'nav.you'],
+  ] as const) {
+    await page.goto(path);
+    const back = page.locator('.crumb').filter({ visible: true });
+    await expect(back, path).toHaveCount(1);
+    await expect(back, path).toHaveText(w(parent));
+    const overflow = await page.evaluate(() => {
+      const main = document.querySelector('main');
+      return (main?.scrollWidth ?? 0) - (main?.clientWidth ?? 0);
+    });
+    expect(overflow, path).toBeLessThanOrEqual(0);
+  }
+  // The heatmap: the sports over a map that fills the rest of the screen, the routes counted at its foot.
+  await page.goto('/stats/heatmap');
+  await page
+    .getByRole('group', { name: w('feed.sports') })
+    .getByRole('button', { name: w('sport.ride') })
+    .click();
+  await expect(page).toHaveURL(/sport=ride/);
+  const box = await page.locator('.heatwrap').boundingBox();
+  const viewport = page.viewportSize()?.height ?? 0;
+  expect((box?.y ?? 0) + (box?.height ?? 0)).toBeGreaterThan(viewport - (width < 600 ? 120 : 40));
+});
+
 test('search keeps its filters in the URL', async ({ page }, info) => {
   const w = (key: string) => word(lang(info.project.name), key);
   await signIn(page, lang(info.project.name));

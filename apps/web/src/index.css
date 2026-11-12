@@ -3332,6 +3332,12 @@ textarea {
   .h-last .hlabel {
     flex: none;
   }
+
+  /* With two rows, the columns that start a row keep a clean left edge. */
+  .h-last .hrow:not(:nth-child(3n + 1)) {
+    border-left: 1px solid var(--line);
+    padding-left: 16px;
+  }
 }
 
 @media (min-width: 1200px) {

@@ -439,8 +439,9 @@ svg.i.m {
   scrollbar-width: none;
 }
 
-/* On a desktop the chips do not fit in the 400 px column and a mouse has no sideways scroll: a selector. */
-.sports-select {
+/* On a desktop the chips do not fit in the 400 px column and a mouse has no sideways scroll: a
+   Zankup-styled selector (a native <select> would ignore the theme). */
+.sportselect {
   display: none;
 }
 
@@ -449,12 +450,86 @@ svg.i.m {
     display: none;
   }
 
-  .feedcol > .sports-select {
+  .feedcol > .sportselect {
     display: block;
-    box-sizing: border-box;
-    width: 100%;
+    position: relative;
     margin: 0 0 10px;
   }
+}
+
+.sportselect-btn {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sportselect-btn:hover,
+.sportselect-btn[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.sportselect-btn svg.i {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+}
+
+.sportselect-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+}
+
+.sportselect-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sportselect-list button:hover {
+  background: var(--surface-2);
+}
+
+.sportselect-list button.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sportselect-list button svg.i {
+  width: 16px;
+  height: 16px;
 }
 
 .chip {

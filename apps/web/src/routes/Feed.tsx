@@ -16,7 +16,7 @@ import {
   type Sport,
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type RefObject } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { Link, NavLink, Navigate, Outlet, useMatch, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
@@ -130,20 +130,8 @@ export function Feed() {
             </button>
           ))}
         </div>
-        {/* On a desktop the chips do not fit (and a mouse has no sideways scroll): a selector instead. */}
-        <select
-          className="sports-select"
-          aria-label={t('feed.sports')}
-          value={sport ?? ''}
-          onChange={(e) => pick((e.target.value || null) as Sport | null)}
-        >
-          <option value="">{t('feed.all')}</option>
-          {CHIPS.map((s) => (
-            <option key={s} value={s}>
-              {t(`sport.${s}`)}
-            </option>
-          ))}
-        </select>
+        {/* On a desktop the chips do not fit (and a mouse has no sideways scroll): the app's selector. */}
+        <SportSelect sport={sport} onPick={pick} />
 
         {feed.isPending && <FeedSkeleton />}
         {feed.isError && (
@@ -182,6 +170,80 @@ export function Feed() {
       <section className="detailcol">
         <Outlet />
       </section>
+    </div>
+  );
+}
+
+/**
+ * The sports selector on a desktop: a Zankup-styled listbox, because the native <select> ignores the
+ * theme. `null` is "All".
+ */
+function SportSelect({ sport, onPick }: { sport: Sport | null; onPick: (sport: Sport | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const current = useRef<HTMLButtonElement>(null);
+  const options: (Sport | null)[] = [null, ...CHIPS];
+
+  useEffect(() => {
+    if (!open) return;
+    current.current?.focus();
+    const close = (event: PointerEvent) => {
+      if (!box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      trigger.current?.focus();
+    };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  const choose = (option: Sport | null) => {
+    onPick(option);
+    setOpen(false);
+    trigger.current?.focus();
+  };
+  const label = sport ? t(`sport.${sport}`) : t('feed.all');
+
+  return (
+    <div className="sportselect" ref={box}>
+      <button
+        type="button"
+        ref={trigger}
+        className="sportselect-btn"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`${t('feed.sports')}: ${label}`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {label}
+        <MaterialIcon name={open ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} />
+      </button>
+      {open && (
+        <ul className="sportselect-list" role="listbox" aria-label={t('feed.sports')}>
+          {options.map((option) => (
+            <li key={option ?? 'all'}>
+              <button
+                type="button"
+                role="option"
+                ref={sport === option ? current : undefined}
+                aria-selected={sport === option}
+                className={sport === option ? 'on' : undefined}
+                onClick={() => choose(option)}
+              >
+                {option ? <SportGlyph sport={option} /> : <MaterialIcon name="grid_view" />}
+                {option ? t(`sport.${option}`) : t('feed.all')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

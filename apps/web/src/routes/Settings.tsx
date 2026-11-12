@@ -243,7 +243,7 @@ function LanguageAndUnits() {
       <h2>
         {t('settings.language')} · {t('settings.units')}
       </h2>
-      <div className="fields">
+      <div className="fields aligned">
         <label className="field">
           <span>
             <b>{t('settings.language')}</b>

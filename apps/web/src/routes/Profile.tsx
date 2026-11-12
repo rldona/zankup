@@ -19,6 +19,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
+import { Modal } from '../detail/Tools';
 import { forgetOfflineData } from '../offline';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
@@ -64,7 +65,11 @@ export function Profile() {
       {/* Desktop: the profile and the menu in a fixed column on the left, the numbers on the right. */}
       <div className="youside">
         <Header me={me.data} summary={summary.data} onEdit={() => setEditing(true)} />
-        {editing && <EditProfile me={me.data} onDone={() => setEditing(false)} />}
+        {editing && (
+          <Modal title={t('profile.edit')} onClose={() => setEditing(false)}>
+            <EditProfile me={me.data} onDone={() => setEditing(false)} />
+          </Modal>
+        )}
         <Menu
           label={t('nav.you')}
           items={[
@@ -394,10 +399,7 @@ function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
     save.mutate();
   };
   return (
-    <form className="panel editprofile" onSubmit={submit}>
-      <div className="ph">
-        <h2>{t('profile.edit')}</h2>
-      </div>
+    <form className="editprofile" onSubmit={submit}>
       <div className="fields">
         <label className="field">
           <b>{t('profile.name')}</b>
@@ -434,7 +436,7 @@ function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
           {save.error.message || t('common.error')}
         </p>
       )}
-      <div className="actions">
+      <div className="actions end">
         <button type="submit" className="primary" disabled={save.isPending}>
           {t('settings.save')}
         </button>

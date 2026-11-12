@@ -374,6 +374,7 @@ export function efficiencyQuery(api: ApiClient, period: Period, sport = 'run') {
 export function calendarQuery(api: ApiClient, period: Period) {
   return {
     queryKey: stats('calendar', period),
+    staleTime: 60_000,
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/stats/calendar', { params: { query: period }, signal })),
   };
@@ -431,9 +432,9 @@ export function goalsQuery(api: ApiClient) {
     // Its own key, not under `activities`: editing or syncing an activity must not mark the goals
     // stale and refetch them the next time the screen opens.
     queryKey: ['goals'] as const,
-    // The goals change only when this screen edits them: coming back within a minute reuses the cache
-    // instead of refetching and flashing the skeleton again.
-    staleTime: 60_000,
+    // The goals change only when this screen edits them: never refetch just for opening the screen.
+    staleTime: 5 * 60_000,
+    refetchOnMount: false,
     queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/goals', { signal })),
   };
 }

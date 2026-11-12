@@ -554,6 +554,140 @@ svg.i.m {
   height: 16px;
 }
 
+/* A service key's form: its parts with room between them. */
+.service-key {
+  display: grid;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.service-key .fields,
+.service-key p {
+  margin: 0;
+}
+
+/* The date field and its calendar, with the app's colours instead of the native picker. */
+.datepicker {
+  width: 100%;
+}
+
+.dp-btn {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dp-btn:hover,
+.dp-btn[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.dp-btn svg.i {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+}
+
+.dp-pop {
+  position: fixed;
+  z-index: 100;
+  width: 300px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+}
+
+.dp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.dp-head button {
+  border: 0;
+  background: none;
+  padding: 4px;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.dp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.dp-week {
+  padding: 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.dp-day {
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dp-day:hover {
+  background: var(--surface-2);
+}
+
+.dp-day.out {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.dp-day.today {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.dp-day.on {
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+}
+
+.dp-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dp-foot button {
+  border: 0;
+  background: none;
+  padding: 4px;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;

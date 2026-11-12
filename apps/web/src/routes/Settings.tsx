@@ -387,7 +387,7 @@ function Garmin() {
   return (
     <>
       <h2>{t('settings.garmin')}</h2>
-      <div className="panel">
+      <div className="panel stack">
         {garmin.expiring_soon && garmin.key_expires_on && (
           <p className="warn" role="alert">
             {t('settings.garminSoon', { date: day(garmin.key_expires_on) })}

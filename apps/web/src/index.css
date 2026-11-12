@@ -3344,11 +3344,6 @@ textarea {
   grid-area: last;
 }
 
-/* A little air between the metrics and the last seven days. */
-.h-metrics + .h-last {
-  margin-top: 10px;
-}
-
 /* The metrics spread out across the row where there is room; every other widget keeps one column. */
 @media (min-width: 1200px) {
   .h-metrics .tiles {
@@ -3449,7 +3444,7 @@ textarea {
 }
 
 .hblock {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .hblock > h2 {

@@ -4193,7 +4193,7 @@ button.danger svg.i {
 /* Goals (OS-911), as the app's: the card opens its chart; side by side on a large screen. */
 .goalgrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
 }

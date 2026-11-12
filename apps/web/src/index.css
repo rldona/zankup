@@ -3311,12 +3311,13 @@ textarea {
   }
 }
 
-/* The last seven days in one card, its rows in columns where there is room. */
+/* The last seven days in one card: two rows on a tablet and a single line on a desktop; the rows
+   stack on a phone. */
 @media (min-width: 600px) {
   .h-last .rowsbox {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    column-gap: 32px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 28px;
     overflow: hidden;
   }
 
@@ -3324,6 +3325,36 @@ textarea {
     margin-top: -1px;
     border-bottom: 0;
     border-top: 1px solid var(--line);
+  }
+}
+
+@media (min-width: 1200px) {
+  .h-last .rowsbox {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    column-gap: 20px;
+  }
+
+  .h-last .hrow {
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .h-last .hrow svg.i {
+    width: 20px;
+    height: 20px;
+  }
+
+  .h-last .hlabel {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .h-last .hrow .num {
+    white-space: nowrap;
   }
 }
 

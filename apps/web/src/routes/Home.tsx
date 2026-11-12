@@ -39,9 +39,8 @@ export function Home() {
           <MaterialIcon name="notifications" />
         </Link>
       </div>
-      {/* The app's order at every size. Desktop: the week beside the last day, the metrics in one row,
-          the last seven days in one card. Tablet: the week across, then the last day beside the
-          metrics two by two. Phone: one column. */}
+      {/* The app's order at every size, one column: the week across the full width, then the last day,
+          the metrics in one row where there is room, and the last seven days in one card. */}
       <div className="homegrid">
         <div className="h-week">
           <WeekHeader footer={<UsualWeek />} />

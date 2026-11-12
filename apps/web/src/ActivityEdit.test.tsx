@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -62,29 +62,26 @@ describe('editing an activity (OS-909)', () => {
 
   it('deletes it after a confirmation and goes back to the feed', async () => {
     const calls = mockApi();
-    const confirm = vi.fn(() => true);
-    vi.stubGlobal('confirm', confirm);
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const router = createMemoryRouter(routes, { initialEntries: ['/activities/7'] });
     render(<App queryClient={queryClient} router={router} />);
     await userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
     await userEvent.click(screen.getByRole('button', { name: 'Delete activity' }));
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('cannot be undone'));
+    const confirm = await screen.findByRole('dialog', { name: 'Delete activity' });
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete' }));
     await waitFor(() => expect(calls).toContain('DELETE /api/activities/7'));
     await waitFor(() => expect(router.state.location.pathname).toBe('/activities'));
   });
 
   it('keeps it when the confirmation is cancelled', async () => {
     const calls = mockApi();
-    vi.stubGlobal(
-      'confirm',
-      vi.fn(() => false),
-    );
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const router = createMemoryRouter(routes, { initialEntries: ['/activities/7'] });
     render(<App queryClient={queryClient} router={router} />);
     await userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
     await userEvent.click(screen.getByRole('button', { name: 'Delete activity' }));
+    const confirm = await screen.findByRole('dialog', { name: 'Delete activity' });
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Cancel' }));
     expect(calls).not.toContain('DELETE /api/activities/7');
     expect(router.state.location.pathname).toBe('/activities/7');
   });

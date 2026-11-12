@@ -134,6 +134,7 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
   const [description, setDescription] = useState(activity.description ?? '');
   const [sport, setSport] = useState(activity.sport);
   const [gearId, setGearId] = useState(activity.gear?.id ?? 0);
+  const [confirming, setConfirming] = useState(false);
   const save = useMutation({
     mutationFn: async () => {
       const { error } = await api.PATCH('/api/activities/{activity_id}', {
@@ -171,66 +172,88 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
   });
   const choices = (gear.data ?? []).filter((g) => !g.retired || g.id === activity.gear?.id);
   return (
-    <Modal title={t('activity.edit')} onClose={onClose}>
-      <form onSubmit={submit} className="stack">
-        <label className="field">
-          <b>{t('activity.name')}</b>
-          <input value={name} maxLength={255} onChange={(e) => setName(e.target.value)} />
-        </label>
-        <label className="field">
-          <b>{t('activity.description')}</b>
-          <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </label>
-        <div className="field">
-          <b>{t('activity.sport')}</b>
-          <Select
-            label={t('activity.sport')}
-            value={sport}
-            onChange={setSport}
-            options={SPORTS.map((s) => ({ value: s, label: t(`sport.${s}`) }))}
-          />
-        </div>
-        <div className="field">
-          <b>{t('gear.title')}</b>
-          <Select
-            label={t('gear.title')}
-            value={String(gearId)}
-            onChange={(value) => setGearId(Number(value))}
-            options={[
-              { value: '0', label: t('gear.none') },
-              ...choices.map((g) => ({ value: String(g.id), label: g.name })),
-            ]}
-          />
-        </div>
-        <p className="note">{t('activity.editNote')}</p>
-        <div className="actions">
-          <button type="submit" className="primary" disabled={save.isPending}>
-            {t('settings.save')}
+    <>
+      <Modal title={t('activity.edit')} onClose={onClose}>
+        <form onSubmit={submit} className="stack">
+          <label className="field">
+            <b>{t('activity.name')}</b>
+            <input value={name} maxLength={255} onChange={(e) => setName(e.target.value)} />
+          </label>
+          <label className="field">
+            <b>{t('activity.description')}</b>
+            <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </label>
+          <div className="field">
+            <b>{t('activity.sport')}</b>
+            <Select
+              label={t('activity.sport')}
+              value={sport}
+              onChange={setSport}
+              options={SPORTS.map((s) => ({ value: s, label: t(`sport.${s}`) }))}
+            />
+          </div>
+          <div className="field">
+            <b>{t('gear.title')}</b>
+            <Select
+              label={t('gear.title')}
+              value={String(gearId)}
+              onChange={(value) => setGearId(Number(value))}
+              options={[
+                { value: '0', label: t('gear.none') },
+                ...choices.map((g) => ({ value: String(g.id), label: g.name })),
+              ]}
+            />
+          </div>
+          <p className="note">{t('activity.editNote')}</p>
+          <div className="actions">
+            <button type="submit" className="primary" disabled={save.isPending}>
+              {t('settings.save')}
+            </button>
+            {save.isError && (
+              <span className="note" role="alert">
+                {t('common.error')}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="danger"
+            disabled={remove.isPending}
+            onClick={() => setConfirming(true)}
+          >
+            <MaterialIcon name="delete" />
+            {t('activity.delete')}
           </button>
-          {save.isError && (
-            <span className="note" role="alert">
+          {remove.isError && (
+            <p className="note" role="alert">
               {t('common.error')}
-            </span>
+            </p>
           )}
-        </div>
-        <button
-          type="button"
-          className="danger"
-          disabled={remove.isPending}
-          onClick={() => {
-            if (window.confirm(`${t('activity.delete')}?\n\n${t('activity.deleteConfirm')}`)) remove.mutate();
-          }}
-        >
-          <MaterialIcon name="delete" />
-          {t('activity.delete')}
-        </button>
-        {remove.isError && (
-          <p className="note" role="alert">
-            {t('common.error')}
-          </p>
-        )}
-      </form>
-    </Modal>
+        </form>
+      </Modal>
+      {confirming && (
+        <Modal title={t('activity.delete')} onClose={() => setConfirming(false)}>
+          <p>{t('activity.deleteConfirm')}</p>
+          <div className="actions">
+            <button type="button" onClick={() => setConfirming(false)}>
+              {t('common.cancel')}
+            </button>
+            <button
+              type="button"
+              className="danger"
+              disabled={remove.isPending}
+              onClick={() => {
+                setConfirming(false);
+                remove.mutate();
+              }}
+            >
+              <MaterialIcon name="delete" />
+              {t('common.delete')}
+            </button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
 

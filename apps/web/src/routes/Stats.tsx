@@ -621,19 +621,21 @@ function CompareWithStrava({ theme }: { theme: ReturnType<typeof useResolvedThem
             theme={theme}
             label={t('compare.chart', { metric: t(`compare.${metric}`) })}
           />
-          <h3>{t('compare.largest')}</h3>
-          <ul className="rows">
-            {current.largest.map((p) => (
-              <li key={p.activity_id}>
-                <Link to={`/activities/${p.activity_id}`}>
-                  {t('compare.activity', { id: p.activity_id })}
-                </Link>
-                <span className="num">
-                  Zankup {number(p.ours, 0)} · Strava {number(p.strava, 0)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <details>
+            <summary>{t('compare.largest')}</summary>
+            <ul className="rows">
+              {current.largest.map((p) => (
+                <li key={p.activity_id}>
+                  <Link to={`/activities/${p.activity_id}`}>
+                    {t('compare.activity', { id: p.activity_id })}
+                  </Link>
+                  <span className="num">
+                    Zankup {number(p.ours, 0)} · Strava {number(p.strava, 0)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
         </>
       ) : (
         <p className="state">{t('compare.notEnough')}</p>

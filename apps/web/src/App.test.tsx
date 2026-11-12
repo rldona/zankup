@@ -152,6 +152,35 @@ describe('app skeleton', () => {
     expect(router.state.location.pathname).toBe('/activities/7');
   });
 
+  it('opens the first activity on a desktop, and says so when there is nothing to show', async () => {
+    const wide = (matches: boolean) =>
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: matches && query === '(min-width: 1024px)',
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }));
+
+    wide(true);
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
+      '/api/activities/7': () => Response.json({ ...RUN, laps: [], splits: [], best_efforts: [] }),
+    });
+    const router = renderAt('/activities');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/activities/7'));
+    cleanup();
+    vi.unstubAllGlobals();
+
+    wide(true);
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/activities': () => Response.json({ items: [], next_cursor: null }),
+    });
+    renderAt('/activities');
+    expect(await screen.findByText('No activities to show yet.')).toBeInTheDocument();
+  });
+
   it('lays an activity out as the app: floating buttons on a phone, a side column on a desktop', async () => {
     const n = 61;
     const streams = {

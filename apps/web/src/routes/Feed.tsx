@@ -17,10 +17,11 @@ import {
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Fragment, useEffect, useMemo, useRef, type CSSProperties, type RefObject } from 'react';
-import { Link, NavLink, Outlet, useMatch, useNavigate, useSearchParams } from 'react-router';
+import { Link, NavLink, Navigate, Outlet, useMatch, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { locale, t } from '../i18n';
+import { useMedia } from '../media';
 import { usePrefs } from '../prefs';
 import { MaterialIcon } from '../MaterialIcon';
 import { SportGlyph, SportIcon } from '../SportIcon';
@@ -129,6 +130,20 @@ export function Feed() {
             </button>
           ))}
         </div>
+        {/* On a desktop the chips do not fit (and a mouse has no sideways scroll): a selector instead. */}
+        <select
+          className="sports-select"
+          aria-label={t('feed.sports')}
+          value={sport ?? ''}
+          onChange={(e) => pick((e.target.value || null) as Sport | null)}
+        >
+          <option value="">{t('feed.all')}</option>
+          {CHIPS.map((s) => (
+            <option key={s} value={s}>
+              {t(`sport.${s}`)}
+            </option>
+          ))}
+        </select>
 
         {feed.isPending && <FeedSkeleton />}
         {feed.isError && (
@@ -171,8 +186,22 @@ export function Feed() {
   );
 }
 
-/** The detail column before an activity is picked (desktop only: on mobile the list fills the screen). */
+/**
+ * The detail column on a desktop: the first activity of the current filter opens by itself, so the
+ * column is never empty; with none, it says so. On a phone the list is the screen.
+ */
 export function PickActivity() {
+  const [params] = useSearchParams();
+  const chosen = params.get('sport');
+  const sport = (CHIPS as readonly string[]).includes(chosen ?? '') ? (chosen as Sport) : null;
+  const wide = useMedia('(min-width: 1024px)');
+  const feed = useInfiniteQuery(activitiesQuery(api, sport ? [sport] : undefined));
+  const first = feed.data?.pages[0]?.items[0];
+  const search = params.toString() ? `?${params}` : '';
+
+  if (feed.isPending) return null;
+  if (feed.isSuccess && !first) return <p className="state pick">{t('feed.none')}</p>;
+  if (wide && first) return <Navigate to={`/activities/${first.id}${search}`} replace />;
   return <p className="state pick">{t('feed.pick')}</p>;
 }
 

@@ -439,6 +439,24 @@ svg.i.m {
   scrollbar-width: none;
 }
 
+/* On a desktop the chips do not fit in the 400 px column and a mouse has no sideways scroll: a selector. */
+.sports-select {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .feedcol > .chips {
+    display: none;
+  }
+
+  .feedcol > .sports-select {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 0 10px;
+  }
+}
+
 .chip {
   display: inline-flex;
   align-items: center;

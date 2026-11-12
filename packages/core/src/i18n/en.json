@@ -20,6 +20,7 @@
   "signIn.title": "Sign in",
   "feed.title": "Activities",
   "feed.empty": "No activities yet. They appear here after the first Garmin sync.",
+  "feed.none": "No activities to show yet.",
   "feed.more": "Load more",
   "feed.all": "All",
   "feed.sports": "Sports",

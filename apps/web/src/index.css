@@ -5038,7 +5038,7 @@ h1.greeting {
 
 .healthtop {
   display: grid;
-  gap: 0 20px;
+  gap: 16px 0;
   align-items: start;
 }
 
@@ -5047,16 +5047,12 @@ h1.greeting {
 }
 
 @media (min-width: 1200px) {
-  .healthtop {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  }
-
   .h-today .cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .page.health .statgrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

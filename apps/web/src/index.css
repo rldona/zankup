@@ -4624,7 +4624,9 @@ button.danger svg.i {
 }
 
 .composer textarea {
-  min-height: 40px;
+  box-sizing: border-box;
+  height: 42px;
+  min-height: 42px;
   padding: 10px 14px 10px 46px;
   border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
   border-radius: 16px;
@@ -4633,7 +4635,14 @@ button.danger svg.i {
 }
 
 .composer > button {
-  min-height: 40px;
+  box-sizing: border-box;
+  height: 42px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .popmenu.tip {

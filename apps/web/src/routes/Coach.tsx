@@ -266,7 +266,7 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder={t('coach.placeholder')}
                 aria-label={t('coach.placeholder')}
-                rows={2}
+                rows={1}
                 maxLength={4000}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {

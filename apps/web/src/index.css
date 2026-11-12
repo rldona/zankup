@@ -2981,7 +2981,7 @@ a.button {
 .turns {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -3238,6 +3238,10 @@ textarea {
 .page.coach .titlebar h1,
 .page.coach > h1 {
   font-size: 28px;
+}
+
+.page.coach .titlebar {
+  margin-bottom: 34px;
 }
 
 .page.notifications .panel.events {
@@ -4611,7 +4615,8 @@ button.danger svg.i {
 .composer > svg.i {
   position: absolute;
   left: 14px;
-  top: 18px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 22px;
   height: 22px;
   color: var(--accent);
@@ -4619,12 +4624,16 @@ button.danger svg.i {
 }
 
 .composer textarea {
-  min-height: 56px;
-  padding: 16px 14px 14px 46px;
+  min-height: 40px;
+  padding: 10px 14px 10px 46px;
   border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
   border-radius: 16px;
   background: var(--surface);
   resize: vertical;
+}
+
+.composer > button {
+  min-height: 40px;
 }
 
 .popmenu.tip {

@@ -425,5 +425,5 @@ export function ComparisonChart({
       ],
     };
   }, [points, c.accent, c.muted]);
-  return <EChart option={option} theme={theme} summary={label} height={460} onReady={open} />;
+  return <EChart option={option} theme={theme} summary={label} height={560} onReady={open} />;
 }

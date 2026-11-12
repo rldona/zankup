@@ -5414,6 +5414,10 @@ h1.greeting {
   margin-bottom: 24px;
 }
 
+.page.estimates .cards {
+  margin-bottom: 14px;
+}
+
 .page.estimates .ph h2 {
   font-size: 20px;
 }

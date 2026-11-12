@@ -7,9 +7,9 @@ reprs or error messages; read them with `.get_secret_value()` only where they ar
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Environment = Literal["development", "test", "production"]
@@ -34,6 +34,9 @@ class Settings(BaseSettings):
         default=15, ge=0, description="Garmin sync schedule; 0 turns automatic syncs off"
     )
     run_worker: bool = Field(default=True, description="Run the job worker inside the API process")
+    dev_login: bool = Field(
+        default=False, description="Development only: one-click sign-in as the instance's first user"
+    )
 
     database_url: str = "postgresql://zankup:zankup@127.0.0.1:5432/zankup"
     data_dir: Path = Path("data")
@@ -103,6 +106,12 @@ class Settings(BaseSettings):
         default=5.0, gt=0, description="Spending cap per calendar month; AI features pause when it is reached"
     )
     weekly_report_hour_utc: int = Field(default=6, ge=0, le=23, description="When Monday's report is queued")
+
+    @model_validator(mode="after")
+    def _no_dev_login_in_production(self) -> Self:
+        if self.is_production and self.dev_login:
+            raise ValueError("DEV_LOGIN signs in without a password or code: it cannot be used in production")
+        return self
 
     @property
     def is_production(self) -> bool:

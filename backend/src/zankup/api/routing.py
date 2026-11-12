@@ -22,6 +22,8 @@ PUBLIC_PATHS = {
     "/api/auth/google/callback",
     "/api/auth/google/mobile/nonce",
     "/api/auth/google/mobile",
+    # One-click sign-in for local development: 404 unless DEV_LOGIN is on (never in production).
+    "/api/auth/dev-login",
     # Connecting Google Health: a browser redirect; both check the session themselves (OS-603).
     "/api/wellness/google/start",
     "/api/wellness/google/callback",

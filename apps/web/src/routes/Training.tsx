@@ -63,6 +63,7 @@ export function TrainingCalendar() {
     setSelection(null);
   };
   const list = days.data ?? [];
+  const today = iso(new Date());
   const weeks: CalendarDay[][] = [];
   for (let i = 0; i < list.length; i += 7) weeks.push(list.slice(i, i + 7));
   const heaviest = Math.max(1, ...list.flatMap((d) => d.activities.map((a) => a.load ?? 0)));
@@ -115,7 +116,7 @@ export function TrainingCalendar() {
                 <div
                   key={d.day}
                   role="gridcell"
-                  className={`calday${inMonth ? '' : ' out'}${isSelected ? ' sel' : ''}`}
+                  className={`calday${inMonth ? '' : ' out'}${isSelected ? ' sel' : ''}${d.day === today ? ' today' : ''}`}
                   onPointerDown={() => {
                     setSelection([index, index]);
                     setDragging(true);

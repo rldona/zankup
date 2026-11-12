@@ -4198,6 +4198,10 @@ button.danger svg.i {
   align-items: start;
 }
 
+.page.goals .titlebar {
+  margin-bottom: 28px;
+}
+
 .panel.goalcard {
   margin: 0;
   display: grid;

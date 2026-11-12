@@ -19,7 +19,7 @@ import { locale, t } from '../i18n';
 import { MaterialIcon } from '../MaterialIcon';
 import { DESKTOP, useMedia } from '../media';
 import { usePrefs } from '../prefs';
-import { CardSkeleton, Pulse } from '../Skeleton';
+import { GoalSkeleton, Pulse } from '../Skeleton';
 
 type Format = ReturnType<typeof formatters>;
 type Metric = 'distance' | 'time' | 'count';
@@ -83,10 +83,14 @@ export function Goals() {
         </button>
       </div>
       {!goals.data && (
-        <Pulse>
-          <CardSkeleton lines={2} />
-          <CardSkeleton lines={2} />
-        </Pulse>
+        <div className="goalgrid">
+          <Pulse>
+            <GoalSkeleton />
+          </Pulse>
+          <Pulse>
+            <GoalSkeleton />
+          </Pulse>
+        </div>
       )}
       {goals.data?.length === 0 && <p className="note">{t('goals.empty')}</p>}
       <div className="goalgrid">

@@ -428,7 +428,12 @@ export function segmentQuery(api: ApiClient, id: number) {
 
 export function goalsQuery(api: ApiClient) {
   return {
-    queryKey: ['activities', 'goals'] as const,
+    // Its own key, not under `activities`: editing or syncing an activity must not mark the goals
+    // stale and refetch them the next time the screen opens.
+    queryKey: ['goals'] as const,
+    // The goals change only when this screen edits them: coming back within a minute reuses the cache
+    // instead of refetching and flashing the skeleton again.
+    staleTime: 60_000,
     queryFn: async ({ signal }: { signal?: AbortSignal }) => unwrap(await api.GET('/api/goals', { signal })),
   };
 }

@@ -4207,7 +4207,7 @@ button.danger svg.i {
 .goalhead {
   all: unset;
   display: grid;
-  gap: 12px;
+  gap: 16px;
   cursor: pointer;
 }
 

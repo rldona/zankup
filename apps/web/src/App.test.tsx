@@ -152,7 +152,36 @@ describe('app skeleton', () => {
     expect(router.state.location.pathname).toBe('/activities/7');
   });
 
-  it('lays an activity out as the app: floating buttons on a phone, a side column on a desktop', async () => {
+  it('opens the first activity on a desktop, and says so when there is nothing to show', async () => {
+    const wide = (matches: boolean) =>
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: matches && query === '(min-width: 1024px)',
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }));
+
+    wide(true);
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
+      '/api/activities/7': () => Response.json({ ...RUN, laps: [], splits: [], best_efforts: [] }),
+    });
+    const router = renderAt('/activities');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/activities/7'));
+    cleanup();
+    vi.unstubAllGlobals();
+
+    wide(true);
+    mockApi({
+      '/api/auth/me': () => Response.json(ME),
+      '/api/activities': () => Response.json({ items: [], next_cursor: null }),
+    });
+    renderAt('/activities');
+    expect(await screen.findByText('No activities to show yet.')).toBeInTheDocument();
+  });
+
+  it('lays an activity out as the app: floating buttons on a phone, labelled buttons on a desktop', async () => {
     const n = 61;
     const streams = {
       t: Array.from({ length: n }, (_, i) => i * 10),
@@ -197,17 +226,12 @@ describe('app skeleton', () => {
     cleanup();
     vi.unstubAllGlobals();
 
-    // A desktop: the heart-rate zones in the side column, the labelled buttons beside the title.
+    // A desktop: the heart-rate zones in the main column, the labelled buttons beside the title.
     media(1440);
     api();
     renderAt('/activities/7');
     const wide = await screen.findByRole('article');
-    const side = await waitFor(() => {
-      const aside = wide.querySelector('aside.detailside');
-      if (!aside) throw new Error('no side column');
-      return aside as HTMLElement;
-    });
-    expect(await within(side).findByRole('heading', { name: 'Heart rate zones' })).toBeInTheDocument();
+    expect(await within(wide).findByRole('heading', { name: 'Heart rate zones' })).toBeInTheDocument();
     expect(within(wide).getByRole('button', { name: 'Edit' })).not.toHaveClass('floatbtn');
   });
 

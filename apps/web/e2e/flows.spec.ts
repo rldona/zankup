@@ -23,9 +23,9 @@ test('sign in with password and code, then the feed', async ({ page }, info) => 
     .filter({ visible: true })
     .first()
     .click();
-  await expect(page).toHaveURL(/\/activities$/);
+  await expect(page).toHaveURL(/\/activities/);
   await expect(page.getByRole('link', { name: /Morning run/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Hill ride/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Hill ride/ }).first()).toBeVisible();
   await expect(page.locator('.mhead').first()).toContainText('2026');
 });
 
@@ -85,8 +85,11 @@ test('the frame: tab bar on a phone, the rail from 600 px, one header, no sidewa
       await expect(rail).toBeVisible();
       await expect(tabbar).toBeHidden();
     }
-    // One title per screen: no top bar of the frame's own above it.
-    await expect(page.locator('h1').filter({ visible: true })).toHaveCount(1);
+    // One title per screen: no top bar of the frame's own above it. Activities on a desktop adds the
+    // open activity's title beside the feed's, so it may have two.
+    const titles = page.locator('h1').filter({ visible: true });
+    if (path === '/activities') expect(await titles.count()).toBeLessThanOrEqual(2);
+    else await expect(titles).toHaveCount(1);
     const overflow = await page.evaluate(() => {
       const main = document.querySelector('main');
       return (main?.scrollWidth ?? 0) - (main?.clientWidth ?? 0);
@@ -186,7 +189,7 @@ test('Stats, the Coach and Settings at every size', async ({ page }, info) => {
     expect(a?.height).toBe(b?.height);
   }
 
-  // The Coach: the weekly report beside the conversation on a desktop, the page's own top margin.
+  // The Coach: the weekly report inside the conversation, the page's own top margin.
   await page.route('**/api/ai/status', (route) =>
     route.fulfill({
       json: {
@@ -206,9 +209,8 @@ test('Stats, the Coach and Settings at every size', async ({ page }, info) => {
   const weekly = page.getByRole('heading', { name: w('weekly.title') });
   const chat = page.getByRole('textbox', { name: w('coach.placeholder') });
   await expect(chat).toBeVisible();
-  const [left, right] = [await weekly.boundingBox(), await chat.boundingBox()];
-  if (width >= 1200) expect(right?.x ?? 0).toBeGreaterThan((left?.x ?? 0) + (left?.width ?? 0));
-  else expect(right?.y ?? 0).toBeGreaterThan(left?.y ?? 0);
+  const [top, bottom] = [await weekly.boundingBox(), await chat.boundingBox()];
+  expect(bottom?.y ?? 0).toBeGreaterThan(top?.y ?? 0);
   const title = await page.getByRole('heading', { name: w('coach.title'), level: 1 }).boundingBox();
   expect(title?.y ?? 0).toBeGreaterThan(8);
 

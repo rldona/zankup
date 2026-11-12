@@ -12,6 +12,7 @@ import { useLocation, useSearchParams } from 'react-router';
 import { api } from '../api';
 import { locale, t } from '../i18n';
 import { sourceName } from '../health/names';
+import { Select } from '../Select';
 import { CardTitle } from '../ui';
 
 const METRICS: HealthMetric[] = ['sleep', 'hrv', 'resting_hr', 'spo2', 'respiration', 'steps'];
@@ -132,22 +133,22 @@ export function HealthSources() {
           <ul className="rows">
             {METRICS.map((metric) => (
               <li key={metric}>
-                <label htmlFor={`prefer-${metric}`}>{t(`health.metric.${metric}` as MessageKey)}</label>
-                <select
-                  id={`prefer-${metric}`}
-                  value={settings.data.priority[metric]?.[0] ?? ''}
-                  disabled={priority.isPending}
-                  onChange={(e) =>
-                    priority.mutate({ [metric]: e.target.value ? [e.target.value as HealthSourceName] : [] })
-                  }
-                >
-                  <option value="">{t('health.automatic')}</option>
-                  {usable.map((s) => (
-                    <option key={s.source} value={s.source}>
-                      {sourceName(s.source)}
-                    </option>
-                  ))}
-                </select>
+                <span>{t(`health.metric.${metric}` as MessageKey)}</span>
+                <div className="prefer">
+                  <Select
+                    label={t(`health.metric.${metric}` as MessageKey)}
+                    value={settings.data.priority[metric]?.[0] ?? ''}
+                    onChange={(value) =>
+                      priority.mutate({
+                        [metric]: value ? [value as HealthSourceName] : [],
+                      })
+                    }
+                    options={[
+                      { value: '', label: t('health.automatic') },
+                      ...usable.map((s) => ({ value: s.source, label: sourceName(s.source) })),
+                    ]}
+                  />
+                </div>
               </li>
             ))}
           </ul>

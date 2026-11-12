@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { t } from '../i18n';
+import { Mark } from '../Mark';
 import { Wordmark } from '../Wordmark';
 import { safeNext } from '../next';
 import { deviceName } from '../signin/device';
@@ -114,11 +115,13 @@ function PasswordStep({
 
   return (
     <>
+      <Mark />
       <h1 className="greeting">{t('signIn.welcome')}</h1>
       <ErrorBox message={error} />
       {/* As on the app (OS-918): Google and the passkey first, then "or" and the e-mail and password,
           whose button is the quieter one. The "or" goes when neither quick way is offered. */}
       <div className="quick">
+        <DevLoginButton onSignedIn={onSignedIn} onError={setError} />
         <GoogleButton />
         <PasskeyButton remember={remember} onSignedIn={onSignedIn} onError={setError} />
       </div>
@@ -218,6 +221,39 @@ function PasskeyButton({
         {waiting ? t('signIn.passkeyWaiting') : t('signIn.passkey')}
       </button>
     </>
+  );
+}
+
+/** Development only: one click as the instance's first user, when the API has DEV_LOGIN on. */
+function DevLoginButton({
+  onSignedIn,
+  onError,
+}: {
+  onSignedIn: (user: Me) => void;
+  onError: (message: string) => void;
+}) {
+  const providers = useQuery({ ...providersQuery(api), retry: false });
+  const [busy, setBusy] = useState(false);
+  if (!providers.data?.dev_login) return null;
+
+  const start = async () => {
+    onError('');
+    setBusy(true);
+    try {
+      const result = await api.POST('/api/auth/dev-login');
+      if (result.data) onSignedIn(result.data);
+      else onError(t('signIn.error.dev'));
+    } catch {
+      onError(t('signIn.error.dev'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button type="button" className="block" onClick={() => void start()} disabled={busy}>
+      {t('signIn.dev')}
+    </button>
   );
 }
 

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 
 import { api } from '../api';
 import { t } from '../i18n';
+import { Select } from '../Select';
 import { ServiceKeyForm } from './ServiceKey';
 
 type Changes = Record<string, unknown>;
@@ -38,13 +39,22 @@ function Origin({ source }: { source?: string }) {
   return source === 'env' ? <p className="note">{t('instance.fromServer')}</p> : null;
 }
 
-function HourSelect({ value, onChange }: { value: number; onChange: (utc: number) => void }) {
+function HourSelect({
+  value,
+  onChange,
+  label,
+}: {
+  value: number;
+  onChange: (utc: number) => void;
+  label: string;
+}) {
   return (
-    <select value={toLocal(value)} onChange={(e) => onChange(toUtc(Number(e.target.value)))}>
-      {HOURS.map((h) => (
-        <option key={h} value={h}>{`${String(h).padStart(2, '0')}:00`}</option>
-      ))}
-    </select>
+    <Select
+      label={label}
+      value={String(toLocal(value))}
+      onChange={(v) => onChange(toUtc(Number(v)))}
+      options={HOURS.map((h) => ({ value: String(h), label: `${String(h).padStart(2, '0')}:00` }))}
+    />
   );
 }
 
@@ -95,7 +105,7 @@ export function CoachSettings() {
       <h3>{t('instance.coachTitle')}</h3>
       <p className="note">{t('instance.modelHelp')}</p>
       <Form changes={changes} save={save} reset={() => setChanges({})}>
-        <label className="field">
+        <div className="field">
           <span>
             <b>{t('instance.model')}</b>
             {chosen && (
@@ -107,17 +117,13 @@ export function CoachSettings() {
               </small>
             )}
           </span>
-          <select
+          <Select
+            label={t('instance.model')}
             value={String(value('ai_model', model.value))}
-            onChange={(e) => setChanges({ ...changes, ai_model: e.target.value })}
-          >
-            {data.models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.id}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={(v) => setChanges({ ...changes, ai_model: v })}
+            options={data.models.map((m) => ({ value: m.id, label: m.id }))}
+          />
+        </div>
         <label className="field">
           <span>
             <b>{t('instance.budget')}</b>
@@ -130,15 +136,16 @@ export function CoachSettings() {
             onChange={(e) => setChanges({ ...changes, ai_monthly_budget_usd: e.target.value })}
           />
         </label>
-        <label className="field">
+        <div className="field">
           <span>
             <b>{t('instance.weeklyHour')}</b>
           </span>
           <HourSelect
+            label={t('instance.weeklyHour')}
             value={Number(value('weekly_report_hour_utc', hour.value))}
             onChange={(u) => setChanges({ ...changes, weekly_report_hour_utc: u })}
           />
-        </label>
+        </div>
       </Form>
       <Origin source={model.source} />
     </div>
@@ -151,21 +158,20 @@ export function SyncInterval() {
   const interval = get('sync_interval_minutes');
   if (!interval) return null;
   return (
-    <label className="field">
+    <div className="field">
       <span>
         <b>{t('instance.syncEvery')}</b>
       </span>
-      <select
+      <Select
+        label={t('instance.syncEvery')}
         value={String(interval.value)}
-        onChange={(e) => save.mutate({ sync_interval_minutes: Number(e.target.value) })}
-      >
-        {[...new Set([0, 15, 30, 60, 180, Number(interval.value)])].map((m) => (
-          <option key={m} value={m}>
-            {m === 0 ? t('instance.syncOff') : m < 60 ? `${m} min` : `${m / 60} h`}
-          </option>
-        ))}
-      </select>
-    </label>
+        onChange={(v) => save.mutate({ sync_interval_minutes: Number(v) })}
+        options={[...new Set([0, 15, 30, 60, 180, Number(interval.value)])].map((m) => ({
+          value: String(m),
+          label: m === 0 ? t('instance.syncOff') : m < 60 ? `${m} min` : `${m / 60} h`,
+        }))}
+      />
+    </div>
   );
 }
 
@@ -216,15 +222,16 @@ export function BackupSettings() {
       <div className="panel">
         <p className="note">{t('instance.backupHelp')}</p>
         <Form changes={changes} save={save} reset={() => setChanges({})}>
-          <label className="field">
+          <div className="field">
             <span>
               <b>{t('instance.backupHour')}</b>
             </span>
             <HourSelect
+              label={t('instance.backupHour')}
               value={Number(value('backup_hour_utc'))}
               onChange={(u) => setChanges({ ...changes, backup_hour_utc: u })}
             />
-          </label>
+          </div>
           <label className="field">
             <span>
               <b>{t('instance.keepDays')}</b>

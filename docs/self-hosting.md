@@ -183,6 +183,7 @@ the API.
 | `GARMIN_KEY_EXPIRES_ON` | The key's expiry date (YYYY-MM-DD), shown and warned in Settings. |
 | `ENVIRONMENT` | `production` on a server (JSON logs, no API docs, secure cookies). |
 | `LOG_LEVEL`, `LOG_FORMAT` | Logging: `INFO` and `json` in production. |
+| `DEV_LOGIN` | Development only: `true` adds a one-click sign-in as the first user. The API refuses to start with it in production; never set it on a server. |
 | `DATABASE_URL` | Postgres. The compose file sets it from `POSTGRES_PASSWORD`. |
 | `DATA_DIR` | The volume (`/data`): original activity files, photos, uploads being imported, exports and the generated VAPID key. |
 | `OWNER_EMAIL` | Placeholder account the sync uses before sign-up; sign-up takes it over. |

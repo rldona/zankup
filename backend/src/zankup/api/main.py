@@ -31,6 +31,7 @@ from zankup.api.transfers import router as transfers_router
 from zankup.api.week import router as week_router
 from zankup.api.wellness import oauth as wellness_oauth
 from zankup.api.wellness import router as wellness_router
+from zankup.auth.dev import router as dev_router
 from zankup.auth.google import router as google_router
 from zankup.auth.passkeys import router as passkeys_router
 from zankup.auth.password_reset import router as password_router
@@ -107,6 +108,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(passkeys_router)
     app.include_router(password_router)
     app.include_router(google_router)
+    app.include_router(dev_router)  # always, so the API contract is the same; 404 unless DEV_LOGIN
     app.include_router(setup_router)
     app.include_router(library_router)  # before activities: PATCH /api/activities/{id}
     app.include_router(activities_router)

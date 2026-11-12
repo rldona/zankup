@@ -72,7 +72,7 @@ button {
 :root {
   --rail: 88px;
   --tabbar-h: 76px;
-  --page-max: 1320px;
+  --page-max: 1200px;
   --gutter: 24px;
 }
 
@@ -138,6 +138,11 @@ svg.i.m {
   padding: calc(18px + env(safe-area-inset-top)) 6px calc(14px + env(safe-area-inset-bottom));
   padding-left: calc(6px + env(safe-area-inset-left));
   overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
 }
 
 .rail .brand {
@@ -277,6 +282,22 @@ svg.i.m {
   display: flex;
   gap: 16px;
   align-items: center;
+}
+
+.actions.end {
+  justify-content: flex-end;
+}
+
+.actions.end button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+}
+
+.actions button.danger {
+  margin-top: 0;
 }
 
 .iconbtn {
@@ -432,6 +453,239 @@ svg.i.m {
   margin: 0 -20px 10px;
   padding: 0 20px;
   scrollbar-width: none;
+}
+
+/* On a desktop the chips do not fit in the 400 px column and a mouse has no sideways scroll: a
+   Zankup-styled selector (a native <select> would ignore the theme). */
+.sportselect {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .feedcol > .chips {
+    display: none;
+  }
+
+  .feedcol > .sportselect {
+    display: block;
+    position: relative;
+    margin: 0 0 10px;
+  }
+}
+
+.zselect {
+  position: relative;
+  width: 100%;
+}
+
+.zselect-btn {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.zselect-btn:hover,
+.zselect-btn[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.zselect-btn svg.i {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+}
+
+.zselect-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+  overflow: auto;
+}
+
+.zselect-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.zselect-list button:hover {
+  background: var(--surface-2);
+}
+
+.zselect-list button.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.zselect-list button svg.i {
+  width: 16px;
+  height: 16px;
+}
+
+/* A service key's form: its parts with room between them. */
+.service-key {
+  display: grid;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.service-key .fields,
+.service-key p {
+  margin: 0;
+}
+
+/* The date field and its calendar, with the app's colours instead of the native picker. */
+.datepicker {
+  width: 100%;
+}
+
+.dp-btn {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dp-btn:hover,
+.dp-btn[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.dp-btn svg.i {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+}
+
+.dp-pop {
+  position: fixed;
+  z-index: 100;
+  width: 300px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+}
+
+.dp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.dp-head button {
+  border: 0;
+  background: none;
+  padding: 4px;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.dp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.dp-week {
+  padding: 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.dp-day {
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dp-day:hover {
+  background: var(--surface-2);
+}
+
+.dp-day.out {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.dp-day.today {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.dp-day.on {
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+}
+
+.dp-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dp-foot button {
+  border: 0;
+  background: none;
+  padding: 4px;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .chip {
@@ -642,8 +896,8 @@ svg.i.m {
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
   margin: 0 0 14px;
 }
 
@@ -896,11 +1150,126 @@ select {
   padding: 7px 10px;
 }
 
+/* Selects everywhere: the browser's arrow replaced with one that sits well on either theme. */
+select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808a86' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+
+select:not([multiple]):hover {
+  border-color: var(--accent);
+}
+
+select:not([multiple]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+select:not([multiple]):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Checkboxes (OS-203 and the rest of the app): the browser's box, drawn with the theme's colours. */
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 1.5px solid var(--muted);
+  border-radius: 5px;
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+input[type='checkbox']::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: var(--accent-fg);
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  transform: scale(0);
+  transition: transform 120ms ease;
+}
+
+input[type='checkbox']:hover {
+  border-color: var(--accent);
+}
+
+input[type='checkbox']:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+input[type='checkbox']:checked::before {
+  transform: scale(1);
+}
+
+input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input[type='checkbox']:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .fields {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 10px 16px;
   margin: 10px 0;
+}
+
+/* Labels of different heights (one with a help line): their controls line up at the bottom. */
+.fields.aligned {
+  align-items: end;
+}
+
+/* The options under a button (Notifications) keep their distance. */
+.actions + .checks {
+  margin-top: 16px;
+}
+
+/* Actions breathe above and below, inside panels and settings sections. */
+.panel > .actions,
+.settingsmain .actions {
+  margin: 12px 0;
+}
+
+.page > .actions {
+  margin: 10px 0;
+}
+
+/* Sharing (OS-412): the expiry selector and the map switch on one line, the buttons to the right,
+   with room between the blocks. */
+.stack.share {
+  gap: 16px;
+}
+
+.fields.sharefields {
+  align-items: end;
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.fields.sharefields .check {
+  min-height: 36px;
 }
 
 .field {
@@ -934,6 +1303,12 @@ select {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+/* A health metric's preferred source: the app's selector, not the native one. */
+.rows li > .prefer {
+  width: 190px;
+  flex: none;
 }
 
 .badge {
@@ -1287,8 +1662,13 @@ a.button.block {
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+/* The grid's gap is the only separation: no card adds its own bottom margin on top. */
+.cards > .panel {
+  margin: 0;
 }
 
 .big {
@@ -1536,7 +1916,7 @@ a.button.block {
 }
 
 .page.calendar .statshead {
-  margin-bottom: 12px;
+  margin-bottom: 32px;
 }
 
 .statshead .month {
@@ -1647,6 +2027,16 @@ a.button.block {
   box-shadow: 0 0 0 1px var(--accent);
 }
 
+/* Today, marked without a click. */
+.calday.today {
+  border-color: var(--accent);
+}
+
+.calday.today .dnum {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .dnum {
   font-size: 12px;
   color: var(--muted);
@@ -1689,10 +2079,35 @@ a.button.block {
 }
 
 .bubble {
-  display: block;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
   background: color-mix(in srgb, var(--sport) 75%, transparent);
   border: 1px solid var(--sport);
+  color: #fff;
+}
+
+.bubble svg.i {
+  width: 62%;
+  height: 62%;
+}
+
+/* The month arrows: the chevrons alone, without the button's circle. */
+.page.calendar .statshead .actions button {
+  border: 0;
+  background: none;
+  border-radius: 8px;
+  padding: 4px;
+  color: var(--fg);
+}
+
+.page.calendar .statshead .actions button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.page.calendar .statshead .actions button svg.i {
+  width: 24px;
+  height: 24px;
 }
 
 .calweek {
@@ -1882,6 +2297,13 @@ a.button.block {
   align-self: flex-start;
 }
 
+/* Zankup mark: one stroke in currentColor, so it takes the colour of what it sits on. */
+.brand-mark {
+  display: block;
+  width: auto;
+  flex: none;
+}
+
 /* Sign-in (OS-203), from the prototype: brand panel on the accent with waves, form on the right;
    one column on narrow screens. */
 .login {
@@ -1927,6 +2349,13 @@ a.button.block {
   opacity: 0.85;
 }
 
+/* The wordmark sits on the left on a phone; centred on the brand panel from a tablet on. */
+@media (min-width: 600px) {
+  .lart > .wordmark {
+    align-self: center;
+  }
+}
+
 .lform {
   display: grid;
   place-items: center;
@@ -1936,6 +2365,16 @@ a.button.block {
 .lcard {
   width: 100%;
   max-width: 380px;
+}
+
+/* The mark above the greeting: the theme's text colour, centred and sized for the card. */
+.lcard .brand-mark {
+  display: block;
+  width: auto;
+  height: 64px;
+  margin: 0 auto 46px;
+  color: var(--fg);
+  stroke-width: 260;
 }
 
 .lcard h1 {
@@ -2160,6 +2599,10 @@ a.button.google {
     align-items: start;
     padding: 26px 20px;
   }
+
+  .lcard .brand-mark {
+    height: 52px;
+  }
 }
 
 /* Sign-up (OS-221) */
@@ -2304,7 +2747,15 @@ a.button.google {
 .stack .field,
 .modal .field {
   display: grid;
-  gap: 4px;
+  gap: 10px;
+}
+
+.editprofile .fields {
+  gap: 16px;
+}
+
+.editprofile .actions {
+  margin-top: 20px;
 }
 
 textarea {
@@ -2668,6 +3119,10 @@ a.button {
   gap: 12px;
 }
 
+.chat .weekly {
+  margin: 0;
+}
+
 .chat .intro p {
   margin: 0 0 10px;
   color: var(--muted);
@@ -2686,7 +3141,7 @@ a.button {
 .turns {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -2817,7 +3272,7 @@ svg.source {
 }
 
 .ph {
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   gap: 8px 12px;
 }
 
@@ -2829,7 +3284,7 @@ svg.source {
 .page h2 {
   font-size: 17px;
   font-weight: 700;
-  margin: 22px 0 10px;
+  margin: 22px 0 20px;
 }
 
 .page .panel h2,
@@ -2841,7 +3296,7 @@ button {
   border-radius: 999px;
   background: transparent;
   border-color: var(--muted);
-  padding: 7px 16px;
+  padding: 9px 16px;
   font-weight: 600;
 }
 
@@ -2937,6 +3392,22 @@ textarea {
   margin: 0;
 }
 
+.page.health .titlebar h1,
+.page.goals .titlebar h1,
+.page.notifications > h1,
+.page.coach .titlebar h1,
+.page.coach > h1 {
+  font-size: 28px;
+}
+
+.page.coach .titlebar {
+  margin-bottom: 34px;
+}
+
+.page.notifications .panel.events {
+  max-width: none;
+}
+
 .titlebar .iconbtn {
   background: transparent;
   border-radius: 999px;
@@ -3000,32 +3471,48 @@ textarea {
   height: 22px;
 }
 
-/* Home (OS-904), as the app's: two columns on a large screen, one on a phone. On a phone the header is
-   the wordmark (the title stays for screen readers). */
+/* Home (OS-904), as the app's: one column at every size. The title stays for screen readers only;
+   on a phone the header is the wordmark. */
 .homemark {
   flex: 1;
   color: var(--fg);
 }
 
-@media (max-width: 599px) {
-  .page.home .titlebar h1 {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+.page.home .titlebar {
+  margin-top: 10px;
+  margin-bottom: 30px;
+}
 
+.page.home .titlebar h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 599px) {
   .page.home .titlebar .iconbtn.phone-only {
     display: grid;
+  }
+}
+
+@media (min-width: 600px) {
+  /* The wordmark centred over the page; the title stays for screen readers only. */
+  .page.home .titlebar {
+    justify-content: center;
+  }
+
+  .page.home .homemark {
+    flex: none;
   }
 }
 
 .homegrid {
   display: grid;
   grid-template-areas: 'week' 'day' 'metrics' 'last';
-  gap: 0 20px;
+  gap: 24px 20px;
   align-items: start;
 }
 
@@ -3045,49 +3532,98 @@ textarea {
   grid-area: last;
 }
 
-/* Tablet: the week across, then the last day beside the metrics two by two. */
-@media (min-width: 600px) {
-  .homegrid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas: 'week week' 'day metrics' 'last last';
-  }
-
-  /* With nothing to show for the last day, the metrics take the row. */
-  .h-day:empty + .h-metrics {
-    grid-column: 1 / -1;
-  }
-}
-
-/* Desktop: the week (7/12) beside the last day (5/12), the metrics in one row. With nothing to show
-   for the last day, the week takes the row. */
+/* The metrics spread out across the row where there is room; every other widget keeps one column. */
 @media (min-width: 1200px) {
-  .homegrid {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    grid-template-areas: 'week day' 'metrics metrics' 'last last';
-  }
-
   .h-metrics .tiles {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
-
-  .h-week:has(+ .h-day:empty) {
-    grid-column: 1 / -1;
-  }
 }
 
-/* The last seven days in one card, its rows in columns where there is room. */
+/* The last seven days in one card: two rows on a tablet and a single line on a desktop; the rows
+   stack on a phone. The cells draw their own hairlines, so the card keeps the theme's colour. */
+.h-last .hrow.empty {
+  display: none;
+}
+
 @media (min-width: 600px) {
   .h-last .rowsbox {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    column-gap: 32px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 0;
+    background: var(--surface);
     overflow: hidden;
   }
 
   .h-last .hrow {
-    margin-top: -1px;
-    border-bottom: 0;
-    border-top: 1px solid var(--line);
+    gap: 8px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 0;
+    box-shadow:
+      inset 1px 0 var(--line),
+      inset 0 1px var(--line);
+  }
+
+  .h-last .hrow:nth-child(3n + 1) {
+    box-shadow: inset 0 1px var(--line);
+  }
+
+  .h-last .hrow:nth-child(-n + 3) {
+    box-shadow: inset 1px 0 var(--line);
+  }
+
+  .h-last .hrow:first-child {
+    box-shadow: none;
+  }
+
+  /* Each label sits next to its own figure, not pushed to the cell's far edge. */
+  .h-last .hlabel {
+    flex: none;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1199px) {
+  .h-last .hrow.empty {
+    display: block;
+  }
+}
+
+@media (min-width: 1200px) {
+  .h-last .rowsbox {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .h-last .hrow,
+  .h-last .hrow:nth-child(n) {
+    box-shadow: inset 1px 0 var(--line);
+  }
+
+  .h-last .hrow:first-child {
+    box-shadow: none;
+  }
+
+  .h-last .hrow {
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .h-last .hrow svg.i {
+    width: 20px;
+    height: 20px;
+  }
+
+  .h-last .hlabel {
+    flex: none;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .h-last .hrow .num {
+    white-space: nowrap;
   }
 }
 
@@ -3096,11 +3632,40 @@ textarea {
 }
 
 .hblock {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .hblock > h2 {
-  margin: 4px 0 10px;
+  margin: 4px 0 20px;
+}
+
+/* The last day: the activities on the left and the vitals on the right, half each from 600 px and
+   full width on a phone. Each keeps its own height. */
+.daygrid {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.daycolumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.daycolumn .dayacts {
+  margin-bottom: 0;
+}
+
+@media (min-width: 600px) {
+  .daygrid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  /* With no activities, the vitals take the whole row. */
+  .daygrid > :only-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .dayacts {
@@ -3108,6 +3673,53 @@ textarea {
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 12px;
   margin-bottom: 12px;
+}
+
+/* Several activities: one page each, swiped (or with the dots below), as on the app. */
+.dayacts.multiple {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.dayacts.multiple::-webkit-scrollbar {
+  display: none;
+}
+
+.dayacts.multiple > * {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.daydots {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.daydots button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.daydots button::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.daydots button.on::before {
+  background: var(--fg);
 }
 
 .panel.dayact {
@@ -3469,6 +4081,11 @@ textarea {
   margin: 0;
 }
 
+/* A lone chart (an activity with only heart rate, say) takes the whole row, not half of it. */
+.chartgrid > :only-child {
+  grid-column: 1 / -1;
+}
+
 .chartfoot {
   display: flex;
   flex-wrap: wrap;
@@ -3512,6 +4129,23 @@ textarea {
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
+}
+
+/* The activity's map, taller than the shared preview's 340 px. */
+.page.detail .mapblock .map {
+  height: 480px;
+}
+
+@media (max-width: 1023px) {
+  .page.detail .mapblock .map {
+    height: 400px;
+  }
+}
+
+@media (max-width: 599px) {
+  .page.detail .mapblock .map {
+    height: 320px;
+  }
 }
 
 .mapblock .map {
@@ -3657,6 +4291,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+  font-size: 13px;
 }
 
 .figmore svg.i {
@@ -3746,9 +4381,13 @@ button.danger svg.i {
 /* Goals (OS-911), as the app's: the card opens its chart; side by side on a large screen. */
 .goalgrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
   align-items: start;
+}
+
+.page.goals .titlebar {
+  margin-bottom: 34px;
 }
 
 .panel.goalcard {
@@ -3760,7 +4399,7 @@ button.danger svg.i {
 .goalhead {
   all: unset;
   display: grid;
-  gap: 8px;
+  gap: 16px;
   cursor: pointer;
 }
 
@@ -3824,6 +4463,7 @@ button.danger svg.i {
 }
 
 .goalplot {
+  min-height: 130px;
   cursor: crosshair;
 }
 
@@ -3887,6 +4527,7 @@ button.danger svg.i {
 
 .goaldays {
   display: flex;
+  min-height: 16px;
 }
 
 .goaldays span {
@@ -3966,7 +4607,7 @@ button.danger svg.i {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr));
   gap: 14px;
-  align-items: start;
+  align-items: stretch;
   margin-bottom: 14px;
 }
 
@@ -3979,10 +4620,6 @@ button.danger svg.i {
   font-size: 17px;
   font-weight: 700;
   margin: -4px 0 6px;
-}
-
-.efficiency .spark {
-  height: 120px;
 }
 
 .menuwrap {
@@ -4025,6 +4662,22 @@ button.danger svg.i {
 .settingslist {
   position: sticky;
   top: 16px;
+}
+
+/* The chosen row keeps its rounded background inside the card. */
+.panel.menu.settingslist {
+  padding: 8px 10px;
+  overflow: hidden;
+}
+
+.panel.menu.settingslist a {
+  padding: 11px 12px;
+  border-radius: 10px;
+}
+
+.panel.menu.settingslist a.on {
+  background: var(--accent-soft);
+  border-radius: 10px;
 }
 
 .settingslist a.on {
@@ -4138,7 +4791,8 @@ button.danger svg.i {
 .composer > svg.i {
   position: absolute;
   left: 14px;
-  top: 18px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 22px;
   height: 22px;
   color: var(--accent);
@@ -4146,12 +4800,25 @@ button.danger svg.i {
 }
 
 .composer textarea {
-  min-height: 56px;
-  padding: 16px 14px 14px 46px;
+  box-sizing: border-box;
+  height: 42px;
+  min-height: 42px;
+  padding: 10px 14px 10px 46px;
   border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
   border-radius: 16px;
   background: var(--surface);
   resize: vertical;
+}
+
+.composer > button {
+  box-sizing: border-box;
+  height: 42px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .popmenu.tip {
@@ -4475,20 +5142,29 @@ h1.greeting {
   border-width: 0 0 1px;
 }
 
-/* Desktop: the charts two by two and the rest beside a column with the Coach's summary and the zones. */
-.detailgrid {
+/* The power and heart-rate zones side by side, each half; the power curve follows at full width. */
+.zonesgrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
-  gap: 16px;
-  align-items: start;
-}
-
-.detailmain .chartgrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
-.detailside > :first-child {
-  margin-top: 0;
+.zonesgrid > .panel {
+  margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .zonesgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The profile charts: two by two across the full width. */
+@media (min-width: 1200px) {
+  .page.detail .chartgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* The Activities header's search bar, as the app's. */
@@ -4591,26 +5267,24 @@ h1.greeting {
 
 .healthtop {
   display: grid;
-  gap: 0 20px;
+  gap: 16px 0;
   align-items: start;
+  margin-bottom: 16px;
 }
 
 .h-today .cards {
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
-@media (min-width: 1200px) {
-  .healthtop {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  }
+/* The disposition and the steps take the whole width; the vitals go two by two. */
+.h-today .cards > :first-child,
+.h-today .cards > .span {
+  grid-column: 1 / -1;
+}
 
-  .h-today .cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .page.health .statgrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+.page.health .statgrid {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 599px) {
@@ -4702,6 +5376,7 @@ h1.greeting {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 20px;
+    margin-top: 40px;
     margin-bottom: 16px;
   }
 
@@ -4734,7 +5409,23 @@ h1.greeting {
   }
 }
 
-/* Settings: the chosen section marked as in the rail. */
+/* Estimates: a page of its own, with room over the cards and a larger section heading. */
+.page.estimates > h1 {
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+.page.estimates .cards {
+  margin-bottom: 14px;
+}
+
+.page.estimates .big {
+  font-size: 24px;
+}
+
+.page.estimates .ph h2 {
+  font-size: 20px;
+}
 .settingslist a.on {
   background: var(--accent-soft);
   border-radius: 12px;

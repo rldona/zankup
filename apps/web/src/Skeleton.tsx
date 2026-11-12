@@ -60,6 +60,18 @@ export function CardSkeleton({ lines = 3 }: { lines?: number }) {
   );
 }
 
+/** A goal card: the name, the bar, the figures and the projection, at the card's real height. */
+export function GoalSkeleton() {
+  return (
+    <div className="panel goalcard bonecard" style={{ gap: 16 }}>
+      <Bone width="45%" height={16} />
+      <Bone height={8} radius={4} />
+      <Bone width="60%" height={18} />
+      <Bone width="80%" />
+    </div>
+  );
+}
+
 /** A screen of cards: what a list or a page looks like before it loads. */
 export function PageSkeleton({ cards = 3 }: { cards?: number }) {
   return (

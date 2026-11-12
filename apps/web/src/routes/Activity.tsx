@@ -30,7 +30,7 @@ import {
   effortShown,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { api } from '../api';
@@ -50,7 +50,7 @@ import { useResolvedTheme } from '../theme';
 import { ActivitySkeleton, ChartSkeleton, Pulse } from '../Skeleton';
 import { CardTitle } from '../ui';
 import { MaterialIcon } from '../MaterialIcon';
-import { DESKTOP, PHONE, useMedia } from '../media';
+import { PHONE, useMedia } from '../media';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -116,7 +116,6 @@ function Detail({ activity }: { activity: ActivityDetail }) {
   );
 
   const phone = useMedia(PHONE);
-  const desktop = useMedia(DESKTOP);
   const map = series && hasMap && (
     <ActivityMap
       series={series}
@@ -129,6 +128,7 @@ function Detail({ activity }: { activity: ActivityDetail }) {
     />
   );
   const summary = <Summary activityId={activity.id} name={activity.name} />;
+  const figures = <Figures {...activityFigures(activity, { pace, format, t, locale })} />;
   const charts = (
     <>
       {activity.streams && !series && (
@@ -151,18 +151,16 @@ function Detail({ activity }: { activity: ActivityDetail }) {
       )}
     </>
   );
-  // The sections in the app's order (OS-909): on a ride the heart-rate zones follow the power curve and
-  // zones; on a run the splits follow the heart-rate zones. On a desktop the heart-rate zones sit in the
-  // side column with the Coach's summary.
+  // The sections in the app's order (OS-909): on a ride the heart-rate zones share a row with the power
+  // zones, and the power curve follows; on a run the splits follow the heart-rate zones.
   const rest = (
     <>
       <Photos activityId={activity.id} photos={activity.photo_list ?? []} />
-      {!desktop && sport !== 'ride' && hrZones}
+      {sport !== 'ride' && hrZones}
       {sport === 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {/* Kept offline before sets existed, an activity may come without them. */}
       {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
-      <EngineExtras activity={activity} />
-      {!desktop && sport === 'ride' && hrZones}
+      <EngineExtras activity={activity} hrZones={sport === 'ride' ? hrZones : undefined} />
       <Laps activity={activity} format={format} pace={pace} />
       {sport !== 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {activity.description && (
@@ -207,26 +205,11 @@ function Detail({ activity }: { activity: ActivityDetail }) {
         {!phone && <ActivityActions activity={activity} />}
       </header>
 
-      <Figures {...activityFigures(activity, { pace, format, t, locale })} />
-      {desktop ? (
-        // Desktop: the charts and the rest beside a column with the Coach's summary and the zones.
-        <div className="detailgrid">
-          <div className="detailmain">
-            {charts}
-            {rest}
-          </div>
-          <aside className="detailside">
-            {summary}
-            {hrZones}
-          </aside>
-        </div>
-      ) : (
-        <>
-          {summary}
-          {charts}
-          {rest}
-        </>
-      )}
+      {/* As on the app: the figures, the Coach's summary below them, then the charts and the rest. */}
+      {figures}
+      {summary}
+      {charts}
+      {rest}
     </article>
   );
 }
@@ -714,7 +697,7 @@ function SaveSegment({ activityId, section }: { activityId: number; section: [nu
 }
 
 /** What the engine adds (OS-312): power zones and curve, the matched route and the segments. */
-function EngineExtras({ activity }: { activity: ActivityDetail }) {
+function EngineExtras({ activity, hrZones }: { activity: ActivityDetail; hrZones?: ReactNode }) {
   const theme = useResolvedTheme();
   const metrics = activity.metrics;
   const allTime = useQuery({
@@ -762,6 +745,37 @@ function EngineExtras({ activity }: { activity: ActivityDetail }) {
           </ul>
         </section>
       )}
+      {(powerZones && bounds) || hrZones ? (
+        <div className="zonesgrid">
+          {hrZones}
+          {powerZones && bounds && (
+            <section className="panel zones">
+              <CardTitle>{t('activity.powerZones')}</CardTitle>
+              <table className="num">
+                <tbody>
+                  {powerZones.map((sec, i) => (
+                    <tr key={i}>
+                      <th scope="row">Z{i + 1}</th>
+                      <td className="track">
+                        <i
+                          style={{
+                            width: `${(sec / (powerZones.reduce((a, b) => a + b, 0) || 1)) * 100}%`,
+                          }}
+                        />
+                      </td>
+                      <td className="muted">
+                        {bounds[i]}
+                        {i < bounds.length - 1 ? `–${(bounds[i + 1] ?? 0) - 1}` : '+'} W
+                      </td>
+                      <td>{formatDuration(sec)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
+        </div>
+      ) : null}
       {curve.length > 0 && allTime.data && (
         <section className="panel">
           <CardTitle>{t('activity.powerCurve')}</CardTitle>
@@ -772,28 +786,6 @@ function EngineExtras({ activity }: { activity: ActivityDetail }) {
             format={(v) => `${Math.round(v)} W`}
             colour={themes[theme].ride}
           />
-        </section>
-      )}
-      {powerZones && bounds && (
-        <section className="panel zones">
-          <CardTitle>{t('activity.powerZones')}</CardTitle>
-          <table className="num">
-            <tbody>
-              {powerZones.map((sec, i) => (
-                <tr key={i}>
-                  <th scope="row">Z{i + 1}</th>
-                  <td className="track">
-                    <i style={{ width: `${(sec / (powerZones.reduce((a, b) => a + b, 0) || 1)) * 100}%` }} />
-                  </td>
-                  <td className="muted">
-                    {bounds[i]}
-                    {i < bounds.length - 1 ? `–${(bounds[i + 1] ?? 0) - 1}` : '+'} W
-                  </td>
-                  <td>{formatDuration(sec)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </section>
       )}
     </>

@@ -776,6 +776,28 @@
         }
       }
     },
+    "/api/auth/dev-login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Dev Login",
+        "description": "Development only: sign in as the first user without a password or code.",
+        "operationId": "devLogin",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/setup": {
       "get": {
         "tags": [
@@ -10032,6 +10054,12 @@
             ],
             "title": "Google Client Id",
             "description": "Public: the Android app asks Google for ID tokens for this client"
+          },
+          "dev_login": {
+            "type": "boolean",
+            "title": "Dev Login",
+            "description": "Development only: one-click sign-in is on",
+            "default": false
           }
         },
         "type": "object",

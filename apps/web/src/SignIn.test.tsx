@@ -209,6 +209,51 @@ describe('sign-in', () => {
     expect(submit).not.toHaveClass('primary'); // the quieter one
   });
 
+  it('offers no development sign-in unless the API says so', async () => {
+    const bodies = mockApi({
+      '/api/auth/me': signedOut,
+      '/api/setup': () => Response.json({ open: false }),
+      '/api/auth/google/providers': () => Response.json({ google: false }),
+    });
+    renderSignIn();
+    await screen.findByRole('heading', { name: 'Welcome back!' });
+    await waitFor(() => expect(bodies['/api/auth/google/providers']).toHaveLength(1));
+    await expect(
+      screen.findByRole('button', { name: 'Sign in as owner (dev)' }, { timeout: 100 }),
+    ).rejects.toThrow();
+  });
+
+  it('signs in with one click in development, then goes where the visitor was heading', async () => {
+    let session = false;
+    const bodies = mockApi({
+      '/api/auth/me': () => (session ? Response.json(ME) : signedOut()),
+      '/api/setup': () => Response.json({ open: false }),
+      '/api/auth/google/providers': () => Response.json({ google: false, dev_login: true }),
+      '/api/auth/dev-login': () => {
+        session = true;
+        return Response.json(ME);
+      },
+      '/api/activities/7': () => Response.json({ detail: 'Not Found' }, { status: 404 }),
+    });
+    const router = renderSignIn('/sign-in?next=%2Factivities%2F7');
+    await userEvent.click(await screen.findByRole('button', { name: 'Sign in as owner (dev)' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/activities/7'));
+    expect(bodies['/api/auth/dev-login']).toHaveLength(1);
+    expect(bodies['/api/auth/login']).toBeUndefined();
+  });
+
+  it('explains when the development sign-in is not available', async () => {
+    mockApi({
+      '/api/auth/me': signedOut,
+      '/api/setup': () => Response.json({ open: false }),
+      '/api/auth/google/providers': () => Response.json({ google: false, dev_login: true }),
+      '/api/auth/dev-login': () => Response.json({ detail: 'Not Found' }, { status: 404 }),
+    });
+    renderSignIn();
+    await userEvent.click(await screen.findByRole('button', { name: 'Sign in as owner (dev)' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The development sign-in is not available.');
+  });
+
   it('hides the passkey option where the browser has no WebAuthn', async () => {
     mockApi({ '/api/auth/me': signedOut });
     renderSignIn();

@@ -223,8 +223,9 @@ function LastNight({ day, sleep }: { day: HealthDay; sleep: NonNullable<HealthDa
 function Today({ day }: { day: HealthDay }) {
   const r = day.readiness;
   const tiles: { key: MessageKey; value: string; source?: [HealthSourceName, HealthSourceName[]] }[] = [];
+  // The same tiles as the app, always: "–" while the day has no reading for one of them.
   const add = (key: MessageKey, v: HealthDay['hrv'], format: (n: number) => string) => {
-    if (v) tiles.push({ key, value: format(v.value), source: [v.source, v.others] });
+    tiles.push({ key, value: v ? format(v.value) : '–', source: v ? [v.source, v.others] : undefined });
   };
   add('health.hrv', day.hrv, (n) => `${n.toFixed(0)} ms`);
   add('health.restingHr', day.resting_hr, (n) => `${n.toFixed(0)} bpm`);

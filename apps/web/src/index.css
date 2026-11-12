@@ -3898,6 +3898,23 @@ textarea {
   border: 1px solid var(--line);
 }
 
+/* The activity's map, taller than the shared preview's 340 px. */
+.page.detail .mapblock .map {
+  height: 480px;
+}
+
+@media (max-width: 1023px) {
+  .page.detail .mapblock .map {
+    height: 400px;
+  }
+}
+
+@media (max-width: 599px) {
+  .page.detail .mapblock .map {
+    height: 320px;
+  }
+}
+
 .mapblock .map {
   margin: 0;
   border-radius: 0;
@@ -4857,6 +4874,24 @@ h1.greeting {
   margin-inline: calc(-1 * var(--gutter));
   border-radius: 0;
   border-width: 0 0 1px;
+}
+
+/* The power and heart-rate zones side by side, each half; the power curve follows at full width. */
+.zonesgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.zonesgrid > .panel {
+  margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .zonesgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* The profile charts: two by two across the full width. */

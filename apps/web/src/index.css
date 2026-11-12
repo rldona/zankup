@@ -3322,9 +3322,15 @@ textarea {
   }
 
   .h-last .hrow {
+    gap: 8px;
     margin-top: -1px;
     border-bottom: 0;
     border-top: 1px solid var(--line);
+  }
+
+  /* Each label sits next to its own figure, not pushed to the cell's far edge. */
+  .h-last .hlabel {
+    flex: none;
   }
 }
 
@@ -3339,6 +3345,13 @@ textarea {
   .h-last .hrow {
     gap: 8px;
     font-size: 14px;
+    border-left: 1px solid var(--line);
+    padding-left: 16px;
+  }
+
+  .h-last .hrow:first-child {
+    border-left: 0;
+    padding-left: 0;
   }
 
   .h-last .hrow svg.i {
@@ -3347,6 +3360,7 @@ textarea {
   }
 
   .h-last .hlabel {
+    flex: none;
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;

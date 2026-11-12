@@ -4275,6 +4275,7 @@ button.danger svg.i {
 }
 
 .goalplot {
+  min-height: 130px;
   cursor: crosshair;
 }
 
@@ -4338,6 +4339,7 @@ button.danger svg.i {
 
 .goaldays {
   display: flex;
+  min-height: 16px;
 }
 
 .goaldays span {

@@ -2587,7 +2587,15 @@ a.button.google {
 .stack .field,
 .modal .field {
   display: grid;
-  gap: 4px;
+  gap: 10px;
+}
+
+.editprofile .fields {
+  gap: 16px;
+}
+
+.editprofile .actions {
+  margin-top: 20px;
 }
 
 textarea {

@@ -305,63 +305,71 @@ function ShareActivity({ activity, onClose }: { activity: ActivityDetail; onClos
   };
   return (
     <Modal title={t('share.title')} onClose={onClose}>
-      <p className="note">{t('share.privacy')}</p>
-      <div className="fields">
-        <div className="field">
-          <b>{t('share.expires')}</b>
-          <Select
-            label={t('share.expires')}
-            value={String(days)}
-            onChange={(value) => setDays(Number(value) as (typeof EXPIRY)[number])}
-            options={EXPIRY.map((d) => ({
-              value: String(d),
-              label: d ? t('share.days', { count: d }) : t('share.never'),
-            }))}
-          />
+      <div className="stack share">
+        <p className="note">{t('share.privacy')}</p>
+        <div className="fields sharefields">
+          <div className="field">
+            <b>{t('share.expires')}</b>
+            <Select
+              label={t('share.expires')}
+              value={String(days)}
+              onChange={(value) => setDays(Number(value) as (typeof EXPIRY)[number])}
+              options={EXPIRY.map((d) => ({
+                value: String(d),
+                label: d ? t('share.days', { count: d }) : t('share.never'),
+              }))}
+            />
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={showMap} onChange={(e) => setShowMap(e.target.checked)} />
+            {t('share.showMap')}
+          </label>
         </div>
-        <label className="check">
-          <input type="checkbox" checked={showMap} onChange={(e) => setShowMap(e.target.checked)} />
-          {t('share.showMap')}
-        </label>
-      </div>
-      <div className="actions">
-        <button type="button" className="primary" onClick={() => create.mutate()} disabled={create.isPending}>
-          {t('share.create')}
-        </button>
-        <ShareImageButton activity={activity} showMap={showMap} />
-      </div>
-      {created && (
-        <div className="sharelink">
-          <input readOnly value={created} aria-label={t('share.link')} onFocus={(e) => e.target.select()} />
-          <button type="button" onClick={() => void copy()}>
-            {copied ? t('share.copied') : t('share.copy')}
+        <div className="actions end">
+          <button
+            type="button"
+            className="primary"
+            onClick={() => create.mutate()}
+            disabled={create.isPending}
+          >
+            {t('share.create')}
           </button>
+          <ShareImageButton activity={activity} showMap={showMap} />
         </div>
-      )}
-      {(shares.data ?? []).length > 0 && (
-        <>
-          <h3>{t('share.active')}</h3>
-          <ul className="rows">
-            {shares.data?.map((s) => (
-              <li key={s.id}>
-                <span>
-                  <b>
-                    {s.expires_at
-                      ? t('share.until', { date: new Date(s.expires_at).toLocaleDateString(locale) })
-                      : t('share.never')}
-                  </b>
-                  <small className="note">
-                    {t(s.show_map ? 'share.withMap' : 'share.noMap')} · {t('share.views', { count: s.views })}
-                  </small>
-                </span>
-                <button type="button" onClick={() => revoke.mutate(s.id)} disabled={revoke.isPending}>
-                  {t('share.revoke')}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+        {created && (
+          <div className="sharelink">
+            <input readOnly value={created} aria-label={t('share.link')} onFocus={(e) => e.target.select()} />
+            <button type="button" onClick={() => void copy()}>
+              {copied ? t('share.copied') : t('share.copy')}
+            </button>
+          </div>
+        )}
+        {(shares.data ?? []).length > 0 && (
+          <>
+            <h3>{t('share.active')}</h3>
+            <ul className="rows">
+              {shares.data?.map((s) => (
+                <li key={s.id}>
+                  <span>
+                    <b>
+                      {s.expires_at
+                        ? t('share.until', { date: new Date(s.expires_at).toLocaleDateString(locale) })
+                        : t('share.never')}
+                    </b>
+                    <small className="note">
+                      {t(s.show_map ? 'share.withMap' : 'share.noMap')} ·{' '}
+                      {t('share.views', { count: s.views })}
+                    </small>
+                  </span>
+                  <button type="button" onClick={() => revoke.mutate(s.id)} disabled={revoke.isPending}>
+                    {t('share.revoke')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
     </Modal>
   );
 }

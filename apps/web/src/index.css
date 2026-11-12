@@ -1102,6 +1102,22 @@ input[type='checkbox']:disabled {
   margin: 10px 0;
 }
 
+/* Sharing (OS-412): the expiry selector and the map switch on one line, the buttons to the right,
+   with room between the blocks. */
+.stack.share {
+  gap: 16px;
+}
+
+.fields.sharefields {
+  align-items: end;
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.fields.sharefields .check {
+  min-height: 36px;
+}
+
 .field {
   display: flex;
   flex-direction: column;

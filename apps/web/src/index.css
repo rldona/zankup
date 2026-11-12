@@ -4859,20 +4859,38 @@ h1.greeting {
   border-width: 0 0 1px;
 }
 
-/* Desktop: the charts two by two and the rest beside a column with the Coach's summary and the zones. */
+/* Desktop: the charts and the rest at 70 % beside the Coach's summary at 30 %, which sticks. */
 .detailgrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
   gap: 16px;
   align-items: start;
 }
 
-.detailmain .chartgrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.detailgrid.noside,
+.detailgrid:has(.detailside:empty) {
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.detailside > :first-child {
-  margin-top: 0;
+.detailgrid:has(.detailside:empty) .detailside {
+  display: none;
+}
+
+.detailmain {
+  min-width: 0;
+}
+
+.detailmain > * {
+  width: 100%;
+}
+
+.detailside {
+  position: sticky;
+  top: 0;
+}
+
+.detailmain .chartgrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 /* The Activities header's search bar, as the app's. */

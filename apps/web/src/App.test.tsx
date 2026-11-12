@@ -226,17 +226,14 @@ describe('app skeleton', () => {
     cleanup();
     vi.unstubAllGlobals();
 
-    // A desktop: the heart-rate zones in the side column, the labelled buttons beside the title.
+    // A desktop: the heart-rate zones in the main column, the labelled buttons beside the title;
+    // without the Coach the data takes the full width.
     media(1440);
     api();
     renderAt('/activities/7');
     const wide = await screen.findByRole('article');
-    const side = await waitFor(() => {
-      const aside = wide.querySelector('aside.detailside');
-      if (!aside) throw new Error('no side column');
-      return aside as HTMLElement;
-    });
-    expect(await within(side).findByRole('heading', { name: 'Heart rate zones' })).toBeInTheDocument();
+    expect(await within(wide).findByRole('heading', { name: 'Heart rate zones' })).toBeInTheDocument();
+    expect(wide.querySelector('aside.detailside')?.childElementCount).toBe(0);
     expect(within(wide).getByRole('button', { name: 'Edit' })).not.toHaveClass('floatbtn');
   });
 

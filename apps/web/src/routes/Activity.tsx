@@ -152,17 +152,17 @@ function Detail({ activity }: { activity: ActivityDetail }) {
     </>
   );
   // The sections in the app's order (OS-909): on a ride the heart-rate zones follow the power curve and
-  // zones; on a run the splits follow the heart-rate zones. On a desktop the heart-rate zones sit in the
-  // side column with the Coach's summary.
+  // zones; on a run the splits follow the heart-rate zones. On a desktop they sit in the main column
+  // too, under the power zones; the side column keeps the Coach's summary.
   const rest = (
     <>
       <Photos activityId={activity.id} photos={activity.photo_list ?? []} />
-      {!desktop && sport !== 'ride' && hrZones}
+      {sport !== 'ride' && hrZones}
       {sport === 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {/* Kept offline before sets existed, an activity may come without them. */}
       {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
       <EngineExtras activity={activity} />
-      {!desktop && sport === 'ride' && hrZones}
+      {sport === 'ride' && hrZones}
       <Laps activity={activity} format={format} pace={pace} />
       {sport !== 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {activity.description && (
@@ -209,16 +209,14 @@ function Detail({ activity }: { activity: ActivityDetail }) {
 
       <Figures {...activityFigures(activity, { pace, format, t, locale })} />
       {desktop ? (
-        // Desktop: the charts and the rest beside a column with the Coach's summary and the zones.
+        // Desktop: the charts and the rest at 70 % beside the Coach's summary at 30 %, which stays in
+        // view while the rest scrolls.
         <div className="detailgrid">
           <div className="detailmain">
             {charts}
             {rest}
           </div>
-          <aside className="detailside">
-            {summary}
-            {hrZones}
-          </aside>
+          <aside className="detailside">{summary}</aside>
         </div>
       ) : (
         <>

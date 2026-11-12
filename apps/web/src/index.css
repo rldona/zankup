@@ -457,7 +457,12 @@ svg.i.m {
   }
 }
 
-.sportselect-btn {
+.zselect {
+  position: relative;
+  width: 100%;
+}
+
+.zselect-btn {
   box-sizing: border-box;
   width: 100%;
   display: flex;
@@ -474,18 +479,18 @@ svg.i.m {
   cursor: pointer;
 }
 
-.sportselect-btn:hover,
-.sportselect-btn[aria-expanded='true'] {
+.zselect-btn:hover,
+.zselect-btn[aria-expanded='true'] {
   border-color: var(--accent);
 }
 
-.sportselect-btn svg.i {
+.zselect-btn svg.i {
   width: 20px;
   height: 20px;
   color: var(--muted);
 }
 
-.sportselect-list {
+.zselect-list {
   position: absolute;
   z-index: 20;
   top: calc(100% + 4px);
@@ -499,9 +504,11 @@ svg.i.m {
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+  max-height: 280px;
+  overflow: auto;
 }
 
-.sportselect-list button {
+.zselect-list button {
   width: 100%;
   display: flex;
   align-items: center;
@@ -517,17 +524,17 @@ svg.i.m {
   cursor: pointer;
 }
 
-.sportselect-list button:hover {
+.zselect-list button:hover {
   background: var(--surface-2);
 }
 
-.sportselect-list button.on {
+.zselect-list button.on {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
 }
 
-.sportselect-list button svg.i {
+.zselect-list button svg.i {
   width: 16px;
   height: 16px;
 }

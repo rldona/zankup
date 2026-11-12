@@ -26,12 +26,12 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { api } from '../api';
-import { Sparkline } from '../charts/static';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import {
   ComparisonChart,
   CurveChart,
+  EfficiencyChart,
   FitnessChart,
   ProgressChart,
   ProgressionChart,
@@ -202,7 +202,7 @@ export function Stats() {
         <FitnessSection range={range} theme={theme} />
         <Volume range={range} unit={period.unit} theme={theme} format={format} />
         <Curves range={range} theme={theme} format={format} />
-        <Efficiency range={range} />
+        <Efficiency range={range} theme={theme} />
         <RecordsSection range={range} theme={theme} unit={format.unit} />
         <Progress
           theme={theme}
@@ -546,7 +546,13 @@ function Progress({
   );
 }
 
-function Efficiency({ range }: { range: { from: string; to: string } }) {
+function Efficiency({
+  range,
+  theme,
+}: {
+  range: { from: string; to: string };
+  theme: ReturnType<typeof useResolvedTheme>;
+}) {
   const points = useQuery(efficiencyQuery(api, range));
   if (!points.data || points.data.length < 3) return null;
   const values = points.data.map((p) => p.efficiency);
@@ -560,9 +566,7 @@ function Efficiency({ range }: { range: { from: string; to: string } }) {
         <h2>{t('stats.efficiency')}</h2>
         <span className="num">{`${change > 0 ? '+' : ''}${change.toFixed(1)} %`}</span>
       </div>
-      <div className="efficiency">
-        <SparklineRow values={values} />
-      </div>
+      <EfficiencyChart points={points.data} theme={theme} />
       <p className="note">{t('stats.efficiencyNote')}</p>
     </section>
   );
@@ -647,8 +651,4 @@ function CompareWithStrava({ theme }: { theme: ReturnType<typeof useResolvedThem
       )}
     </section>
   );
-}
-
-function SparklineRow({ values }: { values: number[] }) {
-  return <Sparkline values={values} label={t('stats.efficiency')} />;
 }

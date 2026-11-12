@@ -4884,11 +4884,6 @@ h1.greeting {
   width: 100%;
 }
 
-.detailside {
-  position: sticky;
-  top: 0;
-}
-
 .detailmain .chartgrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

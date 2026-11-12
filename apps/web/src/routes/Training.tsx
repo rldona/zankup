@@ -22,7 +22,8 @@ import { api } from '../api';
 import { TrackMap } from '../detail/TrackMap';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
-import { SportIcon } from '../SportIcon';
+import { MaterialIcon } from '../MaterialIcon';
+import { SportGlyph, SportIcon } from '../SportIcon';
 import { day } from '../stats/format';
 import { useResolvedTheme } from '../theme';
 import { ChartSkeleton, PageSkeleton, Pulse } from '../Skeleton';
@@ -76,11 +77,11 @@ export function TrainingCalendar() {
         <h1>{t('calendar.title')}</h1>
         <div className="actions">
           <button type="button" onClick={() => shift(-1)} aria-label={t('calendar.prev')}>
-            ‹
+            <MaterialIcon name="chevron_left" />
           </button>
           <b className="month">{first.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</b>
           <button type="button" onClick={() => shift(1)} aria-label={t('calendar.next')}>
-            ›
+            <MaterialIcon name="chevron_right" />
           </button>
         </div>
       </div>
@@ -144,7 +145,9 @@ export function TrainingCalendar() {
                           title={`${a.name ?? t(`sport.${asSport(a.sport)}`)} · ${formatDuration(a.moving_s)}`}
                           aria-label={`${a.name ?? t(`sport.${asSport(a.sport)}`)} · ${formatDuration(a.moving_s)}`}
                           onPointerDown={(e) => e.stopPropagation()}
-                        />
+                        >
+                          <SportGlyph sport={asSport(a.sport)} />
+                        </Link>
                       );
                     })}
                   </span>

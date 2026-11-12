@@ -3094,8 +3094,8 @@ textarea {
 }
 
 .page.home .titlebar {
-  margin-top: 0;
-  margin-bottom: 16px;
+  margin-top: 6px;
+  margin-bottom: 26px;
 }
 
 .page.home .titlebar h1 {
@@ -3117,8 +3117,6 @@ textarea {
   /* The wordmark centred over the page; the title stays for screen readers only. */
   .page.home .titlebar {
     justify-content: center;
-    margin-top: 4px;
-    margin-bottom: 24px;
   }
 
   .page.home .homemark {

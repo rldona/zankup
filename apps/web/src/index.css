@@ -3074,25 +3074,32 @@ textarea {
   height: 22px;
 }
 
-/* Home (OS-904), as the app's: two columns on a large screen, one on a phone. On a phone the header is
-   the wordmark (the title stays for screen readers). */
+/* Home (OS-904), as the app's: one column at every size. The title stays for screen readers only;
+   on a phone the header is the wordmark. */
 .homemark {
   flex: 1;
   color: var(--fg);
 }
 
-@media (max-width: 599px) {
-  .page.home .titlebar h1 {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+.page.home .titlebar h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
+@media (max-width: 599px) {
   .page.home .titlebar .iconbtn.phone-only {
     display: grid;
+  }
+}
+
+@media (min-width: 600px) {
+  /* The header holds nothing visible once the title is for screen readers only. */
+  .page.home .titlebar {
+    margin-bottom: 0;
   }
 }
 
@@ -3119,33 +3126,10 @@ textarea {
   grid-area: last;
 }
 
-/* Tablet: the week across, then the last day beside the metrics two by two. */
-@media (min-width: 600px) {
-  .homegrid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas: 'week week' 'day metrics' 'last last';
-  }
-
-  /* With nothing to show for the last day, the metrics take the row. */
-  .h-day:empty + .h-metrics {
-    grid-column: 1 / -1;
-  }
-}
-
-/* Desktop: the week (7/12) beside the last day (5/12), the metrics in one row. With nothing to show
-   for the last day, the week takes the row. */
+/* The metrics spread out across the row where there is room; every other widget keeps one column. */
 @media (min-width: 1200px) {
-  .homegrid {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    grid-template-areas: 'week day' 'metrics metrics' 'last last';
-  }
-
   .h-metrics .tiles {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  }
-
-  .h-week:has(+ .h-day:empty) {
-    grid-column: 1 / -1;
   }
 }
 
@@ -3177,11 +3161,93 @@ textarea {
   margin: 4px 0 10px;
 }
 
+/* The last day: the activities on the left and the vitals on the right, half each from 600 px and
+   full width on a phone; both sides as tall as the taller one. */
+.daygrid {
+  display: grid;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.daycolumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.daycolumn .dayacts {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+@media (min-width: 600px) {
+  .daygrid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .daygrid > *,
+  .daygrid .dayact {
+    height: 100%;
+  }
+
+  /* With no activities, the vitals take the whole row. */
+  .daygrid > :only-child {
+    grid-column: 1 / -1;
+  }
+}
+
 .dayacts {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 12px;
   margin-bottom: 12px;
+}
+
+/* Several activities: one page each, swiped (or with the dots below), as on the app. */
+.dayacts.multiple {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.dayacts.multiple::-webkit-scrollbar {
+  display: none;
+}
+
+.dayacts.multiple > * {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.daydots {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.daydots button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.daydots button::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.daydots button.on::before {
+  background: var(--fg);
 }
 
 .panel.dayact {

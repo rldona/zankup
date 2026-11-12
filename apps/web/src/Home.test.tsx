@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -134,6 +135,18 @@ describe('Home (OS-904)', () => {
       '50',
     );
     expect(within(card).getByText(/50\s?%/)).toBeInTheDocument();
+  });
+
+  it("pages through the day's activities with dots below when there are several", async () => {
+    mockApi([activity(2, 'Evening run', 0), activity(1, 'Morning run', 0)]);
+    renderHome();
+    const dots = await screen.findAllByRole('button', { name: /^Activity \d of 2$/ });
+    expect(dots).toHaveLength(2);
+    expect(dots[0]).toHaveAttribute('aria-current', 'true');
+    expect(dots[1]).not.toHaveAttribute('aria-current');
+    await userEvent.click(dots[1] as HTMLElement);
+    expect(dots[1]).toHaveAttribute('aria-current', 'true');
+    expect(dots[0]).not.toHaveAttribute('aria-current');
   });
 
   it('leaves out a last day older than yesterday, but keeps the health card', async () => {

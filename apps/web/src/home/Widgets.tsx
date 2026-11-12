@@ -1,7 +1,8 @@
 /**
  * Home's widgets on the web (OS-904), as the app's (OS-527): the last day with activities, only when it
- * is today or yesterday (its cards side by side), that day's steps, heart rate and HRV, the last seven
- * days by sport with the health averages, and the metrics (VO₂ max, FTP, today's steps, training load).
+ * is today or yesterday (its cards side by side), that day's steps, heart rate and HRV (the three rows
+ * always, "—" when the day has no reading), the last seven days by sport with the health averages, and
+ * the metrics (VO₂ max, FTP, today's steps, training load).
  * The working-out is shared with the app in `packages/core` (domain/home.ts).
  */
 import {
@@ -33,7 +34,7 @@ import {
   type Sport,
 } from '@zankup/core';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import { api } from '../api';
@@ -92,9 +93,8 @@ export function LastDay() {
     ? health.data?.find((d) => d.day === recent.day)
     : (health.data?.find((d) => d.day === today && (d.steps || d.resting_hr || d.hrv)) ??
       health.data?.find((d) => d.day === yesterday));
-  const vitals = !!day && !!(day.steps || day.resting_hr || day.hrv);
   // Nothing to say for the day: no section at all, so the others take its room.
-  if (!recent && !vitals && !(!last && feed.isSuccess)) return null;
+  if (!recent && !day && !(!last && feed.isSuccess)) return null;
 
   return (
     <section
@@ -102,46 +102,90 @@ export function LastDay() {
       aria-label={recent ? t(heading === 'today' ? 'home.today' : 'home.yesterday') : undefined}
     >
       {!last && feed.isSuccess && <p className="note">{t('home.empty')}</p>}
-      {recent && (
-        <>
-          <h2>{t(heading === 'today' ? 'home.today' : 'home.yesterday')}</h2>
-          <div className="dayacts">
-            {recent.activities.map((a) => (
-              <DayActivity key={a.id} activity={a} format={format} />
-            ))}
-          </div>
-        </>
-      )}
-      {day && vitals ? (
-        <div className="panel rowsbox">
-          {day.steps ? (
+      {recent && <h2>{t(heading === 'today' ? 'home.today' : 'home.yesterday')}</h2>}
+      <div className="daygrid">
+        {recent && <DayActivities activities={recent.activities} format={format} />}
+        {(recent || day) && (
+          <div className="panel rowsbox">
+            {/* The three rows always, as on the app: "—" when the day has no reading for one of them. */}
             <Row
               icon="footprint"
               tint="var(--ride)"
               label={t('home.steps')}
-              value={Math.round(day.steps.value).toLocaleString(locale)}
-              extra={<Ring value={day.steps.value} max={STEPS_GOAL} size={34} />}
+              value={day?.steps ? Math.round(day.steps.value).toLocaleString(locale) : '—'}
+              extra={day?.steps ? <Ring value={day.steps.value} max={STEPS_GOAL} size={34} /> : undefined}
             />
-          ) : null}
-          {day.resting_hr ? (
             <Row
               icon="favorite"
               tint="var(--zone-5)"
               label={t('home.heartRate')}
-              value={t('home.resting', { value: Math.round(day.resting_hr.value) })}
+              value={day?.resting_hr ? t('home.resting', { value: Math.round(day.resting_hr.value) }) : '—'}
             />
-          ) : null}
-          {day.hrv ? (
             <Row
               icon="monitor_heart"
               tint="var(--run)"
               label={t('home.hrv')}
-              value={`${Math.round(day.hrv.value)} ms`}
+              value={day?.hrv ? `${Math.round(day.hrv.value)} ms` : '—'}
             />
-          ) : null}
-        </div>
-      ) : null}
+          </div>
+        )}
+      </div>
     </section>
+  );
+}
+
+/** The day's activities: one card, or a swipeable carousel with the dots below when there are several. */
+function DayActivities({ activities, format }: { activities: ActivitySummary[]; format: Format }) {
+  const track = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
+  const multiple = activities.length > 1;
+
+  // One card per page: the next child's offset is the page width plus the gap.
+  const step = () => {
+    const el = track.current;
+    const first = el?.children[0] as HTMLElement | undefined;
+    const second = el?.children[1] as HTMLElement | undefined;
+    return first && second ? second.offsetLeft - first.offsetLeft : el?.clientWidth || 1;
+  };
+
+  const go = (next: number) => {
+    track.current?.scrollTo?.({ left: next * step(), behavior: 'smooth' });
+    setIndex(next);
+  };
+
+  const onScroll = () => {
+    const el = track.current;
+    if (!el) return;
+    const next = Math.round(el.scrollLeft / step());
+    setIndex(Math.max(0, Math.min(activities.length - 1, next)));
+  };
+
+  return (
+    <div className="daycolumn">
+      <div
+        className={multiple ? 'dayacts multiple' : 'dayacts'}
+        ref={track}
+        onScroll={multiple ? onScroll : undefined}
+      >
+        {activities.map((a) => (
+          <DayActivity key={a.id} activity={a} format={format} />
+        ))}
+      </div>
+      {multiple && (
+        <div className="daydots">
+          {activities.map((a, i) => (
+            <button
+              key={a.id}
+              type="button"
+              className={i === index ? 'on' : undefined}
+              aria-label={t('home.activityOf', { n: i + 1, total: activities.length })}
+              aria-current={i === index ? 'true' : undefined}
+              onClick={() => go(i)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

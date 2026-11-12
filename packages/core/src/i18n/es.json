@@ -935,6 +935,7 @@
   "nav.home": "Inicio",
   "home.today": "Hoy",
   "home.yesterday": "Ayer",
+  "home.activityOf": "Actividad {n} de {total}",
   "home.last7": "Últimos 7 días",
   "home.metrics": "Métricas",
   "home.steps": "Pasos",

@@ -2,7 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter } from 'react-router';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
 import { routes } from './router';
@@ -50,6 +50,12 @@ function renderAt(path: string) {
 }
 
 describe('settings and profile', () => {
+  beforeEach(() => {
+    HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
+      this.setAttribute('open', '');
+    };
+  });
+
   afterEach(() => {
     localStorage.clear();
     vi.unstubAllGlobals();

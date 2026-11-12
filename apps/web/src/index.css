@@ -5411,11 +5411,16 @@ h1.greeting {
 
 /* Estimates: a page of its own, with room over the cards and a larger section heading. */
 .page.estimates > h1 {
+  font-size: 28px;
   margin-bottom: 24px;
 }
 
 .page.estimates .cards {
   margin-bottom: 14px;
+}
+
+.page.estimates .big {
+  font-size: 24px;
 }
 
 .page.estimates .ph h2 {

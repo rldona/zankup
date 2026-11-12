@@ -5158,6 +5158,7 @@ h1.greeting {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     padding: 20px;
+    margin-top: 8px;
     margin-bottom: 16px;
   }
 

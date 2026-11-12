@@ -5045,6 +5045,7 @@ h1.greeting {
   display: grid;
   gap: 16px 0;
   align-items: start;
+  margin-bottom: 16px;
 }
 
 .h-today .cards {

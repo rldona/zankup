@@ -3312,14 +3312,17 @@ textarea {
 }
 
 /* The last seven days in one card: two rows on a tablet and a single line on a desktop; the rows
-   stack on a phone. The 1 px gaps over the line colour draw a closed grid. */
+   stack on a phone. The cells draw their own hairlines, so the card keeps the theme's colour. */
+.h-last .hrow.empty {
+  display: none;
+}
+
 @media (min-width: 600px) {
   .h-last .rowsbox {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1px;
     padding: 0;
-    background: var(--line);
+    background: var(--surface);
     overflow: hidden;
   }
 
@@ -3328,6 +3331,21 @@ textarea {
     padding: 14px 16px;
     background: var(--surface);
     border: 0;
+    box-shadow:
+      inset 1px 0 var(--line),
+      inset 0 1px var(--line);
+  }
+
+  .h-last .hrow:nth-child(3n + 1) {
+    box-shadow: inset 0 1px var(--line);
+  }
+
+  .h-last .hrow:nth-child(-n + 3) {
+    box-shadow: inset 1px 0 var(--line);
+  }
+
+  .h-last .hrow:first-child {
+    box-shadow: none;
   }
 
   /* Each label sits next to its own figure, not pushed to the cell's far edge. */
@@ -3336,11 +3354,26 @@ textarea {
   }
 }
 
+@media (min-width: 600px) and (max-width: 1199px) {
+  .h-last .hrow.empty {
+    display: block;
+  }
+}
+
 @media (min-width: 1200px) {
   .h-last .rowsbox {
     grid-template-columns: none;
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .h-last .hrow,
+  .h-last .hrow:nth-child(n) {
+    box-shadow: inset 1px 0 var(--line);
+  }
+
+  .h-last .hrow:first-child {
+    box-shadow: none;
   }
 
   .h-last .hrow {

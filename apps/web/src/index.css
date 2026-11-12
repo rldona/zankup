@@ -3162,11 +3162,11 @@ textarea {
 }
 
 /* The last day: the activities on the left and the vitals on the right, half each from 600 px and
-   full width on a phone; both sides as tall as the taller one. */
+   full width on a phone. Each keeps its own height. */
 .daygrid {
   display: grid;
   gap: 12px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .daycolumn {
@@ -3176,18 +3176,12 @@ textarea {
 }
 
 .daycolumn .dayacts {
-  flex: 1;
   margin-bottom: 0;
 }
 
 @media (min-width: 600px) {
   .daygrid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .daygrid > *,
-  .daygrid .dayact {
-    height: 100%;
   }
 
   /* With no activities, the vitals take the whole row. */

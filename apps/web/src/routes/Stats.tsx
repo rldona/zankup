@@ -202,13 +202,13 @@ export function Stats() {
         <FitnessSection range={range} theme={theme} />
         <Volume range={range} unit={period.unit} theme={theme} format={format} />
         <Curves range={range} theme={theme} format={format} />
+        <Efficiency range={range} />
         <RecordsSection range={range} theme={theme} unit={format.unit} />
         <Progress
           theme={theme}
           distanceUnit={format.unit}
           selected={shown.mode === 'year' || shown.mode === 'month' ? shown.year : today.getFullYear()}
         />
-        <Efficiency range={range} />
         <CompareWithStrava theme={theme} />
       </div>
       {/* The period's figures against the year before: a table, after the charts the period changes. */}

@@ -20,6 +20,7 @@
   "signIn.title": "Iniciar sesión",
   "feed.title": "Actividades",
   "feed.empty": "Aún no hay actividades. Aparecen aquí tras la primera sincronización con Garmin.",
+  "feed.none": "Todavía no hay actividades que mostrar.",
   "feed.more": "Cargar más",
   "feed.all": "Todas",
   "feed.sports": "Deportes",

@@ -1935,6 +1935,13 @@ a.button.block {
   align-self: flex-start;
 }
 
+/* Zankup mark: one stroke in currentColor, so it takes the colour of what it sits on. */
+.brand-mark {
+  display: block;
+  width: auto;
+  flex: none;
+}
+
 /* Sign-in (OS-203), from the prototype: brand panel on the accent with waves, form on the right;
    one column on narrow screens. */
 .login {

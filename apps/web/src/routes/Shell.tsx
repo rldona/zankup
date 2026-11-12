@@ -12,7 +12,7 @@ import { api } from '../api';
 import { LatestActivity } from '../LatestActivity';
 import { MaterialIcon } from '../MaterialIcon';
 import { t } from '../i18n';
-import { Wordmark } from '../Wordmark';
+import { Mark } from '../Mark';
 import { useSync } from '../sync';
 import { SyncNow } from '../syncSheet';
 import { useOnline } from '../offline';
@@ -147,7 +147,7 @@ export function Shell() {
       <div className={`app${PUSHED.test(pathname) ? ' pushed' : ''}`}>
         <aside className="rail">
           <Link to="/" className="brand" aria-label="Zankup">
-            <Wordmark height="0.6rem" />
+            <Mark height="2rem" />
           </Link>
           <nav aria-label={t('nav.main')}>
             {SECTIONS.map((item) => (

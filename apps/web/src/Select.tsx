@@ -24,6 +24,7 @@ export function Select({
   label: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [drop, setDrop] = useState({ up: false, max: 280 });
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const current = useRef<HTMLButtonElement>(null);
@@ -31,7 +32,20 @@ export function Select({
 
   useEffect(() => {
     if (!open) return;
-    current.current?.focus();
+    // Inside a modal (which scrolls and clips its content) the list opens upwards when there is no
+    // room below, and never grows past the dialog's edge.
+    const button = trigger.current;
+    if (button) {
+      const rect = button.getBoundingClientRect();
+      const bounds = (
+        button.closest<HTMLElement>('.modal') ?? document.documentElement
+      ).getBoundingClientRect();
+      const below = bounds.bottom - rect.bottom - 12;
+      const above = rect.top - bounds.top - 12;
+      const up = below < 200 && above > below;
+      setDrop({ up, max: Math.max(140, Math.min(280, up ? above : below)) });
+    }
+    current.current?.focus({ preventScroll: true });
     const close = (event: PointerEvent) => {
       if (!box.current?.contains(event.target as Node)) setOpen(false);
     };
@@ -79,7 +93,17 @@ export function Select({
         <MaterialIcon name={open ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} />
       </button>
       {open && (
-        <ul className="zselect-list" role="listbox" aria-label={label} onKeyDown={arrows}>
+        <ul
+          className="zselect-list"
+          role="listbox"
+          aria-label={label}
+          onKeyDown={arrows}
+          style={{
+            top: drop.up ? 'auto' : 'calc(100% + 4px)',
+            bottom: drop.up ? 'calc(100% + 4px)' : 'auto',
+            maxHeight: drop.max,
+          }}
+        >
           {options.map((option) => (
             <li key={option.value}>
               <button

@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router';
 
 import { api } from '../api';
 import { MaterialIcon } from '../MaterialIcon';
+import { Select } from '../Select';
 import { CardTitle } from '../ui';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
@@ -176,27 +177,27 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
           <b>{t('activity.description')}</b>
           <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
-        <label className="field">
+        <div className="field">
           <b>{t('activity.sport')}</b>
-          <select value={sport} onChange={(e) => setSport(e.target.value)}>
-            {SPORTS.map((s) => (
-              <option key={s} value={s}>
-                {t(`sport.${s}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
+          <Select
+            label={t('activity.sport')}
+            value={sport}
+            onChange={setSport}
+            options={SPORTS.map((s) => ({ value: s, label: t(`sport.${s}`) }))}
+          />
+        </div>
+        <div className="field">
           <b>{t('gear.title')}</b>
-          <select value={gearId} onChange={(e) => setGearId(Number(e.target.value))}>
-            <option value={0}>{t('gear.none')}</option>
-            {choices.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <Select
+            label={t('gear.title')}
+            value={String(gearId)}
+            onChange={(value) => setGearId(Number(value))}
+            options={[
+              { value: '0', label: t('gear.none') },
+              ...choices.map((g) => ({ value: String(g.id), label: g.name })),
+            ]}
+          />
+        </div>
         <p className="note">{t('activity.editNote')}</p>
         <div className="actions">
           <button type="submit" className="primary" disabled={save.isPending}>
@@ -275,16 +276,18 @@ function ShareActivity({ activity, onClose }: { activity: ActivityDetail; onClos
     <Modal title={t('share.title')} onClose={onClose}>
       <p className="note">{t('share.privacy')}</p>
       <div className="fields">
-        <label className="field">
+        <div className="field">
           <b>{t('share.expires')}</b>
-          <select value={days} onChange={(e) => setDays(Number(e.target.value) as (typeof EXPIRY)[number])}>
-            {EXPIRY.map((d) => (
-              <option key={d} value={d}>
-                {d ? t('share.days', { count: d }) : t('share.never')}
-              </option>
-            ))}
-          </select>
-        </label>
+          <Select
+            label={t('share.expires')}
+            value={String(days)}
+            onChange={(value) => setDays(Number(value) as (typeof EXPIRY)[number])}
+            options={EXPIRY.map((d) => ({
+              value: String(d),
+              label: d ? t('share.days', { count: d }) : t('share.never'),
+            }))}
+          />
+        </div>
         <label className="check">
           <input type="checkbox" checked={showMap} onChange={(e) => setShowMap(e.target.checked)} />
           {t('share.showMap')}

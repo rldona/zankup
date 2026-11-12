@@ -3229,8 +3229,13 @@ textarea {
 }
 
 .page.health .titlebar h1,
-.page.goals .titlebar h1 {
+.page.goals .titlebar h1,
+.page.notifications > h1 {
   font-size: 28px;
+}
+
+.page.notifications .panel.events {
+  max-width: none;
 }
 
 .titlebar .iconbtn {

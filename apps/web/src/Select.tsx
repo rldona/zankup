@@ -24,27 +24,34 @@ export function Select({
   label: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [drop, setDrop] = useState({ up: false, max: 280 });
+  const [drop, setDrop] = useState({ top: 0, left: 0, width: 0 });
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const current = useRef<HTMLButtonElement>(null);
   const selected = options.find((option) => option.value === value);
+  const scrolls = options.length > 10;
 
   useEffect(() => {
     if (!open) return;
-    // Inside a modal (which scrolls and clips its content) the list opens upwards when there is no
-    // room below, and never grows past the dialog's edge.
-    const button = trigger.current;
-    if (button) {
+    // Fixed to the viewport: the list is not clipped by the scrolling modal around it. It opens
+    // upwards when there is no room below; only long lists get a scroll.
+    const place = () => {
+      const button = trigger.current;
+      if (!button) return;
       const rect = button.getBoundingClientRect();
-      const bounds = (
-        button.closest<HTMLElement>('.modal') ?? document.documentElement
-      ).getBoundingClientRect();
-      const below = bounds.bottom - rect.bottom - 12;
-      const above = rect.top - bounds.top - 12;
-      const up = below < 200 && above > below;
-      setDrop({ up, max: Math.max(140, Math.min(280, up ? above : below)) });
-    }
+      const height = options.length > 10 ? 280 : options.length * 40 + 8;
+      const below = window.innerHeight - rect.bottom - 12;
+      const above = rect.top - 12;
+      const up = below < height && above > below;
+      setDrop({
+        top: up ? Math.max(8, rect.top - height - 4) : rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+    place();
+    window.addEventListener('resize', place);
+    document.addEventListener('scroll', place, true);
     current.current?.focus({ preventScroll: true });
     const close = (event: PointerEvent) => {
       if (!box.current?.contains(event.target as Node)) setOpen(false);
@@ -57,10 +64,12 @@ export function Select({
     document.addEventListener('pointerdown', close);
     document.addEventListener('keydown', escape);
     return () => {
+      window.removeEventListener('resize', place);
+      document.removeEventListener('scroll', place, true);
       document.removeEventListener('pointerdown', close);
       document.removeEventListener('keydown', escape);
     };
-  }, [open]);
+  }, [open, options.length]);
 
   const choose = (option: string) => {
     onChange(option);
@@ -99,9 +108,14 @@ export function Select({
           aria-label={label}
           onKeyDown={arrows}
           style={{
-            top: drop.up ? 'auto' : 'calc(100% + 4px)',
-            bottom: drop.up ? 'calc(100% + 4px)' : 'auto',
-            maxHeight: drop.max,
+            position: 'fixed',
+            zIndex: 100,
+            top: drop.top,
+            left: drop.left,
+            width: drop.width,
+            right: 'auto',
+            bottom: 'auto',
+            maxHeight: scrolls ? 280 : undefined,
           }}
         >
           {options.map((option) => (

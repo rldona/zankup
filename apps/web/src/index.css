@@ -504,7 +504,6 @@ svg.i.m {
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
-  max-height: 280px;
   overflow: auto;
 }
 

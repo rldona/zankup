@@ -495,6 +495,8 @@
   "calendar.week": "Week",
   "calendar.prev": "Previous",
   "calendar.next": "Next",
+  "datepicker.today": "Today",
+  "datepicker.clear": "Clear",
   "calendar.selection": "{days} days selected: {summary}",
   "heatmap.title": "Your heatmap",
   "heatmap.note": "Every route you have recorded with GPS.",

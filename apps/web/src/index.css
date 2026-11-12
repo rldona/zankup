@@ -3228,6 +3228,11 @@ textarea {
   margin: 0;
 }
 
+.page.health .titlebar h1,
+.page.goals .titlebar h1 {
+  font-size: 24px;
+}
+
 .titlebar .iconbtn {
   background: transparent;
   border-radius: 999px;

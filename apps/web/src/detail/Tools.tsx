@@ -172,8 +172,34 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
   });
   const choices = (gear.data ?? []).filter((g) => !g.retired || g.id === activity.gear?.id);
   return (
-    <>
-      <Modal title={t('activity.edit')} onClose={onClose}>
+    <Modal
+      title={confirming ? t('activity.delete') : t('activity.edit')}
+      onClose={confirming ? () => setConfirming(false) : onClose}
+    >
+      {confirming ? (
+        <>
+          <p>{t('activity.deleteConfirm')}</p>
+          {remove.isError && (
+            <p className="note" role="alert">
+              {t('common.error')}
+            </p>
+          )}
+          <div className="actions end">
+            <button type="button" onClick={() => setConfirming(false)}>
+              {t('common.cancel')}
+            </button>
+            <button
+              type="button"
+              className="danger"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate()}
+            >
+              <MaterialIcon name="delete" />
+              {t('common.delete')}
+            </button>
+          </div>
+        </>
+      ) : (
         <form onSubmit={submit} className="stack">
           <label className="field">
             <b>{t('activity.name')}</b>
@@ -205,55 +231,33 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
             />
           </div>
           <p className="note">{t('activity.editNote')}</p>
-          <div className="actions">
+          <div className="actions end">
+            <button
+              type="button"
+              className="danger"
+              disabled={remove.isPending}
+              onClick={() => setConfirming(true)}
+            >
+              <MaterialIcon name="delete" />
+              {t('activity.delete')}
+            </button>
             <button type="submit" className="primary" disabled={save.isPending}>
               {t('settings.save')}
             </button>
-            {save.isError && (
-              <span className="note" role="alert">
-                {t('common.error')}
-              </span>
-            )}
           </div>
-          <button
-            type="button"
-            className="danger"
-            disabled={remove.isPending}
-            onClick={() => setConfirming(true)}
-          >
-            <MaterialIcon name="delete" />
-            {t('activity.delete')}
-          </button>
+          {save.isError && (
+            <p className="note" role="alert">
+              {t('common.error')}
+            </p>
+          )}
           {remove.isError && (
             <p className="note" role="alert">
               {t('common.error')}
             </p>
           )}
         </form>
-      </Modal>
-      {confirming && (
-        <Modal title={t('activity.delete')} onClose={() => setConfirming(false)}>
-          <p>{t('activity.deleteConfirm')}</p>
-          <div className="actions">
-            <button type="button" onClick={() => setConfirming(false)}>
-              {t('common.cancel')}
-            </button>
-            <button
-              type="button"
-              className="danger"
-              disabled={remove.isPending}
-              onClick={() => {
-                setConfirming(false);
-                remove.mutate();
-              }}
-            >
-              <MaterialIcon name="delete" />
-              {t('common.delete')}
-            </button>
-          </div>
-        </Modal>
       )}
-    </>
+    </Modal>
   );
 }
 

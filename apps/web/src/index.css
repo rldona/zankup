@@ -284,6 +284,22 @@ svg.i.m {
   align-items: center;
 }
 
+.actions.end {
+  justify-content: flex-end;
+}
+
+.actions.end button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+}
+
+.actions button.danger {
+  margin-top: 0;
+}
+
 .iconbtn {
   border: 0;
   background: var(--surface-2);

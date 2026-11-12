@@ -280,12 +280,18 @@ export function LastSevenDays() {
       : []),
   ];
   if (!rows.length) return null;
+  // On a tablet the grid is three columns: fill the last row so the empty cells keep the theme's
+  // colour instead of the line colour showing through.
+  const fillers = (3 - (rows.length % 3)) % 3;
   return (
     <section className="hblock" aria-labelledby="last7">
       <h2 id="last7">{t('home.last7')}</h2>
       <div className="panel rowsbox">
         {rows.map((r) => (
           <Row key={r.key} icon={r.icon} tint={r.tint} label={r.label} value={r.value} />
+        ))}
+        {Array.from({ length: fillers }, (_, i) => (
+          <div key={`filler-${i}`} className="hrow empty" aria-hidden="true" />
         ))}
       </div>
     </section>

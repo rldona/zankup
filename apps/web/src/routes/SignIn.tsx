@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { t } from '../i18n';
+import { Mark } from '../Mark';
 import { Wordmark } from '../Wordmark';
 import { safeNext } from '../next';
 import { deviceName } from '../signin/device';
@@ -114,6 +115,7 @@ function PasswordStep({
 
   return (
     <>
+      <Mark />
       <h1 className="greeting">{t('signIn.welcome')}</h1>
       <ErrorBox message={error} />
       {/* As on the app (OS-918): Google and the passkey first, then "or" and the e-mail and password,

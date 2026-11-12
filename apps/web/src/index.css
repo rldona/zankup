@@ -1938,6 +1938,16 @@ a.button.block {
   max-width: 380px;
 }
 
+/* The mark above the greeting: the theme's text colour, centred and sized for the card. */
+.lcard .brand-mark {
+  display: block;
+  width: auto;
+  height: 64px;
+  margin: 0 auto 46px;
+  color: var(--fg);
+  stroke-width: 260;
+}
+
 .lcard h1 {
   font-size: 24px;
   margin: 0 0 4px;
@@ -2159,6 +2169,10 @@ a.button.google {
   .lform {
     align-items: start;
     padding: 26px 20px;
+  }
+
+  .lcard .brand-mark {
+    height: 52px;
   }
 }
 

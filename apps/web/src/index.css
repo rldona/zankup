@@ -3090,7 +3090,7 @@ textarea {
 
 .page.home .titlebar {
   margin-top: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 .page.home .titlebar h1 {
@@ -3113,7 +3113,7 @@ textarea {
   .page.home .titlebar {
     justify-content: center;
     margin-top: 20px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
   }
 
   .page.home .homemark {

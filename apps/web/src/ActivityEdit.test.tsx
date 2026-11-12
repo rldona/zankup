@@ -88,4 +88,14 @@ describe('editing an activity (OS-909)', () => {
     expect(calls).not.toContain('DELETE /api/activities/7');
     expect(router.state.location.pathname).toBe('/activities/7');
   });
+
+  it('closes when the overlay is clicked', async () => {
+    mockApi();
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const router = createMemoryRouter(routes, { initialEntries: ['/activities/7'] });
+    render(<App queryClient={queryClient} router={router} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+    await userEvent.click(await screen.findByRole('dialog'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
 });

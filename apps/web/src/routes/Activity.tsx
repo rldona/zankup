@@ -129,6 +129,7 @@ function Detail({ activity }: { activity: ActivityDetail }) {
     />
   );
   const summary = <Summary activityId={activity.id} name={activity.name} />;
+  const figures = <Figures {...activityFigures(activity, { pace, format, t, locale })} />;
   const charts = (
     <>
       {activity.streams && !series && (
@@ -207,19 +208,20 @@ function Detail({ activity }: { activity: ActivityDetail }) {
         {!phone && <ActivityActions activity={activity} />}
       </header>
 
-      <Figures {...activityFigures(activity, { pace, format, t, locale })} />
       {desktop ? (
-        // Desktop: the charts and the rest at 70 % beside the Coach's summary at 30 %, which stays in
-        // view while the rest scrolls.
-        <div className="detailgrid">
-          <div className="detailmain">
-            {charts}
-            {rest}
+        // Desktop: the figures at 70 % beside the Coach's summary at 30 %; below, the charts and the
+        // rest use the whole width.
+        <>
+          <div className="detailgrid">
+            {figures}
+            <aside className="detailside">{summary}</aside>
           </div>
-          <aside className="detailside">{summary}</aside>
-        </div>
+          {charts}
+          {rest}
+        </>
       ) : (
         <>
+          {figures}
           {summary}
           {charts}
           {rest}

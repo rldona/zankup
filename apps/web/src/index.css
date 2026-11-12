@@ -2959,6 +2959,10 @@ a.button {
   gap: 12px;
 }
 
+.chat .weekly {
+  margin: 0;
+}
+
 .chat .intro p {
   margin: 0 0 10px;
   color: var(--muted);
@@ -3230,7 +3234,9 @@ textarea {
 
 .page.health .titlebar h1,
 .page.goals .titlebar h1,
-.page.notifications > h1 {
+.page.notifications > h1,
+.page.coach .titlebar h1,
+.page.coach > h1 {
   font-size: 28px;
 }
 

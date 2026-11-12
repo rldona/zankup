@@ -3888,6 +3888,11 @@ textarea {
   margin: 0;
 }
 
+/* A lone chart (an activity with only heart rate, say) takes the whole row, not half of it. */
+.chartgrid > :only-child {
+  grid-column: 1 / -1;
+}
+
 .chartfoot {
   display: flex;
   flex-wrap: wrap;

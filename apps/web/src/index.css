@@ -1987,6 +1987,13 @@ a.button.block {
   opacity: 0.85;
 }
 
+/* The wordmark sits on the left on a phone; centred on the brand panel from a tablet on. */
+@media (min-width: 600px) {
+  .lart > .wordmark {
+    align-self: center;
+  }
+}
+
 .lform {
   display: grid;
   place-items: center;

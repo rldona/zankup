@@ -1904,10 +1904,35 @@ a.button.block {
 }
 
 .bubble {
-  display: block;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
   background: color-mix(in srgb, var(--sport) 75%, transparent);
   border: 1px solid var(--sport);
+  color: #fff;
+}
+
+.bubble svg.i {
+  width: 62%;
+  height: 62%;
+}
+
+/* The month arrows: the chevrons alone, without the button's circle. */
+.page.calendar .statshead .actions button {
+  border: 0;
+  background: none;
+  border-radius: 8px;
+  padding: 4px;
+  color: var(--fg);
+}
+
+.page.calendar .statshead .actions button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.page.calendar .statshead .actions button svg.i {
+  width: 24px;
+  height: 24px;
 }
 
 .calweek {

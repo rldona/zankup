@@ -4194,7 +4194,7 @@ button.danger svg.i {
 .goalgrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
+  gap: 20px;
   align-items: start;
 }
 

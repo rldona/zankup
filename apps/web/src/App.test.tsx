@@ -181,7 +181,7 @@ describe('app skeleton', () => {
     expect(await screen.findByText('No activities to show yet.')).toBeInTheDocument();
   });
 
-  it('lays an activity out as the app: floating buttons on a phone, a side column on a desktop', async () => {
+  it('lays an activity out as the app: floating buttons on a phone, labelled buttons on a desktop', async () => {
     const n = 61;
     const streams = {
       t: Array.from({ length: n }, (_, i) => i * 10),
@@ -226,14 +226,12 @@ describe('app skeleton', () => {
     cleanup();
     vi.unstubAllGlobals();
 
-    // A desktop: the heart-rate zones in the main column, the labelled buttons beside the title;
-    // without the Coach the data takes the full width.
+    // A desktop: the heart-rate zones in the main column, the labelled buttons beside the title.
     media(1440);
     api();
     renderAt('/activities/7');
     const wide = await screen.findByRole('article');
     expect(await within(wide).findByRole('heading', { name: 'Heart rate zones' })).toBeInTheDocument();
-    expect(wide.querySelector('aside.detailside')?.childElementCount).toBe(0);
     expect(within(wide).getByRole('button', { name: 'Edit' })).not.toHaveClass('floatbtn');
   });
 

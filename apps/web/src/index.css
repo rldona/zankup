@@ -4859,23 +4859,6 @@ h1.greeting {
   border-width: 0 0 1px;
 }
 
-/* Desktop: the charts and the rest at 70 % beside the Coach's summary at 30 %, which sticks. */
-.detailgrid {
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.detailgrid.noside,
-.detailgrid:has(.detailside:empty) {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.detailgrid:has(.detailside:empty) .detailside {
-  display: none;
-}
-
 /* The profile charts: two by two across the full width. */
 @media (min-width: 1200px) {
   .page.detail .chartgrid {

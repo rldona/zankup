@@ -50,7 +50,7 @@ import { useResolvedTheme } from '../theme';
 import { ActivitySkeleton, ChartSkeleton, Pulse } from '../Skeleton';
 import { CardTitle } from '../ui';
 import { MaterialIcon } from '../MaterialIcon';
-import { DESKTOP, PHONE, useMedia } from '../media';
+import { PHONE, useMedia } from '../media';
 
 type Format = ReturnType<typeof formatters>;
 
@@ -116,7 +116,6 @@ function Detail({ activity }: { activity: ActivityDetail }) {
   );
 
   const phone = useMedia(PHONE);
-  const desktop = useMedia(DESKTOP);
   const map = series && hasMap && (
     <ActivityMap
       series={series}
@@ -153,8 +152,7 @@ function Detail({ activity }: { activity: ActivityDetail }) {
     </>
   );
   // The sections in the app's order (OS-909): on a ride the heart-rate zones follow the power curve and
-  // zones; on a run the splits follow the heart-rate zones. On a desktop they sit in the main column
-  // too, under the power zones; the side column keeps the Coach's summary.
+  // zones; on a run the splits follow the heart-rate zones.
   const rest = (
     <>
       <Photos activityId={activity.id} photos={activity.photo_list ?? []} />
@@ -208,25 +206,11 @@ function Detail({ activity }: { activity: ActivityDetail }) {
         {!phone && <ActivityActions activity={activity} />}
       </header>
 
-      {desktop ? (
-        // Desktop: the figures at 70 % beside the Coach's summary at 30 %; below, the charts and the
-        // rest use the whole width.
-        <>
-          <div className="detailgrid">
-            {figures}
-            <aside className="detailside">{summary}</aside>
-          </div>
-          {charts}
-          {rest}
-        </>
-      ) : (
-        <>
-          {figures}
-          {summary}
-          {charts}
-          {rest}
-        </>
-      )}
+      {/* As on the app: the figures, the Coach's summary below them, then the charts and the rest. */}
+      {figures}
+      {summary}
+      {charts}
+      {rest}
     </article>
   );
 }

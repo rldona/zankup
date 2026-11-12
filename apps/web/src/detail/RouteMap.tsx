@@ -1,4 +1,5 @@
 import {
+  fillGaps,
   mapStyle,
   metricValues,
   quantile,
@@ -77,7 +78,11 @@ export function RouteMap({
       .map((i) => all[i])
       .filter((p) => p !== undefined);
   }, [series]);
-  const values = useMemo(() => (metric ? metricValues(series, metric) : null), [series, metric]);
+  const values = useMemo(() => {
+    if (!metric) return null;
+    const raw = metricValues(series, metric);
+    return raw ? fillGaps(raw) : null;
+  }, [series, metric]);
   const hoverRef = useRef(onHover);
   useEffect(() => {
     hoverRef.current = onHover;
@@ -110,6 +115,11 @@ export function RouteMap({
       instance.on('load', () => {
         const tokens = themes[theme];
         instance.addSource('route', { type: 'geojson', data: segments(track, null) });
+        // A continuous line below the coloured segments: no gap if one segment is not drawn.
+        instance.addSource('route-base', {
+          type: 'geojson',
+          data: line(track.map((p) => p.lonLat)),
+        });
         instance.addSource('section', { type: 'geojson', data: point(undefined) });
         instance.addSource('cursor', { type: 'geojson', data: point(undefined) });
         instance.addSource('ends', {
@@ -136,6 +146,13 @@ export function RouteMap({
           source: 'route',
           layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint: { 'line-color': tokens.surface, 'line-width': 7 },
+        });
+        instance.addLayer({
+          id: 'route-base',
+          type: 'line',
+          source: 'route-base',
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': colour, 'line-width': 4 },
         });
         instance.addLayer({
           id: 'route',

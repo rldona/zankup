@@ -3100,7 +3100,7 @@ svg.source {
 }
 
 .ph {
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   gap: 8px 12px;
 }
 
@@ -3112,7 +3112,7 @@ svg.source {
 .page h2 {
   font-size: 17px;
   font-weight: 700;
-  margin: 22px 0 10px;
+  margin: 22px 0 20px;
 }
 
 .page .panel h2,

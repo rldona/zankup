@@ -264,7 +264,7 @@ function Today({ day }: { day: HealthDay }) {
           )}
         </article>
         {tiles.map((tile) => (
-          <article className="panel" key={tile.key}>
+          <article className={`panel${tile.key === 'health.steps' ? ' span' : ''}`} key={tile.key}>
             <h3>{t(tile.key)}</h3>
             <p className="big num">{tile.value}</p>
             {tile.source && <SourceMark source={tile.source[0]} label={from(...tile.source)} />}

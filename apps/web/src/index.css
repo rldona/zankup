@@ -1506,6 +1506,11 @@ a.button.block {
   gap: 0 14px;
 }
 
+/* The grid's gap is the only separation: no card adds its own bottom margin on top. */
+.cards > .panel {
+  margin: 0;
+}
+
 .big {
   font-size: 28px;
   font-weight: 700;
@@ -5043,17 +5048,18 @@ h1.greeting {
 }
 
 .h-today .cards {
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
-@media (min-width: 1200px) {
-  .h-today .cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+/* The disposition and the steps take the whole width; the vitals go two by two. */
+.h-today .cards > :first-child,
+.h-today .cards > .span {
+  grid-column: 1 / -1;
+}
 
-  .page.health .statgrid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.page.health .statgrid {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 599px) {

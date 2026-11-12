@@ -22,7 +22,7 @@ import { usePrefs } from '../prefs';
 import { drawCard, shareImage } from '../share/card';
 import { useResolvedTheme } from '../theme';
 
-/** A modal dialog that is open while mounted, and closes with Escape or its close button. */
+/** A modal dialog that is open while mounted, and closes with Escape, its close button or the overlay. */
 export function Modal({
   title,
   onClose,
@@ -49,6 +49,10 @@ export function Modal({
       aria-label={title}
       onClose={onClose}
       onCancel={onClose}
+      // A click on the ::backdrop lands on the dialog itself, not on its content.
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
       <header className="ph">
         <h2>{title}</h2>

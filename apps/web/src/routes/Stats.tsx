@@ -454,6 +454,15 @@ function RecordsSection({
   return (
     <section className="panel">
       <CardTitle>{t('stats.records')}</CardTitle>
+      {progression.length > 1 && (
+        <>
+          <h3>{t('stats.progression', { distance: effortName(chosen) })}</h3>
+          <ProgressionChart
+            points={progression.map((p) => ({ day: p.day, time_s: p.time_s, activity_id: p.activity_id }))}
+            theme={theme}
+          />
+        </>
+      )}
       <div className="scroll" tabIndex={0} role="region" aria-label={t('stats.records')}>
         <table className="num">
           <thead>
@@ -492,15 +501,6 @@ function RecordsSection({
           </tbody>
         </table>
       </div>
-      {progression.length > 1 && (
-        <>
-          <h3>{t('stats.progression', { distance: effortName(chosen) })}</h3>
-          <ProgressionChart
-            points={progression.map((p) => ({ day: p.day, time_s: p.time_s, activity_id: p.activity_id }))}
-            theme={theme}
-          />
-        </>
-      )}
     </section>
   );
 }

@@ -3088,6 +3088,11 @@ textarea {
   color: var(--fg);
 }
 
+.page.home .titlebar {
+  margin-top: 12px;
+  margin-bottom: 28px;
+}
+
 .page.home .titlebar h1 {
   position: absolute;
   width: 1px;
@@ -3104,9 +3109,15 @@ textarea {
 }
 
 @media (min-width: 600px) {
-  /* The header holds nothing visible once the title is for screen readers only. */
+  /* The wordmark centred over the page; the title stays for screen readers only. */
   .page.home .titlebar {
-    margin-bottom: 0;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+  }
+
+  .page.home .homemark {
+    flex: none;
   }
 }
 

@@ -3089,7 +3089,7 @@ textarea {
 }
 
 .page.home .titlebar {
-  margin-top: 12px;
+  margin-top: 0;
   margin-bottom: 16px;
 }
 
@@ -3112,7 +3112,7 @@ textarea {
   /* The wordmark centred over the page; the title stays for screen readers only. */
   .page.home .titlebar {
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 4px;
     margin-bottom: 24px;
   }
 

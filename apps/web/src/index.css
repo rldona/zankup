@@ -3312,31 +3312,27 @@ textarea {
 }
 
 /* The last seven days in one card: two rows on a tablet and a single line on a desktop; the rows
-   stack on a phone. */
+   stack on a phone. The 1 px gaps over the line colour draw a closed grid. */
 @media (min-width: 600px) {
   .h-last .rowsbox {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: 28px;
+    gap: 1px;
+    padding: 0;
+    background: var(--line);
     overflow: hidden;
   }
 
   .h-last .hrow {
     gap: 8px;
-    margin-top: -1px;
-    border-bottom: 0;
-    border-top: 1px solid var(--line);
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 0;
   }
 
   /* Each label sits next to its own figure, not pushed to the cell's far edge. */
   .h-last .hlabel {
     flex: none;
-  }
-
-  /* With two rows, the columns that start a row keep a clean left edge. */
-  .h-last .hrow:not(:nth-child(3n + 1)) {
-    border-left: 1px solid var(--line);
-    padding-left: 16px;
   }
 }
 
@@ -3345,19 +3341,11 @@ textarea {
     grid-template-columns: none;
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
-    column-gap: 20px;
   }
 
   .h-last .hrow {
     gap: 8px;
     font-size: 14px;
-    border-left: 1px solid var(--line);
-    padding-left: 16px;
-  }
-
-  .h-last .hrow:first-child {
-    border-left: 0;
-    padding-left: 0;
   }
 
   .h-last .hrow svg.i {

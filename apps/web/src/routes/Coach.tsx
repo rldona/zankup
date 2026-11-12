@@ -222,13 +222,13 @@ function Chat({ weekly, budgetSpent }: { weekly: boolean; budgetSpent: boolean }
           </button>
         )}
       </div>
-      {/* Desktop: the weekly report on the left, the conversation on the right (docs/prototypes/web). */}
+      {/* As on the app: the weekly report is the first block of the conversation, not a side column. */}
       <div className="coachgrid">
-        {weekly && <Weekly />}
         {budgetSpent ? (
           <p className="warn">{t('coach.budget')}</p>
         ) : (
           <section className="chat" aria-label={t('coach.title')}>
+            {weekly && <Weekly />}
             {turns.length === 0 && (
               <div className="intro">
                 <p className="note">{t('coach.suggestionsTitle')}</p>

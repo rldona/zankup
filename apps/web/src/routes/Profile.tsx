@@ -437,11 +437,11 @@ function EditProfile({ me, onDone }: { me: Me; onDone: () => void }) {
         </p>
       )}
       <div className="actions end">
-        <button type="submit" className="primary" disabled={save.isPending}>
-          {t('settings.save')}
-        </button>
         <button type="button" onClick={onDone}>
           {t('profile.cancel')}
+        </button>
+        <button type="submit" className="primary" disabled={save.isPending}>
+          {t('settings.save')}
         </button>
       </div>
     </form>

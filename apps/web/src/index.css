@@ -138,6 +138,11 @@ svg.i.m {
   padding: calc(18px + env(safe-area-inset-top)) 6px calc(14px + env(safe-area-inset-bottom));
   padding-left: calc(6px + env(safe-area-inset-left));
   overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
 }
 
 .rail .brand {

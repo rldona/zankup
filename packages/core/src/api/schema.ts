@@ -420,6 +420,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/auth/dev-login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Dev Login
+     * @description Development only: sign in as the first user without a password or code.
+     */
+    post: operations['devLogin'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/setup': {
     parameters: {
       query?: never;
@@ -3625,6 +3645,12 @@ export interface components {
        * @description Public: the Android app asks Google for ID tokens for this client
        */
       google_client_id?: string | null;
+      /**
+       * Dev Login
+       * @description Development only: one-click sign-in is on
+       * @default false
+       */
+      dev_login: boolean;
     };
     /** PushKey */
     PushKey: {
@@ -5366,6 +5392,26 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  devLogin: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Me'];
+        };
       };
     };
   };

@@ -15,13 +15,14 @@ import { useNavigate } from 'react-router';
 
 import { api } from '../api';
 import { MaterialIcon } from '../MaterialIcon';
+import { Select } from '../Select';
 import { CardTitle } from '../ui';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { drawCard, shareImage } from '../share/card';
 import { useResolvedTheme } from '../theme';
 
-/** A modal dialog that is open while mounted, and closes with Escape or its close button. */
+/** A modal dialog that is open while mounted, and closes with Escape, its close button or the overlay. */
 export function Modal({
   title,
   onClose,
@@ -48,6 +49,10 @@ export function Modal({
       aria-label={title}
       onClose={onClose}
       onCancel={onClose}
+      // A click on the ::backdrop lands on the dialog itself, not on its content.
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
       <header className="ph">
         <h2>{title}</h2>
@@ -129,6 +134,7 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
   const [description, setDescription] = useState(activity.description ?? '');
   const [sport, setSport] = useState(activity.sport);
   const [gearId, setGearId] = useState(activity.gear?.id ?? 0);
+  const [confirming, setConfirming] = useState(false);
   const save = useMutation({
     mutationFn: async () => {
       const { error } = await api.PATCH('/api/activities/{activity_id}', {
@@ -166,65 +172,91 @@ function EditActivity({ activity, onClose }: { activity: ActivityDetail; onClose
   });
   const choices = (gear.data ?? []).filter((g) => !g.retired || g.id === activity.gear?.id);
   return (
-    <Modal title={t('activity.edit')} onClose={onClose}>
-      <form onSubmit={submit} className="stack">
-        <label className="field">
-          <b>{t('activity.name')}</b>
-          <input value={name} maxLength={255} onChange={(e) => setName(e.target.value)} />
-        </label>
-        <label className="field">
-          <b>{t('activity.description')}</b>
-          <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </label>
-        <label className="field">
-          <b>{t('activity.sport')}</b>
-          <select value={sport} onChange={(e) => setSport(e.target.value)}>
-            {SPORTS.map((s) => (
-              <option key={s} value={s}>
-                {t(`sport.${s}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <b>{t('gear.title')}</b>
-          <select value={gearId} onChange={(e) => setGearId(Number(e.target.value))}>
-            <option value={0}>{t('gear.none')}</option>
-            {choices.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="note">{t('activity.editNote')}</p>
-        <div className="actions">
-          <button type="submit" className="primary" disabled={save.isPending}>
-            {t('settings.save')}
-          </button>
-          {save.isError && (
-            <span className="note" role="alert">
+    <Modal
+      title={confirming ? t('activity.delete') : t('activity.edit')}
+      onClose={confirming ? () => setConfirming(false) : onClose}
+    >
+      {confirming ? (
+        <>
+          <p>{t('activity.deleteConfirm')}</p>
+          {remove.isError && (
+            <p className="note" role="alert">
               {t('common.error')}
-            </span>
+            </p>
           )}
-        </div>
-        <button
-          type="button"
-          className="danger"
-          disabled={remove.isPending}
-          onClick={() => {
-            if (window.confirm(`${t('activity.delete')}?\n\n${t('activity.deleteConfirm')}`)) remove.mutate();
-          }}
-        >
-          <MaterialIcon name="delete" />
-          {t('activity.delete')}
-        </button>
-        {remove.isError && (
-          <p className="note" role="alert">
-            {t('common.error')}
-          </p>
-        )}
-      </form>
+          <div className="actions end">
+            <button type="button" onClick={() => setConfirming(false)}>
+              {t('common.cancel')}
+            </button>
+            <button
+              type="button"
+              className="danger"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate()}
+            >
+              <MaterialIcon name="delete" />
+              {t('common.delete')}
+            </button>
+          </div>
+        </>
+      ) : (
+        <form onSubmit={submit} className="stack">
+          <label className="field">
+            <b>{t('activity.name')}</b>
+            <input value={name} maxLength={255} onChange={(e) => setName(e.target.value)} />
+          </label>
+          <label className="field">
+            <b>{t('activity.description')}</b>
+            <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </label>
+          <div className="field">
+            <b>{t('activity.sport')}</b>
+            <Select
+              label={t('activity.sport')}
+              value={sport}
+              onChange={setSport}
+              options={SPORTS.map((s) => ({ value: s, label: t(`sport.${s}`) }))}
+            />
+          </div>
+          <div className="field">
+            <b>{t('gear.title')}</b>
+            <Select
+              label={t('gear.title')}
+              value={String(gearId)}
+              onChange={(value) => setGearId(Number(value))}
+              options={[
+                { value: '0', label: t('gear.none') },
+                ...choices.map((g) => ({ value: String(g.id), label: g.name })),
+              ]}
+            />
+          </div>
+          <p className="note">{t('activity.editNote')}</p>
+          <div className="actions end">
+            <button
+              type="button"
+              className="danger"
+              disabled={remove.isPending}
+              onClick={() => setConfirming(true)}
+            >
+              <MaterialIcon name="delete" />
+              {t('activity.delete')}
+            </button>
+            <button type="submit" className="primary" disabled={save.isPending}>
+              {t('settings.save')}
+            </button>
+          </div>
+          {save.isError && (
+            <p className="note" role="alert">
+              {t('common.error')}
+            </p>
+          )}
+          {remove.isError && (
+            <p className="note" role="alert">
+              {t('common.error')}
+            </p>
+          )}
+        </form>
+      )}
     </Modal>
   );
 }
@@ -273,61 +305,71 @@ function ShareActivity({ activity, onClose }: { activity: ActivityDetail; onClos
   };
   return (
     <Modal title={t('share.title')} onClose={onClose}>
-      <p className="note">{t('share.privacy')}</p>
-      <div className="fields">
-        <label className="field">
-          <b>{t('share.expires')}</b>
-          <select value={days} onChange={(e) => setDays(Number(e.target.value) as (typeof EXPIRY)[number])}>
-            {EXPIRY.map((d) => (
-              <option key={d} value={d}>
-                {d ? t('share.days', { count: d }) : t('share.never')}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={showMap} onChange={(e) => setShowMap(e.target.checked)} />
-          {t('share.showMap')}
-        </label>
-      </div>
-      <div className="actions">
-        <button type="button" className="primary" onClick={() => create.mutate()} disabled={create.isPending}>
-          {t('share.create')}
-        </button>
-        <ShareImageButton activity={activity} showMap={showMap} />
-      </div>
-      {created && (
-        <div className="sharelink">
-          <input readOnly value={created} aria-label={t('share.link')} onFocus={(e) => e.target.select()} />
-          <button type="button" onClick={() => void copy()}>
-            {copied ? t('share.copied') : t('share.copy')}
-          </button>
+      <div className="stack share">
+        <p className="note">{t('share.privacy')}</p>
+        <div className="fields sharefields">
+          <div className="field">
+            <b>{t('share.expires')}</b>
+            <Select
+              label={t('share.expires')}
+              value={String(days)}
+              onChange={(value) => setDays(Number(value) as (typeof EXPIRY)[number])}
+              options={EXPIRY.map((d) => ({
+                value: String(d),
+                label: d ? t('share.days', { count: d }) : t('share.never'),
+              }))}
+            />
+          </div>
+          <label className="check">
+            <input type="checkbox" checked={showMap} onChange={(e) => setShowMap(e.target.checked)} />
+            {t('share.showMap')}
+          </label>
         </div>
-      )}
-      {(shares.data ?? []).length > 0 && (
-        <>
-          <h3>{t('share.active')}</h3>
-          <ul className="rows">
-            {shares.data?.map((s) => (
-              <li key={s.id}>
-                <span>
-                  <b>
-                    {s.expires_at
-                      ? t('share.until', { date: new Date(s.expires_at).toLocaleDateString(locale) })
-                      : t('share.never')}
-                  </b>
-                  <small className="note">
-                    {t(s.show_map ? 'share.withMap' : 'share.noMap')} · {t('share.views', { count: s.views })}
-                  </small>
-                </span>
-                <button type="button" onClick={() => revoke.mutate(s.id)} disabled={revoke.isPending}>
-                  {t('share.revoke')}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+        <div className="actions end">
+          <button
+            type="button"
+            className="primary"
+            onClick={() => create.mutate()}
+            disabled={create.isPending}
+          >
+            {t('share.create')}
+          </button>
+          <ShareImageButton activity={activity} showMap={showMap} />
+        </div>
+        {created && (
+          <div className="sharelink">
+            <input readOnly value={created} aria-label={t('share.link')} onFocus={(e) => e.target.select()} />
+            <button type="button" onClick={() => void copy()}>
+              {copied ? t('share.copied') : t('share.copy')}
+            </button>
+          </div>
+        )}
+        {(shares.data ?? []).length > 0 && (
+          <>
+            <h3>{t('share.active')}</h3>
+            <ul className="rows">
+              {shares.data?.map((s) => (
+                <li key={s.id}>
+                  <span>
+                    <b>
+                      {s.expires_at
+                        ? t('share.until', { date: new Date(s.expires_at).toLocaleDateString(locale) })
+                        : t('share.never')}
+                    </b>
+                    <small className="note">
+                      {t(s.show_map ? 'share.withMap' : 'share.noMap')} ·{' '}
+                      {t('share.views', { count: s.views })}
+                    </small>
+                  </span>
+                  <button type="button" onClick={() => revoke.mutate(s.id)} disabled={revoke.isPending}>
+                    {t('share.revoke')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
     </Modal>
   );
 }

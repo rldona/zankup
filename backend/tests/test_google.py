@@ -184,6 +184,7 @@ def test_providers_and_safe_redirects(ctx: Ctx) -> None:
     assert ctx.anon.get("/api/auth/google/providers").json() == {
         "google": True,
         "google_client_id": CLIENT_ID,
+        "dev_login": False,
     }
     start = ctx.anon.get("/api/auth/google/start", params={"next": "https://evil.test"})
     flow = jwt.decode(start.cookies[COOKIE], options={"verify_signature": False})

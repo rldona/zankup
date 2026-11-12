@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
 import { api } from '../api';
+import { DatePicker } from '../DatePicker';
 import { locale, t } from '../i18n';
 
 const day = (iso: string) =>
@@ -78,12 +79,12 @@ export function ServiceKeyForm({ name }: { name: ServiceKey['name'] }) {
           />
         </label>
         {name === 'garmin' && (
-          <label className="field">
+          <div className="field">
             <span>
               <b>{t('keys.expiresOn')}</b>
             </span>
-            <input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} />
-          </label>
+            <DatePicker label={t('keys.expiresOn')} value={expires} onChange={setExpires} />
+          </div>
         )}
       </div>
       <p className="actions">

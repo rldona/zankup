@@ -30,7 +30,6 @@ export function Notifications() {
   const prefs = settings.data?.notifications;
   return (
     <>
-      <h2>{t('notifications.title')}</h2>
       <p className="note">{t('notifications.help')}</p>
       {state === 'unsupported' && <p className="note">{t('notifications.unsupported')}</p>}
       {state === 'denied' && <p className="warn">{t('notifications.denied')}</p>}

@@ -30,6 +30,8 @@ services:
       DATA_DIR: /data
       # Do not write root-owned __pycache__ folders into the mounted source on the host.
       PYTHONDONTWRITEBYTECODE: '1'
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEV_LOGIN: ${DEV_LOGIN:-false}
       GARMIN_PERSONAL_API_KEY: ${GARMIN_PERSONAL_API_KEY:-}
       JWT_SECRET: ${JWT_SECRET:-local-development-only}
       RESEND_API_KEY: ${RESEND_API_KEY:-}

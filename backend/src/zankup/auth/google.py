@@ -65,6 +65,7 @@ class Providers(BaseModel):
     google_client_id: str | None = Field(
         default=None, description="Public: the Android app asks Google for ID tokens for this client"
     )
+    dev_login: bool = Field(default=False, description="Development only: one-click sign-in is on")
 
 
 def _configured(settings: AppSettings) -> tuple[str, str]:
@@ -107,7 +108,11 @@ def _back(settings: AppSettings, path: str) -> RedirectResponse:
 def providers(settings: AppSettings) -> Providers:
     """Which extra sign-in methods this instance offers (public: the sign-in screen asks)."""
     enabled = bool(settings.google_client_id and settings.google_client_secret)
-    return Providers(google=enabled, google_client_id=settings.google_client_id if enabled else None)
+    return Providers(
+        google=enabled,
+        google_client_id=settings.google_client_id if enabled else None,
+        dev_login=settings.dev_login and not settings.is_production,
+    )
 
 
 @router.get("/start", operation_id="googleStart", response_class=RedirectResponse, status_code=303)

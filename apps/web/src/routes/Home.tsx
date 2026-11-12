@@ -18,11 +18,11 @@ export function Home() {
   const ai = useQuery({ ...aiStatusQuery(api), retry: false });
   return (
     <section className="page home">
-      {/* On a phone, as the app: the wordmark, then the Coach and the notifications. From 600 px those
-          two are in the rail and the title is enough. */}
+      {/* On a phone, as the app: the wordmark on the left, then the Coach and the notifications. From
+          600 px the wordmark is centred and those two live in the rail. */}
       <div className="titlebar">
-        <span className="homemark phone-only" aria-hidden="true">
-          <Wordmark height="0.9rem" />
+        <span className="homemark" aria-hidden="true">
+          <Wordmark height="1.1rem" />
         </span>
         <h1>{t('nav.home')}</h1>
         {ai.data?.available && ai.data.enabled && (
@@ -39,9 +39,8 @@ export function Home() {
           <MaterialIcon name="notifications" />
         </Link>
       </div>
-      {/* The app's order at every size. Desktop: the week beside the last day, the metrics in one row,
-          the last seven days in one card. Tablet: the week across, then the last day beside the
-          metrics two by two. Phone: one column. */}
+      {/* The app's order at every size, one column: the week across the full width, then the last day,
+          the metrics in one row where there is room, and the last seven days in one card. */}
       <div className="homegrid">
         <div className="h-week">
           <WeekHeader footer={<UsualWeek />} />

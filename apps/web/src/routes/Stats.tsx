@@ -26,12 +26,12 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { api } from '../api';
-import { Sparkline } from '../charts/static';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import {
   ComparisonChart,
   CurveChart,
+  EfficiencyChart,
   FitnessChart,
   ProgressChart,
   ProgressionChart,
@@ -202,13 +202,13 @@ export function Stats() {
         <FitnessSection range={range} theme={theme} />
         <Volume range={range} unit={period.unit} theme={theme} format={format} />
         <Curves range={range} theme={theme} format={format} />
+        <Efficiency range={range} theme={theme} />
         <RecordsSection range={range} theme={theme} unit={format.unit} />
         <Progress
           theme={theme}
           distanceUnit={format.unit}
           selected={shown.mode === 'year' || shown.mode === 'month' ? shown.year : today.getFullYear()}
         />
-        <Efficiency range={range} />
         <CompareWithStrava theme={theme} />
       </div>
       {/* The period's figures against the year before: a table, after the charts the period changes. */}
@@ -454,6 +454,15 @@ function RecordsSection({
   return (
     <section className="panel">
       <CardTitle>{t('stats.records')}</CardTitle>
+      {progression.length > 1 && (
+        <>
+          <h3>{t('stats.progression', { distance: effortName(chosen) })}</h3>
+          <ProgressionChart
+            points={progression.map((p) => ({ day: p.day, time_s: p.time_s, activity_id: p.activity_id }))}
+            theme={theme}
+          />
+        </>
+      )}
       <div className="scroll" tabIndex={0} role="region" aria-label={t('stats.records')}>
         <table className="num">
           <thead>
@@ -492,15 +501,6 @@ function RecordsSection({
           </tbody>
         </table>
       </div>
-      {progression.length > 1 && (
-        <>
-          <h3>{t('stats.progression', { distance: effortName(chosen) })}</h3>
-          <ProgressionChart
-            points={progression.map((p) => ({ day: p.day, time_s: p.time_s, activity_id: p.activity_id }))}
-            theme={theme}
-          />
-        </>
-      )}
     </section>
   );
 }
@@ -546,7 +546,13 @@ function Progress({
   );
 }
 
-function Efficiency({ range }: { range: { from: string; to: string } }) {
+function Efficiency({
+  range,
+  theme,
+}: {
+  range: { from: string; to: string };
+  theme: ReturnType<typeof useResolvedTheme>;
+}) {
   const points = useQuery(efficiencyQuery(api, range));
   if (!points.data || points.data.length < 3) return null;
   const values = points.data.map((p) => p.efficiency);
@@ -560,9 +566,7 @@ function Efficiency({ range }: { range: { from: string; to: string } }) {
         <h2>{t('stats.efficiency')}</h2>
         <span className="num">{`${change > 0 ? '+' : ''}${change.toFixed(1)} %`}</span>
       </div>
-      <div className="efficiency">
-        <SparklineRow values={values} />
-      </div>
+      <EfficiencyChart points={points.data} theme={theme} />
       <p className="note">{t('stats.efficiencyNote')}</p>
     </section>
   );
@@ -617,19 +621,21 @@ function CompareWithStrava({ theme }: { theme: ReturnType<typeof useResolvedThem
             theme={theme}
             label={t('compare.chart', { metric: t(`compare.${metric}`) })}
           />
-          <h3>{t('compare.largest')}</h3>
-          <ul className="rows">
-            {current.largest.map((p) => (
-              <li key={p.activity_id}>
-                <Link to={`/activities/${p.activity_id}`}>
-                  {t('compare.activity', { id: p.activity_id })}
-                </Link>
-                <span className="num">
-                  Zankup {number(p.ours, 0)} · Strava {number(p.strava, 0)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <details>
+            <summary>{t('compare.largest')}</summary>
+            <ul className="rows">
+              {current.largest.map((p) => (
+                <li key={p.activity_id}>
+                  <Link to={`/activities/${p.activity_id}`}>
+                    {t('compare.activity', { id: p.activity_id })}
+                  </Link>
+                  <span className="num">
+                    Zankup {number(p.ours, 0)} · Strava {number(p.strava, 0)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
         </>
       ) : (
         <p className="state">{t('compare.notEnough')}</p>
@@ -647,8 +653,4 @@ function CompareWithStrava({ theme }: { theme: ReturnType<typeof useResolvedThem
       )}
     </section>
   );
-}
-
-function SparklineRow({ values }: { values: number[] }) {
-  return <Sparkline values={values} label={t('stats.efficiency')} />;
 }

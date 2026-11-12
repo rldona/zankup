@@ -342,6 +342,50 @@ export function ProgressionChart({
   );
 }
 
+/** Aerobic efficiency per activity (OS-317): speed per heartbeat, better when it climbs. */
+export function EfficiencyChart({
+  points,
+  theme,
+}: {
+  points: { day: string; activity_id: number; efficiency: number }[];
+  theme: ThemeName;
+}) {
+  const c = palette(theme);
+  const open = useOpenActivity();
+  const option = useMemo(
+    () => ({
+      grid: { left: 52, right: 14, top: 14, bottom: 26 },
+      tooltip: { trigger: 'axis', valueFormatter: (v: number) => v.toFixed(2) },
+      xAxis: { type: 'category', data: points.map((p) => p.day), axisLabel: { hideOverlap: true } },
+      yAxis: {
+        type: 'value',
+        scale: true,
+        axisLabel: { formatter: (v: number) => v.toFixed(1) },
+      },
+      series: [
+        {
+          name: t('stats.efficiency'),
+          type: 'line',
+          data: points.map((p) => ({ value: p.efficiency, activityId: p.activity_id })),
+          lineStyle: { color: c.accent, width: 2 },
+          itemStyle: { color: c.accent },
+          symbolSize: 6,
+        },
+      ],
+    }),
+    [points, c],
+  );
+  return (
+    <EChart
+      option={option}
+      theme={theme}
+      height={240}
+      onReady={open}
+      summary={points.map((p) => `${p.day} ${p.efficiency.toFixed(2)}`).join(', ')}
+    />
+  );
+}
+
 /** Ours against Strava's for one metric (OS-323): each point opens its activity. */
 export function ComparisonChart({
   points,
@@ -381,5 +425,5 @@ export function ComparisonChart({
       ],
     };
   }, [points, c.accent, c.muted]);
-  return <EChart option={option} theme={theme} summary={label} height={240} onReady={open} />;
+  return <EChart option={option} theme={theme} summary={label} height={560} onReady={open} />;
 }

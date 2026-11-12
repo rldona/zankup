@@ -22,7 +22,8 @@ import { api } from '../api';
 import { TrackMap } from '../detail/TrackMap';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
-import { SportIcon } from '../SportIcon';
+import { MaterialIcon } from '../MaterialIcon';
+import { SportGlyph, SportIcon } from '../SportIcon';
 import { day } from '../stats/format';
 import { useResolvedTheme } from '../theme';
 import { ChartSkeleton, PageSkeleton, Pulse } from '../Skeleton';
@@ -62,6 +63,7 @@ export function TrainingCalendar() {
     setSelection(null);
   };
   const list = days.data ?? [];
+  const today = iso(new Date());
   const weeks: CalendarDay[][] = [];
   for (let i = 0; i < list.length; i += 7) weeks.push(list.slice(i, i + 7));
   const heaviest = Math.max(1, ...list.flatMap((d) => d.activities.map((a) => a.load ?? 0)));
@@ -76,11 +78,11 @@ export function TrainingCalendar() {
         <h1>{t('calendar.title')}</h1>
         <div className="actions">
           <button type="button" onClick={() => shift(-1)} aria-label={t('calendar.prev')}>
-            ‹
+            <MaterialIcon name="chevron_left" />
           </button>
           <b className="month">{first.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}</b>
           <button type="button" onClick={() => shift(1)} aria-label={t('calendar.next')}>
-            ›
+            <MaterialIcon name="chevron_right" />
           </button>
         </div>
       </div>
@@ -114,7 +116,7 @@ export function TrainingCalendar() {
                 <div
                   key={d.day}
                   role="gridcell"
-                  className={`calday${inMonth ? '' : ' out'}${isSelected ? ' sel' : ''}`}
+                  className={`calday${inMonth ? '' : ' out'}${isSelected ? ' sel' : ''}${d.day === today ? ' today' : ''}`}
                   onPointerDown={() => {
                     setSelection([index, index]);
                     setDragging(true);
@@ -144,7 +146,9 @@ export function TrainingCalendar() {
                           title={`${a.name ?? t(`sport.${asSport(a.sport)}`)} · ${formatDuration(a.moving_s)}`}
                           aria-label={`${a.name ?? t(`sport.${asSport(a.sport)}`)} · ${formatDuration(a.moving_s)}`}
                           onPointerDown={(e) => e.stopPropagation()}
-                        />
+                        >
+                          <SportGlyph sport={asSport(a.sport)} />
+                        </Link>
                       );
                     })}
                   </span>

@@ -208,7 +208,8 @@ describe('phase 6: health', () => {
       '/api/wellness/google/start',
     );
     expect(screen.getByText(/10 nights, 12 days/)).toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Sleep' }), 'garmin');
+    await userEvent.click(screen.getByRole('button', { name: /^Sleep:/ }));
+    await userEvent.click(screen.getByRole('option', { name: 'Garmin' }));
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({ priority: { sleep: ['garmin'] } }),
     );

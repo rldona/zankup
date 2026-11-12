@@ -1236,6 +1236,26 @@ input[type='checkbox']:disabled {
   margin: 10px 0;
 }
 
+/* Labels of different heights (one with a help line): their controls line up at the bottom. */
+.fields.aligned {
+  align-items: end;
+}
+
+/* The options under a button (Notifications) keep their distance. */
+.actions + .checks {
+  margin-top: 16px;
+}
+
+/* Actions breathe above and below, inside panels and settings sections. */
+.panel > .actions,
+.settingsmain .actions {
+  margin: 12px 0;
+}
+
+.page > .actions {
+  margin: 10px 0;
+}
+
 /* Sharing (OS-412): the expiry selector and the map switch on one line, the buttons to the right,
    with room between the blocks. */
 .stack.share {
@@ -1283,6 +1303,12 @@ input[type='checkbox']:disabled {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+/* A health metric's preferred source: the app's selector, not the native one. */
+.rows li > .prefer {
+  width: 190px;
+  flex: none;
 }
 
 .badge {
@@ -3270,7 +3296,7 @@ button {
   border-radius: 999px;
   background: transparent;
   border-color: var(--muted);
-  padding: 7px 16px;
+  padding: 9px 16px;
   font-weight: 600;
 }
 
@@ -4636,6 +4662,22 @@ button.danger svg.i {
 .settingslist {
   position: sticky;
   top: 16px;
+}
+
+/* The chosen row keeps its rounded background inside the card. */
+.panel.menu.settingslist {
+  padding: 8px 10px;
+  overflow: hidden;
+}
+
+.panel.menu.settingslist a {
+  padding: 11px 12px;
+  border-radius: 10px;
+}
+
+.panel.menu.settingslist a.on {
+  background: var(--accent-soft);
+  border-radius: 10px;
 }
 
 .settingslist a.on {

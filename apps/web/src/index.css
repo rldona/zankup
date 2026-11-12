@@ -896,8 +896,8 @@ svg.i.m {
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
   margin: 0 0 14px;
 }
 
@@ -5409,7 +5409,14 @@ h1.greeting {
   }
 }
 
-/* Settings: the chosen section marked as in the rail. */
+/* Estimates: a page of its own, with room over the cards and a larger section heading. */
+.page.estimates > h1 {
+  margin-bottom: 24px;
+}
+
+.page.estimates .ph h2 {
+  font-size: 20px;
+}
 .settingslist a.on {
   background: var(--accent-soft);
   border-radius: 12px;

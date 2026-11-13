@@ -36,8 +36,6 @@
   "feed.stat.ascent": "Elevation",
   "feed.prev": "Previous",
   "feed.next": "Next",
-  "feed.year": "In {year}",
-  "feed.stat.count": "Activities",
   "feed.end": "That's all of them.",
   "activity.back": "Back to activities",
   "activity.notFound": "This activity does not exist or is not yours.",

@@ -66,6 +66,23 @@ button {
   color: var(--run);
 }
 
+/* Flat: cards, panels and the rail stand apart by their surface on the background, with no edge or
+   shadow. High contrast keeps the line, as its surface is the background's white. Menus, dialogs and
+   what floats over a map keep their edge and shadow, as do fields and buttons. */
+:root {
+  --card-line: transparent;
+}
+
+[data-theme='highContrast'] {
+  --card-line: var(--line);
+}
+
+@media (prefers-contrast: more) {
+  :root:not([data-theme]) {
+    --card-line: var(--line);
+  }
+}
+
 /* The signed-in frame (OS-202, docs/prototypes/web), in three sizes as the app: below 600 px the bottom
    tab bar and one header per screen; from 600 px a rail of 88 px; from 1200 px the content centred at one
    width shared by every screen. The phone's safe areas are respected. */
@@ -130,7 +147,7 @@ svg.i.m {
 
 .rail {
   background: var(--surface);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--card-line);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -417,7 +434,7 @@ a.stepbtn:hover {
   flex-direction: column-reverse;
   padding: 10px 12px;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
   min-width: 0;
 }
@@ -881,9 +898,8 @@ a.stepbtn:hover {
 .card {
   display: block;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 14px;
   margin-bottom: 10px;
   color: var(--fg);
@@ -1036,7 +1052,7 @@ a.stepbtn:hover {
   display: flex;
   flex-direction: column-reverse;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: 12px;
   padding: 10px 12px;
 }
@@ -1055,9 +1071,8 @@ a.stepbtn:hover {
 
 .panel {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 14px;
   margin-bottom: 14px;
 }
@@ -1664,9 +1679,8 @@ a.button.block {
 /* This week (OS-217): above the feed, and the "Now" cards in Stats. */
 .week {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 12px 14px;
   margin-bottom: 16px;
 }
@@ -2972,7 +2986,7 @@ a.button {
 
 .gearlist > li {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
   padding: 14px;
 }
@@ -4438,9 +4452,8 @@ textarea {
 @media (min-width: 1200px) {
   .figures {
     background: var(--surface);
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-line);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
     padding: 14px 20px;
   }
 
@@ -5533,9 +5546,8 @@ h1.greeting {
 
   .youside .phead {
     background: var(--surface);
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-line);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
     padding: 20px;
     margin-top: 40px;
     margin-bottom: 16px;
@@ -5617,9 +5629,8 @@ h1.greeting {
     box-sizing: border-box;
     min-height: calc(100dvh - 160px);
     background: var(--surface);
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-line);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
     padding: 20px 24px;
   }
 

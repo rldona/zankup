@@ -371,9 +371,9 @@ describe('app skeleton', () => {
     const [sidebar, tabbar] = await screen.findAllByRole('navigation', { name: 'Main' });
     if (!sidebar || !tabbar) throw new Error('missing navigation');
     const names = (nav: HTMLElement) => Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
-    // The app's tabs (OS-903), on both.
-    expect(names(sidebar)).toEqual(['Home', 'Feed', 'Health', 'Goals', 'You']);
-    expect(names(tabbar)).toEqual(names(sidebar));
+    // The app's tabs (OS-903) in the tab bar; the rail adds the training calendar under Activities.
+    expect(names(tabbar)).toEqual(['Home', 'Feed', 'Health', 'Goals', 'You']);
+    expect(names(sidebar)).toEqual(['Home', 'Feed', 'Calendar', 'Health', 'Goals', 'You']);
     expect(sidebar.querySelector('a.on')?.textContent).toBe('Home');
     // The rail's foot has the notifications and Settings (and the Coach when there is a model), not
     // a sync button: that is in the Activities header, as in the app.
@@ -400,6 +400,12 @@ describe('app skeleton', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/settings'));
     expect(within(rail).getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
     expect(sidebar.querySelector('a.on')).toBeNull();
+    expect(tabbar.querySelector('a.on')?.textContent).toBe('You');
+
+    // The calendar is a section of the rail: marked there, while the tab bar keeps You.
+    await userEvent.click(within(sidebar).getByRole('link', { name: 'Calendar' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/stats/calendar'));
+    expect(sidebar.querySelector('a.on')?.textContent).toBe('Calendar');
     expect(tabbar.querySelector('a.on')?.textContent).toBe('You');
   });
 

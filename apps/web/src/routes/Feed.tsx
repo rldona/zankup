@@ -7,6 +7,7 @@ import {
   formatters,
   localStart,
   monthsQuery,
+  musclesFromExercises,
   routeThumbnail,
   SPORTS,
   usesPace,
@@ -35,6 +36,7 @@ import { SportGlyph, SportIcon } from '../SportIcon';
 import { FeedSkeleton } from '../Skeleton';
 import { useSyncNow } from '../syncSheet';
 import { Icon } from '../Icon';
+import { BodyThumb } from '../detail/BodyMap';
 
 type Format = ReturnType<typeof formatters>;
 const CHIPS = SPORTS.filter((s) => s !== 'other');
@@ -355,6 +357,7 @@ function Card({
 }) {
   const sport = asSport(activity.sport);
   const route = routeThumbnail(activity.route);
+  const muscles = musclesFromExercises(activity.exercises);
   const style = { '--sport': `var(--${sport})` } as CSSProperties;
   return (
     <NavLink
@@ -389,6 +392,8 @@ function Card({
           <svg className="thumb" viewBox="0 0 88 64" aria-hidden="true">
             <polyline points={route} />
           </svg>
+        ) : muscles.size > 0 ? (
+          <BodyThumb worked={muscles} />
         ) : null}
       </div>
     </NavLink>

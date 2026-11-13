@@ -1966,8 +1966,209 @@ a.button.block {
 }
 
 /* Strength (OS-225): sets by exercise and the body map. */
-.exercise h3 {
-  margin: 12px 0 4px;
+/* A strength workout's sets (OS-225): large totals, the session's flow, then a block per exercise. */
+.sfigures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.sfigures div {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.sfigures dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sfigures dd {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.sfigures div:first-child dd {
+  color: var(--strength);
+}
+
+.sflow {
+  margin: 0 0 16px;
+}
+
+.sflowbar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+}
+
+.sflowbar span {
+  flex-basis: 0;
+  min-width: 3px;
+  border-radius: 3px;
+}
+
+.sflowbar .rest {
+  background: var(--line);
+  height: 4px;
+  align-self: center;
+}
+
+.sflow figcaption {
+  margin-top: 6px;
+}
+
+.exercises {
+  display: grid;
+  gap: 10px;
+}
+
+.exercise {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border-left: 4px solid var(--ex, var(--strength));
+}
+
+.exhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 6px;
+}
+
+.exhead h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.exhead .note {
+  margin-left: auto;
+}
+
+.exdot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ex, var(--strength));
+  align-self: center;
+}
+
+.exercise table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.exercise th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: right;
+  padding: 4px 6px;
+}
+
+.exercise th,
+.exercise td {
+  border-bottom: 0;
+}
+
+.exercise td {
+  text-align: right;
+  padding: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.exercise th:first-child,
+.exercise td:first-child {
+  text-align: left;
+  width: 40px;
+}
+
+.exercise th:nth-child(2),
+.exercise td.repcell {
+  text-align: left;
+  width: 38%;
+}
+
+.setno {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.repcell {
+  position: relative;
+}
+
+.repcell b {
+  position: relative;
+  display: inline-block;
+  min-width: 2ch;
+  font-size: 15px;
+}
+
+.repbar {
+  display: inline-block;
+  vertical-align: middle;
+  height: 10px;
+  max-width: calc(100% - 4ch);
+  margin-right: 8px;
+  border-radius: 5px;
+  background: var(--ex, var(--strength));
+}
+
+.restcell {
+  color: var(--muted);
+}
+
+@media (max-width: 599px) {
+  .sfigures {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sfigures dd {
+    font-size: 18px;
+  }
+
+  .exercise {
+    padding: 10px 8px;
+  }
+
+  .exercise th,
+  .exercise td {
+    padding-inline: 4px;
+  }
+
+  .exercise th {
+    font-size: 11px;
+  }
+
+  .exercise th:first-child,
+  .exercise td:first-child {
+    width: 32px;
+  }
+
+  .exercise th:nth-child(2),
+  .exercise td.repcell {
+    width: 32%;
+  }
+
+  /* "Body weight" on two lines rather than squeezing the reps' bar. */
+  .exercise td:nth-child(3) {
+    white-space: normal;
+  }
 }
 
 .bodymap {
@@ -1986,20 +2187,125 @@ a.button.block {
   height: 220px;
 }
 
-.bodymap .body {
+.bodymap .body,
+.bodythumb .body {
   fill: var(--surface-2);
   stroke: var(--line);
   stroke-width: 1;
 }
 
-.bodymap .muscle {
+.bodymap .muscle,
+.bodythumb .muscle {
   fill: var(--line);
   stroke: var(--surface);
   stroke-width: 0.6;
 }
 
-.bodymap .muscle.on {
+.bodymap .muscle.on,
+.bodythumb .muscle.on {
   fill: var(--strength);
+}
+
+/* A strength workout's cover, where a route has its map: the body map across the top of the detail. */
+.musclecover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 480px;
+  padding: 24px 16px 16px;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+}
+
+.musclecover .bodymap {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  gap: clamp(12px, 6vw, 48px);
+}
+
+.musclecover .bodymap figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.musclecover .bodymap svg {
+  flex: 1;
+  min-height: 0;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1 / 2;
+}
+
+.musclecover .bodymap .body {
+  fill: var(--surface-2);
+}
+
+.coverlegend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.coverlegend .swatch {
+  flex: none;
+  width: 24px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--strength) 45%, transparent), var(--strength));
+}
+
+@media (max-width: 1023px) {
+  .musclecover {
+    height: 400px;
+  }
+}
+
+@media (max-width: 599px) {
+  .musclecover {
+    height: 320px;
+  }
+
+  /* Under the floating buttons. */
+  .floatbar + .musclecover {
+    padding-top: 64px;
+  }
+}
+
+@media (min-width: 600px) {
+  .detailnav + .page.detail > .musclecover {
+    height: calc(400px + var(--detailnav-h));
+    padding-top: calc(24px + var(--detailnav-h));
+  }
+}
+
+@media (min-width: 1024px) {
+  .detailnav + .page.detail > .musclecover {
+    height: calc(480px + var(--detailnav-h));
+  }
+}
+
+.bodythumb {
+  padding: 4px 0;
+  box-sizing: border-box;
+}
+
+/* On the tile, which is already --surface-2: the figure a step darker so it stands out. */
+.bodythumb .body {
+  fill: var(--bg);
+  stroke: none;
+}
+
+.bodythumb .muscle {
+  stroke: none;
 }
 
 /* Stats, calendar, routes and segments (phase 3). */
@@ -3620,6 +3926,11 @@ svg.source {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Before there is a summary: room between the pitch and its button. */
+.summary .desc + button.primary {
+  margin-top: 14px;
 }
 
 /*

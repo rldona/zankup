@@ -232,3 +232,15 @@ def test_strength_detail_has_its_sets_and_old_imports_can_be_reread(ctx: Ctx) ->
     while worker.run_once():
         pass
     assert len(ctx.http.get(f"/api/activities/{ctx.ids['strength']}").json()["sets"]) == 1
+
+
+def test_feed_cards_count_the_sets_of_each_exercise(ctx: Ctx) -> None:
+    def one(category: str | None, kind: str = "active") -> dict[str, object]:
+        return {"start_s": 0, "duration_s": 40, "kind": kind, "reps": 8, "weight_kg": 2, "category": category}
+
+    sets = [one("row"), one(None, "rest"), one("row"), one("curl"), one(None)]
+    with ctx.sessions.begin() as db:
+        db.execute(update(Activity).where(Activity.id == ctx.ids["strength"]).values(sets=sets))
+    cards = {a["id"]: a for a in ctx.http.get("/api/activities").json()["items"]}
+    assert cards[ctx.ids["strength"]]["exercises"] == {"row": 2, "curl": 1}
+    assert cards[ctx.ids["run"]]["exercises"] is None

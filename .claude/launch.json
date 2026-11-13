@@ -27,6 +27,16 @@
         "ZANKUP_API": "https://api.zankup.com"
       },
       "port": 5173
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@zankup/web",
+        "dev"
+      ],
+      "port": 5173
     }
   ]
 }

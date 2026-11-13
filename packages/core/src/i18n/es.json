@@ -499,6 +499,8 @@
   "stats.empty": "Aún no hay nada en este periodo.",
   "calendar.title": "Calendario de entrenamiento",
   "calendar.week": "Semana",
+  "calendar.activities": "{count, plural, one {# actividad} other {# actividades}}",
+  "calendar.daily": "Tiempo en movimiento de cada día",
   "calendar.prev": "Anterior",
   "calendar.next": "Siguiente",
   "datepicker.today": "Hoy",

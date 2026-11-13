@@ -29,10 +29,14 @@ export function Notifications() {
   });
   const prefs = settings.data?.notifications;
   return (
-    <>
+    <section className="panel">
       <p className="note">{t('notifications.help')}</p>
       {state === 'unsupported' && <p className="note">{t('notifications.unsupported')}</p>}
-      {state === 'denied' && <p className="warn">{t('notifications.denied')}</p>}
+      {state === 'denied' && (
+        <p className="alert" role="status">
+          {t('notifications.denied')}
+        </p>
+      )}
       {state && state !== 'unsupported' && state !== 'denied' && (
         <div className="actions">
           <button
@@ -73,6 +77,6 @@ export function Notifications() {
           ))}
         </fieldset>
       )}
-    </>
+    </section>
   );
 }

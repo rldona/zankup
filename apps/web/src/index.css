@@ -2277,6 +2277,57 @@ a.button.block {
   min-width: 0;
 }
 
+/* Your routes and segments: one card, each row a link from edge to edge, its icon, text and route
+   (or arrow) centred on one line however long the name. */
+.linkrows li {
+  padding: 0;
+}
+
+.linkrows .routerow {
+  flex: 1;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.linkrows .rtext {
+  flex: 1;
+  gap: 2px;
+}
+
+.linkrows .rtext b {
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+@media (max-width: 599px) {
+  .linkrows .routerow > .thumb {
+    width: 72px;
+    height: 52px;
+  }
+}
+
+.linkrows .rtext .note {
+  margin: 0;
+}
+
+.linkrows .routerow > .sp,
+.linkrows .routerow > .thumb,
+.linkrows .routerow > svg.i {
+  flex: none;
+}
+
+.linkrows .routerow > svg.i {
+  color: var(--muted);
+}
+
+.linkrows .routerow:hover b {
+  color: var(--accent);
+}
+
 .savesegment {
   display: inline-flex;
   gap: 6px;

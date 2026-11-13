@@ -58,7 +58,10 @@ export function EChart({
   }, [seen, theme, box]);
 
   useEffect(() => {
-    if (!chart) return;
+    // A theme change disposes the chart above and changes the option in the same render: this runs
+    // once more with the disposed chart, whose zrender is gone (getZr() is null), before the new one
+    // arrives. Wiring it would throw, so wait for the new one.
+    if (!chart || chart.isDisposed()) return;
     chart.setOption({ animation: !reducedMotion(), ...option }, { notMerge: true });
     const cleanup = latest.current?.(chart);
     // On unmount the chart may already be disposed (the effect above cleans up first): its events

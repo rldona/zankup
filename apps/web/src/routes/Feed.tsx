@@ -260,7 +260,7 @@ function DetailNav({
     );
   return (
     <nav className="detailnav" aria-label={t('feed.title')}>
-      <Link to={{ pathname: '/activities', search }} className="crumb">
+      <Link to={{ pathname: '/activities', search }} className="stepbtn">
         <MaterialIcon name="chevron_left" />
         {t('nav.feed')}
       </Link>

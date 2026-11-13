@@ -93,6 +93,7 @@ export function RouteMap({
     const element = box.current;
     if (!webgl || !element || track.length < 2) return;
     let disposed = false;
+    const touch = window.matchMedia?.('(pointer: coarse)').matches ?? false;
     void loadMapLibre().then((maplibre) => {
       if (disposed) return;
       const lons = track.map((p) => p.lonLat[0]);
@@ -109,8 +110,17 @@ export function RouteMap({
         // over the top 56 px, and the replay bar over the bottom 52 px.
         fitBoundsOptions: { padding: { top: 32 + 56, bottom: 12 + 52, left: 32, right: 32 } },
         attributionControl: { compact: true },
-        cooperativeGestures: true,
+        // With a mouse, the wheel scrolls the page, never the map (zoom is on its buttons, a double
+        // click or a pinch), so there is no "use ⌘ + scroll" overlay. On a touch screen one finger
+        // still scrolls the page and two move the map.
+        cooperativeGestures: touch,
+        scrollZoom: touch,
       });
+      // The credits start folded behind their (i): MapLibre unfolds them once, when the map's data
+      // first arrives, so they are folded when it first settles.
+      instance.once('idle', () =>
+        element.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show'),
+      );
       instance.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right');
       const start = track[0]?.lonLat ?? [0, 0];
       const finish = track.at(-1)?.lonLat ?? start;

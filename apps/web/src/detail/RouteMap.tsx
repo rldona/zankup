@@ -105,7 +105,9 @@ export function RouteMap({
         container: element,
         style: mapStyle(themes[theme]) as never,
         bounds,
-        fitBoundsOptions: { padding: 32 },
+        // The route clears what floats over the map: the activity's bar (or a phone's floating buttons)
+        // over the top 56 px, and the replay bar over the bottom 52 px.
+        fitBoundsOptions: { padding: { top: 32 + 56, bottom: 12 + 52, left: 32, right: 32 } },
         attributionControl: { compact: true },
         cooperativeGestures: true,
       });

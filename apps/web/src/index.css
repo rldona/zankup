@@ -66,6 +66,23 @@ button {
   color: var(--run);
 }
 
+/* Flat: cards, panels and the rail stand apart by their surface on the background, with no edge or
+   shadow. High contrast keeps the line, as its surface is the background's white. Menus, dialogs and
+   what floats over a map keep their edge and shadow, as do fields and buttons. */
+:root {
+  --card-line: transparent;
+}
+
+[data-theme='highContrast'] {
+  --card-line: var(--line);
+}
+
+@media (prefers-contrast: more) {
+  :root:not([data-theme]) {
+    --card-line: var(--line);
+  }
+}
+
 /* The signed-in frame (OS-202, docs/prototypes/web), in three sizes as the app: below 600 px the bottom
    tab bar and one header per screen; from 600 px a rail of 88 px; from 1200 px the content centred at one
    width shared by every screen. The phone's safe areas are respected. */
@@ -130,7 +147,7 @@ svg.i.m {
 
 .rail {
   background: var(--surface);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--card-line);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -275,6 +292,7 @@ svg.i.m {
 }
 
 .detailcol {
+  --detailnav-h: 56px;
   overflow: auto;
   min-width: 0;
   display: none;
@@ -299,9 +317,51 @@ svg.i.m {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px var(--gutter);
-  background: var(--bg);
-  border-bottom: 1px solid var(--line);
+  box-sizing: border-box;
+  height: var(--detailnav-h);
+  /* The bar spans the column, its links line up with the page's content below (100% is the column). */
+  padding: 0 max(var(--gutter), calc((100% - var(--page-max)) / 2 + var(--gutter)));
+  /* Glass: what scrolls under it (the map first) shows through, blurred. */
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .detailnav {
+    background: var(--bg);
+  }
+}
+
+/* With a map, the map starts under the bar, which floats over it; the map grows by the bar's height
+   and its controls move down by it, so what shows below the bar is as before. */
+@media (min-width: 600px) {
+  .detailnav + .page.detail.withmap {
+    margin-top: calc(-1 * var(--detailnav-h));
+  }
+
+  .detailnav + .page.detail > .mapblock .map {
+    height: calc(400px + var(--detailnav-h));
+  }
+
+  .detailnav + .page.detail > .mapblock .mapopts {
+    top: calc(12px + var(--detailnav-h));
+  }
+
+  .detailnav + .page.detail > .mapblock .mappanel {
+    top: calc(60px + var(--detailnav-h));
+  }
+
+  .detailnav + .page.detail > .mapblock .maplibregl-ctrl-top-right {
+    top: calc(52px + var(--detailnav-h));
+  }
+}
+
+@media (min-width: 1024px) {
+  .detailnav + .page.detail > .mapblock .map {
+    height: calc(480px + var(--detailnav-h));
+  }
 }
 
 .detailnav .crumb {
@@ -374,7 +434,7 @@ a.stepbtn:hover {
   flex-direction: column-reverse;
   padding: 10px 12px;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
   min-width: 0;
 }
@@ -838,9 +898,8 @@ a.stepbtn:hover {
 .card {
   display: block;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 14px;
   margin-bottom: 10px;
   color: var(--fg);
@@ -956,10 +1015,11 @@ a.stepbtn:hover {
 }
 
 /* Activity detail (OS-205 to OS-208, OS-216), from the prototype. */
+/* The icon and the actions at the top, level with the title, however many lines sit under it. */
 .dhead {
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 14px;
 }
 
@@ -992,7 +1052,7 @@ a.stepbtn:hover {
   display: flex;
   flex-direction: column-reverse;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: 12px;
   padding: 10px 12px;
 }
@@ -1011,9 +1071,8 @@ a.stepbtn:hover {
 
 .panel {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 14px;
   margin-bottom: 14px;
 }
@@ -1620,9 +1679,8 @@ a.button.block {
 /* This week (OS-217): above the feed, and the "Now" cards in Stats. */
 .week {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   padding: 12px 14px;
   margin-bottom: 16px;
 }
@@ -2928,7 +2986,7 @@ a.button {
 
 .gearlist > li {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: var(--radius);
   padding: 14px;
 }
@@ -4394,9 +4452,8 @@ textarea {
 @media (min-width: 1200px) {
   .figures {
     background: var(--surface);
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-line);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
     padding: 14px 20px;
   }
 
@@ -5333,9 +5390,35 @@ h1.greeting {
   }
 }
 
-/* The map's zoom under its options button, and both under the floating buttons on a phone. */
+/* The activity's map spans the column: what it gains beyond the page (0 until the page stops growing)
+   moves its controls in, so they line up with the content below instead of the column's edges. */
+.page.detail > .mapblock {
+  --map-edge: max(0px, calc((100cqi - var(--page-max)) / 2 + var(--gutter) - 12px));
+}
+
+.page.detail > .mapblock .mapopts,
+.page.detail > .mapblock .mappanel {
+  right: calc(12px + var(--map-edge));
+}
+
+.page.detail > .mapblock .mapbar {
+  left: calc(12px + var(--map-edge));
+  right: calc(12px + var(--map-edge));
+}
+
+.page.detail > .mapblock .maplibregl-ctrl-top-right {
+  right: calc(7.5px + var(--map-edge));
+}
+
+.page.detail > .mapblock .maplibregl-ctrl-bottom-right {
+  right: var(--map-edge);
+}
+
+/* The map's zoom under its options button, centred on it (the 40 px button 12 px in, the 29 px group
+   with its 10 px margin 7.5 px in), and both under the floating buttons on a phone. */
 .mapblock .maplibregl-ctrl-top-right {
   top: 52px;
+  right: 7.5px;
 }
 
 .floatbar + .mapblock .mapopts {
@@ -5463,9 +5546,8 @@ h1.greeting {
 
   .youside .phead {
     background: var(--surface);
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-line);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
     padding: 20px;
     margin-top: 40px;
     margin-bottom: 16px;
@@ -5547,9 +5629,8 @@ h1.greeting {
     box-sizing: border-box;
     min-height: calc(100dvh - 160px);
     background: var(--surface);
-    border: 1px solid var(--line);
+    border: 1px solid var(--card-line);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
     padding: 20px 24px;
   }
 

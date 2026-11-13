@@ -67,6 +67,8 @@ export function TrainingCalendar() {
   const weeks: CalendarDay[][] = [];
   for (let i = 0; i < list.length; i += 7) weeks.push(list.slice(i, i + 7));
   const heaviest = Math.max(1, ...list.flatMap((d) => d.activities.map((a) => a.load ?? 0)));
+  // One scale for the month, so the weeks' bars compare with each other.
+  const busiest = Math.max(1, ...list.map((d) => moving(d.activities)));
   const total = (span: CalendarDay[]) => {
     const acts = span.flatMap((d) => d.activities);
     return `${acts.length} · ${format.distance(acts.reduce((s, a) => s + (a.distance_m ?? 0), 0))} · ${formatHoursMinutes(acts.reduce((s, a) => s + a.moving_s, 0))}`;
@@ -155,13 +157,53 @@ export function TrainingCalendar() {
                 </div>
               );
             })}
-            <div className="calweek num" role="gridcell">
-              {total(week)}
-            </div>
+            <WeekSummary week={week} busiest={busiest} distance={format.distance} />
           </div>
         ))}
       </div>
     </section>
+  );
+}
+
+const moving = (acts: CalendarDay['activities']) => acts.reduce((s, a) => s + a.moving_s, 0);
+
+/**
+ * The week at the end of its row: the distance first, the time and the number of activities under it,
+ * and a bar for each day — its activities stacked in their sport's colour, on the month's scale.
+ */
+function WeekSummary({
+  week,
+  busiest,
+  distance,
+}: {
+  week: CalendarDay[];
+  busiest: number;
+  distance: (metres: number) => string;
+}) {
+  const acts = week.flatMap((d) => d.activities);
+  const metres = acts.reduce((s, a) => s + (a.distance_m ?? 0), 0);
+  const time = formatHoursMinutes(moving(acts));
+  const count = t('calendar.activities', { count: acts.length });
+  return (
+    <div className={`calweek${acts.length ? '' : ' empty'}`} role="gridcell">
+      <b className="wmain num">{acts.length === 0 ? '—' : metres > 0 ? distance(metres) : time}</b>
+      <span className="wmeta num">{metres > 0 ? `${time} · ${count}` : count}</span>
+      <span className="wbars" role="img" aria-label={t('calendar.daily')}>
+        {week.map((d) => (
+          <span key={d.day} title={`${day(d.day)} · ${formatHoursMinutes(moving(d.activities))}`}>
+            {d.activities.map((a) => (
+              <i
+                key={a.id}
+                style={{
+                  height: `${(a.moving_s / busiest) * 100}%`,
+                  background: `var(--${asSport(a.sport)})`,
+                }}
+              />
+            ))}
+          </span>
+        ))}
+      </span>
+    </div>
   );
 }
 

@@ -299,7 +299,8 @@ svg.i.m {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px var(--gutter);
+  /* The bar spans the column, its links line up with the page's content below (100% is the column). */
+  padding: 10px max(var(--gutter), calc((100% - var(--page-max)) / 2 + var(--gutter)));
   background: var(--bg);
   border-bottom: 1px solid var(--line);
 }

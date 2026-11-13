@@ -471,7 +471,7 @@ export function Account({ me }: { me: Me }) {
       </p>
       <Passkeys />
       <Google me={me} />
-      <div className="actions">
+      <div className="actions signout">
         <button type="button" onClick={() => void signOut()}>
           {t('nav.signOut')}
         </button>

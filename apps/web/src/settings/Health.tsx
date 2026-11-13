@@ -75,8 +75,8 @@ export function HealthSources() {
   const usable = settings.data.sources.filter((s) => s.connected || s.nights + s.days > 0);
 
   return (
-    <>
-      <h2 id="health">{t('health.settings')}</h2>
+    <section className="panel">
+      <CardTitle id="health">{t('health.settings')}</CardTitle>
       {result && (
         <p className={result.ok ? 'ok' : 'warn'} role="status">
           {t(result.text)}
@@ -154,7 +154,7 @@ export function HealthSources() {
           </ul>
         </>
       )}
-    </>
+    </section>
   );
 }
 

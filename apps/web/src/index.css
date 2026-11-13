@@ -1583,10 +1583,12 @@ img.avatar {
   }
 }
 
+/* A notice (the sync's progress and result): at the bottom right, out of the way of the rail's
+   buttons; on a phone across the width, over the tab bar. */
 .sheet {
   position: fixed;
-  left: calc(var(--rail) + 16px);
-  bottom: 20px;
+  right: calc(20px + env(safe-area-inset-right, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   width: min(380px, calc(100vw - 32px));
   background: var(--surface);
   border: 1px solid var(--line);
@@ -3817,8 +3819,9 @@ textarea {
   white-space: nowrap;
 }
 
+/* A header's icon button shown only on a phone keeps its centred icon (Home's, the feed's calendar). */
 @media (max-width: 599px) {
-  .page.home .titlebar .iconbtn.phone-only {
+  .titlebar .iconbtn.phone-only {
     display: grid;
   }
 }

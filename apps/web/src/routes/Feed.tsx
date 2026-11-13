@@ -112,9 +112,10 @@ export function Feed() {
                 <Icon name="sync" />
               </span>
             </button>
+            {/* From 600 px the calendar has its own place in the rail. */}
             <Link
               to="/stats/calendar"
-              className="iconbtn"
+              className="iconbtn phone-only"
               aria-label={t('stats.calendar')}
               title={t('stats.calendar')}
             >

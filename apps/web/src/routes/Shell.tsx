@@ -34,6 +34,13 @@ const SECTIONS: Item[] = [
 ];
 
 /**
+ * The rail has room for one more than the app's tab bar: the training calendar, under Activities, as
+ * another way to see them. On a phone it stays in the Activities header.
+ */
+const CALENDAR: Item = { to: '/stats/calendar', icon: 'calendar_month', label: 'stats.calendar' };
+const RAIL: Item[] = [...SECTIONS.slice(0, 2), CALENDAR, ...SECTIONS.slice(2)];
+
+/**
  * The foot of the rail: what the app reaches from Home's header (the Coach, the notifications) and from
  * You (Settings). On a phone they stay where the app has them.
  */
@@ -49,6 +56,7 @@ const OWNS: Record<string, RegExp> = {
   '/activities': /^\/(activities|search|sync)(\/|$)/,
   '/health': /^\/health(\/|$)/,
   '/goals': /^\/goals(\/|$)/,
+  '/stats/calendar': /^\/stats\/calendar$/,
   '/profile': /^\/(profile|stats|estimates|gear|settings|review|routes|segments)(\/|$)/,
 };
 
@@ -56,6 +64,8 @@ const OWNS: Record<string, RegExp> = {
 const PUSHED = /^\/activities\/\d+/;
 
 const sectionOf = (pathname: string) => SECTIONS.find((s) => OWNS[s.to]?.test(pathname));
+/** In the rail the calendar is its own section, checked before You (which owns the rest of Stats). */
+const railSectionOf = (pathname: string) => RAIL.find((s) => OWNS[s.to]?.test(pathname));
 const shortcutOf = (pathname: string) => SHORTCUTS.find((s) => s.owns.test(pathname));
 
 /** An icon, filled while it is the current one, as on the app. */
@@ -99,6 +109,8 @@ const PARENTS: {
   { match: /^\/settings\/import$/, to: '/settings', label: 'nav.settings' },
   { match: /^\/settings\/./, to: '/settings', label: 'nav.settings', show: 'compact' },
   { match: /^\/settings$/, to: '/profile', label: 'nav.you', show: 'phone' },
+  // The calendar is a section of the rail from 600 px: the way back to Stats only on a phone.
+  { match: /^\/stats\/calendar$/, to: '/stats', label: 'nav.stats', show: 'phone' },
   { match: /^\/(stats\/|review\/|routes$|segments$)/, to: '/stats', label: 'nav.stats' },
   { match: /^\/routes\/./, to: '/routes', label: 'routes.title' },
   { match: /^\/segments\/./, to: '/segments', label: 'segments.title' },
@@ -139,6 +151,7 @@ export function Shell() {
   };
   const shortcut = shortcutOf(pathname)?.to;
   const section = sectionOf(pathname)?.to;
+  const railSection = railSectionOf(pathname)?.to;
 
   return (
     <SyncNow.Provider value={{ start: syncNow, running: sync.running }}>
@@ -148,8 +161,8 @@ export function Shell() {
             <Mark height="2rem" />
           </Link>
           <nav aria-label={t('nav.main')}>
-            {SECTIONS.map((item) => (
-              <NavLink key={item.to} item={item} current={shortcut ? undefined : section} />
+            {RAIL.map((item) => (
+              <NavLink key={item.to} item={item} current={shortcut ? undefined : railSection} />
             ))}
           </nav>
           <div className="grow" />

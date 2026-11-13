@@ -957,10 +957,11 @@ a.stepbtn:hover {
 }
 
 /* Activity detail (OS-205 to OS-208, OS-216), from the prototype. */
+/* The icon and the actions at the top, level with the title, however many lines sit under it. */
 .dhead {
   display: flex;
   gap: 12px;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 14px;
 }
 

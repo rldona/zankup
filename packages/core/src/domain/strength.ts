@@ -113,14 +113,76 @@ export function groupSets(sets: readonly StrengthSet[]): ExerciseGroup[] {
   return groups;
 }
 
+/** A workout's totals, for the figures over its sets: active sets, reps, volume, and the time spent
+ * working and resting. */
+export interface StrengthTotals {
+  sets: number;
+  reps: number;
+  volume_kg: number;
+  work_s: number;
+  rest_s: number;
+}
+
+export function strengthTotals(sets: readonly StrengthSet[]): StrengthTotals {
+  const totals: StrengthTotals = { sets: 0, reps: 0, volume_kg: 0, work_s: 0, rest_s: 0 };
+  for (const set of sets) {
+    if (set.kind === 'active') {
+      totals.sets += 1;
+      totals.reps += set.reps ?? 0;
+      totals.volume_kg += (set.reps ?? 0) * (set.weight_kg ?? 0);
+      totals.work_s += set.duration_s;
+    } else if (set.kind === 'rest') totals.rest_s += set.duration_s;
+  }
+  return totals;
+}
+
+/** The session's flow: each set and rest in order, with its share of the time (0 to 1) and, for a
+ * set, the index of its exercise group from `groupSets` (null for a rest). */
+export interface FlowSegment {
+  kind: 'active' | 'rest';
+  share: number;
+  group: number | null;
+}
+
+export function strengthFlow(sets: readonly StrengthSet[]): FlowSegment[] {
+  const total = sets.reduce(
+    (s, set) => s + (set.kind === 'active' || set.kind === 'rest' ? set.duration_s : 0),
+    0,
+  );
+  if (total <= 0) return [];
+  const flow: FlowSegment[] = [];
+  let group = -1;
+  let category: string | null | undefined;
+  for (const set of sets) {
+    if (set.kind === 'active') {
+      if (group < 0 || set.category !== category) {
+        group += 1;
+        category = set.category;
+      }
+      flow.push({ kind: 'active', share: set.duration_s / total, group });
+    } else if (set.kind === 'rest') flow.push({ kind: 'rest', share: set.duration_s / total, group: null });
+  }
+  return flow;
+}
+
 /** Every muscle group worked, with how many sets worked it (for the body map's intensity). */
 export function musclesWorked(sets: readonly StrengthSet[]): Map<Muscle, number> {
-  const worked = new Map<Muscle, number>();
+  const exercises: Record<string, number> = {};
   for (const set of sets) {
     if (set.kind !== 'active' || !set.category) continue;
-    for (const muscle of EXERCISE_MUSCLES[set.category] ?? [])
-      worked.set(muscle, (worked.get(muscle) ?? 0) + 1);
+    exercises[set.category] = (exercises[set.category] ?? 0) + 1;
   }
+  return musclesFromExercises(exercises);
+}
+
+/** The same from the sets per exercise a feed card carries (`exercises`, OS-225). */
+export function musclesFromExercises(
+  exercises: Readonly<Record<string, number>> | null | undefined,
+): Map<Muscle, number> {
+  const worked = new Map<Muscle, number>();
+  for (const [category, sets] of Object.entries(exercises ?? {}))
+    for (const muscle of EXERCISE_MUSCLES[category] ?? [])
+      worked.set(muscle, (worked.get(muscle) ?? 0) + sets);
   return worked;
 }
 

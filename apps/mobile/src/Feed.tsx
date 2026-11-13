@@ -6,6 +6,7 @@
 import { Canvas, Path, Skia } from '@shopify/react-native-skia';
 import { FlashList } from '@shopify/flash-list';
 import {
+  musclesFromExercises,
   activitiesQuery,
   decodePolyline,
   formatActivityDate,
@@ -23,6 +24,7 @@ import { memo, useMemo } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { useApi } from './auth';
+import { BodyThumb } from './detail/Strength';
 import { locale, t } from './i18n';
 import { Icon, SportIcon } from './Icon';
 import { asSport, useFormat } from './prefs';
@@ -153,6 +155,7 @@ export const ActivityCard = memo(function ActivityCard({
   const c = useTheme();
   const sport = asSport(a.sport);
   const moving = a.moving_s ?? a.duration_s;
+  const muscles = musclesFromExercises(a.exercises);
   const figures: [string, string][] = a.distance_m
     ? [
         [t('feed.stat.distance'), format.distance(a.distance_m)],
@@ -188,7 +191,11 @@ export const ActivityCard = memo(function ActivityCard({
               <Stat key={label} labelFirst label={label} value={value} />
             ))}
           </View>
-          {a.route ? <Thumbnail route={a.route} colour={c[sport]} /> : null}
+          {a.route ? (
+            <Thumbnail route={a.route} colour={c[sport]} />
+          ) : muscles.size > 0 ? (
+            <BodyThumb worked={muscles} />
+          ) : null}
         </View>
       </Card>
     </Pressable>

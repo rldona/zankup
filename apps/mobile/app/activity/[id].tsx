@@ -12,6 +12,7 @@ import {
   formatDuration,
   localStart,
   metricValues,
+  musclesWorked,
   quantile,
   RAMP,
   shareCardFigures,
@@ -45,7 +46,7 @@ import { useApi } from '../../src/auth';
 import { type ChartSeries, MetricChart } from '../../src/detail/MetricChart';
 import { RouteMap } from '../../src/detail/RouteMap';
 import { BestEfforts, Laps, Power, RouteAndSegments, Splits, Zones } from '../../src/detail/Sections';
-import { Strength } from '../../src/detail/Strength';
+import { MuscleCover, Strength } from '../../src/detail/Strength';
 import { MapControls } from '../../src/detail/MapControls';
 import { ActivitySkeleton } from '../../src/Skeleton';
 import { ActionMenu } from '../../src/Menu';
@@ -210,7 +211,10 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
   // The map runs under the header, which is see-through over it and fills in as the map scrolls away
   // (with the title); without a map the header is solid from the start.
   const header = insets.top + HEADER;
-  const map = track?.hasGps ? MAP + header : 0;
+  // A strength workout without a route has its body map for a cover, as a route has its map.
+  const muscles = musclesWorked(a.sets ?? []);
+  const muscleCover = !a.has_gps && !track?.hasGps && muscles.size > 0;
+  const map = track?.hasGps || muscleCover ? MAP + header : 0;
   const solid = map
     ? scrollY.interpolate({
         inputRange: [map - header - 48, map - header],
@@ -232,6 +236,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
           useNativeDriver: true,
         })}
       >
+        {muscleCover && <MuscleCover worked={muscles} top={header} height={map} />}
         {track?.hasGps && (
           <View style={{ height: map }}>
             <RouteMap
@@ -363,7 +368,7 @@ function Detail({ activity: a }: { activity: ActivityDetail }) {
           )}
           {/* On a run, the splits follow the heart-rate zones. */}
           {sport === 'run' && <Splits activity={a} format={format} pace={pace} />}
-          {(a.sets ?? []).length > 0 && <Strength sets={a.sets} />}
+          {(a.sets ?? []).length > 0 && <Strength sets={a.sets} cover={muscleCover} />}
           <RouteAndSegments activity={a} />
           <Power activity={a} />
           {series && sport === 'ride' && (

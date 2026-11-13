@@ -2071,6 +2071,13 @@ export interface components {
        * @default 0
        */
       photos: number;
+      /**
+       * Exercises
+       * @description Strength sets per FIT exercise category (OS-225), for the card's body map; null without sets
+       */
+      exercises?: {
+        [key: string]: number;
+      } | null;
       /** Description */
       description: string | null;
       gear: components['schemas']['GearRef'] | null;
@@ -2314,6 +2321,13 @@ export interface components {
        * @default 0
        */
       photos: number;
+      /**
+       * Exercises
+       * @description Strength sets per FIT exercise category (OS-225), for the card's body map; null without sets
+       */
+      exercises?: {
+        [key: string]: number;
+      } | null;
     };
     /** AiBudget */
     AiBudget: {

@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="/home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android"
+    name=":google-id"
+    type="LIBRARY"
+    maven="com.zankup:google-id:1.0.0"
+    agpVersion="9.2.1"
+    buildFolder="build"
+    bootClassPath="/home/rldona/Android/Sdk/platforms/android-37.0/android.jar:/home/rldona/Android/Sdk/build-tools/36.0.0/core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-37.0"
+    neverShrinking="true"
+    highlightGradualR8Api="false">
+  <lintOptions
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

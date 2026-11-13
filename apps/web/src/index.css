@@ -1445,7 +1445,7 @@ input[type='checkbox']:disabled {
   border-bottom: 1px solid var(--line);
 }
 
-.rows li > span {
+.rows li > span:not(.sp) {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -2271,7 +2271,7 @@ a.button.block {
   min-width: 0;
 }
 
-.routerow > span {
+.routerow > span:not(.sp) {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -3039,7 +3039,25 @@ a.button {
   background: var(--surface);
   border: 1px solid var(--card-line);
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* A gear card: name and Edit, the mileage, its bar and the details, each a step apart. */
+.gearlist > li > .ph {
+  margin: 0;
+}
+
+.gearlist > li > .gearkm,
+.gearlist > li > .note,
+.gearlist > li > .warn {
+  margin: 0;
+}
+
+.gearlist > li > .gearbar {
+  margin: 2px 0 4px;
 }
 
 .gearlist > li.retired {
@@ -4548,7 +4566,8 @@ button.danger svg.i {
 
 /* The habitual gear (OS-910), as on the app: first, ringed in the accent, with its badge. */
 .gearlist > li.habitual {
-  border: 2px solid var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .badge.good {

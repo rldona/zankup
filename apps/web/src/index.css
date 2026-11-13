@@ -3481,6 +3481,15 @@ a.button {
   margin-top: 10px;
 }
 
+/* The gap under the header belongs to the body, so the card folded is as tall above as below. */
+.summary .coach-head {
+  margin-bottom: 0;
+}
+
+.summary #summary-body {
+  margin-top: 10px;
+}
+
 .weekly h3 {
   margin: 4px 0 8px;
   font-size: 17px;

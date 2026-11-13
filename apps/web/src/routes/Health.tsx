@@ -7,7 +7,7 @@ import {
   type HealthSourceName,
   type MessageKey,
 } from '@zankup/core';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
@@ -17,6 +17,7 @@ import { CardTitle } from '../ui';
 import { api } from '../api';
 import { HeartChart, ReadinessChart, SleepChart } from '../health/charts';
 import { sourceName } from '../health/names';
+import { useHealthSync, type HealthSyncState } from '../health/useHealthSync';
 import { SleepTiles, StageLanes } from '../health/SleepNight';
 import { locale, t } from '../i18n';
 import { useResolvedTheme } from '../theme';
@@ -52,6 +53,45 @@ const longDay = (day: string) =>
   new Date(`${day}T12:00:00`).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
 
 /**
+ * "Bring now"'s progress and result, as the activities' sync: a notice at the bottom right with what
+ * is being fetched, which says when the data is in and then closes on its own.
+ */
+function SyncNotice({ state, onClose }: { state: HealthSyncState; onClose: () => void }) {
+  if (state.phase === 'idle' || state.phase === 'starting') return null;
+  const text =
+    state.phase === 'running'
+      ? t('health.syncRunning', {
+          sources: new Intl.ListFormat(locale, { type: 'conjunction' }).format(state.sources.map(sourceName)),
+        })
+      : state.phase === 'done'
+        ? t('health.syncDone')
+        : state.phase === 'slow'
+          ? t('health.syncSlow')
+          : state.phase === 'none'
+            ? t('health.syncNone')
+            : t('common.error');
+  const icon =
+    state.phase === 'running'
+      ? 'sync'
+      : state.phase === 'done'
+        ? 'check'
+        : state.phase === 'error'
+          ? 'error'
+          : 'info';
+  return (
+    <div className={`sheet healthsync ${state.phase}`} role="status" aria-live="polite">
+      <span className={state.phase === 'running' ? 'spinning' : undefined}>
+        <MaterialIcon name={icon} />
+      </span>
+      <p>{text}</p>
+      <button type="button" className="iconbtn" aria-label={t('sync.close')} onClick={onClose}>
+        <MaterialIcon name="close" />
+      </button>
+    </div>
+  );
+}
+
+/**
  * Health (OS-606): last night's sleep with its stages, today's readiness, HRV, resting HR and the
  * rest, and their trends, combined with the form (TSB) from training. Each figure says which source it
  * comes from when several recorded it (OS-605).
@@ -70,11 +110,7 @@ export function Health() {
   }, [today, period]);
   const days = useQuery(healthDaysQuery(api, range.start, range.end));
   const theme = useResolvedTheme();
-  const queryClient = useQueryClient();
-  const sync = useMutation({
-    mutationFn: async () => (await api.POST('/api/wellness/sync')).data,
-    onSuccess: () => setTimeout(() => void queryClient.invalidateQueries({ queryKey: ['wellness'] }), 8000),
-  });
+  const sync = useHealthSync();
 
   const list = days.data ?? [];
   const lastNight = [...list].reverse().find((d) => d.sleep);
@@ -115,12 +151,12 @@ export function Health() {
           type="button"
           className="iconbtn"
           aria-label={t('health.sync')}
-          title={sync.isSuccess ? t('health.syncQueued') : t('health.sync')}
-          aria-busy={sync.isPending}
-          disabled={sync.isPending}
-          onClick={() => sync.mutate()}
+          title={t('health.sync')}
+          aria-busy={sync.busy}
+          disabled={sync.busy}
+          onClick={sync.start}
         >
-          <span className={sync.isPending ? 'spinning' : undefined}>
+          <span className={sync.busy ? 'spinning' : undefined}>
             <MaterialIcon name="sync" />
           </span>
         </button>
@@ -133,11 +169,7 @@ export function Health() {
           <MaterialIcon name="settings" />
         </Link>
       </div>
-      {sync.isSuccess && (
-        <p className="note" role="status">
-          {t('health.syncQueued')}
-        </p>
-      )}
+      <SyncNotice state={sync.state} onClose={sync.close} />
 
       {days.isPending && <HealthSkeleton />}
       {days.isError && <p className="warn">{t('common.error')}</p>}

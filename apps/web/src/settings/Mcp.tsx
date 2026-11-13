@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
 import { api } from '../api';
+import { CardTitle } from '../ui';
 import { locale, t } from '../i18n';
 
 const day = (iso: string) =>
@@ -41,15 +42,17 @@ export function Mcp() {
   };
   const url = created?.url ? new URL(created.url, location.origin).toString() : `${location.origin}/api/mcp`;
   return (
-    <>
-      <h2 id="mcp">{t('mcp.title')}</h2>
+    <section className="panel">
+      <CardTitle id="mcp">{t('mcp.title')}</CardTitle>
       <p className="note">{t('mcp.help')}</p>
       <p className="note">
         {t('mcp.url')}: <code>{url}</code>
       </p>
-      <form className="fields" onSubmit={submit}>
+      <form className="fields inline" onSubmit={submit}>
         <label className="field">
-          <span>{t('mcp.name')}</span>
+          <span>
+            <b>{t('mcp.name')}</b>
+          </span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -111,6 +114,6 @@ export function Mcp() {
           ))}
         </ul>
       )}
-    </>
+    </section>
   );
 }

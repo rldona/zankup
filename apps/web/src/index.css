@@ -848,7 +848,7 @@ a.stepbtn:hover {
 .note {
   color: var(--muted);
   font-size: 13px;
-  margin: 0 2px 4px;
+  margin: 0 0 4px;
 }
 
 .note a {
@@ -1434,7 +1434,7 @@ input[type='checkbox']:disabled {
   border-bottom: 1px solid var(--line);
 }
 
-.rows li > span {
+.rows li > span:not(.sp) {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -2260,10 +2260,61 @@ a.button.block {
   min-width: 0;
 }
 
-.routerow > span {
+.routerow > span:not(.sp) {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+/* Your routes and segments: one card, each row a link from edge to edge, its icon, text and route
+   (or arrow) centred on one line however long the name. */
+.linkrows li {
+  padding: 0;
+}
+
+.linkrows .routerow {
+  flex: 1;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.linkrows .rtext {
+  flex: 1;
+  gap: 2px;
+}
+
+.linkrows .rtext b {
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+@media (max-width: 599px) {
+  .linkrows .routerow > .thumb {
+    width: 72px;
+    height: 52px;
+  }
+}
+
+.linkrows .rtext .note {
+  margin: 0;
+}
+
+.linkrows .routerow > .sp,
+.linkrows .routerow > .thumb,
+.linkrows .routerow > svg.i {
+  flex: none;
+}
+
+.linkrows .routerow > svg.i {
+  color: var(--muted);
+}
+
+.linkrows .routerow:hover b {
+  color: var(--accent);
 }
 
 .savesegment {
@@ -2977,7 +3028,25 @@ a.button {
   background: var(--surface);
   border: 1px solid var(--card-line);
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* A gear card: name and Edit, the mileage, its bar and the details, each a step apart. */
+.gearlist > li > .ph {
+  margin: 0;
+}
+
+.gearlist > li > .gearkm,
+.gearlist > li > .note,
+.gearlist > li > .warn {
+  margin: 0;
+}
+
+.gearlist > li > .gearbar {
+  margin: 2px 0 4px;
 }
 
 .gearlist > li.retired {
@@ -4486,7 +4555,8 @@ button.danger svg.i {
 
 /* The habitual gear (OS-910), as on the app: first, ringed in the accent, with its badge. */
 .gearlist > li.habitual {
-  border: 2px solid var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .badge.good {
@@ -4828,9 +4898,120 @@ button.danger svg.i {
   font-size: 20px;
 }
 
+/* Settings (and Import): every group is a card of its own, its title, help, fields and actions inside,
+   with the same rhythm in each. */
 .settingsmain > .panel,
-.settingsmain > section {
+.settingsmain > section,
+.settingsmain > form.panel {
   margin-bottom: 14px;
+}
+
+.settingsmain .panel > .note,
+.page > .panel > .note {
+  max-width: 72ch;
+}
+
+.settingsmain .panel > .fields,
+.settingsmain .panel > form > .fields {
+  margin: 12px 0;
+}
+
+.settingsmain .panel > .actions:last-child,
+.settingsmain .panel > .rows:last-child,
+.settingsmain .panel > .themes:last-child,
+.page > .panel > .actions:last-child {
+  margin-bottom: 0;
+}
+
+.settingsmain .panel > .rows,
+.page > .panel > .rows {
+  margin: 4px 0 0;
+}
+
+.settingsmain .panel .rows li:last-child,
+.page > .panel .rows li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* A card's title sits close to what it heads, the help keeps its distance from what follows. */
+.settingsmain .panel > .ph,
+.page > .panel > .ph {
+  margin-bottom: 10px;
+}
+
+.settingsmain .panel.stack > .ph {
+  margin-bottom: 0;
+}
+
+.settingsmain .panel > .note:not(:last-child) {
+  margin-bottom: 10px;
+}
+
+/* Signing out ends the sign-in card, apart from the passkeys above it. */
+.actions.signout {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* A list that is a card on its own (Your data): its rows reach the card's padding. */
+.panel.rows {
+  margin: 0 0 14px;
+  padding-block: 4px;
+}
+
+.panel.rows li:last-child {
+  border-bottom: 0;
+}
+
+/* A label and its button on one line (a token's name and Create): the button sits on the field. */
+.fields.inline {
+  grid-template-columns: minmax(0, 320px) auto;
+  align-items: end;
+  justify-content: start;
+}
+
+.fields.inline .actions {
+  margin: 0;
+}
+
+/* Lists in settings: the text takes the room, a badge or button keeps its size. */
+.settingsmain .rows li > span,
+.settingsmain .rows li > div:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.settingsmain .rows li > .badge,
+.settingsmain .rows li > button,
+.settingsmain .rows li > .actions {
+  flex: none;
+}
+
+/* Options in a card: no browser frame, the legend as a small heading. */
+.panel fieldset.checks {
+  border: 0;
+  margin: 16px 0 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.panel fieldset.checks legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-weight: 650;
+  font-size: 14px;
+}
+
+/* Something the person has to fix outside Zankup: a tinted line rather than loud text. */
+.alert {
+  margin: 8px 0 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--run) 10%, var(--surface));
+  color: color-mix(in srgb, var(--run) 80%, var(--fg));
+  font-size: 13px;
 }
 
 .pairs dd.masked {

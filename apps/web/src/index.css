@@ -5334,6 +5334,27 @@ h1.greeting {
   }
 }
 
+/* The activity's map spans the column: what it gains beyond the page (0 until the page stops growing)
+   moves its controls in, so they line up with the content below instead of the column's edges. */
+.page.detail > .mapblock {
+  --map-edge: max(0px, calc((100cqi - var(--page-max)) / 2 + var(--gutter) - 12px));
+}
+
+.page.detail > .mapblock .mapopts,
+.page.detail > .mapblock .mappanel {
+  right: calc(12px + var(--map-edge));
+}
+
+.page.detail > .mapblock .mapbar {
+  left: calc(12px + var(--map-edge));
+  right: calc(12px + var(--map-edge));
+}
+
+.page.detail > .mapblock .maplibregl-ctrl-top-right,
+.page.detail > .mapblock .maplibregl-ctrl-bottom-right {
+  right: var(--map-edge);
+}
+
 /* The map's zoom under its options button, and both under the floating buttons on a phone. */
 .mapblock .maplibregl-ctrl-top-right {
   top: 52px;

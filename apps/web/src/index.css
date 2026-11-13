@@ -400,54 +400,6 @@ a.stepbtn:hover {
   }
 }
 
-/* The year so far, above the months. */
-.yearsofar {
-  margin: 4px 0 6px;
-}
-
-.yearsofar h2 {
-  margin: 0 2px 8px;
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.yearsofar dl {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-
-.yearsofar dl div {
-  display: flex;
-  flex-direction: column-reverse;
-  padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid var(--card-line);
-  border-radius: var(--radius);
-  min-width: 0;
-}
-
-.yearsofar dt {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.yearsofar dd {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 650;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (max-width: 479px) {
-  .yearsofar dl {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 .actions {
   display: flex;
   gap: 16px;

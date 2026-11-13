@@ -36,8 +36,6 @@
   "feed.stat.ascent": "Desnivel",
   "feed.prev": "Anterior",
   "feed.next": "Siguiente",
-  "feed.year": "En {year}",
-  "feed.stat.count": "Actividades",
   "feed.end": "No hay más.",
   "activity.back": "Volver a actividades",
   "activity.notFound": "Esta actividad no existe o no es tuya.",

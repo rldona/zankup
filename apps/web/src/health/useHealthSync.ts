@@ -55,7 +55,7 @@ export function useHealthSync() {
       if (!current()) return;
       if (queued.length === 0) return setState({ phase: 'none' });
       setState({ phase: 'running', sources: queued });
-      for (const deadline = Date.now() + PATIENCE; Date.now() < deadline; ) {
+      for (const deadline = Date.now() + PATIENCE; Date.now() < deadline;) {
         await sleep(EVERY);
         if (!current()) return;
         const now = stamps(await settings());

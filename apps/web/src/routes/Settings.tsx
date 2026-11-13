@@ -30,6 +30,7 @@ import { useSetTheme, useThemeChoice } from '../theme';
 import { AlertSettings, BackupSettings, GoogleHealthSwitch, SyncInterval } from '../settings/Instance';
 import { ServiceKeyForm } from '../settings/ServiceKey';
 import { MaterialIcon } from '../MaterialIcon';
+import { CardTitle } from '../ui';
 import { Account } from './Profile';
 
 // The "System" preview is half light, half dark: the two themes the device can pick between.
@@ -196,8 +197,8 @@ function Appearance() {
   const current = useThemeChoice();
   const setTheme = useSetTheme();
   return (
-    <>
-      <h2>{t('settings.appearance')}</h2>
+    <section className="panel">
+      <CardTitle>{t('settings.appearance')}</CardTitle>
       <p className="note">{t('settings.themeHelp')}</p>
       <div className="themes">
         {THEME_CHOICES.map((choice) => {
@@ -230,7 +231,7 @@ function Appearance() {
           );
         })}
       </div>
-    </>
+    </section>
   );
 }
 
@@ -239,15 +240,14 @@ function LanguageAndUnits() {
   const save = useSaveSettings();
   const language = chosenLanguage() ?? '';
   return (
-    <>
-      <h2>
+    <section className="panel">
+      <CardTitle>
         {t('settings.language')} · {t('settings.units')}
-      </h2>
-      <div className="fields aligned">
+      </CardTitle>
+      <div className="fields">
         <label className="field">
           <span>
             <b>{t('settings.language')}</b>
-            <small className="note">{t('settings.languageHelp')}</small>
           </span>
           <select
             value={language}
@@ -260,6 +260,7 @@ function LanguageAndUnits() {
             <option value="en">English</option>
             <option value="es">Español</option>
           </select>
+          <small className="note">{t('settings.languageHelp')}</small>
         </label>
         <label className="field">
           <span>
@@ -274,7 +275,7 @@ function LanguageAndUnits() {
           </select>
         </label>
       </div>
-    </>
+    </section>
   );
 }
 
@@ -310,8 +311,8 @@ function HeartRateForm({
     save.mutate({ hr_max: number(max), hr_rest: number(rest) });
   };
   return (
-    <form onSubmit={submit}>
-      <h2>{t('settings.heart')}</h2>
+    <form className="panel" onSubmit={submit}>
+      <CardTitle>{t('settings.heart')}</CardTitle>
       <p className="note">{estimate ? t('settings.hrHelp', { estimate }) : t('settings.hrHelpNone')}</p>
       <div className="fields">
         <label className="field">
@@ -360,8 +361,7 @@ function HeartRateForm({
 function YourData() {
   return (
     <>
-      <h2>{t('data.title')}</h2>
-      <ul className="rows links">
+      <ul className="panel rows links">
         <li>
           <span>
             <Link to="/settings/import">{t('import.title')}</Link>
@@ -385,30 +385,28 @@ function Garmin() {
   const garmin = sources.data?.find((s) => s.kind === 'garmin');
   if (!garmin) return null;
   return (
-    <>
-      <h2>{t('settings.garmin')}</h2>
-      <div className="panel stack">
-        {garmin.expiring_soon && garmin.key_expires_on && (
-          <p className="warn" role="alert">
-            {t('settings.garminSoon', { date: day(garmin.key_expires_on) })}
-          </p>
-        )}
-        <p className="note">
-          {garmin.last_sync_at
-            ? t('settings.lastSync', {
-                date: new Date(garmin.last_sync_at).toLocaleString(locale, {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                }),
-              })
-            : t('settings.never')}
-          {garmin.last_error && ` ${t('settings.lastError', { error: garmin.last_error })}`}
+    <section className="panel stack">
+      <CardTitle>{t('settings.garmin')}</CardTitle>
+      {garmin.expiring_soon && garmin.key_expires_on && (
+        <p className="warn" role="alert">
+          {t('settings.garminSoon', { date: day(garmin.key_expires_on) })}
         </p>
-        <SyncInterval />
-        <p className="note">{t('keys.garminHelp')}</p>
-        <ServiceKeyForm name="garmin" />
-      </div>
-    </>
+      )}
+      <p className="note">
+        {garmin.last_sync_at
+          ? t('settings.lastSync', {
+              date: new Date(garmin.last_sync_at).toLocaleString(locale, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }),
+            })
+          : t('settings.never')}
+        {garmin.last_error && ` ${t('settings.lastError', { error: garmin.last_error })}`}
+      </p>
+      <SyncInterval />
+      <p className="note">{t('keys.garminHelp')}</p>
+      <ServiceKeyForm name="garmin" />
+    </section>
   );
 }
 
@@ -422,8 +420,8 @@ function Sessions() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: devicesQuery(api).queryKey }),
   });
   return (
-    <>
-      <h2>{t('settings.sessions')}</h2>
+    <section className="panel">
+      <CardTitle>{t('settings.sessions')}</CardTitle>
       <ul className="rows">
         {devices.data?.map((d) => (
           <li key={d.id}>
@@ -444,7 +442,7 @@ function Sessions() {
           </li>
         ))}
       </ul>
-    </>
+    </section>
   );
 }
 
@@ -470,12 +468,14 @@ function Zones() {
   const ftp = estimate('ftp');
   const number = (v: string) => (v.trim() ? Number(v) : null);
   return (
-    <>
-      <h2>{t('settings.zones')}</h2>
+    <section className="panel">
+      <CardTitle>{t('settings.zones')}</CardTitle>
       <p className="note">{t('settings.recomputeNote')}</p>
       <div className="fields">
         <label className="field">
-          <b>{t('settings.zoneModel')}</b>
+          <span>
+            <b>{t('settings.zoneModel')}</b>
+          </span>
           <select
             value={settings.data.zone_model}
             onChange={(e) => save.mutate({ zone_model: e.target.value as 'max' | 'reserve' | 'lthr' })}
@@ -486,7 +486,9 @@ function Zones() {
           </select>
         </label>
         <label className="field">
-          <b>{t('settings.lthr')}</b>
+          <span>
+            <b>{t('settings.lthr')}</b>
+          </span>
           <input
             key={`lthr-${settings.data.lthr}`}
             type="number"
@@ -505,7 +507,9 @@ function Zones() {
           )}
         </label>
         <label className="field">
-          <b>{t('settings.ftp')}</b>
+          <span>
+            <b>{t('settings.ftp')}</b>
+          </span>
           <input
             key={`ftp-${settings.data.ftp}`}
             type="number"
@@ -538,6 +542,6 @@ function Zones() {
           </span>
         )}
       </div>
-    </>
+    </section>
   );
 }

@@ -74,8 +74,7 @@ export function PrivacyZones() {
     );
   };
   return (
-    <>
-      <h2>{t('privacy.title')}</h2>
+    <section className="panel" aria-label={t('privacy.title')}>
       <p className="note">{t('privacy.help')}</p>
       <ZoneMap
         zones={zones}
@@ -86,7 +85,9 @@ export function PrivacyZones() {
       />
       <div className="fields">
         <label className="field">
-          <b>{t('privacy.name')}</b>
+          <span>
+            <b>{t('privacy.name')}</b>
+          </span>
           <input
             value={name}
             maxLength={120}
@@ -95,7 +96,9 @@ export function PrivacyZones() {
           />
         </label>
         <label className="field">
-          <b>{t('privacy.radius')}</b>
+          <span>
+            <b>{t('privacy.radius')}</b>
+          </span>
           <select
             value={draft?.radius_m ?? 400}
             onChange={(e) => draft && setDraft({ ...draft, radius_m: Number(e.target.value) })}
@@ -139,7 +142,7 @@ export function PrivacyZones() {
           ))}
         </ul>
       )}
-    </>
+    </section>
   );
 }
 

@@ -15,6 +15,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
+import { CardTitle } from '../ui';
 
 const date = (iso: string) => new Date(iso).toLocaleDateString(locale, { dateStyle: 'medium' });
 const megabytes = (bytes: number) =>
@@ -312,33 +313,35 @@ export function Import() {
   return (
     <section className="page">
       <h1>{t('import.title')}</h1>
-      <p className="note">{t('import.help')}</p>
-      <ul className="note bullets">
-        <li>{t('import.strava')}</li>
-        <li>{t('import.garmin')}</li>
-        <li>{t('import.files')}</li>
-      </ul>
-      <div className="actions">
-        <button
-          type="button"
-          className="primary"
-          onClick={() => input.current?.click()}
-          disabled={upload.isPending}
-        >
-          {t('import.choose')}
-        </button>
-        <input
-          ref={input}
-          type="file"
-          multiple
-          hidden
-          accept=".zip,.fit,.tcx,.gpx,.gz,application/zip"
-          onChange={(e) => {
-            const files = [...(e.target.files ?? [])];
-            e.target.value = '';
-            if (files.length) upload.mutate(files);
-          }}
-        />
+      <div className="panel">
+        <p className="note">{t('import.help')}</p>
+        <ul className="note bullets">
+          <li>{t('import.strava')}</li>
+          <li>{t('import.garmin')}</li>
+          <li>{t('import.files')}</li>
+        </ul>
+        <div className="actions">
+          <button
+            type="button"
+            className="primary"
+            onClick={() => input.current?.click()}
+            disabled={upload.isPending}
+          >
+            {t('import.choose')}
+          </button>
+          <input
+            ref={input}
+            type="file"
+            multiple
+            hidden
+            accept=".zip,.fit,.tcx,.gpx,.gz,application/zip"
+            onChange={(e) => {
+              const files = [...(e.target.files ?? [])];
+              e.target.value = '';
+              if (files.length) upload.mutate(files);
+            }}
+          />
+        </div>
       </div>
       {progress && (
         <div className="panel" role="status">
@@ -354,13 +357,15 @@ export function Import() {
           {t('import.uploadError')}
         </p>
       )}
-      <h2>{t('import.history')}</h2>
-      {imports.data?.length === 0 && <p className="state">{t('import.none')}</p>}
-      <ul className="rows imports">
-        {imports.data?.map((i) => (
-          <ImportRow key={i.id} item={i} />
-        ))}
-      </ul>
+      <section className="panel">
+        <CardTitle>{t('import.history')}</CardTitle>
+        {imports.data?.length === 0 && <p className="note">{t('import.none')}</p>}
+        <ul className="rows imports">
+          {imports.data?.map((i) => (
+            <ImportRow key={i.id} item={i} />
+          ))}
+        </ul>
+      </section>
     </section>
   );
 }
@@ -422,8 +427,8 @@ export function ExportData() {
   const latest: ExportOut | undefined = exports.data?.[0];
   const busy = latest?.status === 'queued' || latest?.status === 'running';
   return (
-    <>
-      <h2>{t('export.title')}</h2>
+    <section className="panel">
+      <CardTitle>{t('export.title')}</CardTitle>
       <p className="note">{t('export.help')}</p>
       <div className="actions">
         <button type="button" onClick={() => start.mutate()} disabled={busy || start.isPending}>
@@ -448,6 +453,6 @@ export function ExportData() {
       {latest?.expires_at && latest.status === 'done' && (
         <p className="note">{t('export.until', { date: date(latest.expires_at) })}</p>
       )}
-    </>
+    </section>
   );
 }

@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { t } from '../i18n';
 import { Select } from '../Select';
+import { CardTitle } from '../ui';
 import { ServiceKeyForm } from './ServiceKey';
 
 type Changes = Record<string, unknown>;
@@ -101,8 +102,8 @@ export function CoachSettings() {
   const value = (name: string, fallback: unknown) => (name in changes ? changes[name] : fallback);
   const chosen = data.models.find((m) => m.id === value('ai_model', model.value));
   return (
-    <div className="panel">
-      <h3>{t('instance.coachTitle')}</h3>
+    <section className="panel">
+      <CardTitle>{t('instance.coachTitle')}</CardTitle>
       <p className="note">{t('instance.modelHelp')}</p>
       <Form changes={changes} save={save} reset={() => setChanges({})}>
         <div className="field">
@@ -148,7 +149,7 @@ export function CoachSettings() {
         </div>
       </Form>
       <Origin source={model.source} />
-    </div>
+    </section>
   );
 }
 
@@ -182,27 +183,25 @@ export function AlertSettings() {
   const email = get('alert_email');
   if (!email) return null;
   return (
-    <>
-      <h2>{t('instance.alertsTitle')}</h2>
-      <div className="panel">
-        <p className="note">{t('instance.alertsHelp')}</p>
-        <Form changes={changes} save={save} reset={() => setChanges({})}>
-          <label className="field">
-            <span>
-              <b>{t('instance.alertEmail')}</b>
-            </span>
-            <input
-              type="email"
-              value={String('alert_email' in changes ? (changes.alert_email ?? '') : (email.value ?? ''))}
-              onChange={(e) => setChanges({ alert_email: e.target.value.trim() || null })}
-            />
-          </label>
-        </Form>
-        <Origin source={email.source} />
-        <p className="note">{t('instance.resendHelp')}</p>
-        <ServiceKeyForm name="resend" />
-      </div>
-    </>
+    <section className="panel">
+      <CardTitle>{t('instance.alertsTitle')}</CardTitle>
+      <p className="note">{t('instance.alertsHelp')}</p>
+      <Form changes={changes} save={save} reset={() => setChanges({})}>
+        <label className="field">
+          <span>
+            <b>{t('instance.alertEmail')}</b>
+          </span>
+          <input
+            type="email"
+            value={String('alert_email' in changes ? (changes.alert_email ?? '') : (email.value ?? ''))}
+            onChange={(e) => setChanges({ alert_email: e.target.value.trim() || null })}
+          />
+        </label>
+      </Form>
+      <Origin source={email.source} />
+      <p className="note">{t('instance.resendHelp')}</p>
+      <ServiceKeyForm name="resend" />
+    </section>
   );
 }
 
@@ -217,49 +216,47 @@ export function BackupSettings() {
   if (!hour || !keep) return null;
   const value = (name: string) => (name in changes ? changes[name] : get(name)?.value);
   return (
-    <>
-      <h2>{t('instance.backupTitle')}</h2>
-      <div className="panel">
-        <p className="note">{t('instance.backupHelp')}</p>
-        <Form changes={changes} save={save} reset={() => setChanges({})}>
-          <div className="field">
+    <section className="panel">
+      <CardTitle>{t('instance.backupTitle')}</CardTitle>
+      <p className="note">{t('instance.backupHelp')}</p>
+      <Form changes={changes} save={save} reset={() => setChanges({})}>
+        <div className="field">
+          <span>
+            <b>{t('instance.backupHour')}</b>
+          </span>
+          <HourSelect
+            label={t('instance.backupHour')}
+            value={Number(value('backup_hour_utc'))}
+            onChange={(u) => setChanges({ ...changes, backup_hour_utc: u })}
+          />
+        </div>
+        <label className="field">
+          <span>
+            <b>{t('instance.keepDays')}</b>
+          </span>
+          <input
+            type="number"
+            min="1"
+            value={String(value('backup_keep_days') ?? '')}
+            onChange={(e) => setChanges({ ...changes, backup_keep_days: e.target.value })}
+          />
+        </label>
+        {S3_FIELDS.map((name) => (
+          <label key={name} className="field">
             <span>
-              <b>{t('instance.backupHour')}</b>
-            </span>
-            <HourSelect
-              label={t('instance.backupHour')}
-              value={Number(value('backup_hour_utc'))}
-              onChange={(u) => setChanges({ ...changes, backup_hour_utc: u })}
-            />
-          </div>
-          <label className="field">
-            <span>
-              <b>{t('instance.keepDays')}</b>
+              <b>{t(`instance.${name}` as 'instance.backup_s3_bucket')}</b>
             </span>
             <input
-              type="number"
-              min="1"
-              value={String(value('backup_keep_days') ?? '')}
-              onChange={(e) => setChanges({ ...changes, backup_keep_days: e.target.value })}
+              spellCheck={false}
+              value={String(value(name) ?? '')}
+              onChange={(e) => setChanges({ ...changes, [name]: e.target.value.trim() || null })}
             />
           </label>
-          {S3_FIELDS.map((name) => (
-            <label key={name} className="field">
-              <span>
-                <b>{t(`instance.${name}` as 'instance.backup_s3_bucket')}</b>
-              </span>
-              <input
-                spellCheck={false}
-                value={String(value(name) ?? '')}
-                onChange={(e) => setChanges({ ...changes, [name]: e.target.value.trim() || null })}
-              />
-            </label>
-          ))}
-        </Form>
-        <p className="note">{t('instance.s3SecretHelp')}</p>
-        <ServiceKeyForm name="backup_s3" />
-      </div>
-    </>
+        ))}
+      </Form>
+      <p className="note">{t('instance.s3SecretHelp')}</p>
+      <ServiceKeyForm name="backup_s3" />
+    </section>
   );
 }
 
@@ -269,13 +266,15 @@ export function GoogleHealthSwitch() {
   const enabled = get('google_health_enabled');
   if (!enabled) return null;
   return (
-    <label className="check">
-      <input
-        type="checkbox"
-        checked={Boolean(enabled.value)}
-        onChange={(e) => save.mutate({ google_health_enabled: e.target.checked })}
-      />
-      {t('instance.googleHealth')}
-    </label>
+    <section className="panel">
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={Boolean(enabled.value)}
+          onChange={(e) => save.mutate({ google_health_enabled: e.target.checked })}
+        />
+        {t('instance.googleHealth')}
+      </label>
+    </section>
   );
 }

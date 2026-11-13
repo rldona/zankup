@@ -120,13 +120,13 @@ test("Home in the app's order at every size, with This week as the app's", async
   const top = async (key: string) =>
     (await page.getByRole('heading', { name: w(key), exact: true }).boundingBox())?.y ?? -1;
   await expect(page.getByRole('heading', { name: w('home.last7'), exact: true })).toBeVisible();
-  const [week, metrics, last7] = [
+  const [week, last7, metrics] = [
     await top('week.title'),
-    await top('home.metrics'),
     await top('home.last7'),
+    await top('home.metrics'),
   ];
-  expect(week).toBeLessThan(metrics);
-  expect(metrics).toBeLessThan(last7);
+  expect(week).toBeLessThan(last7);
+  expect(last7).toBeLessThan(metrics);
   // Monday's run with a dot for the ride, Tuesday's ride, then the days' numbers.
   const days = page.locator('.week .days');
   await expect(days.getByRole('link', { name: /Morning run, Hill ride/ }).locator('.second')).toBeVisible();

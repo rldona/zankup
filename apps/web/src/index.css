@@ -3645,7 +3645,7 @@ textarea {
 
 .homegrid {
   display: grid;
-  grid-template-areas: 'week' 'day' 'metrics' 'last';
+  grid-template-areas: 'week' 'day' 'last' 'metrics';
   gap: 24px 20px;
   align-items: start;
 }
@@ -5657,32 +5657,74 @@ h1.greeting {
   }
 }
 
-/* The heatmap, as the app's: the map fills the screen under the title, the sports centred over it and
-   the number of routes at its foot. */
+/* The heatmap, full screen: the map fills all of the content area, edge to edge, with the way back
+   to Stats floating at its top left, the sports centred over it and the routes counted at its foot.
+   The title stays for screen readers only. */
+.main:has(> .page.heatmap) {
+  position: relative;
+}
+
+.main:has(> .page.heatmap) > .crumbrow {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  z-index: 3;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.main:has(> .page.heatmap) > .crumbrow .crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 34px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .page.heatmap {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  max-width: none;
+  padding: 0;
+}
+
+.page.heatmap .titlebar {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .heatwrap {
   position: relative;
   flex: 1;
   min-height: 420px;
-  border-radius: var(--radius);
   overflow: hidden;
-  border: 1px solid var(--line);
   background: var(--surface-2);
 }
 
 .heatwrap .map {
   margin: 0;
   border-radius: 0;
+  border: 0;
 }
 
 .heatwrap > .note {
-  padding: 24px;
+  padding: 64px 24px 24px;
 }
 
 .heatwrap .heatchips {
@@ -5721,10 +5763,14 @@ h1.greeting {
   top: 52px;
 }
 
-@media (max-width: 599px) {
-  .heatwrap {
-    margin-inline: calc(-1 * var(--gutter));
-    border-radius: 0;
-    border-width: 1px 0 0;
+/* Narrow: the sports go under the way back, so they do not meet. */
+@media (max-width: 767px) {
+  .heatwrap .heatchips {
+    top: 58px;
+    justify-content: flex-start;
+  }
+
+  .heatwrap .maplibregl-ctrl-top-right {
+    top: 98px;
   }
 }

@@ -57,6 +57,11 @@ export function TrackMap({
         cooperativeGestures: true,
       });
       instance.addControl(new maplibre.NavigationControl({ showCompass: false }), 'top-right');
+      // The credits start folded behind their (i): MapLibre unfolds them once, when the map's data
+      // first arrives, so they are folded when it first settles.
+      instance.once('idle', () =>
+        element.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show'),
+      );
       instance.on('load', () => {
         instance.addSource('tracks', {
           type: 'geojson',

@@ -1,0 +1,9 @@
+com.zankup.googleid.google-id-pngs-0 /home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android/build/generated/res/pngs/release
+com.zankup.googleid.google-id-updated_navigation_xml-1 /home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android/build/generated/updated_navigation_xml/release
+com.zankup.googleid.google-id-mergeReleaseResources-2 /home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+com.zankup.googleid.google-id-mergeReleaseResources-3 /home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+com.zankup.googleid.google-id-release-4 /home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android/build/intermediates/merged_res/release/mergeReleaseResources
+com.zankup.googleid.google-id-release-5 /home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android/build/intermediates/packaged_res/release/packageReleaseResources
+com.zankup.googleid.google-id-main-6 /home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android/src/main/res
+com.zankup.googleid.google-id-release-7 /home/rldona/workspace/Zankup/apps/mobile/modules/google-id/android/src/release/res
+gradleHome-0 /home/rldona/.gradle

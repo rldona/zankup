@@ -116,7 +116,10 @@ describe('app skeleton', () => {
         }),
     });
     const router = renderAt('/activities');
-    const months = await screen.findAllByRole('heading', { level: 2 });
+    const year = await screen.findByRole('region', { name: 'In 2026' });
+    expect(year).toHaveTextContent('Activities12');
+    expect(year).toHaveTextContent('Distance119 km');
+    const months = screen.getAllByRole('heading', { level: 2 }).filter((h) => h.className === 'mhead');
     expect(months.map((h) => h.textContent)).toEqual([
       'November 20263 activities · 21 km · 2 h 3 min',
       'October 20269 activities · 98 km · 8 h 20 min',
@@ -152,33 +155,33 @@ describe('app skeleton', () => {
     expect(router.state.location.pathname).toBe('/activities/7');
   });
 
-  it('opens the first activity on a desktop, and says so when there is nothing to show', async () => {
-    const wide = (matches: boolean) =>
-      vi.stubGlobal('matchMedia', (query: string) => ({
-        matches: matches && query === '(min-width: 1024px)',
-        media: query,
-        addEventListener: () => undefined,
-        removeEventListener: () => undefined,
-      }));
-
-    wide(true);
+  it('keeps the list as the screen on a desktop and steps through the activities from one', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(min-width: 1024px)',
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    const ride = { ...RUN, id: 5, name: 'Long ride', sport: 'ride', start_utc: '2026-10-12T07:00:00Z' };
     mockApi({
       '/api/auth/me': () => Response.json(ME),
-      '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
+      '/api/activities': () => Response.json({ items: [RUN, ride], next_cursor: null }),
       '/api/activities/7': () => Response.json({ ...RUN, laps: [], splits: [], best_efforts: [] }),
+      '/api/activities/5': () => Response.json({ ...ride, laps: [], splits: [], best_efforts: [] }),
     });
     const router = renderAt('/activities');
-    await waitFor(() => expect(router.state.location.pathname).toBe('/activities/7'));
-    cleanup();
-    vi.unstubAllGlobals();
+    // Nothing opens by itself: the list is the screen.
+    await userEvent.click(await screen.findByRole('link', { name: /Long ride/ }));
+    expect(router.state.location.pathname).toBe('/activities/5');
+    expect(document.querySelector('.feedwrap')).toHaveClass('detail');
 
-    wide(true);
-    mockApi({
-      '/api/auth/me': () => Response.json(ME),
-      '/api/activities': () => Response.json({ items: [], next_cursor: null }),
-    });
-    renderAt('/activities');
-    expect(await screen.findByText('No activities to show yet.')).toBeInTheDocument();
+    const bar = await screen.findByRole('navigation', { name: 'Activities' });
+    expect(within(bar).getByText('Next').closest('[aria-disabled]')).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(within(bar).getByRole('link', { name: 'Previous: Morning run' }));
+    expect(router.state.location.pathname).toBe('/activities/7');
+    await userEvent.click(within(bar).getByRole('link', { name: 'Feed' }));
+    expect(router.state.location.pathname).toBe('/activities');
+    vi.unstubAllGlobals();
   });
 
   it('lays an activity out as the app: floating buttons on a phone, labelled buttons on a desktop', async () => {
@@ -462,7 +465,7 @@ describe('app skeleton', () => {
     expect(within(sports).getByRole('button', { name: 'Ride' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('keeps the feed beside the detail on wide screens', async () => {
+  it('marks the open activity in the feed and stays in Activities', async () => {
     mockApi({
       '/api/auth/me': () => Response.json(ME),
       '/api/activities': () => Response.json({ items: [RUN], next_cursor: null }),
@@ -472,7 +475,7 @@ describe('app skeleton', () => {
     expect(await screen.findByRole('heading', { name: 'Morning run' })).toBeInTheDocument();
     const item = screen.getByRole('link', { name: /Morning run/ });
     expect(item).toHaveClass('on'); // the open activity is marked in the list
-    expect(document.querySelector('.feedwrap')).toHaveClass('detail'); // mobile shows only the detail
+    expect(document.querySelector('.feedwrap')).toHaveClass('detail'); // the detail takes the list's place
     for (const nav of screen.getAllByRole('navigation', { name: 'Main' })) {
       expect(nav.querySelector('a.on')).toHaveAttribute('href', '/activities'); // still in Activities
     }

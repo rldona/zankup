@@ -85,11 +85,8 @@ test('the frame: tab bar on a phone, the rail from 600 px, one header, no sidewa
       await expect(rail).toBeVisible();
       await expect(tabbar).toBeHidden();
     }
-    // One title per screen: no top bar of the frame's own above it. Activities on a desktop adds the
-    // open activity's title beside the feed's, so it may have two.
-    const titles = page.locator('h1').filter({ visible: true });
-    if (path === '/activities') expect(await titles.count()).toBeLessThanOrEqual(2);
-    else await expect(titles).toHaveCount(1);
+    // One title per screen: no top bar of the frame's own above it.
+    await expect(page.locator('h1').filter({ visible: true })).toHaveCount(1);
     const overflow = await page.evaluate(() => {
       const main = document.querySelector('main');
       return (main?.scrollWidth ?? 0) - (main?.clientWidth ?? 0);
@@ -104,7 +101,9 @@ test('the frame: tab bar on a phone, the rail from 600 px, one header, no sidewa
   await page.locator('.crumb').click();
   await expect(page).toHaveURL(/\/profile$/);
   if (width >= 1200) {
-    const box = await page.locator('main .page').first().boundingBox();
+    const profile = page.locator('main .page').first();
+    await expect(profile).toBeVisible();
+    const box = await profile.boundingBox();
     expect(box?.width).toBeLessThanOrEqual(1320);
   }
 });

@@ -275,6 +275,7 @@ svg.i.m {
 }
 
 .detailcol {
+  --detailnav-h: 56px;
   overflow: auto;
   min-width: 0;
   display: none;
@@ -299,10 +300,51 @@ svg.i.m {
   display: flex;
   align-items: center;
   gap: 12px;
+  box-sizing: border-box;
+  height: var(--detailnav-h);
   /* The bar spans the column, its links line up with the page's content below (100% is the column). */
-  padding: 10px max(var(--gutter), calc((100% - var(--page-max)) / 2 + var(--gutter)));
-  background: var(--bg);
-  border-bottom: 1px solid var(--line);
+  padding: 0 max(var(--gutter), calc((100% - var(--page-max)) / 2 + var(--gutter)));
+  /* Glass: what scrolls under it (the map first) shows through, blurred. */
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .detailnav {
+    background: var(--bg);
+  }
+}
+
+/* With a map, the map starts under the bar, which floats over it; the map grows by the bar's height
+   and its controls move down by it, so what shows below the bar is as before. */
+@media (min-width: 600px) {
+  .detailnav + .page.detail.withmap {
+    margin-top: calc(-1 * var(--detailnav-h));
+  }
+
+  .detailnav + .page.detail > .mapblock .map {
+    height: calc(400px + var(--detailnav-h));
+  }
+
+  .detailnav + .page.detail > .mapblock .mapopts {
+    top: calc(12px + var(--detailnav-h));
+  }
+
+  .detailnav + .page.detail > .mapblock .mappanel {
+    top: calc(60px + var(--detailnav-h));
+  }
+
+  .detailnav + .page.detail > .mapblock .maplibregl-ctrl-top-right {
+    top: calc(52px + var(--detailnav-h));
+  }
+}
+
+@media (min-width: 1024px) {
+  .detailnav + .page.detail > .mapblock .map {
+    height: calc(480px + var(--detailnav-h));
+  }
 }
 
 .detailnav .crumb {

@@ -154,6 +154,7 @@ svg.i.m {
   gap: 6px;
   padding: calc(18px + env(safe-area-inset-top)) 6px calc(14px + env(safe-area-inset-bottom));
   padding-left: calc(6px + env(safe-area-inset-left));
+  overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -321,17 +322,13 @@ svg.i.m {
   height: var(--detailnav-h);
   /* The bar spans the column, its links line up with the page's content below (100% is the column). */
   padding: 0 max(var(--gutter), calc((100% - var(--page-max)) / 2 + var(--gutter)));
-  /* Glass: what scrolls under it (the map first) shows through, blurred. */
-  background: color-mix(in srgb, var(--bg) 62%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
-  backdrop-filter: blur(16px) saturate(1.6);
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  /* Transparent: only its buttons float over the map and the page; the map takes the rest. */
+  background: transparent;
+  pointer-events: none;
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .detailnav {
-    background: var(--bg);
-  }
+.detailnav > * {
+  pointer-events: auto;
 }
 
 /* With a map, the map starts under the bar, which floats over it; the map grows by the bar's height
@@ -364,14 +361,6 @@ svg.i.m {
   }
 }
 
-.detailnav .crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
 .detailnav .steps {
   margin-left: auto;
   display: flex;
@@ -393,7 +382,7 @@ svg.i.m {
   text-decoration: none;
 }
 
-.stepbtn:last-child {
+.steps .stepbtn:last-child {
   padding: 0 8px 0 12px;
 }
 
@@ -5287,8 +5276,9 @@ h1.greeting {
 .page.detail > .mapblock {
   margin-inline: calc(-1 * var(--gutter));
   margin-inline: calc((100% - 100cqi) / 2);
+  margin-bottom: 28px;
   border-radius: 0;
-  border-width: 0 0 1px;
+  border-width: 0;
 }
 
 /* The power and heart-rate zones side by side, each half; the power curve follows at full width. */

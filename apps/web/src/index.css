@@ -258,24 +258,145 @@ svg.i.m {
 
 .feedwrap {
   display: grid;
-  grid-template-columns: 400px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 }
 
+/* The list is the screen, centred at the width of the cards; an activity takes its place when opened. */
 .feedcol {
-  border-right: 1px solid var(--line);
   overflow: auto;
   padding: 20px;
+}
+
+.feedinner {
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .detailcol {
   overflow: auto;
   min-width: 0;
+  display: none;
+  /* The activity's map spans this column, beyond the page's width (see .page.detail > .mapblock). */
+  container-type: inline-size;
 }
 
-.pick {
-  padding: 20px;
+.feedwrap.detail .feedcol {
+  display: none;
+}
+
+.feedwrap.detail .detailcol {
+  display: block;
+}
+
+/* Above an open activity: back to the list, and the previous and next ones. A phone has its own
+   floating buttons over the map. */
+.detailnav {
+  position: sticky;
+  top: 0;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px var(--gutter);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.detailnav .crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.detailnav .steps {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.stepbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 34px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.stepbtn:last-child {
+  padding: 0 8px 0 12px;
+}
+
+a.stepbtn:hover {
+  border-color: var(--accent);
+}
+
+.stepbtn[aria-disabled='true'] {
+  opacity: 0.4;
+}
+
+@media (max-width: 599px) {
+  .detailnav {
+    display: none;
+  }
+}
+
+/* The year so far, above the months. */
+.yearsofar {
+  margin: 4px 0 6px;
+}
+
+.yearsofar h2 {
+  margin: 0 2px 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.yearsofar dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.yearsofar dl div {
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  min-width: 0;
+}
+
+.yearsofar dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.yearsofar dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 479px) {
+  .yearsofar dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .actions {
@@ -312,40 +433,16 @@ svg.i.m {
   place-items: center;
 }
 
-/* Below 1024 px the feed's list and an activity take turns instead of sitting side by side. */
-@media (max-width: 1023px) {
-  .feedwrap {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .feedcol {
-    border-right: 0;
-  }
-
-  .detailcol {
-    display: none;
-  }
-
-  .feedwrap.detail .feedcol {
-    display: none;
-  }
-
-  .feedwrap.detail .detailcol {
-    display: block;
-  }
-}
-
 /* What only a phone shows (the way back on screens the rail already names, Home's wordmark). */
 .phone-only {
   display: none;
 }
 
 /* The way back shows where nothing else on screen leads back: on a phone only (the rail names the
-   Coach, the notifications and Settings), below 1024 px (Settings' list sits beside its sections from
-   there), or on a tablet only (an activity: the list beside it on a desktop, floating buttons on a phone). */
+   Coach, the notifications and Settings), or below 1024 px (Settings' list sits beside its sections
+   from there). */
 @media (min-width: 600px) {
-  .crumbrow.show-phone,
-  .crumbrow.show-tablet:not(:has(+ .feedwrap)) {
+  .crumbrow.show-phone {
     display: none;
   }
 
@@ -355,8 +452,7 @@ svg.i.m {
 }
 
 @media (min-width: 1024px) {
-  .crumbrow.show-compact,
-  .crumbrow.show-tablet {
+  .crumbrow.show-compact {
     display: none;
   }
 
@@ -422,7 +518,7 @@ svg.i.m {
     padding: 14px var(--gutter);
   }
 
-  .crumbrow:not(.show-tablet) + .page {
+  .crumbrow + .page {
     padding-top: 0;
   }
 
@@ -455,21 +551,12 @@ svg.i.m {
   scrollbar-width: none;
 }
 
-/* On a desktop the chips do not fit in the 400 px column and a mouse has no sideways scroll: a
-   Zankup-styled selector (a native <select> would ignore the theme). */
-.sportselect {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .feedcol > .chips {
-    display: none;
-  }
-
-  .feedcol > .sportselect {
-    display: block;
-    position: relative;
-    margin: 0 0 10px;
+/* From 600 px the list is wide enough for every sport: the chips wrap instead of scrolling sideways. */
+@media (min-width: 600px) {
+  .feedcol .chips {
+    flex-wrap: wrap;
+    margin-inline: 0;
+    padding-inline: 0;
   }
 }
 
@@ -5136,8 +5223,11 @@ h1.greeting {
   padding-top: 0;
 }
 
+/* Edge to edge of the detail column, not only of the centred page: 100% is the page's content width
+   and 100cqi the column's, so this is minus a gutter until the page stops growing, then all the rest. */
 .page.detail > .mapblock {
   margin-inline: calc(-1 * var(--gutter));
+  margin-inline: calc((100% - 100cqi) / 2);
   border-radius: 0;
   border-width: 0 0 1px;
 }
@@ -5232,8 +5322,7 @@ h1.greeting {
 }
 
 @media (max-width: 599px) {
-  .app.pushed .tabbar,
-  .crumbrow.show-tablet {
+  .app.pushed .tabbar {
     display: none;
   }
 

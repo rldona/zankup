@@ -2,7 +2,7 @@ import { createBrowserRouter, type RouteObject } from 'react-router';
 
 import { Activity } from './routes/Activity';
 import { AppError } from './routes/AppError';
-import { Feed, PickActivity } from './routes/Feed';
+import { Feed } from './routes/Feed';
 import { Estimates } from './routes/Estimates';
 import { Goals } from './routes/Goals';
 import { Notifications } from './routes/Notifications';
@@ -39,10 +39,7 @@ const screens: RouteObject[] = [
   {
     path: 'activities',
     element: <Feed />,
-    children: [
-      { index: true, element: <PickActivity /> },
-      { path: ':id', element: <Activity /> },
-    ],
+    children: [{ path: ':id', element: <Activity /> }],
   },
   { path: 'goals', element: <Goals /> },
   { path: 'estimates', element: <Estimates /> },

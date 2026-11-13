@@ -45,6 +45,11 @@ test('open an activity: figures, route, zones and laps', async ({ page }, info) 
   // Charts load when they come near the screen (OS-215), one card each (OS-907).
   await detail.locator('.chartcard').first().scrollIntoViewIfNeeded();
   await expect(detail.locator('.chartcard svg').first()).toBeVisible();
+  // Switching the theme with the charts drawn redraws them in the new colours: the activity stays.
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(detail.getByRole('heading', { name: 'Morning run' })).toBeVisible();
+  await expect(detail.locator('.chartcard svg').first()).toBeVisible();
+  await page.emulateMedia({ colorScheme: 'light' });
   // On a phone the activity is pushed over the feed, as on the app: no tab bar, and back, edit, share
   // and photos float over the map.
   if ((page.viewportSize()?.width ?? 0) < 600) {

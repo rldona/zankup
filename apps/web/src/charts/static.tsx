@@ -1,33 +1,8 @@
 /**
- * Static charts in plain SVG (OS-215): no library, drawn with the theme's CSS variables, so they
- * cost nothing to load and change with the theme on their own.
+ * Static pieces in plain SVG or CSS (OS-215): no library, drawn with the theme's CSS variables, so they
+ * cost nothing to load and change with the theme on their own. Charts with data use ECharts.
  */
 import { formatDuration, routeThumbnail } from '@zankup/core';
-
-/** A small trend line. */
-export function Sparkline({
-  values,
-  label,
-  colour = 'var(--accent)',
-}: {
-  values: number[];
-  label: string;
-  colour?: string;
-}) {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const points = values
-    .map(
-      (v, i) =>
-        `${((i / Math.max(1, values.length - 1)) * 100).toFixed(1)},${(28 - ((v - min) / (max - min || 1)) * 24).toFixed(1)}`,
-    )
-    .join(' ');
-  return (
-    <svg className="spark" viewBox="0 0 100 30" preserveAspectRatio="none" role="img" aria-label={label}>
-      <polyline points={points} style={{ stroke: colour }} />
-    </svg>
-  );
-}
 
 /** Time in each HR zone as one stacked bar. */
 export function ZoneBar({ seconds, label }: { seconds: number[]; label: string }) {

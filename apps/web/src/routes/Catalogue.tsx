@@ -2,7 +2,8 @@ import { commonTokens, THEMES, themes, type ThemeName } from '@zankup/core';
 import { useMemo } from 'react';
 
 import { EChart } from '../charts/EChart';
-import { RouteShape, Sparkline, ZoneBar } from '../charts/static';
+import { Sparkline } from '../charts/Sparkline';
+import { RouteShape, ZoneBar } from '../charts/static';
 import { t } from '../i18n';
 
 // A loop drawn as an encoded polyline, and made-up figures: the catalogue shows components, not data.
@@ -67,7 +68,7 @@ function ThemeBlock({ name }: { name: ThemeName }) {
       </div>
       <div className="catgrid">
         <figure>
-          <figcaption className="note">Static · sparkline</figcaption>
+          <figcaption className="note">ECharts · sparkline</figcaption>
           <Sparkline values={WEEKS} label="Weekly distance trend" />
         </figure>
         <figure>

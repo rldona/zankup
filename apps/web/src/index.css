@@ -1246,18 +1246,6 @@ button.link {
   margin: 6px 2px 30px;
 }
 
-.spark {
-  width: 100%;
-  height: 30px;
-  display: block;
-}
-
-.spark polyline {
-  fill: none;
-  stroke-width: 2;
-  vector-effect: non-scaling-stroke;
-}
-
 /* MapLibre's controls in the theme's colours. */
 .maplibregl-ctrl-group,
 .maplibregl-ctrl-attrib {
@@ -2068,8 +2056,156 @@ a.button.block {
   margin: 0 0 4px;
 }
 
-.estimate .spark {
-  margin: 4px 0;
+/* Estimates (OS-913): each card a button that opens its history; its name and how much it moved in
+   three months on top, the value, its line, and how it is made. */
+.cards.estimates {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  margin-bottom: 14px;
+}
+
+button.panel.estimate,
+button.panel.estimate:hover:not(:disabled) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  text-align: left;
+  font-weight: 400;
+  border-radius: var(--radius);
+  border: 1px solid var(--card-line);
+  background: var(--surface);
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+button.panel.estimate:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+button.panel.estimate.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* The name, then how much it moved: always one under the other, so every value sits at one height. */
+.estimate .ehead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 44px;
+  min-width: 0;
+}
+
+.estimate .ename {
+  font-weight: 650;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.estimate .big {
+  margin: 0;
+}
+
+.estimate .trend.compact {
+  margin: 2px -2px 0;
+}
+
+.estimate .note {
+  margin: 0;
+}
+
+/* How much an estimate moved: green when it is good news, the sport's orange when it is not. */
+.delta {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.delta.good {
+  background: color-mix(in srgb, var(--form-positive) 16%, var(--surface));
+  color: color-mix(in srgb, var(--form-positive) 70%, var(--fg));
+}
+
+.delta.bad {
+  background: color-mix(in srgb, var(--run) 12%, var(--surface));
+  color: color-mix(in srgb, var(--run) 75%, var(--fg));
+}
+
+.estimatedetail .ph h2 {
+  flex: 1;
+}
+
+.estimatedetail > .note {
+  margin: 8px 0 0;
+}
+
+/* Race predictions: one row per distance (time, pace, change), the picked one's history below. */
+.racelist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 10px;
+}
+
+.racelist button,
+.racelist button:hover:not(:disabled) {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 8px;
+  text-align: left;
+  font-weight: 400;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.racelist button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.racelist button.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+.racelist .rname {
+  font-size: 13px;
+  color: var(--muted);
+  grid-column: 1 / -1;
+}
+
+.racelist .rtime {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.racelist .rpace {
+  margin: 0;
+  text-align: right;
+}
+
+.racelist .delta {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.predictions .charttitle {
+  font-size: 14px;
+  margin: 18px 0 4px;
 }
 
 .goal {
@@ -3129,20 +3265,6 @@ a.button {
 
 .review nav.actions {
   justify-content: space-between;
-}
-
-.rbars {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 90px;
-}
-
-.rbars i {
-  flex: 1;
-  min-height: 0;
-  border-radius: 3px 3px 0 0;
-  background: var(--accent);
 }
 
 .shared {

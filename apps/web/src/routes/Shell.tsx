@@ -85,17 +85,15 @@ function NavLink({ item, current, bare }: { item: Item; current: string | undefi
  * Where each screen leads back to, above its title, and where that link shows: the screen it was
  * opened from (Stats for its calendar, heatmap, reviews, routes and segments; Settings for its
  * sections; You for Stats, Estimates and Gear). `show` keeps it to the sizes where nothing else on
- * screen leads back: a phone (the rail names the Coach, the notifications and Settings), below 1024 px
- * (Settings' list sits beside its sections from there) or a tablet (an activity: beside the list on a
- * desktop, with its own floating buttons on a phone).
+ * screen leads back: a phone (the rail names the Coach, the notifications and Settings) or below 1024 px
+ * (Settings' list sits beside its sections from there). An activity has its own way back, in the feed.
  */
 const PARENTS: {
   match: RegExp;
   to: string;
   label: MessageKey;
-  show?: 'phone' | 'compact' | 'tablet';
+  show?: 'phone' | 'compact';
 }[] = [
-  { match: PUSHED, to: '/activities', label: 'nav.feed', show: 'tablet' },
   { match: /^\/(search|sync)$/, to: '/activities', label: 'nav.feed' },
   { match: /^\/(coach|notifications)$/, to: '/', label: 'nav.home', show: 'phone' },
   { match: /^\/settings\/import$/, to: '/settings', label: 'nav.settings' },

@@ -5496,6 +5496,21 @@
             "title": "Photos",
             "default": 0
           },
+          "exercises": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exercises",
+            "description": "Strength sets per FIT exercise category (OS-225), for the card's body map; null without sets"
+          },
           "description": {
             "anyOf": [
               {
@@ -6375,6 +6390,21 @@
             "type": "integer",
             "title": "Photos",
             "default": 0
+          },
+          "exercises": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exercises",
+            "description": "Strength sets per FIT exercise category (OS-225), for the card's body map; null without sets"
           }
         },
         "type": "object",

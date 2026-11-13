@@ -64,6 +64,11 @@ class ActivitySummary(BaseModel):
     route: str | None = Field(description="Simplified route as an encoded polyline (precision 5)")
     photo: int | None = Field(default=None, description="First photo, for the card's thumbnail")
     photos: int = 0
+    exercises: dict[str, int] | None = Field(
+        default=None,
+        description="Strength sets per FIT exercise category (OS-225), for the card's body map; "
+        "null without sets",
+    )
 
 
 class ActivityPage(BaseModel):
@@ -280,7 +285,17 @@ def _summary_fields(activity: Activity) -> dict[str, Any]:
         "avg_power": activity.avg_power,
         "has_gps": activity.has_gps,
         "route": activity.route_simplified,
+        "exercises": _exercises(activity.sets),
     }
+
+
+def _exercises(sets: list[dict[str, Any]] | None) -> dict[str, int] | None:
+    """Active sets per exercise category, for the feed card's body map."""
+    counts: dict[str, int] = {}
+    for s in sets or []:
+        if s.get("kind") == "active" and s.get("category"):
+            counts[s["category"]] = counts.get(s["category"], 0) + 1
+    return counts or None
 
 
 def _summaries(db: DbSession, activities: list[Activity]) -> list[ActivitySummary]:

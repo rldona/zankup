@@ -10,6 +10,7 @@ import {
   formatters,
   localStart,
   metricValues,
+  musclesWorked,
   quantile,
   RAMP,
   sectionStats,
@@ -40,6 +41,7 @@ import { MapControls } from '../detail/MapControls';
 import { useReplay } from '../detail/replay';
 import { ActivityActions, Meta, Photos } from '../detail/Tools';
 import { RouteMap } from '../detail/RouteMap';
+import { MuscleCover } from '../detail/BodyMap';
 import { Strength } from '../detail/Strength';
 import { Summary } from '../detail/Summary';
 import { CurveChart } from '../stats/charts';
@@ -127,6 +129,9 @@ function Detail({ activity }: { activity: ActivityDetail }) {
       onHover={setHover}
     />
   );
+  // A strength workout without a route has its body map for a cover, as a route has its map.
+  const muscles = useMemo(() => musclesWorked(activity.sets ?? []), [activity.sets]);
+  const cover = map || (muscles.size > 0 && !activity.has_gps && <MuscleCover worked={muscles} />);
   const summary = <Summary activityId={activity.id} name={activity.name} />;
   const figures = <Figures {...activityFigures(activity, { pace, format, t, locale })} />;
   const charts = (
@@ -159,7 +164,7 @@ function Detail({ activity }: { activity: ActivityDetail }) {
       {sport !== 'ride' && hrZones}
       {sport === 'run' && <Splits activity={activity} format={format} pace={pace} />}
       {/* Kept offline before sets existed, an activity may come without them. */}
-      {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} />}
+      {(activity.sets ?? []).length > 0 && <Strength sets={activity.sets} cover={!map && !!cover} />}
       <EngineExtras activity={activity} hrZones={sport === 'ride' ? hrZones : undefined} />
       <Laps activity={activity} format={format} pace={pace} />
       {sport !== 'run' && <Splits activity={activity} format={format} pace={pace} />}
@@ -187,11 +192,11 @@ function Detail({ activity }: { activity: ActivityDetail }) {
   );
 
   return (
-    <article className={`page detail${map ? ' withmap' : ''}`}>
+    <article className={`page detail${cover ? ' withmap' : ''}`}>
       {/* On a phone, as the app's pushed screen: back, edit, share and photos over the map. */}
       {phone && <ActivityActions activity={activity} floating />}
       {/* As on the app: the map across the top, then the title, the figures and the Coach's summary. */}
-      {map}
+      {cover}
       <header className="dhead">
         <SportIcon sport={sport} />
         <div>

@@ -159,7 +159,6 @@ export function Feed() {
               </button>
             ))}
           </div>
-          <YearSoFar months={months.data} format={format} />
 
           {feed.isPending && <FeedSkeleton />}
           {feed.isError && (
@@ -272,37 +271,6 @@ function DetailNav({
         </div>
       )}
     </nav>
-  );
-}
-
-/** Above the list: the totals of the latest year with activities of the chosen sport, from the months'. */
-function YearSoFar({ months, format }: { months: MonthTotals[] | undefined; format: Format }) {
-  const year = months?.[0]?.month.slice(0, 4);
-  if (!months || !year) return null;
-  const these = months.filter((m) => m.month.startsWith(year));
-  const sum = (pick: (m: MonthTotals) => number) => these.reduce((total, m) => total + pick(m), 0);
-  const distance = sum((m) => m.distance_m);
-  const figures: [string, string][] = [
-    [t('feed.stat.count'), sum((m) => m.count).toLocaleString(locale)],
-    [
-      t('feed.stat.distance'),
-      `${Math.round(distance / (format.unit === 'km' ? 1000 : 1609.344)).toLocaleString(locale)} ${format.unit}`,
-    ],
-    [t('feed.stat.time'), formatHoursMinutes(sum((m) => m.moving_s))],
-    [t('feed.stat.ascent'), format.elevation(sum((m) => m.ascent_m))],
-  ];
-  return (
-    <section className="yearsofar" aria-label={t('feed.year', { year })}>
-      <h2>{t('feed.year', { year })}</h2>
-      <dl className="num">
-        {figures.map(([label, value]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
   );
 }
 

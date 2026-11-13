@@ -116,9 +116,9 @@ describe('app skeleton', () => {
         }),
     });
     const router = renderAt('/activities');
-    const year = await screen.findByRole('region', { name: 'In 2026' });
-    expect(year).toHaveTextContent('Activities12');
-    expect(year).toHaveTextContent('Distance119 km');
+    await screen.findByRole('link', { name: /Morning run/ });
+    // The year's totals are under You, not repeated over the list.
+    expect(screen.queryByRole('region', { name: 'In 2026' })).not.toBeInTheDocument();
     const months = screen.getAllByRole('heading', { level: 2 }).filter((h) => h.className === 'mhead');
     expect(months.map((h) => h.textContent)).toEqual([
       'November 20263 activities · 21 km · 2 h 3 min',

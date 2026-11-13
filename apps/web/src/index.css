@@ -3817,8 +3817,9 @@ textarea {
   white-space: nowrap;
 }
 
+/* A header's icon button shown only on a phone keeps its centred icon (Home's, the feed's calendar). */
 @media (max-width: 599px) {
-  .page.home .titlebar .iconbtn.phone-only {
+  .titlebar .iconbtn.phone-only {
     display: grid;
   }
 }

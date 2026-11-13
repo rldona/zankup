@@ -400,54 +400,6 @@ a.stepbtn:hover {
   }
 }
 
-/* The year so far, above the months. */
-.yearsofar {
-  margin: 4px 0 6px;
-}
-
-.yearsofar h2 {
-  margin: 0 2px 8px;
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.yearsofar dl {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-
-.yearsofar dl div {
-  display: flex;
-  flex-direction: column-reverse;
-  padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid var(--card-line);
-  border-radius: var(--radius);
-  min-width: 0;
-}
-
-.yearsofar dt {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.yearsofar dd {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 650;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (max-width: 479px) {
-  .yearsofar dl {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 .actions {
   display: flex;
   gap: 16px;
@@ -1622,6 +1574,30 @@ img.avatar {
     width: auto;
     bottom: calc(var(--tabbar-h) + 8px + env(safe-area-inset-bottom));
   }
+}
+
+/* Health's "Bring now": the sync's notice with an icon, the text and a close button on one line. */
+.sheet.healthsync {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px 10px 14px;
+}
+
+.sheet.healthsync p {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+}
+
+.sheet.healthsync > span {
+  display: inline-grid;
+  color: var(--accent);
+}
+
+.sheet.healthsync.error > span,
+.sheet.healthsync.none > span {
+  color: var(--muted);
 }
 
 /* Offline (OS-211). */

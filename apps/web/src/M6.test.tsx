@@ -182,15 +182,36 @@ describe('phase 6: health', () => {
     );
   });
 
-  it('fetch now queues a sync', async () => {
+  it('fetch now says what it brings, and that it is done once the source has synced', async () => {
+    let synced = false;
     const calls = mockApi({
-      'POST /api/wellness/sync': () => Response.json({ queued: ['garmin'] }, { status: 202 }),
+      'POST /api/wellness/sync': () => {
+        synced = true;
+        return Response.json({ queued: ['garmin'] }, { status: 202 });
+      },
+      // The job has run by the first time it is asked: Garmin's last sync moves on.
+      '/api/wellness/settings': () =>
+        Response.json(
+          synced
+            ? { ...HEALTH_SETTINGS, sources: [status('garmin', { last_sync_at: '2026-11-09T09:00:00Z' })] }
+            : HEALTH_SETTINGS,
+        ),
     });
     renderAt('/health');
     await userEvent.click(await screen.findByRole('button', { name: 'Fetch now' }));
-    await waitFor(() =>
-      expect(calls.some((c) => c.method === 'POST' && c.path === '/api/wellness/sync')).toBe(true),
-    );
+    expect(await screen.findByText('Bringing your health data from Garmin…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fetch now' })).toBeDisabled();
+    expect(await screen.findByText('Health data up to date.', {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fetch now' })).toBeEnabled();
+    const days = calls.filter((c) => c.path === '/api/wellness/days').length;
+    expect(days).toBeGreaterThan(1); // refreshed after the sync
+  }, 10_000);
+
+  it('fetch now with no source connected says so', async () => {
+    mockApi({ 'POST /api/wellness/sync': () => Response.json({ queued: [] }, { status: 202 }) });
+    renderAt('/health');
+    await userEvent.click(await screen.findByRole('button', { name: 'Fetch now' }));
+    expect(await screen.findByText('No health source is connected.')).toBeInTheDocument();
   });
 
   it('settings: connect Google Health, choose a source per metric and delete one source’s data', async () => {

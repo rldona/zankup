@@ -177,11 +177,13 @@ INTERFACE = [
     "account_circle",
     "group",
     "cloud_sync",
+    "assignment",
 ]
 FILLED = [
     "home",
     "cards_stack",
     "flag",
+    "assignment",
     "list",
     "search",
     "sync",

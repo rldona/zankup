@@ -4166,6 +4166,28 @@
         }
       }
     },
+    "/api/stats/streak": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Streak Summary",
+        "description": "The weekly streak (Progress → Series): how many weeks in a row, with how many activities.",
+        "operationId": "getStreak",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Streak"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/stats/heatmap": {
       "get": {
         "tags": [
@@ -6802,6 +6824,23 @@
           "moving_s": {
             "type": "number",
             "title": "Moving S"
+          },
+          "ascent_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascent M"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start",
+            "description": "Start time (UTC)"
           }
         },
         "type": "object",
@@ -6811,7 +6850,8 @@
           "name",
           "load",
           "distance_m",
-          "moving_s"
+          "moving_s",
+          "start"
         ],
         "title": "CalendarActivity"
       },
@@ -11988,6 +12028,54 @@
           "stage"
         ],
         "title": "Stage_"
+      },
+      "Streak": {
+        "properties": {
+          "weeks": {
+            "type": "integer",
+            "title": "Weeks",
+            "description": "Weeks in a row with an activity, up to this week or the last"
+          },
+          "activities": {
+            "type": "integer",
+            "title": "Activities",
+            "description": "Activities in those weeks"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since",
+            "description": "Monday of the streak's first week"
+          },
+          "first_activity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Activity",
+            "description": "Day of the first activity ever"
+          }
+        },
+        "type": "object",
+        "required": [
+          "weeks",
+          "activities",
+          "since",
+          "first_activity"
+        ],
+        "title": "Streak"
       },
       "StreamsInfo": {
         "properties": {

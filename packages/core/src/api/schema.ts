@@ -1547,6 +1547,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/stats/streak': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Streak Summary
+     * @description The weekly streak (Progress → Series): how many weeks in a row, with how many activities.
+     */
+    get: operations['getStreak'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/stats/heatmap': {
     parameters: {
       query?: never;
@@ -2513,6 +2533,14 @@ export interface components {
       distance_m: number | null;
       /** Moving S */
       moving_s: number;
+      /** Ascent M */
+      ascent_m?: number | null;
+      /**
+       * Start
+       * Format: date-time
+       * @description Start time (UTC)
+       */
+      start: string;
     };
     /** CalendarDay */
     CalendarDay: {
@@ -4378,6 +4406,29 @@ export interface components {
        * @enum {string}
        */
       stage: 'awake' | 'light' | 'deep' | 'rem';
+    };
+    /** Streak */
+    Streak: {
+      /**
+       * Weeks
+       * @description Weeks in a row with an activity, up to this week or the last
+       */
+      weeks: number;
+      /**
+       * Activities
+       * @description Activities in those weeks
+       */
+      activities: number;
+      /**
+       * Since
+       * @description Monday of the streak's first week
+       */
+      since: string | null;
+      /**
+       * First Activity
+       * @description Day of the first activity ever
+       */
+      first_activity: string | null;
     };
     /** StreamsInfo */
     StreamsInfo: {
@@ -7461,6 +7512,26 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getStreak: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Streak'];
         };
       };
     };

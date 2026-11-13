@@ -41,9 +41,10 @@ type Step =
 
 /**
  * Choosing another instance (your own server) on the sign-in screen. Hidden for now: the app signs in to
- * api.zankup.com only. Set to true to offer it again.
+ * api.zankup.com only. Set to true to offer it again. Development builds (Zankup Dev) always offer it,
+ * to sign in to a local API (`http://localhost:8000` through `adb reverse`).
  */
-const OTHER_INSTANCES = false;
+const OTHER_INSTANCES = __DEV__;
 
 const message = (failure: unknown) => (failure instanceof SignInError ? failure.message : t('common.error'));
 
@@ -149,7 +150,8 @@ function LinkButton({ children, onPress }: { children: string; onPress: () => vo
 }
 
 function InstanceStep({ onReady }: { onReady: (url: string) => void }) {
-  const [url, setUrl] = useState(instanceUrl() ?? DEFAULT_INSTANCE);
+  // Zankup Dev starts on the local API (`make api` + `adb reverse tcp:8000 tcp:8000`).
+  const [url, setUrl] = useState(instanceUrl() ?? (__DEV__ ? 'http://localhost:8000' : DEFAULT_INSTANCE));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const next = async () => {

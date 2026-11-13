@@ -54,6 +54,10 @@ def test_progress_calendar_heatmap_and_efficiency(ctx: Ctx) -> None:  # noqa: F8
         },
     ).json()
     assert len(days) == 8 and sum(len(d["activities"]) for d in days) == 3
+    assert all("ascent_m" in a and a["start"] for d in days for a in d["activities"])
+    streak = ctx.http.get("/api/stats/streak").json()
+    assert streak["weeks"] >= 1 and streak["activities"] == 3  # recent() put them in the last three days
+    assert streak["since"] and streak["first_activity"]
     assert ctx.http.get("/api/stats/heatmap").json()["routes"]
     assert ctx.http.get("/api/stats/years").json()[0] == today.year
     assert isinstance(ctx.http.get("/api/stats/efficiency").json(), list)

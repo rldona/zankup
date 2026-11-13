@@ -4751,10 +4751,12 @@ button.danger svg.i {
   top: 16px;
 }
 
-/* The chosen row keeps its rounded background inside the card. */
+/* The chosen row keeps its rounded background inside the card. The shadow sets the card apart, so it
+   has no border. */
 .panel.menu.settingslist {
   padding: 8px 10px;
   overflow: hidden;
+  border: 0;
 }
 
 .panel.menu.settingslist a {

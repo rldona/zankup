@@ -254,7 +254,8 @@ describe('phase 3 screens', () => {
       '/activities/9',
     );
     expect(screen.getByText('-5')).toBeInTheDocument();
-    expect(screen.getAllByText(/1 · 10.00 km · 50 min/).length).toBe(1);
+    expect(screen.getAllByText('10.00 km').length).toBe(1);
+    expect(screen.getAllByText('50 min · 1 activity').length).toBe(1);
   });
 
   it('routes and segments lists', async () => {

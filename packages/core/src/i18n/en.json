@@ -499,6 +499,8 @@
   "stats.empty": "Nothing in this period yet.",
   "calendar.title": "Training calendar",
   "calendar.week": "Week",
+  "calendar.activities": "{count, plural, one {# activity} other {# activities}}",
+  "calendar.daily": "Moving time each day",
   "calendar.prev": "Previous",
   "calendar.next": "Next",
   "datepicker.today": "Today",

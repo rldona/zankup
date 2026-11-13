@@ -227,36 +227,38 @@ export function RoutesList() {
     <section className="page">
       <h1>{t('routes.title')}</h1>
       {routes.data?.length === 0 && <p className="state">{t('routes.empty')}</p>}
-      <ul className="rows">
-        {routes.data?.map((r) => {
-          const shape = routeThumbnail(r.route);
-          return (
-            <li key={r.id}>
-              <Link to={`/routes/${r.id}`} className="routerow">
-                <SportIcon sport={asSport(r.sport)} />
-                <span>
-                  <b>{r.name ?? t(`sport.${asSport(r.sport)}`)}</b>
-                  <small className="note num">
-                    {t('routes.times', { count: r.count })} ·{' '}
-                    {r.best.distance_m ? format.distance(r.best.distance_m) : ''} · {t('routes.best')}{' '}
-                    {formatDuration(r.best.moving_s)}
-                  </small>
-                </span>
-              </Link>
-              {shape && (
-                <svg
-                  className="thumb"
-                  viewBox="0 0 88 64"
-                  aria-hidden="true"
-                  style={{ ['--sport' as string]: `var(--${asSport(r.sport)})` }}
-                >
-                  <polyline points={shape} />
-                </svg>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {routes.data && routes.data.length > 0 && (
+        <ul className="panel rows linkrows">
+          {routes.data.map((r) => {
+            const shape = routeThumbnail(r.route);
+            return (
+              <li key={r.id}>
+                <Link to={`/routes/${r.id}`} className="routerow">
+                  <SportIcon sport={asSport(r.sport)} />
+                  <span className="rtext">
+                    <b title={r.name ?? undefined}>{r.name ?? t(`sport.${asSport(r.sport)}`)}</b>
+                    <small className="note num">
+                      {t('routes.times', { count: r.count })} ·{' '}
+                      {r.best.distance_m ? format.distance(r.best.distance_m) : ''} · {t('routes.best')}{' '}
+                      {formatDuration(r.best.moving_s)}
+                    </small>
+                  </span>
+                  {shape && (
+                    <svg
+                      className="thumb"
+                      viewBox="0 0 88 64"
+                      aria-hidden="true"
+                      style={{ ['--sport' as string]: `var(--${asSport(r.sport)})` }}
+                    >
+                      <polyline points={shape} />
+                    </svg>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
@@ -309,19 +311,24 @@ export function SegmentsList() {
     <section className="page">
       <h1>{t('segments.title')}</h1>
       {segments.data?.length === 0 && <p className="state">{t('segments.empty')}</p>}
-      <ul className="rows">
-        {segments.data?.map((s) => (
-          <li key={s.id}>
-            <Link to={`/segments/${s.id}`}>
-              <b>{s.name}</b>
-            </Link>
-            <span className="note num">
-              {format.distance(s.distance_m)} · {t('segments.efforts', { count: s.efforts })}
-              {s.best_s != null && ` · ${t('routes.best')} ${formatDuration(s.best_s)}`}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {segments.data && segments.data.length > 0 && (
+        <ul className="panel rows linkrows">
+          {segments.data.map((s) => (
+            <li key={s.id}>
+              <Link to={`/segments/${s.id}`} className="routerow">
+                <span className="rtext">
+                  <b>{s.name}</b>
+                  <small className="note num">
+                    {format.distance(s.distance_m)} · {t('segments.efforts', { count: s.efforts })}
+                    {s.best_s != null && ` · ${t('routes.best')} ${formatDuration(s.best_s)}`}
+                  </small>
+                </span>
+                <MaterialIcon name="chevron_right" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

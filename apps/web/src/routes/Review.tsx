@@ -2,15 +2,17 @@ import {
   formatDuration,
   formatters,
   reviewQuery,
+  themes,
   type Review as ReviewData,
   type Sport,
   effortShown,
 } from '@zankup/core';
 import { useQuery } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { api } from '../api';
+import { EChart } from '../charts/EChart';
 import { locale, t } from '../i18n';
 import { usePrefs } from '../prefs';
 import { drawCard, shareImage, type CardFigure } from '../share/card';
@@ -263,19 +265,56 @@ function Cards({ data, heading, format }: { data: ReviewData; heading: string; f
   );
 }
 
+/**
+ * Distance per day of the month or per month of the year (ECharts, as every chart with data): each
+ * bar's day or month on its axis, the distance and the activities in a tooltip.
+ */
 function Bars({ data, format }: { data: ReviewData; format: Format }) {
-  const max = Math.max(...data.buckets.map((b) => b.distance_m), 1);
-  return (
-    <div className="rbars" role="img" aria-label={t('review.barsLabel')}>
-      {data.buckets.map((b) => (
-        <i
-          key={b.start}
-          title={`${b.start}: ${format.distance(b.distance_m)}`}
-          style={{ height: `${Math.max(b.count ? 4 : 0, (b.distance_m / max) * 100)}%` }}
-        />
-      ))}
-    </div>
-  );
+  const theme = useResolvedTheme();
+  const accent = themes[theme].accent;
+  const scale = format.unit === 'km' ? 1000 : 1609.344;
+  const option = useMemo(() => {
+    const label = (start: string) => {
+      const d = new Date(`${start}T12:00:00`);
+      return data.period === 'year' ? d.toLocaleDateString(locale, { month: 'short' }) : String(d.getDate());
+    };
+    return {
+      grid: { left: 40, right: 8, top: 10, bottom: 24 },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        formatter: (params: { dataIndex: number }[]) => {
+          const b = data.buckets[params[0]?.dataIndex ?? 0];
+          if (!b) return '';
+          const when = new Date(`${b.start}T12:00:00`).toLocaleDateString(
+            locale,
+            data.period === 'year' ? { month: 'long', year: 'numeric' } : { day: 'numeric', month: 'long' },
+          );
+          return `${when}<br/><b>${format.distance(b.distance_m)}</b> · ${t('review.activitiesCount', { count: b.count })}`;
+        },
+      },
+      xAxis: {
+        type: 'category',
+        data: data.buckets.map((b) => label(b.start)),
+        axisTick: { show: false },
+        axisLabel: { hideOverlap: true },
+      },
+      yAxis: {
+        type: 'value',
+        splitNumber: 3,
+        axisLabel: { formatter: (v: number) => `${Math.round(v / scale)} ${format.unit}` },
+      },
+      series: [
+        {
+          type: 'bar',
+          data: data.buckets.map((b) => b.distance_m),
+          barMaxWidth: 18,
+          itemStyle: { color: accent, borderRadius: [3, 3, 0, 0] },
+        },
+      ],
+    };
+  }, [data, format, accent, scale]);
+  return <EChart option={option} theme={theme} height={150} summary={t('review.barsLabel')} />;
 }
 
 function Card({

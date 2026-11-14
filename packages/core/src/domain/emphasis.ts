@@ -12,7 +12,7 @@ export function emphasis(text: string): Run[] {
   for (const match of text.matchAll(pattern)) {
     const at = match.index ?? 0;
     if (at > last) runs.push({ text: text.slice(last, at), bold: false });
-    runs.push({ text: match[1], bold: true });
+    runs.push({ text: match[1] ?? '', bold: true });
     last = at + match[0].length;
   }
   if (last < text.length) runs.push({ text: text.slice(last), bold: false });

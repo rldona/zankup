@@ -10,7 +10,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -78,8 +78,17 @@ function Sheet({ onClose, children }: { onClose: () => void; children: ReactNode
     .onEnd((e) => {
       const h = height.get();
       const where = settle(drag.get(), e.velocityY, h);
-      if (where === 'close') drag.set(withTiming(h + 40, { duration: 180 }, () => scheduleOnRN(onClose)));
-      else drag.set(withSpring(where === 'half' ? h / 2 : 0, { damping: 22, stiffness: 220 }));
+      if (where === 'close')
+        drag.set(
+          withTiming(h + 40, { duration: 200, easing: Easing.out(Easing.cubic) }, () =>
+            scheduleOnRN(onClose),
+          ),
+        );
+      // A plain glide to where it rests, no bounce.
+      else
+        drag.set(
+          withTiming(where === 'half' ? h / 2 : 0, { duration: 220, easing: Easing.out(Easing.cubic) }),
+        );
     });
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: drag.get() }] }));
   // The backdrop lightens as the sheet goes down.

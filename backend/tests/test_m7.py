@@ -972,3 +972,32 @@ def test_tell_me_more_writes_the_report_once_and_keeps_it(
     assert client.get(f"/api/activities/{run_id}/report").json()["headline"] == sections["headline"]
     with sessions() as db:
         assert db.scalar(select(LlmCall.purpose)) == "report"
+
+
+def test_the_report_compares_with_the_same_route_without_sending_it(
+    http: tuple[TestClient, sessionmaker[Session], Llm, FakeApi],
+) -> None:
+    """On a route done before (as Col du Granon): the earlier attempts go as "same_route", numbers
+    only; a key named "route" is kept from the model and failed the report."""
+    from zankup.db.models import ActivityMetrics
+
+    client, sessions, _llm, api = http
+    with sessions.begin() as db:
+        ids = list(
+            db.scalars(select(Activity.id).where(Activity.sport == "run").order_by(Activity.start_utc))
+        )
+        for activity_id in ids:
+            row = db.get(ActivityMetrics, activity_id)
+            if row is None:
+                row = ActivityMetrics(
+                    activity_id=activity_id, user_id=db.get_one(Activity, activity_id).user_id
+                )
+                db.add(row)
+            row.route_group = 7
+        run_id = db.scalar(select(Activity.id).where(Activity.external_id == "1"))
+    fields = ("headline", "effort", "story", "month", "verdict", "next")
+    api.messages.scripted.append(reply([text_block(json.dumps({f: f for f in fields}))]))
+    made = client.post(f"/api/activities/{run_id}/report")
+    assert made.status_code == 200, made.text
+    content = api.messages.requests[0]["messages"][0]["content"]
+    assert '"same_route":{"earlier_attempts":' in content and '"baseline":"same_route"' in content

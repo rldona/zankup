@@ -33,7 +33,8 @@ Write for the person who did it, in the language and units you are told, as a co
 data: warm and direct, never gushing. Give, as separate fields:
 - headline: one sentence, the gist (at most 140 characters).
 - effort: how hard it was (relative effort against their usual, heart-rate or power zones).
-- story: the activity told with its numbers (distance, time, pace or power, splits, the route).
+- story: the activity told with its numbers (distance, time, pace or power, splits, the earlier \
+attempts on the same route in "same_route").
 - month: its place in the month so far (volume against the same days of last month, goals, streak).
 - verdict: one or two sentences that weigh it all up.
 - next: one concrete recommendation for the next session: the kind of session, its duration or \
@@ -230,7 +231,7 @@ def report_context(db: Session, activity: Activity) -> dict[str, Any]:
     day = date.fromisoformat(context["day"])
     route = _route(db, activity)
     if route:
-        context["route"] = route
+        context["same_route"] = route  # not "route": that key is kept from the model (GPS)
     context["comparisons"] = comparisons(context, route)
     context["month"] = _month(db, activity, day)
     context["goals"] = _goals(db, activity, day)

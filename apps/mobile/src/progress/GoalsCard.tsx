@@ -143,7 +143,8 @@ export function GoalChart({
   const shown = year ? [0, ...runningTotal(values)] : values;
   const slots = year ? 13 : Math.max(1, shown.length);
   const max = Math.max(target, ...shown, 1);
-  const x = (i: number) => 8 + (i / Math.max(1, slots - 1)) * (width - 16);
+  // 16 px in from each side: the last point's 14 px halo stays inside the chart.
+  const x = (i: number) => 16 + (i / Math.max(1, slots - 1)) * (width - 32);
   const y = (v: number) => base - (Math.min(v, max) / max) * (base - top);
   const colour = String(c.accent);
   const last = shown.length - 1;

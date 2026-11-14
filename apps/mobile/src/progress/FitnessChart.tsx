@@ -60,10 +60,16 @@ export function FitnessChart({
   const [width, setWidth] = useState(0);
   const ready = useCanvasReady(width);
   const count = values.length;
-  const plot = Math.max(0, width - AXIS - 12);
+  const plot = Math.max(0, width - AXIS - 22); // room on the right for the picked day's halo
   const inner = height - TOP - BOTTOM;
   const base = TOP + inner;
-  const { domain, ticks } = useMemo(() => niceScale([0, Math.max(10, ...values) * 1.05], 5), [values]);
+  // The tightest round top over the line (Strava: 106 → 120, not 125), with four to six steps.
+  const { domain, ticks } = useMemo(() => {
+    const top = Math.max(10, ...values) * 1.05;
+    return [4, 5, 6]
+      .map((n) => niceScale([0, top], n))
+      .reduce((best, s) => (s.domain[1] < best.domain[1] ? s : best));
+  }, [values]);
   const y = (v: number) => base - ((v - domain[0]) / (domain[1] - domain[0] || 1)) * inner;
   const pts = width ? points(values, AXIS, plot, y) : [];
   const step = count > 1 ? plot / (count - 1) : 0;

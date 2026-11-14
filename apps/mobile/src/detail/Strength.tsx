@@ -6,6 +6,7 @@
  */
 import {
   BACK,
+  BODY_DETAIL,
   BODY_SHAPES,
   BODY_SILHOUETTE,
   FRONT,
@@ -19,7 +20,7 @@ import {
   type Muscle,
   type StrengthSet,
 } from '@zankup/core';
-import { Canvas, Group, Path } from '@shopify/react-native-skia';
+import { Canvas, Group, Path, RadialGradient, Skia, vec } from '@shopify/react-native-skia';
 import { Text, View } from 'react-native';
 
 import { locale, t } from '../i18n';
@@ -220,7 +221,24 @@ export function Strength({ sets, cover = false }: { sets: StrengthSet[]; cover?:
 
 const SIZE = { width: 120, height: 240 };
 
-/** One side of the figure, its muscles shaded by how many sets worked them, drawn 100 wide. */
+/** Where each muscle's glow is centred, and how far it reaches: its shape's bounds, worked out once. */
+const glows = new Map<string, { x: number; y: number; r: number }>();
+function glowOf(d: string) {
+  let g = glows.get(d);
+  if (!g) {
+    const b = Skia.Path.MakeFromSVGString(d)?.getBounds();
+    g = b
+      ? { x: b.x + b.width / 2, y: b.y + b.height / 2, r: Math.max(b.width, b.height) * 0.6 }
+      : { x: 50, y: 100, r: 10 };
+    glows.set(d, g);
+  }
+  return g;
+}
+
+/**
+ * One side of the figure, drawn 100 wide: the outline over the background, the muscles in grey, and
+ * those worked glowing in the strength colour, brighter in their middle and stronger the more sets.
+ */
 function Side({
   side,
   worked,
@@ -232,19 +250,30 @@ function Side({
 }) {
   const c = useTheme();
   const most = Math.max(1, ...worked.values());
+  const rest = mix(c.muted, c.bg, 0.55);
+  const core = mix(c.strength, '#ffd27a', 0.45);
   return (
     <Group transform={[{ scale }]}>
-      <Path path={BODY_SILHOUETTE} color={c.surface2} />
+      <Path path={BODY_SILHOUETTE} color={c.bg} />
+      <Path
+        path={BODY_SILHOUETTE}
+        style="stroke"
+        strokeWidth={1.1}
+        strokeJoin="round"
+        color={mix(c.muted, c.fg, 0.3)}
+      />
+      {BODY_DETAIL[side].map((d, i) => (
+        <Path key={`detail-${i}`} path={d} color={rest} />
+      ))}
       {Object.entries(BODY_SHAPES[side]).flatMap(([muscle, paths]) =>
         paths.map((d, i) => {
           const sets = worked.get(muscle as Muscle) ?? 0;
+          if (!sets) return <Path key={`${muscle}-${i}`} path={d} color={rest} />;
+          const g = glowOf(d);
           return (
-            <Path
-              key={`${muscle}-${i}`}
-              path={d}
-              color={sets ? c.strength : c.line}
-              opacity={sets ? 0.45 + 0.55 * (sets / most) : 1}
-            />
+            <Path key={`${muscle}-${i}`} path={d} opacity={0.55 + 0.45 * (sets / most)}>
+              <RadialGradient c={vec(g.x, g.y)} r={g.r} colors={[core, c.strength]} />
+            </Path>
           );
         }),
       )}

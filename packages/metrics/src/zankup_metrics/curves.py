@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-DURATIONS = (5, 10, 15, 30, 60, 120, 300, 600, 1200, 1800, 3600, 5400, 7200)
+DURATIONS = (5, 10, 15, 30, 60, 120, 180, 300, 600, 900, 1200, 1800, 2700, 3600, 5400, 7200)
 
 
 def resample(t: Sequence[float], values: Sequence[float | None], max_gap_s: float = 30) -> list[float | None]:

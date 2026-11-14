@@ -287,6 +287,9 @@ export type EstimateOut = Json<'/api/stats/estimates', 'get'>[number];
 export type YearLine = Json<'/api/stats/progress', 'get'>[number];
 export type CalendarDay = Json<'/api/stats/calendar', 'get'>[number];
 export type StreakOut = Json<'/api/stats/streak', 'get'>;
+export type ZonesOut = Json<'/api/stats/zones', 'get'>;
+export type BestOut = Json<'/api/stats/bests', 'get'>[number];
+export type Medal = Json<'/api/stats/bests/recent', 'get'>[number];
 export type RouteGroup = Json<'/api/routes', 'get'>[number];
 export type RouteDetail = Json<'/api/routes/{group_id}', 'get'>;
 export type SegmentOut = Json<'/api/segments', 'get'>[number];
@@ -378,6 +381,33 @@ export function streakQuery(api: ApiClient) {
     queryKey: stats('streak'),
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/stats/streak', { signal })),
+  };
+}
+
+/** Time in each HR or power zone over a period, and the span before it (Progress → Training zones). */
+export function zonesQuery(api: ApiClient, kind: 'hr' | 'power', period: Period, sport?: string[]) {
+  return {
+    queryKey: stats('zones', { ...period, kind, sport }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/zones', { params: { query: { ...period, kind, sport } }, signal })),
+  };
+}
+
+/** Every activity's best at one measure: a run distance, power_30… or longest (Progress → Best times). */
+export function bestsQuery(api: ApiClient, key: string) {
+  return {
+    queryKey: stats('bests', { key }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/bests', { params: { query: { key } }, signal })),
+  };
+}
+
+/** The medals of the last days (Progress → Best times' card). */
+export function recentBestsQuery(api: ApiClient, days = 30) {
+  return {
+    queryKey: stats('bests-recent', { days }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/bests/recent', { params: { query: { days } }, signal })),
   };
 }
 

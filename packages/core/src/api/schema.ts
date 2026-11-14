@@ -1607,6 +1607,68 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/stats/zones': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Zones
+     * @description Time in each HR or power zone over a period and the span before it (Progress → Training zones).
+     */
+    get: operations['getZones'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/bests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Bests
+     * @description Every activity's best at one measure, oldest first: a run distance's time, a ride's best power
+     *     over a duration or a ride's distance (Progress → Best times).
+     */
+    get: operations['getBests'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/stats/bests/recent': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Recent Bests
+     * @description The medals of the last days: bests in the top three of all time or of their year, all-time and
+     *     better places first (Progress → Best times' card).
+     */
+    get: operations['getRecentBests'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/routes': {
     parameters: {
       query?: never;
@@ -2506,6 +2568,23 @@ export interface components {
       /** Start Distance M */
       start_distance_m: number;
     };
+    /** BestOut */
+    BestOut: {
+      /** Activity Id */
+      activity_id: number;
+      /** Name */
+      name: string | null;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /**
+       * Value
+       * @description Seconds (a run distance), watts (power_…) or metres (longest)
+       */
+      value: number;
+    };
     /** Bucket */
     Bucket: {
       /**
@@ -3262,6 +3341,31 @@ export interface components {
       weight_kg?: number | null;
       /** Height Cm */
       height_cm?: number | null;
+    };
+    /** Medal */
+    Medal: {
+      /** Key */
+      key: string;
+      /** Activity Id */
+      activity_id: number;
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Value */
+      value: number;
+      /**
+       * Rank
+       * @description 1 to 3
+       */
+      rank: number;
+      /**
+       * Scope
+       * @description Of all time, or of its year
+       * @enum {string}
+       */
+      scope: 'all' | 'year';
     };
     /** MetricComparison */
     MetricComparison: {
@@ -4814,6 +4918,26 @@ export interface components {
        * @description Distance up to each day of the year (index 0 = 1 Jan)
        */
       cumulative_m: number[];
+    };
+    /** ZonesOut */
+    ZonesOut: {
+      /** Kind */
+      kind: string;
+      /**
+       * Bounds
+       * @description Each zone's lower bound (bpm or W) with today's settings
+       */
+      bounds: number[];
+      /**
+       * Seconds
+       * @description Time in each zone in the period
+       */
+      seconds: number[];
+      /**
+       * Previous
+       * @description The same, over the span just before the period
+       */
+      previous: number[];
     };
     /** LoginRequest */
     zankup__auth__passkeys__LoginRequest: {
@@ -7586,6 +7710,104 @@ export interface operations {
         };
         content: {
           'application/json': number[];
+        };
+      };
+    };
+  };
+  getZones: {
+    parameters: {
+      query?: {
+        kind?: 'hr' | 'power';
+        from?: string | null;
+        to?: string | null;
+        /** @description Only these sports */
+        sport?: string[] | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ZonesOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getBests: {
+    parameters: {
+      query: {
+        /** @description A run distance (5k…), power_30… or longest */
+        key: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BestOut'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getRecentBests: {
+    parameters: {
+      query?: {
+        days?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Medal'][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
         };
       };
     };

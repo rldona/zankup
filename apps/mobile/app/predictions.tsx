@@ -24,7 +24,8 @@ import {
 import { addDays } from '../src/progress/weeks';
 import { PageSkeleton } from '../src/Skeleton';
 import { useTheme } from '../src/theme';
-import { accent, InfoButton, Muted, Screen } from '../src/ui';
+import { Chip } from '../src/progress/Chip';
+import { InfoButton, Muted, Screen } from '../src/ui';
 
 type Range = 'today' | '1m' | '3m' | '6m';
 const DAYS = { '1m': 30, '3m': 83, '6m': 166 } as const;
@@ -117,25 +118,13 @@ export default function PredictionsScreen() {
       <>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           {RACES.map((r) => {
-            const on = r.kind === race;
             return (
-              <Pressable
+              <Chip
                 key={r.kind}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: on }}
+                on={r.kind === race}
+                label={t(`progress.race.${r.kind}`)}
                 onPress={() => setRace(r.kind)}
-                style={{
-                  paddingHorizontal: 11,
-                  paddingVertical: 5,
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: on ? accent(c) : c.line,
-                }}
-              >
-                <Text style={{ color: on ? accent(c) : c.fg, fontSize: 13 }}>
-                  {t(`progress.race.${r.kind}`)}
-                </Text>
-              </Pressable>
+              />
             );
           })}
         </ScrollView>

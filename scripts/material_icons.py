@@ -179,6 +179,8 @@ INTERFACE = [
     "cloud_sync",
     "assignment",
     "more_horiz",
+    "military_tech",
+    "military_tech-fill",
 ]
 FILLED = [
     "home",

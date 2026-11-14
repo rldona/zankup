@@ -1,4 +1,4 @@
-import { instanceQuery, queryKeys, type InstanceSettings } from '@zankup/core';
+import { instanceQuery, keysQuery, queryKeys, type InstanceSettings } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
@@ -95,10 +95,13 @@ function Form({
 export function CoachSettings() {
   const { data, get, save } = useInstance();
   const [changes, setChanges] = useState<Changes>({});
+  // Without an Anthropic key the Coach is off: its model and budget mean nothing.
+  const keys = useQuery(keysQuery(api));
+  const hasKey = keys.data?.some((k) => k.name === 'anthropic' && k.configured);
   const model = get('ai_model');
   const budget = get('ai_monthly_budget_usd');
   const hour = get('weekly_report_hour_utc');
-  if (!data || !model || !budget || !hour) return null;
+  if (!data || !model || !budget || !hour || !hasKey) return null;
   const value = (name: string, fallback: unknown) => (name in changes ? changes[name] : fallback);
   const chosen = data.models.find((m) => m.id === value('ai_model', model.value));
   return (

@@ -5,6 +5,7 @@ a missing database an error instead of a skip.
 """
 
 import os
+import time
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -15,7 +16,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from zankup.core.config import Settings
 
@@ -44,8 +45,17 @@ def throwaway_database() -> Iterator[str]:
     try:
         yield server.set(database=name).render_as_string(hide_password=False)
     finally:
-        with admin.connect() as conn:
-            conn.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
+        # FORCE cannot end an autovacuum worker on it (a superuser's process) without
+        # pg_signal_autovacuum_worker: it finishes in a moment, so try again.
+        for attempt in range(10):
+            try:
+                with admin.connect() as conn:
+                    conn.execute(text(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)'))
+                break
+            except ProgrammingError:
+                if attempt == 9:
+                    raise
+                time.sleep(0.5)
         admin.dispose()
 
 

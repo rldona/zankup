@@ -57,18 +57,44 @@ export function valueOn(history: Point[], day: string): number | null {
 export function series(history: Point[], from: string, today: string): Point[] {
   const start = valueOn(history, from);
   if (start == null) return [];
-  const inside = history.filter((p) => p.day > from && p.day <= today);
-  const out = [{ day: from, value: start }, ...inside];
+  const out = [{ day: from, value: start }];
+  for (const p of history)
+    if (p.day > from && p.day <= today && Math.abs(p.value - out[out.length - 1].value) >= 0.5) out.push(p);
   const last = out[out.length - 1];
   return last.day === today ? out : [...out, { day: today, value: last.value }];
 }
 
-/** Axis ticks for race times: round steps (10 s to 30 min) covering the range, at most `count`. */
+/**
+ * The line through the points, smooth as Strava's: a curve from each point to the next that leaves and
+ * arrives level, so it never overshoots a point (a time no prediction had).
+ */
+export function smoothPath(points: { x: number; y: number }[]): string {
+  return points
+    .map((p, i) => {
+      if (!i) return `M${p.x} ${p.y}`;
+      const q = points[i - 1];
+      const mid = (q.x + p.x) / 2;
+      return `C${mid} ${q.y} ${mid} ${p.y} ${p.x} ${p.y}`;
+    })
+    .join('');
+}
+
+/** Axis ticks for race times: round steps (10 s to 30 min) covering the range, about `count`. */
 export function timeTicks(lo: number, hi: number, count = 4): number[] {
-  const span = Math.max(1, hi - lo);
-  const step = [10, 15, 30, 60, 120, 180, 300, 600, 900, 1800].find((s) => span / s <= count) ?? 3600;
-  const first = Math.floor(lo / step) * step;
-  const out = [first];
-  while (out[out.length - 1] < hi || out.length < 2) out.push(out[out.length - 1] + step);
+  // At least 4 % of the time high, so a prediction that hardly moved is a calm line mid-chart (Strava's
+  // 10 km: 49:00 to 52:00), not a flat one stuck to an axis ten seconds wide.
+  const least = lo * 0.04;
+  if (hi - lo < least) {
+    const mid = (lo + hi) / 2;
+    [lo, hi] = [mid - least / 2, mid + least / 2];
+  }
+  const steps = [10, 15, 30, 60, 120, 180, 300, 600, 900, 1800, 3600];
+  const step =
+    steps.find((st) => Math.ceil(hi / st) - Math.floor(lo / st) <= count) ?? steps[steps.length - 1];
+  const out: number[] = [];
+  for (let v = Math.floor(lo / step) * step; v < hi + step; v += step) {
+    out.push(v);
+    if (v >= hi && out.length >= 2) break;
+  }
   return out;
 }

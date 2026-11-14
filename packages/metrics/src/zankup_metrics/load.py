@@ -3,7 +3,8 @@
 TRIMP (Banister, 1991): for each minute, the HR reserve fraction x = (HR - rest) / (max - rest)
 weighted by y·e^(b·x), with y = 0.64 and b = 1.92 for men, 0.86 and 1.67 for women (the average of
 both when sex is unknown). It grows exponentially with intensity: an hour easy scores far less than
-an hour hard.
+an hour hard. Scaled by EFFORT_SCALE so relative effort, and the fitness built on it, read on Strava's
+scale: the same curve as Strava's Fitness was about 1.45 times lower with Banister's bare units.
 
 Fitness (CTL), fatigue (ATL) and form (TSB), Banister's impulse-response model as popularised by
 TrainingPeaks: exponentially weighted averages of daily load with time constants of 42 and 7 days.
@@ -18,6 +19,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 COEFFICIENTS = {"male": (0.64, 1.92), "female": (0.86, 1.67)}
+EFFORT_SCALE = 1.45  # Banister's TRIMP to Strava's relative effort, calibrated on its Fitness
 CTL_DAYS = 42
 ATL_DAYS = 7
 
@@ -30,7 +32,7 @@ def trimp(
     sex: str | None = None,
     max_gap_s: float = 30,
 ) -> float:
-    """Banister TRIMP of an activity from its HR series (bpm) and times (s)."""
+    """Banister TRIMP of an activity from its HR series (bpm) and times (s), on Strava's scale."""
     if hr_max <= hr_rest:
         raise ValueError("Max HR must be above resting HR")
     if sex in COEFFICIENTS:
@@ -46,7 +48,7 @@ def trimp(
             continue
         x = min(1.0, max(0.0, (value - hr_rest) / (hr_max - hr_rest)))
         total += (dt / 60) * x * y * math.exp(b * x)
-    return total
+    return total * EFFORT_SCALE
 
 
 @dataclass(frozen=True)

@@ -23,40 +23,44 @@ import { isoDay } from './fitness';
 import { addDays, weekDays, weekMark, type WeekMark } from './weeks';
 import { Panel } from './Panel';
 
-export function SeriesCard() {
+/** The card; its month opens in a panel the screen holds (`onOpen`), outside the row of cards. */
+export function SeriesCard({ onOpen }: { onOpen: () => void }) {
   const api = useApi();
   const c = useTheme();
   const streak = useQuery(streakQuery(api));
-  const [open, setOpen] = useState(false);
   if (streak.isPending) return <CardSkeleton lines={4} />;
   const weeks = streak.data?.weeks ?? 0;
   return (
-    <>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${t('progress.series')}: ${t('progress.streakWeeks', { count: weeks })}`}
-        onPress={() => setOpen(true)}
-        style={{ flex: 1 }}
-      >
-        <Card style={{ flex: 1, marginBottom: 0 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ flex: 1, color: c.fg, fontSize: 16, fontWeight: '700' }}>
-              {t('progress.series')}
-            </Text>
-            <Icon name="chevron_right" color={c.muted} size={22} />
-          </View>
-          <View style={{ alignItems: 'center', marginTop: 10 }}>
-            <Flame weeks={weeks} size={88} />
-            <Text style={{ color: accent(c), fontSize: 18, fontWeight: '800' }}>
-              {t('progress.weeksWord', { count: weeks })}
-            </Text>
-          </View>
-        </Card>
-      </Pressable>
-      <Panel open={open} onClose={() => setOpen(false)}>
-        <SeriesMonth onClose={() => setOpen(false)} />
-      </Panel>
-    </>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${t('progress.series')}: ${t('progress.streakWeeks', { count: weeks })}`}
+      onPress={onOpen}
+      style={{ flex: 1 }}
+    >
+      <Card style={{ flex: 1, marginBottom: 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ flex: 1, color: c.fg, fontSize: 16, fontWeight: '700' }}>
+            {t('progress.series')}
+          </Text>
+          <Icon name="chevron_right" color={c.muted} size={22} />
+        </View>
+        <View style={{ alignItems: 'center', marginTop: 10 }}>
+          <Flame weeks={weeks} size={88} />
+          <Text style={{ color: accent(c), fontSize: 18, fontWeight: '800' }}>
+            {t('progress.weeksWord', { count: weeks })}
+          </Text>
+        </View>
+      </Card>
+    </Pressable>
+  );
+}
+
+/** Series' month in its panel. */
+export function SeriesPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Panel open={open} onClose={onClose}>
+      <SeriesMonth onClose={onClose} />
+    </Panel>
   );
 }
 

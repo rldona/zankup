@@ -19,7 +19,7 @@ from zankup_metrics.estimates import (
     vdot,
 )
 from zankup_metrics.gap import gap_distance
-from zankup_metrics.load import DailyLoad, fitness, ramp, trimp
+from zankup_metrics.load import EFFORT_SCALE, DailyLoad, fitness, ramp, trimp
 from zankup_metrics.moving import moving_time
 from zankup_metrics.routes import Match, find_segment, same_route
 from zankup_metrics.smoothing import pace_s_per_km, rolling_mean
@@ -30,6 +30,7 @@ __version__ = "0.2.0"
 
 __all__ = [
     "DURATIONS",
+    "EFFORT_SCALE",
     "RACES",
     "RUN_DISTANCES",
     "BestEffort",

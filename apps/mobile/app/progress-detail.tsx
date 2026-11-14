@@ -132,16 +132,16 @@ export default function ProgressDetailScreen() {
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingHorizontal: 14,
-        paddingVertical: 7,
+        gap: 5,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
         borderRadius: 999,
-        borderWidth: 1.5,
+        borderWidth: 1,
         borderColor: on ? accent(c) : c.line,
       }}
     >
       {icon}
-      <Text style={{ color: on ? accent(c) : c.fg, fontSize: 14 }}>{label}</Text>
+      <Text style={{ color: on ? accent(c) : c.fg, fontSize: 13 }}>{label}</Text>
     </Pressable>
   );
   const change = (p: number | null) =>
@@ -170,7 +170,7 @@ export default function ProgressDetailScreen() {
           sport ? t(`sport.${asSport(sport)}`) : t('progress.allSports'),
           () => setPanel('sport'),
           <>
-            <Icon name={sportIcon(sport)} color={accent(c)} size={20} />
+            <Icon name={sportIcon(sport)} color={accent(c)} size={16} />
           </>,
         )}
         {metrics.map((m) =>

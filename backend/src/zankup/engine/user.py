@@ -69,6 +69,49 @@ def _best(curves: list[tuple[int, dict[str, float]]], duration: int) -> tuple[fl
     return best
 
 
+def race_basis(best_by_distance: dict[float, tuple[float, int]]) -> tuple[float, float, int] | None:
+    """The effort race times are predicted from: of the best per distance (3 km and up), the highest VDOT."""
+    usable = [(d, t, a) for d, (t, a) in best_by_distance.items() if d >= 3000]
+    return max(usable, key=lambda e: m.vdot(e[0], e[1])) if usable else None
+
+
+def race_history(
+    db: Session, user_id: int, today: date, days: int = 183, step: int = 7
+) -> dict[str, list[tuple[date, float]]]:
+    """Race predictions as they stood each week of the last `days` (and today), each from the 90 days
+    before it, as update_estimates makes them: the chart of how they changed, without having had to
+    store one every day."""
+    start = today - timedelta(days=days)
+    since = datetime.combine(start - ESTIMATE_WINDOW, datetime.min.time(), UTC)
+    efforts = db.execute(
+        select(BestEffort.distance_m, BestEffort.time_s, BestEffort.activity_id, Activity.start_utc)
+        .join(Activity, Activity.id == BestEffort.activity_id)
+        .where(
+            BestEffort.user_id == user_id,
+            Activity.start_utc >= since,
+            Activity.sport == "run",
+            BestEffort.distance_m >= 3000,
+        )
+    ).all()
+    out: dict[str, list[tuple[date, float]]] = defaultdict(list)
+    for back in range(days // step * step, -1, -step):
+        day = today - timedelta(days=back)
+        lo = datetime.combine(day - ESTIMATE_WINDOW, datetime.min.time(), UTC)
+        hi = datetime.combine(day + timedelta(days=1), datetime.min.time(), UTC)
+        best_by_distance: dict[float, tuple[float, int]] = {}
+        for distance_m, time_s, activity_id, started in efforts:
+            if lo <= started < hi and (
+                distance_m not in best_by_distance or time_s < best_by_distance[distance_m][0]
+            ):
+                best_by_distance[distance_m] = (time_s, activity_id)
+        best = race_basis(best_by_distance)
+        if best:
+            d, t, _ = best
+            for key, target in m.RACES.items():
+                out[f"race_{key}"].append((day, m.riegel(d, t, target)))
+    return out
+
+
 def update_estimates(db: Session, user_id: int, today: date) -> dict[str, EstimateRow]:
     """Today's estimates from the last 90 days (max HR from the last year), each with its sources."""
     since = datetime.combine(today - ESTIMATE_WINDOW, datetime.min.time(), UTC)
@@ -115,9 +158,9 @@ def update_estimates(db: Session, user_id: int, today: date) -> dict[str, Estima
             "critical_speed",
             sorted(set(sources)),
         )
-    usable = [(d, t, a) for d, (t, a) in best_by_distance.items() if d >= 3000]
-    if usable:
-        d, t, a = max(usable, key=lambda e: m.vdot(e[0], e[1]))
+    best = race_basis(best_by_distance)
+    if best:
+        d, t, a = best
         found["vdot"] = (m.vdot(d, t), f"vdot:{d / 1000:g}", [a])
         for key, target in m.RACES.items():
             found[f"race_{key}"] = (m.riegel(d, t, target), f"riegel:{d / 1000:g}", [a])

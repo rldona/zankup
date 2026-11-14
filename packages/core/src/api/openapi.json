@@ -4303,6 +4303,208 @@
         }
       }
     },
+    "/api/stats/zones": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Zones",
+        "description": "Time in each HR or power zone over a period and the span before it (Progress → Training zones).",
+        "operationId": "getZones",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "hr",
+                "power"
+              ],
+              "type": "string",
+              "default": "hr",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "sport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only these sports",
+              "title": "Sport"
+            },
+            "description": "Only these sports"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZonesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/bests": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Bests",
+        "description": "Every activity's best at one measure, oldest first: a run distance's time, a ride's best power\nover a duration or a ride's distance (Progress → Best times).",
+        "operationId": "getBests",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "A run distance (5k…), power_30… or longest",
+              "title": "Key"
+            },
+            "description": "A run distance (5k…), power_30… or longest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BestOut"
+                  },
+                  "title": "Response Getbests"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/bests/recent": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Recent Bests",
+        "description": "The medals of the last days: bests in the top three of all time or of their year, all-time and\nbetter places first (Progress → Best times' card).",
+        "operationId": "getRecentBests",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 366,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Medal"
+                  },
+                  "title": "Response Getrecentbests"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/routes": {
       "get": {
         "tags": [
@@ -6752,6 +6954,43 @@
         ],
         "title": "BestEffortOut"
       },
+      "BestOut": {
+        "properties": {
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value",
+            "description": "Seconds (a run distance), watts (power_…) or metres (longest)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activity_id",
+          "name",
+          "day",
+          "value"
+        ],
+        "title": "BestOut"
+      },
       "Bucket": {
         "properties": {
           "start": {
@@ -8978,6 +9217,51 @@
           "totp_enabled"
         ],
         "title": "Me"
+      },
+      "Medal": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank",
+            "description": "1 to 3"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "year"
+            ],
+            "title": "Scope",
+            "description": "Of all time, or of its year"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "activity_id",
+          "day",
+          "value",
+          "rank",
+          "scope"
+        ],
+        "title": "Medal"
       },
       "MetricComparison": {
         "properties": {
@@ -13000,6 +13284,46 @@
           "cumulative_m"
         ],
         "title": "YearLine"
+      },
+      "ZonesOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "bounds": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Bounds",
+            "description": "Each zone's lower bound (bpm or W) with today's settings"
+          },
+          "seconds": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Seconds",
+            "description": "Time in each zone in the period"
+          },
+          "previous": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Previous",
+            "description": "The same, over the span just before the period"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "bounds",
+          "seconds",
+          "previous"
+        ],
+        "title": "ZonesOut"
       },
       "zankup__auth__passkeys__LoginRequest": {
         "properties": {

@@ -14,7 +14,8 @@ import { locale, t } from '../i18n';
 import { asSport, useUnits } from '../prefs';
 import { CardSkeleton } from '../Skeleton';
 import { useTheme } from '../theme';
-import { accent, Card } from '../ui';
+import { Chip, CHIP_ICON } from './Chip';
+import { Card } from '../ui';
 import { isoDay } from './fitness';
 import {
   axisTicks,
@@ -114,35 +115,18 @@ export function VolumeCard() {
   const values = buckets.map((b) => valueOf(b, chartMetric));
   const ticks = format.ticks(Math.max(...values, 0), chartMetric, 2);
 
-  const chip = (s: string | null) => {
-    const on = s === sport;
-    return (
-      <Pressable
-        key={s ?? 'all'}
-        accessibilityRole="radio"
-        accessibilityState={{ checked: on }}
-        onPress={() => {
-          setSport(s);
-          setPicked(null);
-        }}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 5,
-          paddingHorizontal: 10,
-          paddingVertical: 4,
-          borderRadius: 999,
-          borderWidth: 1,
-          borderColor: on ? accent(c) : c.line,
-        }}
-      >
-        <Icon name={sportIcon(s)} color={on ? accent(c) : c.fg} size={16} />
-        <Text style={{ color: on ? accent(c) : c.fg, fontSize: 13 }}>
-          {s ? t(`sport.${asSport(s)}`) : t('progress.allSports')}
-        </Text>
-      </Pressable>
-    );
-  };
+  const chip = (s: string | null) => (
+    <Chip
+      key={s ?? 'all'}
+      on={s === sport}
+      label={s ? t(`sport.${asSport(s)}`) : t('progress.allSports')}
+      icon={(colour) => <Icon name={sportIcon(s)} color={colour} size={CHIP_ICON} />}
+      onPress={() => {
+        setSport(s);
+        setPicked(null);
+      }}
+    />
+  );
 
   return (
     <Card style={{ gap: 14 }}>

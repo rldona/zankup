@@ -156,3 +156,39 @@ def test_changing_heart_rate_settings_recomputes(ctx: Ctx) -> None:  # noqa: F81
     assert ctx.http.get("/api/settings").json()["zone_model"] == "reserve"
     with ctx.sessions.begin() as db:
         db.execute(update(Activity).values(name="x"))  # unrelated changes do not recompute
+
+
+def test_training_zones_skills_and_best_times(ctx: Ctx) -> None:  # noqa: F811
+    ready(ctx)
+    hr = ctx.http.get("/api/stats/zones", params={"kind": "hr"}).json()
+    assert len(hr["bounds"]) == 5 and len(hr["seconds"]) == 5 and sum(hr["seconds"]) > 0
+    assert sum(hr["previous"]) == 0  # nothing in the year before
+    power = ctx.http.get("/api/stats/zones", params={"kind": "power", "sport": ["ride"]}).json()
+    assert len(power["seconds"]) == 7
+    curve = ctx.http.get("/api/stats/curves", params={"kind": "power"}).json()
+    assert {180, 900} <= {p["duration_s"] for p in curve}  # Skills' durations
+
+    five = ctx.http.get("/api/stats/bests", params={"key": "5k"}).json()
+    assert five and five[0]["activity_id"] == ctx.ids["run"] and five[0]["value"] > 0
+    watts = ctx.http.get("/api/stats/bests", params={"key": "power_30"}).json()
+    assert watts and watts[0]["activity_id"] == ctx.ids["ride-power"]
+    assert ctx.http.get("/api/stats/bests", params={"key": "nope"}).status_code == 422
+    medals = ctx.http.get("/api/stats/bests/recent").json()
+    assert medals and all(x["rank"] == 1 and x["scope"] == "all" for x in medals)  # the only ones yet
+    assert {"5k", "power_30"} <= {x["key"] for x in medals}
+
+
+def test_a_medal_is_of_all_time_or_of_its_year() -> None:
+    from datetime import date
+
+    from zankup.api.stats import BestOut, medal_of
+
+    def best(day: str, value: float) -> BestOut:
+        return BestOut(activity_id=1, name=None, day=date.fromisoformat(day), value=value)
+
+    old = [best("2024-05-01", 1500 + i) for i in range(3)]
+    this_year = best("2026-06-01", 1600)
+    assert medal_of([*old, this_year], this_year, lower=True) == (1, "year")
+    assert medal_of([*old, this_year], old[1], lower=True) == (2, "all")
+    watts = best("2026-06-01", 551)
+    assert medal_of([best("2025-01-01", 600), watts], watts, lower=False) == (2, "all")

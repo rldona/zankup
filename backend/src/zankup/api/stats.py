@@ -11,14 +11,16 @@ from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Literal
 
-from fastapi import Query
+from fastapi import HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, select
 
+import zankup_metrics as m
 from zankup.api.profile import streak
 from zankup.api.routing import protected_router
 from zankup.auth.deps import CurrentUser, DbSession
 from zankup.db.models import Activity, ActivityMetrics, BestEffort, DailyLoad, EstimateRow
+from zankup.engine.athlete import athlete
 from zankup.engine.user import local_day, race_history
 
 router = protected_router(prefix="/api/stats", tags=["stats"])
@@ -510,3 +512,167 @@ def years(db: DbSession, user: CurrentUser) -> list[int]:
     if first is None:
         return []
     return list(range(datetime.now(UTC).year, first.year - 1, -1))
+
+
+# --- training zones (Progress) ---------------------------------------------------------------------
+
+
+class ZonesOut(BaseModel):
+    kind: str
+    bounds: list[float] = Field(description="Each zone's lower bound (bpm or W) with today's settings")
+    seconds: list[float] = Field(description="Time in each zone in the period")
+    previous: list[float] = Field(description="The same, over the span just before the period")
+
+
+@router.get("/zones", operation_id="getZones")
+def zones(
+    db: DbSession,
+    user: CurrentUser,
+    kind: Literal["hr", "power"] = "hr",
+    start: From = None,
+    end: To = None,
+    sport: Sports = None,
+) -> ZonesOut:
+    """Time in each HR or power zone over a period and the span before it (Progress → Training zones)."""
+    start, end = _range(start, end)
+    who = athlete(db, user.id)
+    if kind == "hr":
+        bounds = m.hr_zones(who.zone_method, who.hr_max, who.hr_rest, who.lthr)
+    else:
+        bounds = m.power_zones(who.ftp) if who.ftp else []
+    count = 5 if kind == "hr" else 7
+
+    def total(a: date, b: date) -> list[float]:
+        out = [0.0] * count
+        for _, mt in _activities(db, user.id, a, b, sport):
+            for i, s in enumerate((mt and (mt.hr_zones if kind == "hr" else mt.power_zones)) or []):
+                if i < count:
+                    out[i] += s
+        return [round(s, 1) for s in out]
+
+    return ZonesOut(
+        kind=kind,
+        bounds=[round(b) for b in bounds],
+        seconds=total(start, end),
+        previous=total(start - (end - start), start),
+    )
+
+
+# --- best times (Progress) -------------------------------------------------------------------------
+
+# A ride's best power over these durations; with the run distances and the longest ride, the bests.
+POWER_BESTS = (5, 15, 30, 60, 300, 600, 1200, 3600)
+BEST_KEYS = (*m.RUN_DISTANCES, *(f"power_{d}" for d in POWER_BESTS), "longest")
+
+
+class BestOut(BaseModel):
+    activity_id: int
+    name: str | None
+    day: date
+    value: float = Field(description="Seconds (a run distance), watts (power_…) or metres (longest)")
+
+
+def _bests(db: DbSession, user_id: int, key: str) -> list[BestOut]:
+    found: list[tuple[Activity, float]] = []
+    if key in m.RUN_DISTANCES:
+        for time_s, a in db.execute(
+            select(BestEffort.time_s, Activity)
+            .join(Activity, Activity.id == BestEffort.activity_id)
+            .where(BestEffort.user_id == user_id, BestEffort.distance_key == key, Activity.sport == "run")
+        ).all():
+            found.append((a, time_s))
+    elif key == "longest":
+        for a in db.scalars(
+            select(Activity).where(
+                Activity.user_id == user_id, Activity.sport == "ride", Activity.distance_m > 0
+            )
+        ):
+            found.append((a, a.distance_m or 0.0))
+    else:
+        duration = key.removeprefix("power_")
+        for a, curve in db.execute(
+            select(Activity, ActivityMetrics.power_curve)
+            .join(ActivityMetrics, ActivityMetrics.activity_id == Activity.id)
+            .where(
+                Activity.user_id == user_id,
+                Activity.sport == "ride",
+                ActivityMetrics.power_curve.is_not(None),
+            )
+        ).all():
+            if curve and duration in curve:
+                found.append((a, curve[duration]))
+    out = [
+        BestOut(activity_id=a.id, name=a.name, day=local_day(a.start_utc, a.timezone), value=round(v, 2))
+        for a, v in found
+    ]
+    return sorted(out, key=lambda b: (b.day, b.activity_id))
+
+
+def lower_is_better(key: str) -> bool:
+    return key in m.RUN_DISTANCES
+
+
+@router.get("/bests", operation_id="getBests")
+def bests(
+    db: DbSession,
+    user: CurrentUser,
+    key: Annotated[str, Query(description="A run distance (5k…), power_30… or longest")],
+) -> list[BestOut]:
+    """Every activity's best at one measure, oldest first: a run distance's time, a ride's best power
+    over a duration or a ride's distance (Progress → Best times)."""
+    if key not in BEST_KEYS:
+        raise HTTPException(status_code=422, detail="Unknown best")
+    return _bests(db, user.id, key)
+
+
+class Medal(BaseModel):
+    key: str
+    activity_id: int
+    day: date
+    value: float
+    rank: int = Field(description="1 to 3")
+    scope: Literal["all", "year"] = Field(description="Of all time, or of its year")
+
+
+def medal_of(
+    entries: list[BestOut], entry: BestOut, lower: bool
+) -> tuple[int, Literal["all", "year"]] | None:
+    """An entry's place: in the top three of all time, or else of its year; None when neither."""
+
+    def rank(pool: list[BestOut]) -> int:
+        return 1 + sum(1 for b in pool if (b.value < entry.value if lower else b.value > entry.value))
+
+    overall = rank(entries)
+    if overall <= 3:
+        return overall, "all"
+    yearly = rank([b for b in entries if b.day.year == entry.day.year])
+    return (yearly, "year") if yearly <= 3 else None
+
+
+@router.get("/bests/recent", operation_id="getRecentBests")
+def recent_bests(
+    db: DbSession, user: CurrentUser, days: Annotated[int, Query(ge=1, le=366)] = 30
+) -> list[Medal]:
+    """The medals of the last days: bests in the top three of all time or of their year, all-time and
+    better places first (Progress → Best times' card)."""
+    since = datetime.now(UTC).date() - timedelta(days=days)
+    medals: list[Medal] = []
+    for key in BEST_KEYS:
+        entries = _bests(db, user.id, key)
+        for entry in entries:
+            if entry.day < since:
+                continue
+            place = medal_of(entries, entry, lower_is_better(key))
+            if place:
+                medals.append(
+                    Medal(
+                        key=key,
+                        activity_id=entry.activity_id,
+                        day=entry.day,
+                        value=entry.value,
+                        rank=place[0],
+                        scope=place[1],
+                    )
+                )
+    medals.sort(key=lambda x: (x.scope != "all", x.rank, -x.day.toordinal()))
+    return medals

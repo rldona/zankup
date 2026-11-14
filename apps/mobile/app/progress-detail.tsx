@@ -8,7 +8,7 @@ import { calendarQuery, SPORTS, streakQuery, volumeQuery, type CalendarDay } fro
 import { useQuery } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useApi } from '../src/auth';
 import { Icon, SportIcon } from '../src/Icon';
@@ -16,6 +16,7 @@ import { locale, t } from '../src/i18n';
 import { asSport } from '../src/prefs';
 import { isoDay } from '../src/progress/fitness';
 import { Panel } from '../src/progress/Panel';
+import { SportSheet } from '../src/progress/SportSheet';
 import {
   bucketValue,
   comparableYears,
@@ -35,6 +36,7 @@ import { VolumeChart } from '../src/progress/VolumeChart';
 import { addDays, mondayOf } from '../src/progress/weeks';
 import { ChartSkeleton } from '../src/Skeleton';
 import { useTheme } from '../src/theme';
+import { Chip, CHIP_ICON } from '../src/progress/Chip';
 import { accent, InfoButton, Muted, onAccent, Screen } from '../src/ui';
 
 const at = (iso: string) => new Date(`${iso}T12:00:00`);
@@ -123,27 +125,12 @@ export default function ProgressDetailScreen() {
     });
   })();
 
-  const pill = (on: boolean, label: string, onPress: () => void, icon?: React.ReactNode) => (
-    <Pressable
-      key={label}
-      accessibilityRole="button"
-      accessibilityState={{ selected: on }}
-      onPress={onPress}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: on ? accent(c) : c.line,
-      }}
-    >
-      {icon}
-      <Text style={{ color: on ? accent(c) : c.fg, fontSize: 13 }}>{label}</Text>
-    </Pressable>
-  );
+  const pill = (
+    on: boolean,
+    label: string,
+    onPress: () => void,
+    icon?: (colour: string) => React.ReactNode,
+  ) => <Chip key={label} role="button" on={on} label={label} onPress={onPress} icon={icon} />;
   const change = (p: number | null) =>
     p == null ? null : (
       <Text
@@ -169,9 +156,9 @@ export default function ProgressDetailScreen() {
           true,
           sport ? t(`sport.${asSport(sport)}`) : t('progress.allSports'),
           () => setPanel('sport'),
-          <>
-            <Icon name={sportIcon(sport)} color={accent(c)} size={16} />
-          </>,
+          (colour) => (
+            <Icon name={sportIcon(sport)} color={colour} size={CHIP_ICON} />
+          ),
         )}
         {metrics.map((m) =>
           pill(
@@ -420,76 +407,6 @@ export default function ProgressDetailScreen() {
         )}
       </Panel>
     </Screen>
-  );
-}
-
-/** "Filter by sport": every sport, or one, with a search over their names. */
-function SportSheet({
-  sport,
-  found,
-  onPick,
-}: {
-  sport: string | null;
-  found: string[];
-  onPick: (sport: string | null) => void;
-}) {
-  const c = useTheme();
-  const [query, setQuery] = useState('');
-  const list = (found.length ? found : [...SPORTS]).filter((s) =>
-    t(`sport.${asSport(s)}`)
-      .toLocaleLowerCase(locale)
-      .includes(query.trim().toLocaleLowerCase(locale)),
-  );
-  const row = (s: string | null, title: string, note?: string) => {
-    const on = s === sport;
-    return (
-      <Pressable
-        key={s ?? 'all'}
-        accessibilityRole="radio"
-        accessibilityState={{ checked: on }}
-        onPress={() => onPick(s)}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 14 }}
-      >
-        <Icon name={sportIcon(s)} color={on ? accent(c) : c.fg} size={26} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: on ? accent(c) : c.fg, fontSize: 15 }}>{title}</Text>
-          {note ? <Text style={{ color: on ? accent(c) : c.fg, fontSize: 13 }}>{note}</Text> : null}
-        </View>
-        {on && <Icon name="check" color={accent(c)} size={26} />}
-      </Pressable>
-    );
-  };
-  return (
-    <ScrollView
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}
-    >
-      <Text style={{ color: c.fg, fontSize: 17, fontWeight: '800', marginBottom: 12 }}>
-        {t('progress.filterSport')}
-      </Text>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          paddingHorizontal: 16,
-          borderRadius: 999,
-          backgroundColor: c.surface2,
-          marginBottom: 6,
-        }}
-      >
-        <Icon name="search" color={c.muted} size={22} />
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={t('nav.search')}
-          placeholderTextColor={c.muted}
-          style={{ flex: 1, color: c.fg, fontSize: 15, paddingVertical: 12 }}
-        />
-      </View>
-      {!query && row(null, t('progress.allSports'), t('progress.allSportsNote'))}
-      {list.map((s) => row(s, t(`sport.${asSport(s)}`)))}
-    </ScrollView>
   );
 }
 

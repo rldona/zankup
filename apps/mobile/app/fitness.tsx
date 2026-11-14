@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useApi } from '../src/auth';
 import { keys, readSync, storage } from '../src/storage';
@@ -49,6 +50,8 @@ export default function FitnessScreen() {
   const last = days.length - 1;
   // The day touched on the chart; none means the last one (today).
   const [picked, setPicked] = useState<number | null>(null);
+  const [chartHeight, setChartHeight] = useState(0);
+  const insets = useSafeAreaInsets();
   const index = Math.max(0, Math.min(picked ?? last, last));
   const day = days[index];
   const today = isoDay(new Date());
@@ -57,87 +60,100 @@ export default function FitnessScreen() {
   const labels = days.map((d) => (d.day === today ? t('home.today') : short ? date(d.day) : month(d.day)));
 
   return (
-    <Screen header>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ color: c.fg, fontSize: 20, fontWeight: '800' }}>{t('progress.fitness')}</Text>
-        <InfoButton text={t('progress.fitnessInfo')} />
-      </View>
-      <Text style={{ color: c.fg, fontSize: 14, lineHeight: 21 }}>{t('progress.fitnessIntro')}</Text>
+    // Not scrolled: the heading and the change on top, the day's activities at the bottom and the chart
+    // as tall as the room between them, as Strava's.
+    <Screen header scroll={false}>
+      <View style={{ flex: 1, padding: 16, gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={{ color: c.fg, fontSize: 20, fontWeight: '800' }}>{t('progress.fitness')}</Text>
+          <InfoButton text={t('progress.fitnessInfo')} />
+        </View>
+        <Text style={{ color: c.fg, fontSize: 14, lineHeight: 21 }}>{t('progress.fitnessIntro')}</Text>
 
-      <View
-        accessibilityRole="tablist"
-        style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: c.line, marginHorizontal: -16 }}
-      >
-        {FITNESS_RANGES.map((r) => {
-          const on = r === range;
-          return (
-            <Pressable
-              key={r}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: on }}
-              onPress={() => {
-                setRange(r);
-                void storage.setItem(keys.fitnessRange, r);
-                setPicked(null);
-              }}
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                paddingVertical: 12,
-                borderBottomWidth: 3,
-                borderColor: on ? accent(c) : 'transparent',
-              }}
-            >
-              <Text style={{ color: on ? c.fg : c.muted, fontSize: 14, fontWeight: on ? '700' : '400' }}>
-                {t(`progress.range.${r}`)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {fitness.isPending ? (
-        <ChartSkeleton height={360} />
-      ) : !day || !change ? (
-        <Muted>{t('progress.noFitness')}</Muted>
-      ) : (
-        <>
-          <View>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-              <Text style={{ color: c.fg, fontSize: 30, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-                {change.direction === 'up' ? '▴' : change.direction === 'down' ? '▾' : ''}
-                {change.percent} %
-              </Text>
-              <Text
+        <View
+          accessibilityRole="tablist"
+          style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: c.line, marginHorizontal: -16 }}
+        >
+          {FITNESS_RANGES.map((r) => {
+            const on = r === range;
+            return (
+              <Pressable
+                key={r}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                onPress={() => {
+                  setRange(r);
+                  void storage.setItem(keys.fitnessRange, r);
+                  setPicked(null);
+                }}
                 style={{
-                  color: change.direction === 'up' ? c.formPositive : c.fg,
-                  fontSize: 14,
-                  fontVariant: ['tabular-nums'],
+                  flex: 1,
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  borderBottomWidth: 3,
+                  borderColor: on ? accent(c) : 'transparent',
                 }}
               >
-                {change.direction === 'none'
-                  ? t('progress.noChange')
-                  : t('progress.points', { points: change.points > 0 ? `+${change.points}` : change.points })}
+                <Text style={{ color: on ? c.fg : c.muted, fontSize: 14, fontWeight: on ? '700' : '400' }}>
+                  {t(`progress.range.${r}`)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {fitness.isPending ? (
+          <ChartSkeleton height={360} />
+        ) : !day || !change ? (
+          <Muted>{t('progress.noFitness')}</Muted>
+        ) : (
+          <>
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                <Text style={{ color: c.fg, fontSize: 30, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                  {change.direction === 'up' ? '▴' : change.direction === 'down' ? '▾' : ''}
+                  {change.percent} %
+                </Text>
+                <Text
+                  style={{
+                    color: change.direction === 'up' ? c.formPositive : c.fg,
+                    fontSize: 14,
+                    fontVariant: ['tabular-nums'],
+                  }}
+                >
+                  {change.direction === 'none'
+                    ? t('progress.noChange')
+                    : t('progress.points', {
+                        points: change.points > 0 ? `+${change.points}` : change.points,
+                      })}
+                </Text>
+              </View>
+              <Text style={{ color: c.fg, fontSize: 14 }}>
+                {index === last
+                  ? t(`progress.last.${range}`)
+                  : t('progress.between', { from: date(days[0].day), to: date(day.day) })}
               </Text>
             </View>
-            <Text style={{ color: c.fg, fontSize: 14 }}>
-              {index === last
-                ? t(`progress.last.${range}`)
-                : t('progress.between', { from: date(days[0].day), to: date(day.day) })}
-            </Text>
-          </View>
-          <FitnessChart
-            values={days.map((d) => d.ctl)}
-            loads={days.map((d) => d.load)}
-            labels={labels}
-            picked={index}
-            onPick={setPicked}
-            showLoads={range === '1m'}
-            label={`${t('progress.fitness')} ${Math.round(day.ctl)}, ${date(day.day, true)}`}
-          />
-          <DayActivities day={day.day} />
-        </>
-      )}
+            <View style={{ flex: 1 }} onLayout={(e) => setChartHeight(e.nativeEvent.layout.height)}>
+              {chartHeight > 0 && (
+                <FitnessChart
+                  values={days.map((d) => d.ctl)}
+                  loads={days.map((d) => d.load)}
+                  labels={labels}
+                  picked={index}
+                  onPick={setPicked}
+                  showLoads={range === '1m'}
+                  height={Math.max(240, chartHeight)}
+                  label={`${t('progress.fitness')} ${Math.round(day.ctl)}, ${date(day.day, true)}`}
+                />
+              )}
+            </View>
+            <View style={{ paddingBottom: insets.bottom }}>
+              <DayActivities day={day.day} />
+            </View>
+          </>
+        )}
+      </View>
     </Screen>
   );
 }

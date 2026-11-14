@@ -2189,21 +2189,28 @@ a.button.block {
 
 .bodymap .body,
 .bodythumb .body {
-  fill: var(--surface-2);
-  stroke: var(--line);
-  stroke-width: 1;
+  fill: var(--bg);
+  stroke: color-mix(in srgb, var(--muted) 70%, var(--fg));
+  stroke-width: 1.1;
+  stroke-linejoin: round;
 }
 
 .bodymap .muscle,
 .bodythumb .muscle {
-  fill: var(--line);
-  stroke: var(--surface);
-  stroke-width: 0.6;
+  fill: color-mix(in srgb, var(--muted) 45%, var(--bg));
 }
 
 .bodymap .muscle.on,
 .bodythumb .muscle.on {
-  fill: var(--strength);
+  fill: url(#muscle-glow);
+}
+
+.glow-core {
+  stop-color: color-mix(in srgb, var(--strength) 55%, #ffd27a);
+}
+
+.glow-edge {
+  stop-color: var(--strength);
 }
 
 /* A strength workout's cover, where a route has its map: the body map across the top of the detail. */
@@ -2242,7 +2249,7 @@ a.button.block {
 }
 
 .musclecover .bodymap .body {
-  fill: var(--surface-2);
+  fill: var(--bg);
 }
 
 .coverlegend {

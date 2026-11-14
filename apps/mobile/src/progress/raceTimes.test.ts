@@ -36,7 +36,8 @@ describe('history', () => {
     expect(series(history, '2026-11-10', '2026-11-15')).toHaveLength(2); // no change: a flat line
   });
   it('has round time ticks', () => {
-    expect(timeTicks(1492, 1494)).toEqual([1490, 1500]);
+    // hardly moved: an axis 4 % of the time wide, centred on it
+    expect(timeTicks(1492, 1494)).toEqual([1440, 1470, 1500, 1530]);
     // 4:10:00 to 4:46:00 in ten-minute steps, up to 4:50:00 (Strava's marathon axis)
     expect(timeTicks(4 * 3600 + 10 * 60, 4 * 3600 + 46 * 60)).toEqual([
       15_000, 15_600, 16_200, 16_800, 17_400,

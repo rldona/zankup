@@ -19,7 +19,7 @@ from zankup.api.profile import streak
 from zankup.api.routing import protected_router
 from zankup.auth.deps import CurrentUser, DbSession
 from zankup.db.models import Activity, ActivityMetrics, BestEffort, DailyLoad, EstimateRow
-from zankup.engine.user import local_day
+from zankup.engine.user import local_day, race_history
 
 router = protected_router(prefix="/api/stats", tags=["stats"])
 
@@ -282,7 +282,9 @@ class EstimateOut(BaseModel):
     method: str
     day: date
     sources: list[Source]
-    history: list[EstimatePoint] = Field(description="Each time it changed")
+    history: list[EstimatePoint] = Field(
+        description="Each time it changed; race times, as they stood each week of the last six months"
+    )
 
 
 @router.get("/estimates", operation_id="getEstimates")
@@ -298,6 +300,7 @@ def estimates(db: DbSession, user: CurrentUser) -> list[EstimateOut]:
     activities = {
         a.id: a for a in db.scalars(select(Activity).where(Activity.id.in_(ids), Activity.user_id == user.id))
     }
+    races = race_history(db, user.id, datetime.now(UTC).date())
     out = []
     for kind, history in by_kind.items():
         latest = history[-1]
@@ -307,9 +310,12 @@ def estimates(db: DbSession, user: CurrentUser) -> list[EstimateOut]:
             if (a := activities.get(i))
         ]
         changes: list[EstimatePoint] = []
-        for r in history:
-            if not changes or abs(changes[-1].value - r.value) > 1e-6:
-                changes.append(EstimatePoint(day=r.day, value=r.value))
+        if kind in races:
+            changes = [EstimatePoint(day=d, value=round(v, 3)) for d, v in races[kind]]
+        else:
+            for r in history:
+                if not changes or abs(changes[-1].value - r.value) > 1e-6:
+                    changes.append(EstimatePoint(day=r.day, value=r.value))
         out.append(
             EstimateOut(
                 kind=kind,

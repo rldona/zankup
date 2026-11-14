@@ -2762,7 +2762,7 @@ export interface components {
       sources: components['schemas']['Source'][];
       /**
        * History
-       * @description Each time it changed
+       * @description Each time it changed; race times, as they stood each week of the last six months
        */
       history: components['schemas']['EstimatePoint'][];
     };

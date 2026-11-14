@@ -125,14 +125,14 @@ export default function PredictionsScreen() {
                 accessibilityState={{ checked: on }}
                 onPress={() => setRace(r.kind)}
                 style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 9,
+                  paddingHorizontal: 11,
+                  paddingVertical: 5,
                   borderRadius: 999,
-                  borderWidth: 1.5,
+                  borderWidth: 1,
                   borderColor: on ? accent(c) : c.line,
                 }}
               >
-                <Text style={{ color: on ? accent(c) : c.fg, fontSize: 14 }}>
+                <Text style={{ color: on ? accent(c) : c.fg, fontSize: 13 }}>
                   {t(`progress.race.${r.kind}`)}
                 </Text>
               </Pressable>

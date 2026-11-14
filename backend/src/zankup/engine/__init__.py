@@ -7,4 +7,4 @@ metrics depend on, or a new METRICS_VERSION, queues `metrics_full`, which redoes
 the stored series with its progress visible in the app. Everything is idempotent.
 """
 
-METRICS_VERSION = 2  # 2: estimate methods are keys the app translates
+METRICS_VERSION = 3  # 2: estimate methods are keys the app translates; 3: TRIMP on Strava's scale

@@ -18,7 +18,16 @@ import { CardSkeleton } from '../Skeleton';
 import { useTheme } from '../theme';
 import { accent, Card, Muted } from '../ui';
 import { isoDay } from './fitness';
-import { changeText, RACES, raceTime, series, valueOn, type Point, type RaceKind } from './raceTimes';
+import {
+  changeText,
+  RACES,
+  raceTime,
+  series,
+  smoothPath,
+  valueOn,
+  type Point,
+  type RaceKind,
+} from './raceTimes';
 import { addDays } from './weeks';
 
 /** Each race's history (day and predicted seconds), oldest first. */
@@ -233,7 +242,7 @@ export function PredictionChart({
                   <Line key={v} p1={vec(0, y(v))} p2={vec(plot, y(v))} color={c.line} strokeWidth={1} />
                 ))}
                 <Path
-                  path={points.map((p, i) => `${i ? 'L' : 'M'}${x(p.day)} ${y(p.value)}`).join('')}
+                  path={smoothPath(points.map((p) => ({ x: x(p.day), y: y(p.value) })))}
                   style="stroke"
                   strokeWidth={3}
                   strokeJoin="round"

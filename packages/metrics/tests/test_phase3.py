@@ -34,9 +34,9 @@ def test_time_in_zones_skips_pauses() -> None:
 
 def test_trimp_matches_banisters_formula() -> None:
     t, hr = series(3600, 120)  # HR reserve fraction 0.5 with rest 50, max 190
-    expected = 60 * 0.5 * 0.64 * math.exp(1.92 * 0.5)
+    expected = 60 * 0.5 * 0.64 * math.exp(1.92 * 0.5) * m.EFFORT_SCALE
     assert m.trimp(t, hr, 190, 50, "male") == pytest.approx(expected, rel=1e-3)
-    women = 60 * 0.5 * 0.86 * math.exp(1.67 * 0.5)
+    women = 60 * 0.5 * 0.86 * math.exp(1.67 * 0.5) * m.EFFORT_SCALE
     assert m.trimp(t, hr, 190, 50, "female") == pytest.approx(women, rel=1e-3)
     assert m.trimp(t, hr, 190, 50, "female") > m.trimp(t, hr, 190, 50, "male")
     hard = m.trimp(*series(3600, 170), 190, 50, "male")

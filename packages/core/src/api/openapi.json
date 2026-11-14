@@ -7469,7 +7469,7 @@
             },
             "type": "array",
             "title": "History",
-            "description": "Each time it changed"
+            "description": "Each time it changed; race times, as they stood each week of the last six months"
           }
         },
         "type": "object",

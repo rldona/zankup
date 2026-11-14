@@ -39,6 +39,10 @@ def test_curves_records_and_estimates(ctx: Ctx) -> None:  # noqa: F811
     estimates = {e["kind"]: e for e in ctx.http.get("/api/stats/estimates").json()}
     assert "hr_max" in estimates and estimates["hr_max"]["sources"]
     assert estimates["hr_max"]["history"]
+    race = estimates["race_5k"]["history"]  # weekly, while the run is in the 90-day window: today only
+    today = datetime.now(UTC).date().isoformat()
+    assert race[-1]["day"] == today and abs(race[-1]["value"] - estimates["race_5k"]["value"]) < 0.01
+    assert len(race) == 1
 
 
 def test_progress_calendar_heatmap_and_efficiency(ctx: Ctx) -> None:  # noqa: F811

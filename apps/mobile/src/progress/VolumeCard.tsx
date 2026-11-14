@@ -128,16 +128,16 @@ export function VolumeCard() {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 8,
-          paddingHorizontal: 12,
-          paddingVertical: 6,
+          gap: 5,
+          paddingHorizontal: 10,
+          paddingVertical: 4,
           borderRadius: 999,
-          borderWidth: 1.5,
+          borderWidth: 1,
           borderColor: on ? accent(c) : c.line,
         }}
       >
-        <Icon name={sportIcon(s)} color={on ? accent(c) : c.fg} size={20} />
-        <Text style={{ color: on ? accent(c) : c.fg, fontSize: 14 }}>
+        <Icon name={sportIcon(s)} color={on ? accent(c) : c.fg} size={16} />
+        <Text style={{ color: on ? accent(c) : c.fg, fontSize: 13 }}>
           {s ? t(`sport.${asSport(s)}`) : t('progress.allSports')}
         </Text>
       </Pressable>

@@ -972,6 +972,14 @@ def test_tell_me_more_writes_the_report_once_and_keeps_it(
     assert client.get(f"/api/activities/{run_id}/report").json()["headline"] == sections["headline"]
     with sessions() as db:
         assert db.scalar(select(LlmCall.purpose)) == "report"
+    # Written by an older prompt (no version): written again when opened.
+    with sessions.begin() as db:
+        from zankup.db.models import ActivityReport
+
+        db.get_one(ActivityReport, run_id).sections = dict(sections)
+    api.messages.scripted.append(reply([text_block(json.dumps({**sections, "headline": "**Nuevo**"}))]))
+    again = client.post(f"/api/activities/{run_id}/report").json()
+    assert len(api.messages.requests) == 2 and again["headline"] == "Nuevo"  # no bold in the headline
 
 
 def test_the_report_compares_with_the_same_route_without_sending_it(

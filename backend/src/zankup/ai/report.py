@@ -30,8 +30,8 @@ JSON: its numbers, the metrics the app computed, how it compares with baselines 
 month so far, the person's goals, their load in the last days and their form that day.
 
 Write for the person who did it, in the language and units you are told, as a coach who knows their \
-data: warm and direct, never gushing. Give, as separate fields:
-- headline: one sentence, the gist (at most 140 characters).
+data: warm and direct, never gushing. It is read on a phone: short. Give, as separate fields:
+- headline: one sentence, the gist (at most 110 characters).
 - effort: how hard it was (relative effort against their usual, heart-rate or power zones).
 - story: the activity told with its numbers (distance, time, pace or power, splits, the earlier \
 attempts on the same route in "same_route").
@@ -40,6 +40,16 @@ attempts on the same route in "same_route").
 - next: one concrete recommendation for the next session: the kind of session, its duration or \
 distance and its intensity (a zone or an effort), and why, from their form and recent load. Never \
 medical advice.
+
+Length: effort, story, month and verdict at most two sentences and 45 words each; next one or two \
+sentences. Pick what matters; leave the rest out, the numbers are on the screen already.
+
+Formats, never raw units: durations as h:mm:ss, mm:ss or minutes ("68 min in zone 3", never "4093 s"); \
+runs and walks as pace (min/km or min/mile), rides and the rest as km/h or mph, never m/s; relative \
+effort and heart rate as whole numbers; splits by their pace or time, not seconds.
+
+Bold: wrap the one or two figures or findings that matter most in each field in **double asterisks** \
+(the headline in none). No other markdown.
 
 Rules that matter more than style:
 1. Every comparison comes from "comparisons": say its baseline ("your usual of the last 90 days", \
@@ -66,6 +76,8 @@ SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
 }
 FIELDS = ("headline", "effort", "story", "month", "verdict", "next")
+# Raised when the prompt changes: a report written by an older one is written again when opened.
+REPORT_VERSION = 2
 
 # How far a value has to be from its baseline to be more than "similar".
 SPEED_MARGIN = 0.02  # 2 % of the speed: about 7 s/km at 6:00/km
@@ -271,6 +283,8 @@ def generate_report(db: Session, llm: Llm, activity: Activity) -> ActivityReport
         db.add(row)
     row.language = language
     row.sections = {f: str(data.get(f) or "").strip() for f in FIELDS}
+    row.sections["headline"] = row.sections["headline"].replace("**", "")
+    row.sections["_version"] = str(REPORT_VERSION)
     row.model = llm.model
     row.metrics_version = METRICS_VERSION
     row.created_at = datetime.now(UTC)

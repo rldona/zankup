@@ -221,7 +221,7 @@ describe('phase 7: the AI assistant', () => {
       story: '10.0 km at 5:50 min/km.',
       month: '32 km so far this month.',
       verdict: 'A session that adds up.',
-      next: 'Tomorrow, 40 easy minutes in zone 2.',
+      next: 'Tomorrow, **40 easy minutes** in zone 2.',
       model: 'claude-haiku-5-5',
       created_at: '2026-11-04T09:00:00Z',
     };
@@ -234,7 +234,7 @@ describe('phase 7: the AI assistant', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Tell me more' }));
     expect(await screen.findByText('A steady threshold run.')).toBeInTheDocument();
     expect(screen.getByText('For your next session')).toBeInTheDocument();
-    expect(screen.getByText('Tomorrow, 40 easy minutes in zone 2.')).toBeInTheDocument();
+    expect(screen.getByText('40 easy minutes').tagName).toBe('STRONG'); // its **bold**
     expect(calls.filter((c) => c.path === '/api/activities/7/report')).toHaveLength(1);
   });
 

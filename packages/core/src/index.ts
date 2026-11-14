@@ -21,4 +21,5 @@ export * from './domain/figures';
 export * from './domain/goals';
 export * from './domain/shareCard';
 export * from './domain/efforts';
+export * from './domain/emphasis';
 export * from './domain/compare';

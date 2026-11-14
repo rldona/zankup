@@ -7,6 +7,7 @@ import {
   activityReportQuery,
   activitySummaryQuery,
   aiStatusQuery,
+  emphasis,
   settingsQuery,
   type AiPrefs,
 } from '@zankup/core';
@@ -20,7 +21,7 @@ import { t } from './i18n';
 import { Panel } from './progress/Panel';
 import { keys, readSync, storage } from './storage';
 import { useTheme } from './theme';
-import { Body, Button, Card, Heading, Muted, SwitchRow } from './ui';
+import { accent, Body, Button, Card, Heading, Muted, onAccent, SwitchRow } from './ui';
 
 export function SummaryCard({ activityId }: { activityId: number }) {
   const { api } = useAuth();
@@ -60,7 +61,7 @@ export function SummaryCard({ activityId }: { activityId: number }) {
         backgroundColor: c.accentSoft,
       }}
     >
-      <Icon name="wand_stars" color={String(c.accent)} size={20} />
+      <Icon name="wand_stars" color={accent(c)} size={20} />
     </View>
   );
   return (
@@ -112,7 +113,7 @@ export function SummaryCard({ activityId }: { activityId: number }) {
           <Muted>{t('summary.pitch')}</Muted>
           <Button
             primary
-            icon={<Icon name="wand_stars" color={String(c.accentFg)} size={20} />}
+            icon={<Icon name="wand_stars" color={onAccent(c)} size={20} />}
             onPress={() => write.mutate()}
             disabled={write.isPending}
           >
@@ -165,7 +166,7 @@ function ReportSheet({ activityId, onClose }: { activityId: number; onClose: () 
           </>
         ) : (
           <>
-            <ActivityIndicator color={String(c.accent)} />
+            <ActivityIndicator color={accent(c)} />
             <Muted>{t('report.writing')}</Muted>
           </>
         )}
@@ -174,7 +175,7 @@ function ReportSheet({ activityId, onClose }: { activityId: number; onClose: () 
   return (
     <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8, gap: 14 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Icon name="wand_stars" color={String(c.accent)} size={22} />
+        <Icon name="wand_stars" color={accent(c)} size={22} />
         <Text style={{ color: c.fg, fontSize: 15, fontWeight: '700' }}>{t('summary.aiTitle')}</Text>
       </View>
       <Text style={{ color: c.fg, fontSize: 22, fontWeight: '800', lineHeight: 28 }}>{row.headline}</Text>
@@ -182,16 +183,18 @@ function ReportSheet({ activityId, onClose }: { activityId: number; onClose: () 
         .filter((p) => p.trim())
         .map((p, i) => (
           <Text key={i} style={{ color: c.fg, fontSize: 15, lineHeight: 23 }}>
-            {p}
+            <Emphasis text={p} />
           </Text>
         ))}
       {row.next.trim() ? (
         <View style={{ gap: 6, padding: 14, borderRadius: 12, backgroundColor: c.surface2 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Icon name="flag" color={String(c.accent)} size={20} />
+            <Icon name="flag" color={accent(c)} size={20} />
             <Text style={{ color: c.fg, fontSize: 14, fontWeight: '700' }}>{t('report.next')}</Text>
           </View>
-          <Text style={{ color: c.fg, fontSize: 15, lineHeight: 22 }}>{row.next}</Text>
+          <Text style={{ color: c.fg, fontSize: 15, lineHeight: 22 }}>
+            <Emphasis text={row.next} />
+          </Text>
         </View>
       ) : null}
       <Button primary onPress={onClose}>
@@ -235,5 +238,22 @@ export function AiCard() {
       />
       {info.budget?.exceeded && <Muted>{t('ai.budgetExceeded')}</Muted>}
     </Card>
+  );
+}
+
+/** A Coach text with what matters most in bold (its **double asterisks**), inside a Text. */
+function Emphasis({ text }: { text: string }) {
+  return (
+    <>
+      {emphasis(text).map((run, i) =>
+        run.bold ? (
+          <Text key={i} style={{ fontWeight: '800' }}>
+            {run.text}
+          </Text>
+        ) : (
+          run.text
+        ),
+      )}
+    </>
   );
 }

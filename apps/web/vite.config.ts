@@ -36,7 +36,9 @@ const pwa = VitePWA({
     importScripts: ['/push-sw.js'], // push notifications (OS-401)
     maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // MapLibre and its worker
     navigateFallback: '/index.html',
-    navigateFallbackDenylist: [/^\/api\//],
+    // The API, and connecting an AI assistant (OAuth): always from the network, never an older app
+    // kept by this worker that does not know the page yet.
+    navigateFallbackDenylist: [/^\/api\//, /^\/oauth\//],
     cleanupOutdatedCaches: true,
     runtimeCaching: [
       {

@@ -273,3 +273,38 @@ describe('phase 7: the AI assistant', () => {
     expect(screen.getByRole('note')).toHaveTextContent(/can be wrong/);
   });
 });
+
+describe('connecting an AI assistant by OAuth', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const query =
+    '?response_type=code&client_id=abc&redirect_uri=' +
+    encodeURIComponent('https://claude.ai/api/mcp/auth_callback') +
+    '&code_challenge=' +
+    'c'.repeat(43) +
+    '&code_challenge_method=S256&state=xyz';
+
+  it('says who asks and, allowed, sends the code back to the assistant', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    const calls = mockApi({
+      '/api/oauth/client': () => Response.json({ name: 'Claude' }),
+      'POST /api/oauth/approve': () =>
+        Response.json({ redirect: 'https://claude.ai/api/mcp/auth_callback?code=k&state=xyz' }),
+    });
+    renderAt(`/oauth/authorize${query}`);
+    expect(await screen.findByRole('heading', { name: 'Claude wants to access your Zankup' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Allow' }));
+    await waitFor(() =>
+      expect(assign).toHaveBeenCalledWith('https://claude.ai/api/mcp/auth_callback?code=k&state=xyz'),
+    );
+    const approve = calls.find((c) => c.path === '/api/oauth/approve');
+    expect(approve?.body).toMatchObject({ client_id: 'abc', state: 'xyz', code_challenge_method: 'S256' });
+  });
+
+  it('refuses a link that is not a valid request', async () => {
+    mockApi({ '/api/oauth/client': () => Response.json({ detail: 'no' }, { status: 400 }) });
+    renderAt(`/oauth/authorize${query}`);
+    expect(await screen.findByText(/not valid or has expired/)).toBeVisible();
+  });
+});

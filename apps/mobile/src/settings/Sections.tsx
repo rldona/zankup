@@ -14,6 +14,7 @@ import {
   type NotificationPrefs,
 } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Linking, Share, Text, View } from 'react-native';
 
@@ -296,6 +297,9 @@ export function Mcp() {
   return (
     <Card>
       <Heading>{t('mcp.title')}</Heading>
+      <Button primary onPress={() => router.push('/assistants')}>
+        {t('assistants.connect')}
+      </Button>
       <Muted>{t('mcp.help')}</Muted>
       <Muted>
         {t('mcp.url')}: <Text style={{ color: c.fg, fontFamily: 'monospace' }}>{url}</Text>

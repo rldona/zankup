@@ -18,6 +18,7 @@ from zankup.api.keys import router as keys_router
 from zankup.api.library import router as library_router
 from zankup.api.mcp import router as mcp_router
 from zankup.api.notifications import router as notifications_router
+from zankup.api.oauth import router as oauth_router
 from zankup.api.preferences import router as preferences_router
 from zankup.api.profile import router as profile_router
 from zankup.api.review import router as review_router
@@ -131,6 +132,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(keys_router)
     app.include_router(instance_router)
     app.include_router(mcp_router)
+    app.include_router(oauth_router)
 
     # Uploads and downloads go straight to the API host (api/transfers.py): the app's origins may call
     # those paths from the browser. Never with cookies, which keep working only through the proxy.

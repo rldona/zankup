@@ -193,7 +193,7 @@ the API.
 | `RESEND_API_KEY`, `ALERT_EMAIL`, `ALERT_FROM` | E-mail: password recovery and sync/backup alerts. |
 | `BACKUP_S3_*`, `BACKUP_DIR`, `BACKUP_KEEP_DAYS`, `BACKUP_HOUR_UTC` | Daily backups. |
 | `PG_DUMP_COMMAND`, `PG_RESTORE_COMMAND` | Backup tools; the image has the right ones. |
-| `WEBAUTHN_RP_ID`, `WEBAUTHN_ORIGINS` | Your domain and origin, for passkeys, Google and e-mail links. |
+| `WEBAUTHN_RP_ID`, `WEBAUTHN_ORIGINS` | Your domain and origin, for passkeys, Google and e-mail links, and the page where AI assistants (Claude's custom connectors) are allowed to read your data. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in (and Google Health, with the same client). |
 | `GOOGLE_HEALTH_ENABLED` | `true` offers connecting Google Health in Settings → Health. |
 | `GOOGLE_HEALTH_WEBHOOK_SECRET` | Google Health's new-data notifications (optional; the hourly sync works without). |

@@ -833,6 +833,33 @@ class ApiToken(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class OAuthClient(Base):
+    """An AI assistant registered for the MCP server by OAuth (dynamic client registration): Claude adds
+    itself, then asks the person to authorise it. Public clients, with PKCE and no secret."""
+
+    __tablename__ = "oauth_clients"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, comment="The client_id")
+    name: Mapped[str] = mapped_column(String(120))
+    redirect_uris: Mapped[list[str]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class OAuthCode(Base):
+    """An authorisation code: one use, ten minutes, bound to its client, redirect and PKCE challenge.
+    Only its SHA-256 is stored."""
+
+    __tablename__ = "oauth_codes"
+
+    code_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    client_id: Mapped[str] = mapped_column(ForeignKey("oauth_clients.id", ondelete="CASCADE"))
+    user_id: Mapped[int] = _user_fk()
+    redirect_uri: Mapped[str] = mapped_column(String(2000))
+    code_challenge: Mapped[str] = mapped_column(String(128))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 INSTANCE_KEYS = ("garmin", "anthropic", "resend", "backup_s3")
 
 

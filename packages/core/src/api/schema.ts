@@ -2054,6 +2054,46 @@ export interface paths {
     patch: operations['updateInstance'];
     trace?: never;
   };
+  '/api/oauth/client': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Client Info
+     * @description The assistant asking, for the page: only when the address it sends the answer to is its own.
+     */
+    get: operations['getOAuthClient'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/oauth/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Approve
+     * @description The person allows the assistant: a code for it, for ten minutes and one use.
+     */
+    post: operations['approveOAuth'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/health': {
     parameters: {
       query?: never;
@@ -2549,6 +2589,22 @@ export interface components {
       /** Expires In */
       expires_in: number;
     };
+    /** Approval */
+    Approval: {
+      /** Client Id */
+      client_id: string;
+      /** Redirect Uri */
+      redirect_uri: string;
+      /** Code Challenge */
+      code_challenge: string;
+      /**
+       * Code Challenge Method
+       * @default S256
+       */
+      code_challenge_method: string;
+      /** State */
+      state?: string | null;
+    };
     /** BestEffortOut */
     BestEffortOut: {
       /**
@@ -2643,6 +2699,11 @@ export interface components {
       mfa_required: true;
       /** Challenge */
       challenge: string;
+    };
+    /** ClientOut */
+    ClientOut: {
+      /** Name */
+      name: string;
     };
     /** CoachMessage */
     CoachMessage: {
@@ -3883,6 +3944,14 @@ export interface components {
       progression: {
         [key: string]: components['schemas']['RecordOut'][];
       };
+    };
+    /** Redirect */
+    Redirect: {
+      /**
+       * Redirect
+       * @description Where to send the browser: the assistant, with the code
+       */
+      redirect: string;
     };
     /** RefreshRequest */
     RefreshRequest: {
@@ -8574,6 +8643,71 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['InstanceOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getOAuthClient: {
+    parameters: {
+      query: {
+        client_id: string;
+        redirect_uri: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClientOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  approveOAuth: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Approval'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Redirect'];
         };
       };
       /** @description Validation Error */

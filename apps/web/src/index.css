@@ -40,6 +40,20 @@ button {
   margin: 0 0 0.25em;
 }
 
+/* Connecting an AI assistant (OAuth): what it may do, then allow or cancel. */
+.authorize {
+  max-width: 420px;
+  margin-inline: auto;
+  gap: 12px;
+}
+
+.authorize ul {
+  text-align: start;
+  color: var(--muted);
+  padding-inline-start: 1.2em;
+  margin: 0 0 8px;
+}
+
 .placeholder p,
 .state {
   color: var(--muted);

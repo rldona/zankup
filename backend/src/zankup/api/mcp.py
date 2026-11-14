@@ -11,14 +11,15 @@ import logging
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from zankup import __version__
 from zankup.ai.tools import TOOLS, ToolError, run_tool
-from zankup.auth.deps import DbSession, unauthorised
+from zankup.api.oauth import www_authenticate
+from zankup.auth.deps import AppSettings, DbSession
 from zankup.auth.security import token_hash
 from zankup.db.models import ApiToken, User
 
@@ -34,17 +35,26 @@ INSTRUCTIONS = (
 )
 
 
-def mcp_user(request: Request, db: DbSession) -> User:
-    """The token's owner. Bearer `zk_…` tokens from Settings; a revoked token is a 401."""
+def mcp_user(request: Request, db: DbSession, settings: AppSettings) -> User:
+    """The token's owner. Bearer `zk_…` tokens, from Settings or OAuth; a revoked token is a 401 that
+    says where to authorise (api/oauth.py), so an assistant can connect itself."""
+
+    def refused() -> HTTPException:
+        return HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "Not signed in",
+            headers={"WWW-Authenticate": www_authenticate(settings)},
+        )
+
     authorization = request.headers.get("Authorization", "")
     if not authorization.lower().startswith("bearer "):
-        raise unauthorised()
+        raise refused()
     row = db.scalar(select(ApiToken).where(ApiToken.token_hash == token_hash(authorization[7:].strip())))
     if row is None or row.revoked_at is not None:
-        raise unauthorised()
+        raise refused()
     user = db.get(User, row.user_id)
     if user is None:
-        raise unauthorised()
+        raise refused()
     row.last_used_at = datetime.now(UTC)
     db.commit()
     return user

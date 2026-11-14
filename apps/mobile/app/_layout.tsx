@@ -138,6 +138,13 @@ export default function Root() {
                   <Stack.Screen name="settings/[section]" options={{ title: '' }} />
                   <Stack.Screen name="stats" options={{ title: t('nav.stats') }} />
                   <Stack.Screen name="estimates" options={{ title: t('stats.estimates') }} />
+                  <Stack.Screen name="fitness" options={{ title: t('progress.training') }} />
+                  <Stack.Screen name="training-log" options={{ title: t('progress.log') }} />
+                  <Stack.Screen name="progress-detail" options={{ title: t('nav.progress') }} />
+                  <Stack.Screen name="effort" options={{ title: t('progress.effort') }} />
+                  <Stack.Screen name="predictions" options={{ title: t('progress.predictions') }} />
+                  <Stack.Screen name="objectives" options={{ title: t('progress.goals') }} />
+                  <Stack.Screen name="objective-new" options={{ title: t('progress.newGoal') }} />
                   <Stack.Screen name="sync" options={{ title: t('sync.title') }} />
                   <Stack.Screen name="notifications" options={{ title: t('notifications.title') }} />
                   <Stack.Screen name="coach" options={{ title: t('coach.title') }} />

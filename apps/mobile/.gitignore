@@ -4,3 +4,6 @@
 google-services.json
 *.keystore
 play-service-account.json
+
+# Gradle output of the local native modules
+modules/*/android/build/

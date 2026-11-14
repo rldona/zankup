@@ -15,6 +15,7 @@ from fastapi import Query
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, select
 
+from zankup.api.profile import streak
 from zankup.api.routing import protected_router
 from zankup.auth.deps import CurrentUser, DbSession
 from zankup.db.models import Activity, ActivityMetrics, BestEffort, DailyLoad, EstimateRow
@@ -393,6 +394,8 @@ class CalendarActivity(BaseModel):
     load: float | None
     distance_m: float | None
     moving_s: float
+    ascent_m: float | None = None
+    start: datetime = Field(description="Start time (UTC)")
 
 
 class CalendarDay(BaseModel):
@@ -429,9 +432,46 @@ def calendar(db: DbSession, user: CurrentUser, start: From = None, end: To = Non
                     load=mt.trimp if mt else None,
                     distance_m=a.distance_m,
                     moving_s=a.moving_s or a.duration_s,
+                    ascent_m=a.ascent_m,
+                    start=a.start_utc,
                 )
             )
     return list(days.values())
+
+
+class Streak(BaseModel):
+    weeks: int = Field(description="Weeks in a row with an activity, up to this week or the last")
+    activities: int = Field(description="Activities in those weeks")
+    since: date | None = Field(description="Monday of the streak's first week")
+    first_activity: date | None = Field(description="Day of the first activity ever")
+
+
+def _monday(day: date) -> date:
+    return day - timedelta(days=day.weekday())
+
+
+@router.get("/streak", operation_id="getStreak")
+def streak_summary(db: DbSession, user: CurrentUser) -> Streak:
+    """The weekly streak (Progress → Series): how many weeks in a row, with how many activities."""
+    today = datetime.now(UTC).date()
+    starts = [
+        local_day(s, tz)
+        for s, tz in db.execute(
+            select(Activity.start_utc, Activity.timezone).where(Activity.user_id == user.id)
+        )
+    ]
+    weeks = {_monday(d) for d in starts}
+    count = streak(weeks, today)
+    if not count:
+        return Streak(weeks=0, activities=0, since=None, first_activity=min(starts, default=None))
+    last = _monday(today) if _monday(today) in weeks else _monday(today) - timedelta(weeks=1)
+    since = last - timedelta(weeks=count - 1)
+    return Streak(
+        weeks=count,
+        activities=sum(1 for d in starts if d >= since),
+        since=since,
+        first_activity=min(starts),
+    )
 
 
 class Heatmap(BaseModel):

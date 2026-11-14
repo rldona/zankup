@@ -15,6 +15,7 @@ const day = (d: string, km: number[], sport = 'run', more: { sport: string; km: 
     load: null,
     distance_m: a.km * 1000,
     moving_s: 600,
+    start: `${d}T08:00:00Z`,
   })),
 });
 

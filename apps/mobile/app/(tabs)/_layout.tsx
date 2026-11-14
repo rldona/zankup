@@ -12,7 +12,7 @@ const TABS: { name: string; icon: IconName; label: Parameters<typeof t>[0] }[] =
   { name: 'index', icon: 'home', label: 'nav.home' },
   { name: 'activities', icon: 'cards_stack', label: 'nav.feed' },
   { name: 'health', icon: 'favorite', label: 'nav.health' },
-  { name: 'goals', icon: 'flag', label: 'nav.goals' },
+  { name: 'progress', icon: 'assignment', label: 'nav.progress' },
   { name: 'profile', icon: 'person', label: 'nav.you' },
 ];
 
@@ -54,6 +54,8 @@ export default function TabsLayout() {
             }}
           />
         ))}
+        {/* Goals is no longer a tab (Progress took its place); the screen stays, unlinked for now. */}
+        <Tabs.Screen name="goals" options={{ href: null }} />
       </Tabs>
       {/* A new activity, from below, once (as Strava): name it, add photos, choose its gear. */}
       <LatestActivity />

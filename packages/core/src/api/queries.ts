@@ -286,6 +286,7 @@ export type Records = Json<'/api/stats/records', 'get'>;
 export type EstimateOut = Json<'/api/stats/estimates', 'get'>[number];
 export type YearLine = Json<'/api/stats/progress', 'get'>[number];
 export type CalendarDay = Json<'/api/stats/calendar', 'get'>[number];
+export type StreakOut = Json<'/api/stats/streak', 'get'>;
 export type RouteGroup = Json<'/api/routes', 'get'>[number];
 export type RouteDetail = Json<'/api/routes/{group_id}', 'get'>;
 export type SegmentOut = Json<'/api/segments', 'get'>[number];
@@ -368,6 +369,15 @@ export function efficiencyQuery(api: ApiClient, period: Period, sport = 'run') {
     queryKey: stats('efficiency', { ...period, sport }),
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       unwrap(await api.GET('/api/stats/efficiency', { params: { query: { ...period, sport } }, signal })),
+  };
+}
+
+/** The weekly streak (Progress → Series). */
+export function streakQuery(api: ApiClient) {
+  return {
+    queryKey: stats('streak'),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      unwrap(await api.GET('/api/stats/streak', { signal })),
   };
 }
 

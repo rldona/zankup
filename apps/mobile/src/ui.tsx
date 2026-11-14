@@ -16,6 +16,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
+import type { ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from './Icon';
@@ -217,7 +218,16 @@ export function CardTitle({
  * An (i) that opens `text` as a tooltip under it (a card's title, the Coach's header). The tooltip sits
  * on a transparent layer over the whole screen, so a tap anywhere, on it or outside it, closes it.
  */
-export function InfoButton({ text, label = t('common.moreInfo') }: { text: string; label?: string }) {
+export function InfoButton({
+  text,
+  label = t('common.moreInfo'),
+  color,
+}: {
+  text: string;
+  label?: string;
+  /** The icon's colour when it sits on a colour of its own (the text's there); the theme's otherwise. */
+  color?: ColorValue;
+}) {
   const c = useTheme();
   const anchor = useRef<ComponentRef<typeof View>>(null);
   const [below, setBelow] = useState<number | null>(null);
@@ -233,7 +243,7 @@ export function InfoButton({ text, label = t('common.moreInfo') }: { text: strin
         hitSlop={10}
         onPress={below === null ? open : close}
       >
-        <Icon name="info" color={c.fg} size={22} />
+        <Icon name="info" color={color ?? c.fg} size={22} />
       </Pressable>
       <Modal
         transparent

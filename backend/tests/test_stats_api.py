@@ -54,6 +54,10 @@ def test_progress_calendar_heatmap_and_efficiency(ctx: Ctx) -> None:  # noqa: F8
         },
     ).json()
     assert len(days) == 8 and sum(len(d["activities"]) for d in days) == 3
+    assert all("ascent_m" in a and a["start"] for d in days for a in d["activities"])
+    streak = ctx.http.get("/api/stats/streak").json()
+    assert streak["weeks"] >= 1 and streak["activities"] == 3  # recent() put them in the last three days
+    assert streak["since"] and streak["first_activity"]
     assert ctx.http.get("/api/stats/heatmap").json()["routes"]
     assert ctx.http.get("/api/stats/years").json()[0] == today.year
     assert isinstance(ctx.http.get("/api/stats/efficiency").json(), list)
@@ -98,6 +102,9 @@ def test_segments_routes_goals_events_and_engine(ctx: Ctx) -> None:  # noqa: F81
     ).json()
     assert goal["current"] > 0 and goal["projection"] >= goal["current"]
     assert [g["id"] for g in ctx.http.get("/api/goals").json()] == [goal["id"]]
+    climb = ctx.http.post("/api/goals", json={"period": "month", "metric": "ascent", "target": 2000})
+    assert climb.status_code == 201 and climb.json()["current"] >= 0
+    assert ctx.http.delete(f"/api/goals/{climb.json()['id']}").status_code == 204
     changed = ctx.http.patch(
         f"/api/goals/{goal['id']}",
         json={"period": "week", "metric": "time", "sport": "strength", "target": 7200},

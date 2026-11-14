@@ -468,12 +468,12 @@ class Event(Base):
 
 
 class Goal(Base):
-    """A volume goal (OS-318): so much distance, time or activities per week, month or year."""
+    """A volume goal (OS-318): so much distance, time, elevation or activities per week, month or year."""
 
     __tablename__ = "goals"
     __table_args__ = (
         CheckConstraint("period IN ('week', 'month', 'year')", name="period"),
-        CheckConstraint("metric IN ('distance', 'time', 'count')", name="metric"),
+        CheckConstraint("metric IN ('distance', 'time', 'ascent', 'count')", name="metric"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -481,7 +481,7 @@ class Goal(Base):
     period: Mapped[str] = mapped_column(String(10))
     metric: Mapped[str] = mapped_column(String(10))
     sport: Mapped[str | None] = mapped_column(String(20))
-    target: Mapped[float] = mapped_column(Float, comment="Metres, seconds or a count")
+    target: Mapped[float] = mapped_column(Float, comment="Metres, seconds, metres climbed or a count")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

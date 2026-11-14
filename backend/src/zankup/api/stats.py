@@ -573,23 +573,24 @@ class BestOut(BaseModel):
 
 
 def _bests(db: DbSession, user_id: int, key: str) -> list[BestOut]:
+    found: list[tuple[Activity, float]] = []
     if key in m.RUN_DISTANCES:
-        rows = db.execute(
+        for time_s, a in db.execute(
             select(BestEffort.time_s, Activity)
             .join(Activity, Activity.id == BestEffort.activity_id)
             .where(BestEffort.user_id == user_id, BestEffort.distance_key == key, Activity.sport == "run")
-        ).all()
-        found = [(a, time_s) for time_s, a in rows]
+        ).all():
+            found.append((a, time_s))
     elif key == "longest":
-        rides = db.scalars(
+        for a in db.scalars(
             select(Activity).where(
                 Activity.user_id == user_id, Activity.sport == "ride", Activity.distance_m > 0
             )
-        )
-        found = [(a, a.distance_m) for a in rides]
+        ):
+            found.append((a, a.distance_m or 0.0))
     else:
         duration = key.removeprefix("power_")
-        rows = db.execute(
+        for a, curve in db.execute(
             select(Activity, ActivityMetrics.power_curve)
             .join(ActivityMetrics, ActivityMetrics.activity_id == Activity.id)
             .where(
@@ -597,8 +598,9 @@ def _bests(db: DbSession, user_id: int, key: str) -> list[BestOut]:
                 Activity.sport == "ride",
                 ActivityMetrics.power_curve.is_not(None),
             )
-        ).all()
-        found = [(a, curve[duration]) for a, curve in rows if curve and duration in curve]
+        ).all():
+            if curve and duration in curve:
+                found.append((a, curve[duration]))
     out = [
         BestOut(activity_id=a.id, name=a.name, day=local_day(a.start_utc, a.timezone), value=round(v, 2))
         for a, v in found
@@ -632,12 +634,13 @@ class Medal(BaseModel):
     scope: Literal["all", "year"] = Field(description="Of all time, or of its year")
 
 
-def medal_of(entries: list[BestOut], entry: BestOut, lower: bool) -> tuple[int, str] | None:
+def medal_of(
+    entries: list[BestOut], entry: BestOut, lower: bool
+) -> tuple[int, Literal["all", "year"]] | None:
     """An entry's place: in the top three of all time, or else of its year; None when neither."""
 
     def rank(pool: list[BestOut]) -> int:
-        better = (lambda b: b.value < entry.value) if lower else (lambda b: b.value > entry.value)
-        return 1 + sum(1 for b in pool if better(b))
+        return 1 + sum(1 for b in pool if (b.value < entry.value if lower else b.value > entry.value))
 
     overall = rank(entries)
     if overall <= 3:
@@ -668,7 +671,7 @@ def recent_bests(
                         day=entry.day,
                         value=entry.value,
                         rank=place[0],
-                        scope=place[1],  # type: ignore[arg-type]
+                        scope=place[1],
                     )
                 )
     medals.sort(key=lambda x: (x.scope != "all", x.rank, -x.day.toordinal()))

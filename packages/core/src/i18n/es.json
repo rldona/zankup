@@ -1290,5 +1290,10 @@
   "oauth.revoke": "Puedes quitarle el acceso cuando quieras en Ajustes → Zankup Coach y MCP.",
   "oauth.allow": "Permitir",
   "oauth.cancel": "Cancelar",
-  "oauth.invalid": "Este enlace para conectar un asistente no es válido o ha caducado. Vuelve a intentarlo desde el asistente."
+  "oauth.invalid": "Este enlace para conectar un asistente no es válido o ha caducado. Vuelve a intentarlo desde el asistente.",
+  "report.more": "Cuéntame más",
+  "report.writing": "Escribiendo tu informe…",
+  "report.failed": "No se ha podido escribir el informe.",
+  "report.next": "Para tu próximo entreno",
+  "report.done": "OK"
 }

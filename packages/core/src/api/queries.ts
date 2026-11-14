@@ -626,6 +626,7 @@ export function healthSettingsQuery(api: ApiClient) {
 export type AiStatus = Json<'/api/ai/status', 'get'>;
 export type AiPrefs = Preferences['ai'];
 export type ActivityAiSummary = Json<'/api/activities/{activity_id}/summary', 'get'>;
+export type ActivityReport = Json<'/api/activities/{activity_id}/report', 'get'>;
 export type WeeklyReport = Json<'/api/ai/weekly', 'get'>[number];
 export type ApiToken = Json<'/api/ai/tokens', 'get'>[number];
 export type ApiTokenCreated = Created<'/api/ai/tokens'>;
@@ -646,6 +647,22 @@ export function activitySummaryQuery(api: ApiClient, activityId: number) {
     queryKey: ['activity', activityId, 'summary'] as const,
     queryFn: async ({ signal }: { signal?: AbortSignal }): Promise<ActivityAiSummary | null> => {
       const result = await api.GET('/api/activities/{activity_id}/summary', {
+        params: { path: { activity_id: activityId } },
+        signal,
+      });
+      if (result.response.status === 404) return null;
+      return unwrap(result);
+    },
+    retry: false,
+  };
+}
+
+/** The longer report on an activity ("Tell me more"), or null while there is none. */
+export function activityReportQuery(api: ApiClient, activityId: number) {
+  return {
+    queryKey: ['activity', activityId, 'report'] as const,
+    queryFn: async ({ signal }: { signal?: AbortSignal }): Promise<ActivityReport | null> => {
+      const result = await api.GET('/api/activities/{activity_id}/report', {
         params: { path: { activity_id: activityId } },
         signal,
       });

@@ -3,14 +3,21 @@
  * Settings (OS-708). The Coach itself lives in the PWA; the phone opens it from the weekly report's
  * notification.
  */
-import { activitySummaryQuery, aiStatusQuery, settingsQuery, type AiPrefs } from '@zankup/core';
+import {
+  activityReportQuery,
+  activitySummaryQuery,
+  aiStatusQuery,
+  settingsQuery,
+  type AiPrefs,
+} from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useAuth } from './auth';
 import { Icon } from './Icon';
 import { t } from './i18n';
+import { Panel } from './progress/Panel';
 import { keys, readSync, storage } from './storage';
 import { useTheme } from './theme';
 import { Body, Button, Card, Heading, Muted, SwitchRow } from './ui';
@@ -33,6 +40,7 @@ export function SummaryCard({ activityId }: { activityId: number }) {
   });
   // Folded or open, remembered on this phone for every activity.
   const [folded, setFolded] = useState(() => readSync(keys.coachFolded) === '1');
+  const [more, setMore] = useState(false);
   const fold = () => {
     const next = !folded;
     setFolded(next);
@@ -93,6 +101,11 @@ export function SummaryCard({ activityId }: { activityId: number }) {
               ))}
             </View>
           )}
+          {can && (
+            <Button primary onPress={() => setMore(true)}>
+              {t('report.more')}
+            </Button>
+          )}
         </>
       ) : (
         <>
@@ -108,7 +121,83 @@ export function SummaryCard({ activityId }: { activityId: number }) {
         </>
       )}
       {write.isError && <Muted accessibilityRole="alert">{t('summary.failed')}</Muted>}
+      <Panel open={more} onClose={() => setMore(false)}>
+        {more && <ReportSheet activityId={activityId} onClose={() => setMore(false)} />}
+      </Panel>
     </Card>
+  );
+}
+
+/**
+ * "Tell me more": the longer report on an activity, as Strava's. Written the first time it is opened
+ * (a few seconds), then kept. Its sections in order, and the recommendation for the next session apart.
+ */
+function ReportSheet({ activityId, onClose }: { activityId: number; onClose: () => void }) {
+  const { api } = useAuth();
+  const c = useTheme();
+  const queryClient = useQueryClient();
+  const report = useQuery({
+    ...activityReportQuery(api, activityId),
+    queryFn: async () => {
+      // The one kept, or a new one: the server decides (POST answers with the kept one when it can).
+      const { data, error } = await api.POST('/api/activities/{activity_id}/report', {
+        params: { path: { activity_id: activityId } },
+      });
+      if (!data) throw new Error(String((error as { detail?: unknown } | undefined)?.detail ?? 'report'));
+      return data;
+    },
+    staleTime: Infinity,
+  });
+  const row = report.data;
+  if (!row)
+    return (
+      <View style={{ padding: 24, alignItems: 'center', gap: 14 }}>
+        {report.isError ? (
+          <>
+            <Muted accessibilityRole="alert">{t('report.failed')}</Muted>
+            <Button
+              onPress={() =>
+                void queryClient.invalidateQueries({ queryKey: ['activity', activityId, 'report'] })
+              }
+            >
+              {t('common.retry')}
+            </Button>
+          </>
+        ) : (
+          <>
+            <ActivityIndicator color={String(c.accent)} />
+            <Muted>{t('report.writing')}</Muted>
+          </>
+        )}
+      </View>
+    );
+  return (
+    <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8, gap: 14 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Icon name="wand_stars" color={String(c.accent)} size={22} />
+        <Text style={{ color: c.fg, fontSize: 15, fontWeight: '700' }}>{t('summary.aiTitle')}</Text>
+      </View>
+      <Text style={{ color: c.fg, fontSize: 22, fontWeight: '800', lineHeight: 28 }}>{row.headline}</Text>
+      {[row.effort, row.story, row.month, row.verdict]
+        .filter((p) => p.trim())
+        .map((p, i) => (
+          <Text key={i} style={{ color: c.fg, fontSize: 15, lineHeight: 23 }}>
+            {p}
+          </Text>
+        ))}
+      {row.next.trim() ? (
+        <View style={{ gap: 6, padding: 14, borderRadius: 12, backgroundColor: c.surface2 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="flag" color={String(c.accent)} size={20} />
+            <Text style={{ color: c.fg, fontSize: 14, fontWeight: '700' }}>{t('report.next')}</Text>
+          </View>
+          <Text style={{ color: c.fg, fontSize: 15, lineHeight: 22 }}>{row.next}</Text>
+        </View>
+      ) : null}
+      <Button primary onPress={onClose}>
+        {t('report.done')}
+      </Button>
+    </ScrollView>
   );
 }
 

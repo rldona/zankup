@@ -20,6 +20,8 @@ export const keys = {
   physicalHidden: 'zankup.physicalHidden',
   /** The goals whose chart is open, as a JSON list of ids. */
   goalsOpen: 'zankup.goalsOpen',
+  /** The range last chosen on Progress → Fitness (1m, 3m, 6m, 1y or 2y). */
+  fitnessRange: 'zankup.fitnessRange',
 } as const;
 
 export const storage = Storage;

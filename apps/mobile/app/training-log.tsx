@@ -64,7 +64,7 @@ export default function TrainingLogScreen() {
       />
       <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10 }}>
         {letters.map((l, i) => (
-          <Text key={i} style={{ flex: 1, textAlign: 'center', color: c.fg, fontSize: 14 }}>
+          <Text key={i} style={{ flex: 1, textAlign: 'center', color: c.fg, fontSize: 13 }}>
             {l}
           </Text>
         ))}
@@ -81,10 +81,10 @@ export default function TrainingLogScreen() {
 
       <Panel open={panel === 'filters'} onClose={() => setPanel(null)}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, gap: 14, paddingBottom: 8 }}>
-          <Text style={{ color: c.fg, fontSize: 20, fontWeight: '800', textAlign: 'center' }}>
+          <Text style={{ color: c.fg, fontSize: 17, fontWeight: '800', textAlign: 'center' }}>
             {t('progress.filters')}
           </Text>
-          <Text style={{ color: c.fg, fontSize: 16, fontWeight: '600' }}>{t('progress.activityType')}</Text>
+          <Text style={{ color: c.fg, fontSize: 14, fontWeight: '600' }}>{t('progress.activityType')}</Text>
           <Choice
             label={t('progress.activityType')}
             value={sport ?? 'all'}
@@ -94,7 +94,7 @@ export default function TrainingLogScreen() {
               ...SPORTS.map((s) => ({ value: s, label: t(`sport.${s}`) })),
             ]}
           />
-          <Text style={{ color: c.fg, fontSize: 16, fontWeight: '600' }}>{t('progress.data')}</Text>
+          <Text style={{ color: c.fg, fontSize: 14, fontWeight: '600' }}>{t('progress.data')}</Text>
           <Choice
             label={t('progress.data')}
             value={metric}
@@ -187,7 +187,7 @@ function Months({ first, today, onPick }: { first: string; today: string; onPick
         return (
           <View key={iso}>
             {newYear && (
-              <Text style={{ color: c.fg, fontSize: 22, fontWeight: '800', padding: 16, paddingBottom: 12 }}>
+              <Text style={{ color: c.fg, fontSize: 18, fontWeight: '800', padding: 16, paddingBottom: 12 }}>
                 {year}
               </Text>
             )}
@@ -196,7 +196,7 @@ function Months({ first, today, onPick }: { first: string; today: string; onPick
               onPress={() => onPick(iso < first ? first : iso)}
               style={{ paddingHorizontal: 16, paddingVertical: 14, borderTopWidth: 1, borderColor: c.line }}
             >
-              <Text style={{ color: c.fg, fontSize: 17 }}>
+              <Text style={{ color: c.fg, fontSize: 15 }}>
                 {new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { month: 'long' })}
               </Text>
             </Pressable>

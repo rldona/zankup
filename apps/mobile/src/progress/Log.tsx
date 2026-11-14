@@ -15,7 +15,7 @@ import { asSport, useFormat, useUnits } from '../prefs';
 import { CardSkeleton } from '../Skeleton';
 import { sportColour } from '../stats/Sections';
 import { useTheme } from '../theme';
-import { Card, Muted } from '../ui';
+import { accent, Card, Muted } from '../ui';
 import { isoDay } from './fitness';
 import {
   addDays,
@@ -32,7 +32,7 @@ export type Activities = CalendarDay['activities'];
 
 /** A day's colour: its sport's, or a neutral grey when it has more than one activity. */
 export function dayColour(c: ReturnType<typeof useTheme>, activities: Activities) {
-  if (activities.length > 1) return '#c4c4be';
+  if (activities.length > 1) return c.muted;
   return activities[0] ? sportColour(c, activities[0].sport) : c.muted;
 }
 
@@ -54,8 +54,8 @@ export function LogCard() {
     formatHoursMinutes(w.reduce((s, d) => s + total(d.activities, 'time'), 0));
   const line = (label: string, value: string) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-      <Text style={{ color: c.fg, fontSize: 15 }}>{label}</Text>
-      <Text style={{ color: c.fg, fontSize: 15, fontVariant: ['tabular-nums'] }}>{value}</Text>
+      <Text style={{ color: c.fg, fontSize: 14 }}>{label}</Text>
+      <Text style={{ color: c.fg, fontSize: 14, fontVariant: ['tabular-nums'] }}>{value}</Text>
     </View>
   );
   return (
@@ -67,8 +67,8 @@ export function LogCard() {
     >
       <Card style={{ flex: 1, marginBottom: 0, gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Icon name="calendar_month" color={c.run} size={22} />
-          <Text numberOfLines={1} style={{ flex: 1, color: c.fg, fontSize: 18, fontWeight: '700' }}>
+          <Icon name="calendar_month" color={accent(c)} size={22} />
+          <Text numberOfLines={1} style={{ flex: 1, color: c.fg, fontSize: 16, fontWeight: '700' }}>
             {t('progress.log')}
           </Text>
           <Icon name="chevron_right" color={c.muted} size={22} />
@@ -142,8 +142,8 @@ export function WeekRow({
   return (
     <View style={{ height: ROW_HEIGHT, borderBottomWidth: 1, borderColor: c.line, paddingTop: 14 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ color: c.fg, fontSize: 15 }}>{weekRange(monday, locale)}</Text>
-        <Text style={{ color: c.fg, fontSize: 15, fontVariant: ['tabular-nums'] }}>{days ? label : ''}</Text>
+        <Text style={{ color: c.fg, fontSize: 14 }}>{weekRange(monday, locale)}</Text>
+        <Text style={{ color: c.fg, fontSize: 14, fontVariant: ['tabular-nums'] }}>{days ? label : ''}</Text>
       </View>
       <View style={{ flexDirection: 'row', flex: 1 }}>
         {week.map(({ day, activities }) => {
@@ -169,8 +169,8 @@ export function WeekRow({
                   <Text
                     numberOfLines={1}
                     style={{
-                      color: several ? '#1d1d1b' : '#fff',
-                      fontSize: 12,
+                      color: several ? c.bg : '#fff',
+                      fontSize: 11,
                       fontVariant: ['tabular-nums'],
                     }}
                   >
@@ -200,7 +200,7 @@ export function WeekRow({
                 <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: c.muted }} />
               )}
               {day === today && (
-                <Text style={{ position: 'absolute', bottom: 6, color: c.fg, fontSize: 12 }}>▲</Text>
+                <Text style={{ position: 'absolute', bottom: 6, color: c.fg, fontSize: 11 }}>▲</Text>
               )}
             </View>
           );
@@ -218,7 +218,7 @@ export function DayList({ activities, onOpen }: { activities: Activities; onOpen
   const format = useFormat();
   return (
     <View style={{ paddingHorizontal: 16, gap: 4 }}>
-      <Muted style={{ fontSize: 15, marginBottom: 4 }}>
+      <Muted style={{ fontSize: 14, marginBottom: 4 }}>
         {t('progress.dayActivities', { count: activities.length })}
       </Muted>
       {activities.map((a) => (
@@ -231,10 +231,10 @@ export function DayList({ activities, onOpen }: { activities: Activities; onOpen
           <View
             style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: sportColour(c, a.sport) }}
           />
-          <Text numberOfLines={1} style={{ flex: 1, color: c.fg, fontSize: 16 }}>
+          <Text numberOfLines={1} style={{ flex: 1, color: c.fg, fontSize: 14 }}>
             {a.name ?? t(`sport.${asSport(a.sport)}`)}
           </Text>
-          <Muted style={{ fontSize: 14 }}>
+          <Muted style={{ fontSize: 13 }}>
             {[a.distance_m ? format.distance(a.distance_m) : null, formatHoursMinutes(a.moving_s)]
               .filter(Boolean)
               .join(' · ')}

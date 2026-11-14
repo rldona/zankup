@@ -2969,12 +2969,12 @@ export interface components {
        * Metric
        * @enum {string}
        */
-      metric: 'distance' | 'time' | 'count';
+      metric: 'distance' | 'time' | 'ascent' | 'count';
       /** Sport */
       sport?: string | null;
       /**
        * Target
-       * @description Metres, seconds or a number of activities
+       * @description Metres, seconds, metres climbed or a number of activities
        */
       target: number;
     };

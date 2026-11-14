@@ -9,7 +9,7 @@ import { Icon } from '../Icon';
 import { t } from '../i18n';
 import { CardSkeleton } from '../Skeleton';
 import { useTheme } from '../theme';
-import { Card, Muted } from '../ui';
+import { accent, Card, Muted } from '../ui';
 import { fitnessChange, rangePeriod, untilToday } from './fitness';
 import { FitnessSparkline } from './FitnessChart';
 
@@ -29,11 +29,11 @@ export function FitnessCard() {
     >
       <Card>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Icon name="monitoring" color={String(c.fitness)} size={26} />
-          <Text style={{ flex: 1, color: c.fg, fontSize: 18, fontWeight: '700' }}>
+          <Icon name="monitoring" color={accent(c)} size={26} />
+          <Text style={{ flex: 1, color: c.fg, fontSize: 16, fontWeight: '700' }}>
             {t('progress.fitness')}
           </Text>
-          <Muted style={{ fontSize: 15 }}>{t('progress.lastMonth')}</Muted>
+          <Muted style={{ fontSize: 14 }}>{t('progress.lastMonth')}</Muted>
           <Icon name="chevron_right" color={c.muted} size={22} />
         </View>
         {now == null || !change ? (
@@ -41,9 +41,9 @@ export function FitnessCard() {
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 8 }}>
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={{ color: c.fg, fontSize: 15 }}>{t('progress.score')}</Text>
+              <Text style={{ color: c.fg, fontSize: 14 }}>{t('progress.score')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Text style={{ color: c.fg, fontSize: 44, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                <Text style={{ color: c.fg, fontSize: 30, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
                   {Math.round(now)}
                 </Text>
                 {change.direction !== 'none' && (
@@ -59,11 +59,11 @@ export function FitnessCard() {
                     }}
                   >
                     <Text
-                      style={{ color: change.direction === 'up' ? c.formPositive : c.muted, fontSize: 12 }}
+                      style={{ color: change.direction === 'up' ? c.formPositive : c.muted, fontSize: 11 }}
                     >
                       {change.direction === 'up' ? '▲' : '▼'}
                     </Text>
-                    <Text style={{ color: c.fg, fontSize: 15, fontVariant: ['tabular-nums'] }}>
+                    <Text style={{ color: c.fg, fontSize: 14, fontVariant: ['tabular-nums'] }}>
                       {Math.abs(change.points)}
                     </Text>
                   </View>

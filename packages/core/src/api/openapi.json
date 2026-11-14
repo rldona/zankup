@@ -8089,6 +8089,7 @@
             "enum": [
               "distance",
               "time",
+              "ascent",
               "count"
             ],
             "title": "Metric"
@@ -8108,7 +8109,7 @@
             "type": "number",
             "exclusiveMinimum": 0.0,
             "title": "Target",
-            "description": "Metres, seconds or a number of activities"
+            "description": "Metres, seconds, metres climbed or a number of activities"
           }
         },
         "type": "object",

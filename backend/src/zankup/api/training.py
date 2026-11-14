@@ -237,9 +237,9 @@ def delete_segment(segment_id: int, db: DbSession, user: CurrentUser) -> None:
 
 class GoalCreate(BaseModel):
     period: Literal["week", "month", "year"]
-    metric: Literal["distance", "time", "count"]
+    metric: Literal["distance", "time", "ascent", "count"]
     sport: str | None = None
-    target: float = Field(gt=0, description="Metres, seconds or a number of activities")
+    target: float = Field(gt=0, description="Metres, seconds, metres climbed or a number of activities")
 
 
 class GoalOut(BaseModel):
@@ -268,9 +268,12 @@ def _goal_out(db: DbSession, goal: Goal, today: date) -> GoalOut:
     for a in db.scalars(query):
         if not start <= local_day(a.start_utc, a.timezone) < end:
             continue
-        current += {"distance": a.distance_m or 0, "time": a.moving_s or a.duration_s, "count": 1}[
-            goal.metric
-        ]
+        current += {
+            "distance": a.distance_m or 0,
+            "time": a.moving_s or a.duration_s,
+            "ascent": a.ascent_m or 0,
+            "count": 1,
+        }[goal.metric]
     elapsed = (today - start).days + 1
     length = (end - start).days
     return GoalOut(

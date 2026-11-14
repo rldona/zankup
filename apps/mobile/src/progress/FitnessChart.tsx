@@ -18,7 +18,7 @@ const AXIS = 34;
 const TOP = 40; // room for the picked day's badge
 const BOTTOM = 22; // the days under the chart
 /** How hard the click on a day with training is (0 to 1): the system's slider tick, firmer. */
-const CLICK_STRENGTH = 1;
+export const CLICK_STRENGTH = 1;
 
 function points(values: number[], left: number, plot: number, y: (v: number) => number) {
   const step = values.length > 1 ? plot / (values.length - 1) : 0;
@@ -68,7 +68,7 @@ export function FitnessChart({
   const pts = width ? points(values, AXIS, plot, y) : [];
   const step = count > 1 ? plot / (count - 1) : 0;
   const maxLoad = Math.max(0, ...loads);
-  const colour = String(c.fitness);
+  const colour = String(c.accent);
 
   const pick = (x: number) => {
     if (!count) return;
@@ -200,7 +200,12 @@ export function FitnessChart({
                 }}
               >
                 <Text
-                  style={{ color: '#fff', fontWeight: '700', fontSize: 15, fontVariant: ['tabular-nums'] }}
+                  style={{
+                    color: c.accentFg,
+                    fontWeight: '700',
+                    fontSize: 14,
+                    fontVariant: ['tabular-nums'],
+                  }}
                 >
                   {Math.round(values[picked])}
                 </Text>
@@ -225,7 +230,7 @@ export function FitnessSparkline({
 }) {
   const c = useTheme();
   const ready = useCanvasReady(width);
-  const colour = String(c.fitness);
+  const colour = String(c.accent);
   const left = 30; // the first score, written before the line
   const pad = 14;
   const lo = Math.min(...values);
@@ -264,7 +269,7 @@ export function FitnessSparkline({
           textAlign: 'right',
           top: first[1] - 9,
           color: c.muted,
-          fontSize: 13,
+          fontSize: 12,
           fontVariant: ['tabular-nums'],
         }}
       >

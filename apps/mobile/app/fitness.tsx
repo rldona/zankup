@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { useApi } from '../src/auth';
+import { keys, readSync, storage } from '../src/storage';
 import { Icon, SportIcon } from '../src/Icon';
 import { locale, t } from '../src/i18n';
 import { asSport } from '../src/prefs';
@@ -24,7 +25,7 @@ import {
 import { FitnessChart } from '../src/progress/FitnessChart';
 import { ChartSkeleton } from '../src/Skeleton';
 import { useTheme } from '../src/theme';
-import { InfoButton, Muted, Screen } from '../src/ui';
+import { accent, InfoButton, Muted, Screen } from '../src/ui';
 
 const date = (iso: string, withYear = false) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(locale, {
@@ -38,7 +39,11 @@ const month = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(lo
 export default function FitnessScreen() {
   const api = useApi();
   const c = useTheme();
-  const [range, setRange] = useState<FitnessRange>('1m');
+  // The range chosen last time, kept on the phone.
+  const [range, setRange] = useState<FitnessRange>(() => {
+    const saved = readSync(keys.fitnessRange);
+    return FITNESS_RANGES.includes(saved as FitnessRange) ? (saved as FitnessRange) : '1m';
+  });
   const fitness = useQuery(fitnessQuery(api, rangePeriod(range, new Date())));
   const days = untilToday(fitness.data ?? [], new Date());
   const last = days.length - 1;
@@ -54,10 +59,10 @@ export default function FitnessScreen() {
   return (
     <Screen header>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Text style={{ color: c.fg, fontSize: 24, fontWeight: '800' }}>{t('progress.fitness')}</Text>
+        <Text style={{ color: c.fg, fontSize: 20, fontWeight: '800' }}>{t('progress.fitness')}</Text>
         <InfoButton text={t('progress.fitnessInfo')} />
       </View>
-      <Text style={{ color: c.fg, fontSize: 15, lineHeight: 21 }}>{t('progress.fitnessIntro')}</Text>
+      <Text style={{ color: c.fg, fontSize: 14, lineHeight: 21 }}>{t('progress.fitnessIntro')}</Text>
 
       <View
         accessibilityRole="tablist"
@@ -72,6 +77,7 @@ export default function FitnessScreen() {
               accessibilityState={{ selected: on }}
               onPress={() => {
                 setRange(r);
+                void storage.setItem(keys.fitnessRange, r);
                 setPicked(null);
               }}
               style={{
@@ -79,10 +85,10 @@ export default function FitnessScreen() {
                 alignItems: 'center',
                 paddingVertical: 12,
                 borderBottomWidth: 3,
-                borderColor: on ? String(c.fitness) : 'transparent',
+                borderColor: on ? accent(c) : 'transparent',
               }}
             >
-              <Text style={{ color: on ? c.fg : c.muted, fontSize: 15, fontWeight: on ? '700' : '400' }}>
+              <Text style={{ color: on ? c.fg : c.muted, fontSize: 14, fontWeight: on ? '700' : '400' }}>
                 {t(`progress.range.${r}`)}
               </Text>
             </Pressable>
@@ -98,14 +104,14 @@ export default function FitnessScreen() {
         <>
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-              <Text style={{ color: c.fg, fontSize: 40, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+              <Text style={{ color: c.fg, fontSize: 30, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
                 {change.direction === 'up' ? '▴' : change.direction === 'down' ? '▾' : ''}
                 {change.percent} %
               </Text>
               <Text
                 style={{
                   color: change.direction === 'up' ? c.formPositive : c.fg,
-                  fontSize: 15,
+                  fontSize: 14,
                   fontVariant: ['tabular-nums'],
                 }}
               >
@@ -114,7 +120,7 @@ export default function FitnessScreen() {
                   : t('progress.points', { points: change.points > 0 ? `+${change.points}` : change.points })}
               </Text>
             </View>
-            <Text style={{ color: c.fg, fontSize: 15 }}>
+            <Text style={{ color: c.fg, fontSize: 14 }}>
               {index === last
                 ? t(`progress.last.${range}`)
                 : t('progress.between', { from: date(days[0].day), to: date(day.day) })}
@@ -154,8 +160,8 @@ function DayActivities({ day }: { day: string }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 4 }}>
         <Icon name="timeline" color={c.muted} size={30} />
         <View>
-          <Text style={{ color: c.muted, fontSize: 17 }}>{t('progress.noActivities')}</Text>
-          <Muted style={{ fontSize: 14 }}>{when}</Muted>
+          <Text style={{ color: c.muted, fontSize: 15 }}>{t('progress.noActivities')}</Text>
+          <Muted style={{ fontSize: 13 }}>{when}</Muted>
         </View>
       </View>
     );
@@ -170,10 +176,10 @@ function DayActivities({ day }: { day: string }) {
         >
           <SportIcon sport={asSport(a.sport)} size={36} />
           <View style={{ flex: 1 }}>
-            <Text numberOfLines={1} style={{ color: c.fg, fontSize: 17 }}>
+            <Text numberOfLines={1} style={{ color: c.fg, fontSize: 15 }}>
               {a.name ?? a.sport}
             </Text>
-            <Muted style={{ fontSize: 14 }}>{when}</Muted>
+            <Muted style={{ fontSize: 13 }}>{when}</Muted>
           </View>
         </Pressable>
       ))}

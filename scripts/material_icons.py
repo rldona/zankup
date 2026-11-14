@@ -178,6 +178,7 @@ INTERFACE = [
     "group",
     "cloud_sync",
     "assignment",
+    "more_horiz",
 ]
 FILLED = [
     "home",

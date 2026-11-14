@@ -18,7 +18,7 @@ import { asSport } from '../prefs';
 import { CardSkeleton } from '../Skeleton';
 import { monthGrid } from '../stats/dates';
 import { useTheme } from '../theme';
-import { Card, InfoButton, Muted } from '../ui';
+import { accent, Card, InfoButton, Muted, onAccent } from '../ui';
 import { isoDay } from './fitness';
 import { addDays, weekDays, weekMark, type WeekMark } from './weeks';
 import { Panel } from './Panel';
@@ -40,14 +40,14 @@ export function SeriesCard() {
       >
         <Card style={{ flex: 1, marginBottom: 0 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ flex: 1, color: c.fg, fontSize: 18, fontWeight: '700' }}>
+            <Text style={{ flex: 1, color: c.fg, fontSize: 16, fontWeight: '700' }}>
               {t('progress.series')}
             </Text>
             <Icon name="chevron_right" color={c.muted} size={22} />
           </View>
           <View style={{ alignItems: 'center', marginTop: 10 }}>
-            <Flame weeks={weeks} size={104} />
-            <Text style={{ color: c.run, fontSize: 22, fontWeight: '800' }}>
+            <Flame weeks={weeks} size={88} />
+            <Text style={{ color: accent(c), fontSize: 18, fontWeight: '800' }}>
               {t('progress.weeksWord', { count: weeks })}
             </Text>
           </View>
@@ -74,13 +74,13 @@ function Flame({ weeks, size }: { weeks: number; size: number }) {
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Canvas style={{ width: size, height: size, opacity: ready ? 1 : 0 }}>
-        {ready && <Path path={FLAME} color={c.run} transform={[{ scale: size / 100 }]} />}
+        {ready && <Path path={FLAME} color={String(c.accent)} transform={[{ scale: size / 100 }]} />}
       </Canvas>
       <Text
         style={{
           position: 'absolute',
           top: size * 0.44,
-          color: c.bg,
+          color: c.accentFg,
           fontSize: size * (weeks > 99 ? 0.26 : 0.32),
           fontWeight: '800',
           fontVariant: ['tabular-nums'],
@@ -134,7 +134,7 @@ function SeriesMonth({ onClose }: { onClose: () => void }) {
   return (
     <View style={{ paddingHorizontal: 16, gap: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ flex: 1, color: c.fg, fontSize: 22, fontWeight: '800' }}>{title}</Text>
+        <Text style={{ flex: 1, color: c.fg, fontSize: 18, fontWeight: '800' }}>{title}</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('progress.prevMonth')}
@@ -156,14 +156,14 @@ function SeriesMonth({ onClose }: { onClose: () => void }) {
       </View>
       <View style={{ flexDirection: 'row', gap: 40 }}>
         <View>
-          <Muted style={{ color: c.fg, fontSize: 14 }}>{t('progress.yourStreak')}</Muted>
-          <Text style={{ color: c.fg, fontSize: 22, fontWeight: '800' }}>
+          <Muted style={{ color: c.fg, fontSize: 13 }}>{t('progress.yourStreak')}</Muted>
+          <Text style={{ color: c.fg, fontSize: 18, fontWeight: '800' }}>
             {t('progress.streakWeeks', { count: streak?.weeks ?? 0 })}
           </Text>
         </View>
         <View>
-          <Muted style={{ color: c.fg, fontSize: 14 }}>{t('progress.streakActivities')}</Muted>
-          <Text style={{ color: c.fg, fontSize: 22, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+          <Muted style={{ color: c.fg, fontSize: 13 }}>{t('progress.streakActivities')}</Muted>
+          <Text style={{ color: c.fg, fontSize: 18, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
             {streak?.activities ?? 0}
           </Text>
         </View>
@@ -173,7 +173,7 @@ function SeriesMonth({ onClose }: { onClose: () => void }) {
       <View>
         <View style={{ flexDirection: 'row', marginBottom: 6 }}>
           {letters.map((l, i) => (
-            <Text key={i} style={{ flex: 1, textAlign: 'center', color: c.fg, fontSize: 14 }}>
+            <Text key={i} style={{ flex: 1, textAlign: 'center', color: c.fg, fontSize: 13 }}>
               {l}
             </Text>
           ))}
@@ -203,7 +203,7 @@ function SeriesMonth({ onClose }: { onClose: () => void }) {
                     right: 8,
                     top: band(marks[w - 1] ?? 'missed') ? 0 : 4,
                     bottom: band(marks[w + 1] ?? 'missed') ? 0 : 4,
-                    backgroundColor: c.run,
+                    backgroundColor: accent(c),
                     opacity: 0.25,
                     borderTopLeftRadius: band(marks[w - 1] ?? 'missed') ? 0 : 18,
                     borderTopRightRadius: band(marks[w - 1] ?? 'missed') ? 0 : 18,
@@ -231,12 +231,12 @@ function WeekBadge({ mark, weeks }: { mark: WeekMark; weeks: number }) {
           width: 26,
           height: 26,
           borderRadius: 13,
-          backgroundColor: c.run,
+          backgroundColor: accent(c),
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Icon name="check" color={c.bg} size={18} />
+        <Icon name="check" color={onAccent(c)} size={18} />
       </View>
     );
   return <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: c.line }} />;
@@ -260,7 +260,7 @@ function DayCell({
   const size = 38;
   const first = activities[0];
   let cell;
-  if (!inMonth) cell = <Text style={{ color: c.muted, fontSize: 16 }}>{n}</Text>;
+  if (!inMonth) cell = <Text style={{ color: c.muted, fontSize: 14 }}>{n}</Text>;
   else if (first)
     cell = (
       <Pressable
@@ -275,7 +275,7 @@ function DayCell({
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: day === today ? 2 : 0,
-          borderColor: c.run,
+          borderColor: accent(c),
         }}
       >
         <Icon name={SPORT_ICONS[asSport(first.sport)]} color={c.bg} size={22} />
@@ -310,7 +310,7 @@ function DayCell({
           borderColor: day === today ? c.fg : c.line,
         }}
       >
-        <Text style={{ color: c.fg, fontSize: 16, fontVariant: ['tabular-nums'] }}>{n}</Text>
+        <Text style={{ color: c.fg, fontSize: 14, fontVariant: ['tabular-nums'] }}>{n}</Text>
       </View>
     );
   return <View style={{ flex: 1, alignItems: 'center' }}>{cell}</View>;

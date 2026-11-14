@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router';
 
 import { api } from '../api';
 import { t } from '../i18n';
+import { Mark } from '../Mark';
 import { Wordmark } from '../Wordmark';
 
 /**
@@ -80,9 +81,9 @@ export function Authorize() {
 
   return (
     <main className="placeholder authorize">
-      <Wordmark />
+      <Mark />
       <h1>{t('oauth.title', { name: client.data.name })}</h1>
-      <p>{t('oauth.what')}</p>
+      <p>{t('oauth.what', { name: client.data.name })}</p>
       <ul>
         <li>{t('oauth.reads')}</li>
         <li>{t('oauth.never')}</li>

@@ -22,7 +22,7 @@ from zankup.ai import ai_preferences
 from zankup.ai.client import BUDGET_WARNING, Llm, LlmBudgetExceeded, LlmError, build_llm
 from zankup.ai.coach import CoachRequest, answer, ndjson
 from zankup.ai.report import FIELDS as REPORT_FIELDS
-from zankup.ai.report import generate_report
+from zankup.ai.report import REPORT_VERSION, generate_report
 from zankup.ai.summary import generate_summary, settings_of
 from zankup.ai.weekly import generate_weekly_now, last_week_start
 from zankup.api.routing import protected_router
@@ -225,7 +225,13 @@ def create_report(
     client = _require(llm, db, user, "summaries")
     row = db.get(ActivityReport, activity_id)
     language, _units = settings_of(db, user.id)
-    if row is not None and not again and row.language == language and row.metrics_version == METRICS_VERSION:
+    current = (
+        row is not None
+        and row.language == language
+        and row.metrics_version == METRICS_VERSION
+        and (row.sections or {}).get("_version") == str(REPORT_VERSION)
+    )
+    if row is not None and current and not again:
         return _report_out(row)
     try:
         row = generate_report(db, client, activity)

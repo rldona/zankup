@@ -1,4 +1,4 @@
-import { activityReportQuery, activitySummaryQuery, aiStatusQuery } from '@zankup/core';
+import { activityReportQuery, activitySummaryQuery, aiStatusQuery, emphasis } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -183,12 +183,16 @@ function ReportDialog({ activityId, onClose }: { activityId: number; onClose: ()
           {[row.effort, row.story, row.month, row.verdict]
             .filter((p) => p.trim())
             .map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}>
+                <Emphasis text={p} />
+              </p>
             ))}
           {row.next.trim() && (
             <aside className="report-next">
               <b>{t('report.next')}</b>
-              <p>{row.next}</p>
+              <p>
+                <Emphasis text={row.next} />
+              </p>
             </aside>
           )}
           <button type="button" className="primary block" onClick={onClose}>
@@ -198,4 +202,9 @@ function ReportDialog({ activityId, onClose }: { activityId: number; onClose: ()
       )}
     </Modal>
   );
+}
+
+/** A Coach text with what matters most in bold (its **double asterisks**). */
+function Emphasis({ text }: { text: string }) {
+  return <>{emphasis(text).map((run, i) => (run.bold ? <strong key={i}>{run.text}</strong> : run.text))}</>;
 }

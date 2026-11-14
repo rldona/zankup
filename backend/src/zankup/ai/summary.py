@@ -38,6 +38,8 @@ the numbers you are given, rounded sensibly; never invent a number, a place or a
 no emoji, no advice beyond one short observation. Distances in km or miles with one decimal, paces as \
 min/km or min/mile, times as h:mm or mm:ss.
 
+Every comparison comes from "comparisons": say its baseline and its direction exactly as given, \
+never the opposite; if two baselines disagree on a measure, say both in one sentence, naming each. \
 Also propose a short title (at most 50 characters) that describes the session, like "Easy 10 km with \
 negative splits", never a place, and up to three highlights of a few words each."""
 
@@ -96,6 +98,10 @@ def generate_summary(db: Session, llm: Llm, activity: Activity) -> ActivitySumma
     """Ask the model and keep (or replace) the activity's summary."""
     language, units = settings_of(db, activity.user_id)
     context = activity_context(db, activity)
+    # The same comparisons as the report's (ai/report.py), so the two never say opposite things.
+    from zankup.ai.report import _route, comparisons
+
+    context["comparisons"] = comparisons(context, _route(db, activity))
     completion = llm.complete(
         db,
         activity.user_id,

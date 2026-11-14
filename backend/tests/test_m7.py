@@ -914,3 +914,61 @@ def test_an_assistant_connects_itself_by_oauth(
     assert "result" in rpc(client, token, "tools/list").json()
     client.cookies.set(SESSION_COOKIE, _session_token(sessions))
     assert [t["name"] for t in client.get("/api/ai/tokens").json()] == ["Claude"]  # revocable in Settings
+
+
+# --- "Tell me more": the longer report on an activity ------------------------------------------------
+
+
+def test_comparisons_are_worked_out_here_so_the_report_cannot_contradict_itself() -> None:
+    """Strava's said "faster than your usual pace" and then "slower than your 30-day average": here the
+    direction comes with its baseline, from the numbers, and the model may only say that."""
+    from zankup.ai.report import comparisons
+
+    context = {
+        "avg_speed_mps": 2.93,  # 5:41/km
+        "avg_hr": 148,
+        "distance_m": 6610,
+        "metrics": {"relative_effort": 133},
+        "usual": {
+            "median_speed_mps": 3.10,  # 5:23/km: slower than usual
+            "median_avg_hr": 146,
+            "median_distance_m": 6500,
+            "median_relative_effort": 130,
+        },
+    }
+    route = {"median_speed_mps": 2.80, "median_relative_effort": 150}  # faster than on this route
+    found = {(c["measure"], c["baseline"]): c["direction"] for c in comparisons(context, route)}
+    assert found[("speed", "usual_90_days")] == "lower"
+    assert found[("speed", "same_route")] == "higher"
+    assert found[("avg_hr", "usual_90_days")] == "similar"  # 2 bpm
+    assert found[("relative_effort", "same_route")] == "lower"
+    assert ("avg_hr", "same_route") not in found  # nothing to compare with
+
+
+def test_tell_me_more_writes_the_report_once_and_keeps_it(
+    http: tuple[TestClient, sessionmaker[Session], Llm, FakeApi],
+) -> None:
+    client, sessions, _llm, api = http
+    with sessions() as db:
+        run_id = db.scalar(select(Activity.id).where(Activity.external_id == "1"))
+    assert client.get(f"/api/activities/{run_id}/report").status_code == 404
+    sections = {
+        "headline": "Rodaje sólido en zona umbral.",
+        "effort": "Esfuerzo relativo por encima de lo habitual.",
+        "story": "Diez kilómetros a 5:50 min/km.",
+        "month": "Llevas 32 km este mes.",
+        "verdict": "Una sesión que suma.",
+        "next": "Mañana, 40 min suaves en zona 2.",
+    }
+    api.messages.scripted.append(reply([text_block(json.dumps(sections))]))
+    made = client.post(f"/api/activities/{run_id}/report")
+    assert made.status_code == 200, made.text
+    assert {k: made.json()[k] for k in sections} == sections
+    content = api.messages.requests[0]["messages"][0]["content"]
+    assert '"comparisons"' in content and '"month"' in content and '"recent_load"' in content
+    assert "Madrid" not in content and "Ana" not in content  # minimised, as the summary
+    assert client.post(f"/api/activities/{run_id}/report").json()["next"] == sections["next"]
+    assert len(api.messages.requests) == 1  # kept: asked again, the model is not
+    assert client.get(f"/api/activities/{run_id}/report").json()["headline"] == sections["headline"]
+    with sessions() as db:
+        assert db.scalar(select(LlmCall.purpose)) == "report"

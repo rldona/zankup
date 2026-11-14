@@ -1290,5 +1290,10 @@
   "oauth.revoke": "You can take its access away at any time in Settings → Zankup Coach and MCP.",
   "oauth.allow": "Allow",
   "oauth.cancel": "Cancel",
-  "oauth.invalid": "This link to connect an assistant is not valid or has expired. Try again from the assistant."
+  "oauth.invalid": "This link to connect an assistant is not valid or has expired. Try again from the assistant.",
+  "report.more": "Tell me more",
+  "report.writing": "Writing your report…",
+  "report.failed": "The report could not be written.",
+  "report.next": "For your next session",
+  "report.done": "OK"
 }

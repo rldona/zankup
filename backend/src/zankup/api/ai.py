@@ -21,13 +21,16 @@ from sqlalchemy.orm import Session
 from zankup.ai import ai_preferences
 from zankup.ai.client import BUDGET_WARNING, Llm, LlmBudgetExceeded, LlmError, build_llm
 from zankup.ai.coach import CoachRequest, answer, ndjson
+from zankup.ai.report import FIELDS as REPORT_FIELDS
+from zankup.ai.report import generate_report
 from zankup.ai.summary import generate_summary, settings_of
 from zankup.ai.weekly import generate_weekly_now, last_week_start
 from zankup.api.routing import protected_router
 from zankup.auth.deps import AppSettings, CurrentUser, DbSession
 from zankup.auth.security import new_token, token_hash
 from zankup.core.config import Settings
-from zankup.db.models import Activity, ActivitySummary, ApiToken, User, WeeklyReport
+from zankup.db.models import Activity, ActivityReport, ActivitySummary, ApiToken, User, WeeklyReport
+from zankup.engine import METRICS_VERSION
 
 router = protected_router(prefix="/api", tags=["ai"])
 
@@ -174,6 +177,64 @@ def create_summary(activity_id: int, db: DbSession, user: CurrentUser, llm: Mayb
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(error)) from error
     db.commit()
     return _summary_out(row)
+
+
+# --- the longer report on an activity ("Tell me more") ------------------------------------------------
+
+
+class ReportOut(BaseModel):
+    activity_id: int
+    language: str
+    headline: str
+    effort: str
+    story: str
+    month: str
+    verdict: str
+    next: str = Field(description="A concrete recommendation for the next session")
+    model: str
+    created_at: datetime
+
+
+def _report_out(row: ActivityReport) -> ReportOut:
+    s = row.sections or {}
+    return ReportOut(
+        activity_id=row.activity_id,
+        language=row.language,
+        model=row.model,
+        created_at=row.created_at,
+        **{f: str(s.get(f, "")) for f in REPORT_FIELDS},
+    )
+
+
+@router.get("/activities/{activity_id}/report", operation_id="getActivityReport")
+def get_report(activity_id: int, db: DbSession, user: CurrentUser) -> ReportOut:
+    _own_activity(db, user, activity_id)
+    row = db.get(ActivityReport, activity_id)
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No report yet")
+    return _report_out(row)
+
+
+@router.post("/activities/{activity_id}/report", operation_id="createActivityReport")
+def create_report(
+    activity_id: int, db: DbSession, user: CurrentUser, llm: MaybeLlm, again: bool = False
+) -> ReportOut:
+    """The report now: the one kept if it is in the user's language and with today's metrics (unless
+    `again`), else a new one from the model."""
+    activity = _own_activity(db, user, activity_id)
+    client = _require(llm, db, user, "summaries")
+    row = db.get(ActivityReport, activity_id)
+    language, _units = settings_of(db, user.id)
+    if row is not None and not again and row.language == language and row.metrics_version == METRICS_VERSION:
+        return _report_out(row)
+    try:
+        row = generate_report(db, client, activity)
+    except LlmBudgetExceeded as error:
+        raise HTTPException(status.HTTP_409_CONFLICT, f"Monthly AI budget reached: {error}") from error
+    except LlmError as error:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(error)) from error
+    db.commit()
+    return _report_out(row)
 
 
 # --- weekly report (OS-704) ---------------------------------------------------------------------------

@@ -743,7 +743,7 @@ class SourcePriority(Base):
 
 # --- AI assistant (phase 7) --------------------------------------------------------------------------
 
-LLM_PURPOSES = ("summary", "weekly", "coach", "eval")
+LLM_PURPOSES = ("summary", "report", "weekly", "coach", "eval")
 REPORT_STATUSES = ("pending", "done", "failed")
 
 
@@ -788,6 +788,25 @@ class ActivitySummary(Base):
     suggested_title: Mapped[str] = mapped_column(String(120))
     summary: Mapped[str] = mapped_column(Text)
     highlights: Mapped[list[str]] = mapped_column(JSONB, server_default="[]")
+    model: Mapped[str] = mapped_column(String(60))
+    metrics_version: Mapped[int] = mapped_column(SmallInteger)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ActivityReport(Base):
+    """The longer report on an activity, asked with "Tell me more" (ai/report.py): its sections in the
+    user's language, kept until asked again."""
+
+    __tablename__ = "activity_reports"
+
+    activity_id: Mapped[int] = mapped_column(
+        ForeignKey("activities.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = _user_fk()
+    language: Mapped[str] = mapped_column(String(5))
+    sections: Mapped[dict[str, str]] = mapped_column(
+        JSONB, comment="headline, effort, story, month, verdict and next"
+    )
     model: Mapped[str] = mapped_column(String(60))
     metrics_version: Mapped[int] = mapped_column(SmallInteger)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

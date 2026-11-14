@@ -5112,6 +5112,99 @@
         }
       }
     },
+    "/api/activities/{activity_id}/report": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Get Report",
+        "operationId": "getActivityReport",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Create Report",
+        "description": "The report now: the one kept if it is in the user's language and with today's metrics (unless\n`again`), else a new one from the model.",
+        "operationId": "createActivityReport",
+        "parameters": [
+          {
+            "name": "activity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Activity Id"
+            }
+          },
+          {
+            "name": "again",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Again"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ai/weekly": {
       "get": {
         "tags": [
@@ -10839,6 +10932,66 @@
           "credential"
         ],
         "title": "RegisterRequest"
+      },
+      "ReportOut": {
+        "properties": {
+          "activity_id": {
+            "type": "integer",
+            "title": "Activity Id"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline"
+          },
+          "effort": {
+            "type": "string",
+            "title": "Effort"
+          },
+          "story": {
+            "type": "string",
+            "title": "Story"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "next": {
+            "type": "string",
+            "title": "Next",
+            "description": "A concrete recommendation for the next session"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "activity_id",
+          "language",
+          "headline",
+          "effort",
+          "story",
+          "month",
+          "verdict",
+          "next",
+          "model",
+          "created_at"
+        ],
+        "title": "ReportOut"
       },
       "ResetRequest": {
         "properties": {

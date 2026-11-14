@@ -1,10 +1,11 @@
-import { activitySummaryQuery, aiStatusQuery } from '@zankup/core';
+import { activityReportQuery, activitySummaryQuery, aiStatusQuery } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { api } from '../api';
 import { MaterialIcon } from '../MaterialIcon';
 import { t } from '../i18n';
+import { Modal } from './Tools';
 
 /**
  * Zankup Coach's summary of the activity (OS-703): the sentences, the highlights and the suggested title.
@@ -59,6 +60,7 @@ export function Summary({ activityId, name }: { activityId: number; name: string
     },
   });
   const [folded, setFolded] = useState(readFolded);
+  const [more, setMore] = useState(false);
   const can = status.data?.available && status.data.enabled && status.data.summaries;
   const row = summary.data;
   if (!row && !can) return null;
@@ -134,12 +136,66 @@ export function Summary({ activityId, name }: { activityId: number; name: string
             )}
           </>
         )}
+        {row && can && (
+          <button type="button" className="primary" onClick={() => setMore(true)}>
+            {t('report.more')}
+          </button>
+        )}
         {(write.isError || rename.isError) && (
           <p className="note" role="alert">
             {t('summary.failed')}
           </p>
         )}
       </div>
+      {more && <ReportDialog activityId={activityId} onClose={() => setMore(false)} />}
     </section>
+  );
+}
+
+/**
+ * "Tell me more": the longer report on an activity, as Strava's. Written the first time it is opened
+ * (a few seconds), then kept: the effort, the activity told, its place in the month, a verdict and the
+ * recommendation for the next session, apart.
+ */
+function ReportDialog({ activityId, onClose }: { activityId: number; onClose: () => void }) {
+  const report = useQuery({
+    ...activityReportQuery(api, activityId),
+    queryFn: async () => {
+      // The one kept, or a new one: the server decides.
+      const { data, error } = await api.POST('/api/activities/{activity_id}/report', {
+        params: { path: { activity_id: activityId } },
+      });
+      if (!data) throw new Error(String((error as { detail?: unknown } | undefined)?.detail ?? 'error'));
+      return data;
+    },
+    staleTime: Infinity,
+  });
+  const row = report.data;
+  return (
+    <Modal title={t('summary.aiTitle')} onClose={onClose} className="report">
+      {!row ? (
+        <p className="note" role={report.isError ? 'alert' : 'status'}>
+          {report.isError ? t('report.failed') : t('report.writing')}
+        </p>
+      ) : (
+        <article className="report-body">
+          <h3>{row.headline}</h3>
+          {[row.effort, row.story, row.month, row.verdict]
+            .filter((p) => p.trim())
+            .map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          {row.next.trim() && (
+            <aside className="report-next">
+              <b>{t('report.next')}</b>
+              <p>{row.next}</p>
+            </aside>
+          )}
+          <button type="button" className="primary block" onClick={onClose}>
+            {t('report.done')}
+          </button>
+        </article>
+      )}
+    </Modal>
   );
 }

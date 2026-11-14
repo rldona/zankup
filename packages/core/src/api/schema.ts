@@ -1902,6 +1902,28 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/activities/{activity_id}/report': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Report */
+    get: operations['getActivityReport'];
+    put?: never;
+    /**
+     * Create Report
+     * @description The report now: the one kept if it is in the user's language and with today's metrics (unless
+     *     `again`), else a new one from the model.
+     */
+    post: operations['createActivityReport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/ai/weekly': {
     parameters: {
       query?: never;
@@ -3978,6 +4000,35 @@ export interface components {
        * @default Passkey
        */
       name: string;
+    };
+    /** ReportOut */
+    ReportOut: {
+      /** Activity Id */
+      activity_id: number;
+      /** Language */
+      language: string;
+      /** Headline */
+      headline: string;
+      /** Effort */
+      effort: string;
+      /** Story */
+      story: string;
+      /** Month */
+      month: string;
+      /** Verdict */
+      verdict: string;
+      /**
+       * Next
+       * @description A concrete recommendation for the next session
+       */
+      next: string;
+      /** Model */
+      model: string;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
     };
     /** ResetRequest */
     ResetRequest: {
@@ -8334,6 +8385,70 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SummaryOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  getActivityReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReportOut'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  createActivityReport: {
+    parameters: {
+      query?: {
+        again?: boolean;
+      };
+      header?: never;
+      path: {
+        activity_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReportOut'];
         };
       };
       /** @description Validation Error */

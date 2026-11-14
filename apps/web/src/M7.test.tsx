@@ -212,6 +212,32 @@ describe('phase 7: the AI assistant', () => {
     expect(screen.queryByRole('button', { name: 'Ask for a summary' })).not.toBeInTheDocument();
   });
 
+  it('"Tell me more" writes the longer report and shows the recommendation apart', async () => {
+    const REPORT_ROW = {
+      activity_id: 7,
+      language: 'en',
+      headline: 'A steady threshold run.',
+      effort: 'Relative effort above your usual.',
+      story: '10.0 km at 5:50 min/km.',
+      month: '32 km so far this month.',
+      verdict: 'A session that adds up.',
+      next: 'Tomorrow, 40 easy minutes in zone 2.',
+      model: 'claude-haiku-5-5',
+      created_at: '2026-11-04T09:00:00Z',
+    };
+    const calls = mockApi({
+      '/api/activities/7': () => Response.json({ ...RUN, laps: [], splits: [], best_efforts: [] }),
+      '/api/activities/7/summary': () => Response.json(SUMMARY),
+      'POST /api/activities/7/report': () => Response.json(REPORT_ROW),
+    });
+    renderAt('/activities/7');
+    await userEvent.click(await screen.findByRole('button', { name: 'Tell me more' }));
+    expect(await screen.findByText('A steady threshold run.')).toBeInTheDocument();
+    expect(screen.getByText('For your next session')).toBeInTheDocument();
+    expect(screen.getByText('Tomorrow, 40 easy minutes in zone 2.')).toBeInTheDocument();
+    expect(calls.filter((c) => c.path === '/api/activities/7/report')).toHaveLength(1);
+  });
+
   it('has the AI switches, the explanation and the MCP tokens in Settings', async () => {
     let tokens: object[] = [];
     const calls = mockApi({

@@ -47,6 +47,14 @@ button {
   gap: 12px;
 }
 
+/* The mark, centred and as large as on sign-in. */
+.authorize .brand-mark {
+  height: 64px;
+  margin: 0 auto 24px;
+  color: var(--fg);
+  stroke-width: 260;
+}
+
 .authorize ul {
   text-align: start;
   color: var(--muted);

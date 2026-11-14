@@ -294,6 +294,7 @@ describe('connecting an AI assistant by OAuth', () => {
     });
     renderAt(`/oauth/authorize${query}`);
     expect(await screen.findByRole('heading', { name: 'Claude wants to access your Zankup' })).toBeVisible();
+    expect(screen.getByText('If you allow it, Claude will be able to, on your behalf:')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Allow' }));
     await waitFor(() =>
       expect(assign).toHaveBeenCalledWith('https://claude.ai/api/mcp/auth_callback?code=k&state=xyz'),

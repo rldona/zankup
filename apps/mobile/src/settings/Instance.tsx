@@ -4,7 +4,7 @@
  * its own fields; a value the server would refuse comes back as a message. Hours are shown in the
  * phone's time and kept in UTC.
  */
-import { instanceQuery, queryKeys, type InstanceSettings } from '@zankup/core';
+import { instanceQuery, keysQuery, queryKeys, type InstanceSettings } from '@zankup/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -115,6 +115,17 @@ function Section({ children }: { children: ReactNode }) {
 
 const money = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/**
+ * Whether there is an Anthropic key (saved from the apps or the server's): without one the Coach is
+ * off, and its model and budget mean nothing.
+ */
+export function useHasAnthropicKey(): boolean | null {
+  const api = useApi();
+  const keys = useQuery(keysQuery(api));
+  if (!keys.data) return null;
+  return keys.data.some((k) => k.name === 'anthropic' && k.configured);
+}
 
 /** Settings › Zankup Coach: the model (with its price), the monthly budget and Monday's hour. */
 export function CoachSettings() {

@@ -21,6 +21,7 @@ import {
   AlertSettings,
   BackupSettings,
   CoachSettings,
+  useHasAnthropicKey,
   GoogleHealthSwitch,
 } from '../../src/settings/Instance';
 import { PrivacyZones } from '../../src/settings/Privacy';
@@ -42,6 +43,7 @@ import { Button, Card, Choice, Heading, MenuRow, Muted, Screen, SwitchRow } from
 
 export default function SettingsSectionScreen() {
   const params = useLocalSearchParams<{ section: string }>();
+  const hasKey = useHasAnthropicKey();
   const section = (SETTINGS_SECTIONS as readonly string[]).includes(params.section)
     ? (params.section as SettingsSection)
     : 'general';
@@ -73,10 +75,13 @@ export default function SettingsSectionScreen() {
             <Muted>{t('keys.anthropicHelp')}</Muted>
             <ServiceKeyEditor name="anthropic" />
           </Card>
-          <Card>
-            <Heading first>{t('instance.coachTitle')}</Heading>
-            <CoachSettings />
-          </Card>
+          {/* The model and budget only with a key: without one the Coach is off. */}
+          {hasKey && (
+            <Card>
+              <Heading first>{t('instance.coachTitle')}</Heading>
+              <CoachSettings />
+            </Card>
+          )}
           <AiCard />
           <Mcp />
         </>

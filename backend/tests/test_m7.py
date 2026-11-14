@@ -845,3 +845,72 @@ def test_a_stray_space_around_the_model_is_trimmed(monkeypatch: pytest.MonkeyPat
 
     monkeypatch.setenv("AI_MODEL", " claude-haiku-5-5 ")
     assert Settings().ai_model == "claude-haiku-5-5"
+
+
+def test_an_assistant_connects_itself_by_oauth(
+    http: tuple[TestClient, sessionmaker[Session], Llm, FakeApi],
+) -> None:
+    """Claude's custom connector: the 401 points to the metadata, it registers, the person allows it
+    on the app's page and the code (with PKCE) becomes a token that works on the MCP server."""
+    from zankup.api.oauth import challenge_of
+
+    client, sessions, _llm, _api = http
+    client.cookies.clear()
+    refused = rpc(client, None, "initialize")
+    assert refused.status_code == 401
+    assert 'resource_metadata="' in refused.headers["WWW-Authenticate"]
+    resource = client.get("/.well-known/oauth-protected-resource/api/mcp").json()
+    assert resource["resource"].endswith("/api/mcp") and resource["authorization_servers"]
+    meta = client.get("/.well-known/oauth-authorization-server").json()
+    assert meta["code_challenge_methods_supported"] == ["S256"]
+    assert meta["authorization_endpoint"].endswith("/oauth/authorize")
+
+    redirect = "https://claude.ai/api/mcp/auth_callback"
+    assert (
+        client.post("/api/oauth/register", json={"redirect_uris": ["http://evil.example/cb"]}).status_code
+        == 400
+    )
+    registered = client.post(
+        "/api/oauth/register", json={"client_name": "Claude", "redirect_uris": [redirect]}
+    )
+    assert registered.status_code == 201, registered.text
+    client_id = registered.json()["client_id"]
+
+    verifier = "v" * 64
+    approval = {
+        "client_id": client_id,
+        "redirect_uri": redirect,
+        "code_challenge": challenge_of(verifier),
+        "state": "xyz",
+    }
+    assert client.post("/api/oauth/approve", json=approval).status_code == 401  # signed in first
+    client.cookies.set(SESSION_COOKIE, _session_token(sessions))
+    asked = client.get("/api/oauth/client", params={"client_id": client_id, "redirect_uri": redirect})
+    assert asked.json() == {"name": "Claude"}
+    other = {"client_id": client_id, "redirect_uri": "https://elsewhere.example/cb"}
+    assert client.get("/api/oauth/client", params=other).status_code == 400
+    approved = client.post("/api/oauth/approve", json=approval)
+    assert approved.status_code == 200, approved.text
+    back = approved.json()["redirect"]
+    assert back.startswith(f"{redirect}?code=") and back.endswith("&state=xyz")
+    code = back.split("code=")[1].split("&")[0]
+    client.cookies.clear()
+
+    form = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect,
+        "client_id": client_id,
+        "code_verifier": "w" * 64,
+    }
+    assert client.post("/api/oauth/token", data=form).json()["error"] == "invalid_grant"  # wrong verifier
+    issued = client.post("/api/oauth/token", data={**form, "code_verifier": verifier})
+    assert issued.status_code == 200, issued.text
+    token = issued.json()["access_token"]
+    assert issued.json()["token_type"] == "Bearer" and token.startswith("zk_")
+    assert (
+        client.post("/api/oauth/token", data={**form, "code_verifier": verifier}).status_code == 400
+    )  # once
+    assert "result" in rpc(client, token, "tools/list").json()
+    client.cookies.set(SESSION_COOKIE, _session_token(sessions))
+    assert [t["name"] for t in client.get("/api/ai/tokens").json()] == ["Claude"]  # revocable in Settings

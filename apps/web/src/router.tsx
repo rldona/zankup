@@ -10,6 +10,7 @@ import { Home } from './routes/Home';
 import { Health } from './routes/Health';
 import { NotFound } from './routes/NotFound';
 import { Profile } from './routes/Profile';
+import { Authorize } from './routes/Authorize';
 import { RequireSession } from './routes/RequireSession';
 import { Setup } from './routes/Setup';
 import { Shell } from './routes/Shell';
@@ -78,6 +79,8 @@ export const routes: RouteObject[] = [
       {
         element: <RequireSession />,
         children: [
+          // An AI assistant asking to connect (OAuth): signed in, but outside the app's frame.
+          { path: '/oauth/authorize', element: <Authorize /> },
           {
             element: <Shell />,
             // An error in a screen shows inside the frame, with the navigation still there.

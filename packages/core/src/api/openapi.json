@@ -5512,6 +5512,100 @@
         }
       }
     },
+    "/api/oauth/client": {
+      "get": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Client Info",
+        "description": "The assistant asking, for the page: only when the address it sends the answer to is its own.",
+        "operationId": "getOAuthClient",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Client Id"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Redirect Uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oauth/approve": {
+      "post": {
+        "tags": [
+          "oauth"
+        ],
+        "summary": "Approve",
+        "description": "The person allows the assistant: a code for it, for ten minutes and one use.",
+        "operationId": "approveOAuth",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Approval"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Redirect"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health",
@@ -6919,6 +7013,48 @@
         ],
         "title": "AppTokens"
       },
+      "Approval": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Client Id"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "title": "Redirect Uri"
+          },
+          "code_challenge": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 43,
+            "title": "Code Challenge"
+          },
+          "code_challenge_method": {
+            "type": "string",
+            "title": "Code Challenge Method",
+            "default": "S256"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "redirect_uri",
+          "code_challenge"
+        ],
+        "title": "Approval"
+      },
       "BestEffortOut": {
         "properties": {
           "distance_key": {
@@ -7146,6 +7282,19 @@
           "challenge"
         ],
         "title": "Challenge"
+      },
+      "ClientOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ClientOut"
       },
       "CoachMessage": {
         "properties": {
@@ -10636,6 +10785,20 @@
           "progression"
         ],
         "title": "Records"
+      },
+      "Redirect": {
+        "properties": {
+          "redirect": {
+            "type": "string",
+            "title": "Redirect",
+            "description": "Where to send the browser: the assistant, with the code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "redirect"
+        ],
+        "title": "Redirect"
       },
       "RefreshRequest": {
         "properties": {
